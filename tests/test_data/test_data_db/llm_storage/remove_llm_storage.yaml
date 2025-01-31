@@ -1,0 +1,9 @@
+type: code
+dependencies: []
+changed_columns: [paper_name, openai_id]
+function: delete_files
+code_file: open_ai_store.py
+is_global: true
+is_udf: false
+arguments:
+  key_file: ./open_ai_key/key.txt

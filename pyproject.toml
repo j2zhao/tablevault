@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tablevault"
+version = "0.0.0"
+description = "Table Configurationa and Versioning Tool. (OpenAI and CSV files right now.)"
+authors = [
+    { name = "Jinjin Zhao", email = "j2zhao@uchicago.edu" }
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+keywords = ["example", "package", "python"]
+requires-python = ">=3.11" # la
+dependencies = [
+    "numpy", # add versioning?
+    "pandas",
+    "filelock",
+    "pyyaml",
+    "portalocker", 
+    "openai", #maybe make optional in future
+    "dataclasses_json",
+    "click"
+]
+
+[project.scripts]
+tablevault = "tablevault.cli:main"
+
+[project.optional-dependencies] # TODO: actually use to format check and also convert tests to pytest
+dev = [
+    "black",
+    "mypy",
+    "flake8"
+]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+
+[tool.mypy]
+python_version = "3.13"
+warn_unused_configs = true
+ignore_missing_imports = true
+files = "tablevault"
