@@ -2,7 +2,7 @@
 This is way more complicated than i thought T_T
 
 '''
-from test_basic import copy_db
+from tests._outdated_tests.test_basic import copy_db
 import subprocess
 import os
 import shutil
@@ -68,10 +68,6 @@ def test_copy_instance_prompt_change():
     command = ["python", "execute_operation.py", "-op", "get_instances", "-db", "test_database", "-t", "llm_questions"]
     llm_instance_id = subprocess.run(command, capture_output=True, text=True)
     llm_instance_id = llm_instance_id.stdout.split('\n')[0]
-
-    command = ["python", "execute_operation.py", "-op", "get_instances", "-db", "test_database", "-t", "llm_storage"]
-    code_instance_id = subprocess.run(command, capture_output=True, text=True)
-    code_instance_id = code_instance_id.stdout.split('\n')[0]
 
     # copy instance with llm prompts
     command = ["python", "execute_operation.py", "-op", "table_instance", "-db", "test_database", "-t", "llm_questions", 
@@ -145,7 +141,6 @@ def test_new_row_change():
                 "-pid", code_instance_id]
     subprocess.run(command)
 
-    # # nothing should execute - execute llm
     command = ["python", "execute_operation.py",  "-op", "execute", "-db", "test_database", "-t", "llm_storage"]
     subprocess.run(command)
     

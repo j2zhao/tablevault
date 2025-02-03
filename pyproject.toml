@@ -30,16 +30,17 @@ tablevault = "tablevault.cli:main"
 [project.optional-dependencies] # TODO: actually use to format check and also convert tests to pytest
 dev = [
     "black",
-    "mypy",
     "flake8"
 ]
 
 [tool.flake8]
 max-line-length = 88
 extend-ignore = ["E203", "W503"]
-
-[tool.mypy]
-python_version = "3.13"
-warn_unused_configs = true
-ignore_missing_imports = true
-files = "tablevault"
+exclude =[
+    ".ipynb_checkpoints",
+    "*/.ipynb_checkpoints/*"]
+# [tool.mypy]
+# python_version = "3.13"
+# warn_unused_configs = true
+# ignore_missing_imports = true
+# files = "tablevault"

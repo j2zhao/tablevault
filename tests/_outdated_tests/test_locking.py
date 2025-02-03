@@ -5,8 +5,8 @@ Currently doesn't work with
 import subprocess
 import shutil
 import os
-from auto_data_table.database_lock import DatabaseLock
-from test_basic import create_db
+from tablevault._database_lock import DatabaseLock
+from tests._outdated_tests.test_basic import create_db
 
 
 def multi_instance_reads():

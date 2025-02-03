@@ -2,7 +2,7 @@
 Needs for manual interupts to different functions
 
 """
-from test_basic import copy_db
+from tests._outdated_tests.test_basic import copy_db
 import subprocess
 
 def basic_restart(): #DONE
