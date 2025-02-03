@@ -10,7 +10,7 @@ import re
 
 from tablevault import _file_operations
 from tablevault._llm_functions.open_ai_thread import Open_AI_Thread, add_open_ai_secret
-from tablevault._prompt_execution import prompt_parser
+from tablevault._prompt_parsing import prompt_parser
 from tablevault._prompt_execution import llm_prompts
 
 
