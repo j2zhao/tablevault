@@ -68,18 +68,23 @@ def execute_table(
     author: str,
     instance_id: str = "",
     force: bool = False,
-):
-
+): 
     start_time = time.time()
     rand_str = "".join(random.choices(string.ascii_letters, k=5))
     perm_instance_id = "_" + str(int(start_time)) + "_" + rand_str
     perm_instance_id = instance_id + perm_instance_id
     instance_id = "TEMP_" + instance_id
+
     db_metadata = MetadataStore(db_dir)
+
     instance_lock = DatabaseLock(db_dir, table_name, instance_id)
+
     instance_lock.acquire_exclusive_lock()
+
     perm_instance_lock = DatabaseLock(db_dir, table_name, perm_instance_id)
+
     perm_instance_lock.acquire_exclusive_lock()
+
     prompts = _file_operations.get_prompts(instance_id, table_name, db_dir)
 
     instance_exists = _file_operations.check_temp_instance_existance(
@@ -120,6 +125,7 @@ def execute_table(
         force,
         origin_exists,
     )
+
     if origin_lock is not None:
         origin_lock.release_shared_lock()
     # execute prompts
@@ -150,10 +156,11 @@ def execute_table(
     _update_table_columns(
         to_change_columns, all_columns, instance_id, table_name, db_dir
     )
-    db_metadata.update_process_step(process_id, "clear_table")
+
     to_change_columns = set(to_change_columns)
     for i, pname in enumerate(top_pnames):
         prompt = prompt_parser.convert_reference(prompts[pname])
+
         cache = _fetch_table_cache(
             external_deps[pname],
             db_metadata,
@@ -162,11 +169,13 @@ def execute_table(
             db_dir,
             start_time,
         )
+
         if i == 0:
             rows_updated = execute_gen_table_from_prompt(
                 prompt, cache, instance_id, table_name, db_dir
             )
             db_metadata.update_process_data(process_id, {"rows_updated": rows_updated})
+
             if not rows_updated and len(to_execute) == 0:
                 break
         else:
@@ -186,23 +195,32 @@ def execute_table(
         print(pname)
     if not rows_updated and len(to_change_columns) == 0:
         db_metadata.update_process_step(process_id, "no_update")
+        
         db_metadata.write_to_log(process_id, success=False)
+
         instance_lock.release_exclusive_lock()
         perm_instance_lock.release_exclusive_lock(delete=True)
+
         for lock in dep_locks:
             lock.release_shared_lock()
+
         print("NO UPDATES: NOTHING HAPPENS.")
     else:
+
         _file_operations.materialize_table_folder(
             perm_instance_id, instance_id, table_name, db_dir
         )
+
         db_metadata.update_process_step(process_id, "materalized")
+
         db_metadata.write_to_log(process_id)
+
         instance_lock.release_exclusive_lock(delete=True)
+
         perm_instance_lock.release_exclusive_lock()
+
         for lock in dep_locks:
             lock.release_shared_lock()
-        print(f"FINISHED INSTANCE: {perm_instance_id}")
 
 
 def restart_execute_table(author: str, process_id: str, db_dir: str):

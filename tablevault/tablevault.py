@@ -1,7 +1,6 @@
 from tablevault import _table_operations
 from tablevault._metadata_store import MetadataStore, ActiveProcessDict
 
-
 class TableVault:
 
     def __init__(
