@@ -43,7 +43,7 @@ def delete_files(key_file):
     return df
 
 
-def upload_file_from_tabe(file_path, key_file):
+def upload_file_from_table(file_path, key_file):
     with open(key_file, "r") as f:
         secret = f.read()
         add_open_ai_secret(secret)

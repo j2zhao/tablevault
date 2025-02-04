@@ -116,26 +116,6 @@ class Open_AI_Thread:
             sleep(1)
         return False
 
-    def categorical_query(self, setup, categories, definition=None, file_name=None):
-        if self.assistant is None:
-            print(f"Thread Closed for {self.name}")
-            return None, None
-        if definition is not None:
-            self.add_message(definition)
-        msg = ""
-        categories_ = [f'"{cat}"' for cat in categories]
-        categories__ = " ; ".join(categories_)
-        msg = setup.replace("CATEGORIES", categories__)
-        self.add_message(msg)
-        output = self.run_query(file_name=file_name)
-        if output is None:
-            return None, None
-        msg = llm_prompts.CATEGORY_PROMPT
-        msg = msg.replace("CATEGORIES", categories__)
-        self.add_message(msg)
-        output2 = self.run_query(file_name)
-        return output, output2
-
     def delete_assistant(self):
         try:
             self.client.beta.assistants.delete(self.assistant.id)

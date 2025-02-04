@@ -12,6 +12,8 @@ import pandas as pd
 import random
 import string
 
+from tablevault._timing_helper.timing_helper import BasicTimer, StepsTimer
+
 
 def _update_table_columns(
     to_change_columns: list,
@@ -37,11 +39,9 @@ def _update_table_columns(
 
 def _fetch_table_cache(
     external_dependencies: list,
-    db_metadata: MetadataStore,
     instance_id: str,
     table_name: str,
     db_dir: str,
-    start_time: float,
 ) -> prompt_parser.Cache:
     cache = {}
     cache["self"] = _file_operations.get_table(instance_id, table_name, db_dir)
@@ -69,6 +69,7 @@ def execute_table(
     instance_id: str = "",
     force: bool = False,
 ): 
+    #test_timer = BasicTimer()
     start_time = time.time()
     rand_str = "".join(random.choices(string.ascii_letters, k=5))
     perm_instance_id = "_" + str(int(start_time)) + "_" + rand_str
@@ -158,16 +159,16 @@ def execute_table(
     )
 
     to_change_columns = set(to_change_columns)
+    #test_timer.end_time('Finish Beginning Operation')
+    
     for i, pname in enumerate(top_pnames):
         prompt = prompt_parser.convert_reference(prompts[pname])
 
         cache = _fetch_table_cache(
             external_deps[pname],
-            db_metadata,
             instance_id,
             table_name,
             db_dir,
-            start_time,
         )
 
         if i == 0:
@@ -175,7 +176,7 @@ def execute_table(
                 prompt, cache, instance_id, table_name, db_dir
             )
             db_metadata.update_process_data(process_id, {"rows_updated": rows_updated})
-
+            #test_timer.end_time("Finish Generation")
             if not rows_updated and len(to_execute) == 0:
                 break
         else:
@@ -188,6 +189,7 @@ def execute_table(
                     execute_llm_from_prompt(
                         prompt, cache, instance_id, table_name, db_dir
                     )
+                #test_timer.end_time(f"Finish Prompt {pname}")
             else:
                 continue
         db_metadata.update_process_step(process_id, pname)
@@ -221,6 +223,7 @@ def execute_table(
 
         for lock in dep_locks:
             lock.release_shared_lock()
+    #test_timer.end_time(f"Finish Operation")
 
 
 def restart_execute_table(author: str, process_id: str, db_dir: str):
@@ -292,11 +295,9 @@ def restart_execute_table(author: str, process_id: str, db_dir: str):
         prompt = prompt_parser.convert_reference(prompts[pname])
         cache = _fetch_table_cache(
             external_deps[pname],
-            db_metadata,
             instance_id,
             table_name,
             db_dir,
-            start_time,
         )
         if i == 0:
             rows_updated = execute_gen_table_from_prompt(
