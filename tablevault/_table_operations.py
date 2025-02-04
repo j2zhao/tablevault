@@ -68,7 +68,7 @@ def execute_table(
     author: str,
     instance_id: str = "",
     force: bool = False,
-):
+): 
     start_time = time.time()
     rand_str = "".join(random.choices(string.ascii_letters, k=5))
     perm_instance_id = "_" + str(int(start_time)) + "_" + rand_str
@@ -195,7 +195,7 @@ def execute_table(
         print(pname)
     if not rows_updated and len(to_change_columns) == 0:
         db_metadata.update_process_step(process_id, "no_update")
-
+        
         db_metadata.write_to_log(process_id, success=False)
 
         instance_lock.release_exclusive_lock()
