@@ -21,9 +21,7 @@ def load_function_from_file(file_path: str, function_name: str) -> tuple[Callabl
         raise AttributeError(f"Function '{function_name}' not found in '{file_path}'")
 
 
-def get_function_from_module(
-    module_name: str, function_name: str
-) -> Callable:
+def get_function_from_module(module_name: str, function_name: str) -> Callable:
 
     # Import the module by its absolute name
     module = import_module(module_name)
