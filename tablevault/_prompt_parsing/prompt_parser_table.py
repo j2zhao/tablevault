@@ -1,12 +1,12 @@
-from typing import Any, Optional
+from typing import Any, Optional, Union
 import re
-from tablevault._prompt_parsing.prompt_types import (
+from tablevault._prompt_parsing.types import (
     PromptArg,
     Cache,
     TableReference,
     TableString,
 )
-
+from tablevault.errors import DVPromptError
 
 def parse_arg_from_dict(data: PromptArg) -> PromptArg:
     if isinstance(data, dict):
@@ -24,6 +24,7 @@ def parse_val_from_arg(prompt: PromptArg, index: Optional[int], cache: Cache) ->
         prompt_ = prompt.text
         for ref in prompt.references:
             ref_ = _read_table_reference(ref, index=index, cache=cache)
+            ref_ = str(ref_)
             prompt_ = prompt_.replace("<<>>", ref_, 1)
     elif isinstance(prompt, TableReference):
         prompt_ = _read_table_reference(prompt, index=index, cache=cache)
@@ -68,7 +69,7 @@ def _parse_table_reference(s: str) -> TableReference:
     main_pattern = r"^([A-Za-z0-9_]+)(\([A-Za-z0-9_]*\))?\.([A-Za-z0-9_]+)(\[(.*)\])?$"
     m = re.match(main_pattern, s)
     if not m:
-        raise ValueError(f"Invalid TableReference string: {s}")
+        raise DVPromptError(f"Invalid TableReference string: {s}")
 
     main_table = m.group(1)
     main_instance = m.group(2)
@@ -87,7 +88,7 @@ def _parse_table_reference(s: str) -> TableReference:
         pair = pair.strip()
         kv_split = pair.split(":", 1)
         if len(kv_split) != 2:
-            raise ValueError(f"Invalid key-value pair: {pair}")
+            raise DVPromptError(f"Invalid key-value pair: {pair}")
         key_col = kv_split[0].strip()
         val_str = kv_split[1].strip()
         # Parse the value
@@ -129,7 +130,7 @@ def _split_top_level_list(s: str) -> list[str]:
 
 def _read_table_reference(
     ref: TableReference, index: Optional[int], cache: Cache
-) -> str:
+) -> Union[list, str]:
     if ref.instance_id is not None:
         df = cache[(ref.table, ref.instance_id)]
     else:
@@ -144,4 +145,5 @@ def _read_table_reference(
     query_str = " & ".join([f"{k} == {repr(v)}" for k, v in conditions.items()])
     rows = df.query(query_str)
     result = rows[ref.column].to_list()
-    return result[0]
+
+    return result

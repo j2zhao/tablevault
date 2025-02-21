@@ -3,7 +3,7 @@ from typing import Any, Callable
 from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import re
-from tablevault import _file_operations
+from tablevault._utils import file_operations
 from tablevault._prompt_parsing import prompt_parser
 from importlib import import_module
 
@@ -135,7 +135,7 @@ def execute_code_from_prompt(
         results = _execute_single_code_from_prompt(prompt, funct, cache)
         for col, values in prompt["parsed_changed_columns"]:
             df[col] = results[col]
-    _file_operations.write_table(df, instance_id, table_name, db_dir)
+    file_operations.write_table(df, instance_id, table_name, db_dir)
 
 
 def execute_gen_table_from_prompt(
@@ -169,7 +169,7 @@ def execute_gen_table_from_prompt(
     if not df[prompt["parsed_changed_columns"]].equals(
         cache["self"][prompt["parsed_changed_columns"]]
     ):
-        _file_operations.write_table(df, instance_id, table_name, db_dir)
+        file_operations.write_table(df, instance_id, table_name, db_dir)
         return True
     else:
         return False

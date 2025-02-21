@@ -1,13 +1,13 @@
 import time
-from tablevault._metadata_store import MetadataStore
-from tablevault import _file_operations
+from tablevault._utils.metadata_store import MetadataStore
+from tablevault._utils import file_operations
 from tablevault._prompt_parsing import prompt_parser
 from tablevault._prompt_execution.parse_code import (
     execute_code_from_prompt,
     execute_gen_table_from_prompt,
 )
 from tablevault._prompt_execution.parse_llm import execute_llm_from_prompt
-from tablevault._database_lock import DatabaseLock
+from tablevault.deprecated._database_lock import DatabaseLock
 import pandas as pd
 import random
 import string
@@ -22,7 +22,7 @@ def _update_table_columns(
     table_name: str,
     db_dir: str,
 ) -> None:
-    df = _file_operations.get_table(instance_id, table_name, db_dir)
+    df = file_operations.get_table(instance_id, table_name, db_dir)
     columns = list(dict.fromkeys(df.columns).keys()) + [
         col for col in all_columns if col not in df.columns
     ]
@@ -34,7 +34,7 @@ def _update_table_columns(
         elif col in to_change_columns or col not in df.columns:
             df[col] = pd.NA
         df[col] = df[col].astype("string")
-    _file_operations.write_table(df, instance_id, table_name, db_dir)
+    file_operations.write_table(df, instance_id, table_name, db_dir)
 
 
 def _fetch_table_cache(
@@ -44,22 +44,20 @@ def _fetch_table_cache(
     db_dir: str,
 ) -> prompt_parser.Cache:
     cache = {}
-    cache["self"] = _file_operations.get_table(instance_id, table_name, db_dir)
+    cache["self"] = file_operations.get_table(instance_id, table_name, db_dir)
 
     for dep in external_dependencies:
         table, _, instance, _, latest = dep
         if latest:
-            cache[table] = _file_operations.get_table(instance, table, db_dir)
+            cache[table] = file_operations.get_table(instance, table, db_dir)
         else:
-            cache[(table, instance)] = _file_operations.get_table(
+            cache[(table, instance)] = file_operations.get_table(
                 instance, table, db_dir
             )
     return cache
 
 
-def setup_database(db_dir: str, replace: bool = False):
-    _file_operations.setup_database_folder(db_dir, replace)
-    DatabaseLock(db_dir)
+
 
 
 def execute_table(
@@ -86,9 +84,9 @@ def execute_table(
 
     perm_instance_lock.acquire_exclusive_lock()
 
-    prompts = _file_operations.get_prompts(instance_id, table_name, db_dir)
+    prompts = file_operations.get_prompts(instance_id, table_name, db_dir)
 
-    instance_exists = _file_operations.check_temp_instance_existance(
+    instance_exists = file_operations.check_temp_instance_existance(
         instance_id, table_name, db_dir
     )
     if not instance_exists:
@@ -147,7 +145,6 @@ def execute_table(
         "all_columns": all_columns,
         "internal_prompt_deps": internal_prompt_deps,
         "external_deps": external_deps,
-        "gen_columns": prompts[top_pnames[0]]["parsed_changed_columns"],
     }
     print("PARSED DEPENDENCIES AND TO EXECUTE PROMPTS")
     process_id = db_metadata.start_new_process(
@@ -209,7 +206,7 @@ def execute_table(
         print("NO UPDATES: NOTHING HAPPENS.")
     else:
 
-        _file_operations.materialize_table_folder(
+        file_operations.materialize_table_folder(
             perm_instance_id, instance_id, table_name, db_dir
         )
 
@@ -250,7 +247,7 @@ def restart_execute_table(author: str, process_id: str, db_dir: str):
     instance_lock.acquire_exclusive_lock()
     if "stop_execute" in process.complete_steps:
         print("stop_execution")
-        _file_operations.clear_table_instance(instance_id, table_name, db_dir)
+        file_operations.clear_table_instance(instance_id, table_name, db_dir)
         db_metadata.write_to_log(process_id, success=False)
         instance_lock.release_exclusive_lock()
         return
@@ -268,7 +265,7 @@ def restart_execute_table(author: str, process_id: str, db_dir: str):
         instance_lock.release_exclusive_lock(delete=True)
         perm_instance_lock.release_exclusive_lock()
         return
-    prompts = _file_operations.get_prompts(instance_id, table_name, db_dir)
+    prompts = file_operations.get_prompts(instance_id, table_name, db_dir)
     _, prompts = prompt_parser.parse_prompts_modified(prompts)
     dep_locks = []
     for pname in external_deps:
@@ -326,7 +323,7 @@ def restart_execute_table(author: str, process_id: str, db_dir: str):
         perm_instance_lock.release_exclusive_lock(delete=True)
         instance_lock.release_exclusive_lock()
     else:
-        _file_operations.materialize_table_folder(
+        file_operations.materialize_table_folder(
             perm_instance_id, instance_id, table_name, db_dir
         )
         db_metadata.update_process_step(process_id, "materalized")
@@ -347,7 +344,7 @@ def delete_table(table_name: str, db_dir: str, author: str):
     lock.acquire_exclusive_lock()
     operation = "delete_table"
     process_id = db_metadata.start_new_process(author, operation, table_name)
-    _file_operations.delete_table_folder(table_name, db_dir)
+    file_operations.delete_table_folder(table_name, db_dir)
     db_metadata.write_to_log(process_id)
     lock.release_exclusive_lock(delete=True)
 
@@ -364,7 +361,7 @@ def restart_delete_table(author: str, process_id: str, db_dir: str):
         raise e
     lock = DatabaseLock(db_dir, table_name, restart=True)
     lock.acquire_exclusive_lock()
-    _file_operations.delete_table_folder(table_name, db_dir)
+    file_operations.delete_table_folder(table_name, db_dir)
     db_metadata.write_to_log(process_id)
     lock.release_exclusive_lock(delete=True)
 
@@ -377,7 +374,7 @@ def delete_table_instance(instance_id: str, table_name: str, db_dir: str, author
     process_id = db_metadata.start_new_process(
         author, operation, table_name, instance_id
     )
-    _file_operations.delete_table_folder(table_name, db_dir, instance_id)
+    file_operations.delete_table_folder(table_name, db_dir, instance_id)
     db_metadata.write_to_log(process_id)
     lock.release_exclusive_lock(delete=True)
 
@@ -395,7 +392,7 @@ def restart_delete_table_instance(author: str, process_id: str, db_dir: str):
         raise e
     lock = DatabaseLock(db_dir, table_name, instance_id, restart=True)
     lock.acquire_exclusive_lock()
-    _file_operations.delete_table_folder(table_name, db_dir, instance_id)
+    file_operations.delete_table_folder(table_name, db_dir, instance_id)
     db_metadata.write_to_log(process_id)
     lock.release_exclusive_lock(delete=True)
 
@@ -405,12 +402,18 @@ def setup_table_instance(
     table_name: str,
     db_dir: str,
     author: str,
-    origin_id: str = "",
+    origin_id: str = "", # should also have origin version
     prompts: list[str] = [],
-    gen_prompt: str = "",
-):
-    if len(prompts) != 0 and gen_prompt not in prompts:
-        raise ValueError("Need to Define gen_prompt")
+):  
+    gen_prompt = False 
+    if len(prompts) != 0:
+        for prompt in prompts:
+            if prompt.startswith(f'gen_{table_name}') and not gen_prompt:
+                gen_prompt = True
+            elif prompt.startswith(f'gen_{table_name}') and gen_prompt:
+                raise ValueError(f'Can only have one prompt that starts with: gen_{table_name}')
+        if gen_prompt == False:
+            raise ValueError(f'Needs one generator prompt that starts with gen_{table_name}')
     db_metadata = MetadataStore(db_dir)
     table_lock = DatabaseLock(db_dir, table_name)
     table_lock.acquire_shared_lock()
@@ -432,7 +435,7 @@ def setup_table_instance(
     lock.acquire_shared_lock()
     table_lock.release_shared_lock()
     lock.acquire_exclusive_lock()
-    data = {"gen_prompt": gen_prompt, "prompts": prompts, "origin_id": origin_id}
+    data = {"prompts": prompts, "origin_id": origin_id}
     process_id = db_metadata.start_new_process(
         author,
         "setup_table_instance",
@@ -441,8 +444,8 @@ def setup_table_instance(
         data=data,
         start_time=start_time,
     )
-    _file_operations.setup_table_instance_folder(
-        instance_id, table_name, db_dir, origin_id, prompts, gen_prompt
+    file_operations.setup_table_instance_folder(
+        instance_id, table_name, db_dir, origin_id, prompts
     )
     db_metadata.write_to_log(process_id)
     lock.release_exclusive_lock()
@@ -454,7 +457,6 @@ def restart_setup_table_instance(author: str, process_id: str, db_dir: str):
     try:
         table_name = process.table_name
         instance_id = process.instance_id
-        gen_prompt = process.data["gen_prompt"]
         prompts = process.data["prompts"]
         origin = process.data["origin"]
     except Exception as e:
@@ -464,21 +466,23 @@ def restart_setup_table_instance(author: str, process_id: str, db_dir: str):
         print(e)
     lock = DatabaseLock(db_dir, table_name, instance_id, restart=True)
     lock.acquire_exclusive_lock()
-    _file_operations.setup_table_instance_folder(
-        instance_id, table_name, db_dir, origin, prompts, gen_prompt
+    file_operations.setup_table_instance_folder(
+        instance_id, table_name, db_dir, origin, prompts
     )
     db_metadata.write_to_log(process_id)
     lock.release_exclusive_lock()
 
 
-def setup_table(table_name: str, db_dir: str, author: str, allow_multiple: bool = True):
+def setup_table(table_name: str, db_dir: str, author: str, 
+                allow_multiple: bool = True, prompt_dir:str=''):
     db_metadata = MetadataStore(db_dir)
     lock = DatabaseLock(db_dir, table_name)
     lock.acquire_exclusive_lock()
     process_id = db_metadata.start_new_process(
-        author, "setup_table", table_name, data={"allow_multiple": allow_multiple}
+        author, "setup_table", table_name, data={"allow_multiple": allow_multiple, 
+                                                 "prompt_dir": prompt_dir}
     )
-    _file_operations.setup_table_folder(table_name, db_dir)
+    file_operations.setup_table_folder(table_name, db_dir, prompt_dir)
     db_metadata.write_to_log(process_id)
     # write to metadata about multiple
     lock.release_exclusive_lock()
@@ -490,6 +494,7 @@ def restart_setup_table(author: str, process_id: str, db_dir: str):
     try:
         table_name = process.table_name
         process.data["allow_multiple"]
+        prompt_dir = process.data["prompt_dir"]
     except Exception as e:
         print(process)
         db_metadata.write_to_log(process_id, success=False)
@@ -498,7 +503,7 @@ def restart_setup_table(author: str, process_id: str, db_dir: str):
     lock = DatabaseLock(db_dir, table_name, restart=True)
     lock.acquire_exclusive_lock()
 
-    _file_operations.setup_table_folder(table_name, db_dir)
+    file_operations.setup_table_folder(table_name, db_dir, prompt_dir)
     db_metadata.write_to_log(process_id)
     lock.release_exclusive_lock()
 

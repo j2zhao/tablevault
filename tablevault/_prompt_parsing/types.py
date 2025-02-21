@@ -20,3 +20,8 @@ class TableString:
 Prompt = dict[Any, Any]
 PromptArg = Any
 Cache = dict[Union[str, tuple[str, str]], pd.DataFrame]
+
+
+InternalDeps = dict[str, list[str]]
+ExternalDeps = dict[str, list[tuple[str, str, str, float, bool]]]
+PromptDeps = dict[str, list[str]]

@@ -8,12 +8,12 @@ from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 import re
 
-from tablevault import _file_operations
+from tablevault._utils import file_operations
 from tablevault._llm_functions.open_ai_thread import Open_AI_Thread, add_open_ai_secret
 from tablevault._prompt_parsing import prompt_parser
 from tablevault._prompt_execution import llm_prompts
 #from tablevault._timing_helper.timing_helper import StepsTimer
-
+from tablevault.errors import DVPromptError
 #timer = StepsTimer()
 
 def _execute_llm(
@@ -102,7 +102,7 @@ def _execute_llm(
         msg = msg.replace("ENTITY_NAME", prompt["entity_name"])
         thread.add_message(message=msg)
         #timer.stop_step("AddArgs", it)
-        it = timer.start_step("RunQuery")
+        #it = timer.start_step("RunQuery")
         result = thread.run_query()
         #timer.stop_step("RunQuery", it)
         results.append(result)
@@ -139,14 +139,14 @@ def _execute_llm(
         #timer.stop_step("RunQuery", it)
         results.append(result)
     else:
-        raise ValueError("Output type not supported")
+        raise DVPromptError("Output type not supported")
     with lock:
         #it = timer.start_step("WriteTable")
         for i, column in enumerate(prompt["parsed_changed_columns"]):
             df.at[index, column] = results[i]
         #timer.stop_step("WriteTable", it)
         #it = timer.start_step("WriteTable2")
-        _file_operations.write_table(df, instance_id, table_name, db_dir)
+        file_operations.write_table(df, instance_id, table_name, db_dir)
         #timer.stop_step("WriteTable2", it)
 
 

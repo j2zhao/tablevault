@@ -5,8 +5,8 @@ import json
 from typing import Optional
 import yaml
 import filecmp
-from tablevault._prompt_parsing.prompt_types import Prompt
-
+from tablevault._prompt_parsing.types import Prompt
+from tablevault.errors import *
 
 def setup_database_folder(db_dir: str, replace: bool = False) -> None:
     if not replace and os.path.exists(db_dir):
@@ -21,10 +21,12 @@ def setup_database_folder(db_dir: str, replace: bool = False) -> None:
     meta_dir = os.path.join(db_dir, "metadata")
     os.makedirs(meta_dir)
 
-    with open(os.path.join(meta_dir, "log.txt"), "w") as file:
+    with open(os.path.join(meta_dir, "logs.txt"), "w") as file:
+        pass
+    with open(os.path.join(meta_dir, "completed_logs.txt"), "w") as file:
         pass
 
-    with open(os.path.join(meta_dir, "active_log.json"), "w") as file:
+    with open(os.path.join(meta_dir, "active_logs.json"), "w") as file:
         json.dump({}, file)
 
     with open(os.path.join(meta_dir, "columns_history.json"), "w") as file:
@@ -37,24 +39,22 @@ def setup_database_folder(db_dir: str, replace: bool = False) -> None:
         json.dump({}, file)
 
 
-def clear_table_instance(instance_id: str, table_name: str, db_dir: str) -> None:
-    if not instance_id.startswith("TEMP"):
-        raise ValueError('Temp folder name has to start with "TEMP"')
-    table_dir = os.path.join(db_dir, table_name)
-    temp_dir = os.path.join(table_dir, instance_id)
-    prompt_dir = os.path.join(temp_dir, "prompts")
-    metadata_path = os.path.join(prompt_dir, "description.yaml")
-    with open(metadata_path, "r") as file:
-        metadata = yaml.safe_load(file)
-    if "origin" in metadata:
-        prev_dir = os.path.join(table_dir, metadata["origin"])
-        prev_table_path = os.path.join(prev_dir, "table.csv")
-        current_table_path = os.path.join(temp_dir, "table.csv")
-        shutil.copy2(prev_table_path, current_table_path)
-    else:
-        df = pd.DataFrame()
-        current_table_path = os.path.join(temp_dir, "table.csv")
-        df.to_csv(current_table_path, index=False)
+# def clear_table_instance(instance_id: str, table_name: str, db_dir: str) -> None:
+#     table_dir = os.path.join(db_dir, table_name)
+#     temp_dir = os.path.join(table_dir, instance_id)
+#     prompt_dir = os.path.join(temp_dir, "prompts")
+#     metadata_path = os.path.join(prompt_dir, "description.yaml")
+#     with open(metadata_path, "r") as file:
+#         metadata = yaml.safe_load(file)
+#     if "origin" in metadata:
+#         prev_dir = os.path.join(table_dir, metadata["origin"])
+#         prev_table_path = os.path.join(prev_dir, "table.csv")
+#         current_table_path = os.path.join(temp_dir, "table.csv")
+#         shutil.copy2(prev_table_path, current_table_path)
+#     else:
+#         df = pd.DataFrame()
+#         current_table_path = os.path.join(temp_dir, "table.csv")
+#         df.to_csv(current_table_path, index=False)
 
 
 def setup_table_instance_folder(
@@ -63,10 +63,7 @@ def setup_table_instance_folder(
     db_dir: str,
     origin: str = "",
     prompts: list[str] = [],
-    gen_prompt: str = "",
 ) -> None:
-    if not instance_id.startswith("TEMP"):
-        raise ValueError('Temp folder name has to start with "TEMP"')
     table_dir = os.path.join(db_dir, table_name)
     temp_dir = os.path.join(table_dir, instance_id)
     if os.path.exists(temp_dir):
@@ -81,8 +78,8 @@ def setup_table_instance_folder(
         prev_dir = os.path.join(table_dir, str(origin))
         prev_prompt_dir = os.path.join(prev_dir, "prompts")
         shutil.copytree(prev_prompt_dir, prompt_dir, copy_function=shutil.copy2)
-        prev_table_path = os.path.join(prev_dir, "table.csv")
-        shutil.copy2(prev_table_path, current_table_path)
+        # prev_table_path = os.path.join(prev_dir, "table.csv")
+        # shutil.copy2(prev_table_path, current_table_path)
         with open(metadata_path, "r") as file:
             metadata = yaml.safe_load(file)
         if "copied_prompts" in metadata:
@@ -100,29 +97,25 @@ def setup_table_instance_folder(
             prompt_path_ = os.path.join(prompt_dir_, prompt + ".yaml")
             prompt_path = os.path.join(prompt_dir, prompt + ".yaml")
             shutil.copy2(prompt_path_, prompt_path)
-        metadata = {"table_generator": gen_prompt}
         metadata["copied_prompts"] = prompts
         with open(metadata_path, "w") as file:
             yaml.safe_dump(metadata, file)
     else:
         os.makedirs(prompt_dir)
-        df = pd.DataFrame()
-        df.to_csv(current_table_path, index=False)
         with open(metadata_path, "w") as file:
             pass
-
+    df = pd.DataFrame()
+    df.to_csv(current_table_path, index=False)
 
 def setup_table_folder(table_name: str, db_dir: str) -> None:
-    if table_name == "DATABASE" or table_name == "TABLE" or table_name == "RESTART":
-        raise ValueError(f"Special Name Taken: {table_name}.")
     table_dir = os.path.join(db_dir, table_name)
     if os.path.isdir(table_dir):
         shutil.rmtree(table_dir)
     if os.path.isfile(table_dir):
         os.remove(table_dir)
     os.makedirs(table_dir)
-    prompt_dir = os.path.join(table_dir, "prompts")
-    os.makedirs(prompt_dir)
+    prompt_dir_ = os.path.join(table_dir, "prompts")
+    os.makedirs(prompt_dir_)
 
 
 def materialize_table_folder(
@@ -131,7 +124,7 @@ def materialize_table_folder(
     table_dir = os.path.join(db_dir, table_name)
     temp_dir = os.path.join(table_dir, temp_instance_id)
     if not os.path.exists(temp_dir):
-        raise ValueError("No Table In Progress")
+        raise DVFileError("No Table In Progress")
     new_dir = os.path.join(table_dir, instance_id)
     if os.path.exists(new_dir):
         print("Table already materialized")
@@ -161,7 +154,7 @@ def get_table(
         return pd.DataFrame()
 
 
-def get_prompts(instance_id: str, table_name: str, db_dir: str) -> list[Prompt]:
+def get_prompts(instance_id: str, table_name: str, db_dir: str, get_metadata: bool = False) -> dict[str, Prompt]:
     table_dir = os.path.join(db_dir, table_name)
     instance_dir = os.path.join(table_dir, instance_id)
     prompt_dir = os.path.join(instance_dir, "prompts")
@@ -174,6 +167,8 @@ def get_prompts(instance_id: str, table_name: str, db_dir: str) -> list[Prompt]:
                 prompt = yaml.safe_load(file)
                 prompt["name"] = name
             prompts[name] = prompt
+    if not get_metadata:
+        del prompts["description"]
     return prompts
 
 
@@ -189,7 +184,10 @@ def write_table(
 
 
 def get_prompt_names(instance_id: str, table_name: str, db_dir: str) -> list[str]:
-    prompt_dir = os.path.join(db_dir, table_name, instance_id, "prompts")
+    if instance_id != '':
+        prompt_dir = os.path.join(db_dir, table_name, instance_id, "prompts")
+    else:
+        prompt_dir = os.path.join(db_dir, table_name, "prompts")
     prompt_names = []
     for file in os.listdir(prompt_dir):
         if file.endswith(".yaml") and file != "description.yaml":
@@ -207,6 +205,42 @@ def check_prompt_equality(
     return filecmp.cmp(prompt_dir_1, prompt_dir_2, shallow=False)
 
 
-def check_temp_instance_existance(instance_id: str, table_name: str, db_dir: str):
+def check_temp_instance_existance(instance_id: str, table_name: str, db_dir: str
+                                  ) -> str:
     instance_dir = os.path.join(db_dir, table_name, instance_id)
     return os.path.exists(instance_dir)
+
+def move_prompts(org_dir:str, table_name:str, db_dir:str) -> None:
+    # move old prompts to subfolder until done?
+    try:
+        table_dir = os.path.join(db_dir, table_name)
+        prompt_dir = os.path.join(table_dir, 'prompts')
+        if org_dir.endswith('.yaml'):
+            shutil.copy2(org_dir, prompt_dir)
+        else:
+            for f in os.listdir(org_dir):
+                if f.endswith('.yaml'):
+                    p_path = os.path.join(org_dir, f)
+                    shutil.copy2(p_path, prompt_dir)
+    except Exception as e:
+        raise DVFileError(f'Error copying from {prompt_dir}: {e}')
+
+def move_code(org_dir:str, db_dir:str) -> None:
+    try:
+        # move old prompts to subfolder until done?
+        code_dir = os.path.join(db_dir, 'code_functions')
+        if org_dir.endswith('.py'):
+            shutil.copy2(org_dir, code_dir)
+        else:
+            for f in os.listdir(org_dir):
+                if f.endswith('.py'):
+                    c_path = os.path.join(org_dir, f)
+                    shutil.copy2(c_path, code_dir)
+    except Exception as e:
+        raise DVFileError(f'Error copying from {org_dir}: {e}')
+
+def copy_table(temp_id:str, prev_instance_id:str,table_name:str, db_dir:str):
+    table_dir = os.path.join(db_dir, table_name)
+    prev_table_path = os.path.join(table_dir, prev_instance_id, "table.csv")
+    current_table_path = os.path.join(table_dir, temp_id, "table.csv")
+    shutil.copy2(prev_table_path, current_table_path)

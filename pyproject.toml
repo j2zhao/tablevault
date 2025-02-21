@@ -24,8 +24,8 @@ dependencies = [
     "click"
 ]
 
-[project.scripts]
-tablevault = "tablevault.cli:main"
+# [project.scripts]
+# tablevault = "tablevault.cli:main"
 
 [project.optional-dependencies] # TODO: actually use to format check and also convert tests to pytest
 dev = [

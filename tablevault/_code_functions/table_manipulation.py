@@ -16,6 +16,5 @@ def generate_categories():
 #     archive_dir = os.path.join(archive, time)
 #     if not os.path.isdir(archive_dir):
 #         raise FileExistsError('There is not a previous save at {time}')
-
 #     archive_path = os.path.join(archive, 'table.csv')
 #     shutil.copy2(archive_path, table_path)

@@ -5,7 +5,7 @@ Currently doesn't work with
 import subprocess
 import shutil
 import os
-from tablevault._database_lock import DatabaseLock
+from tablevault.deprecated._database_lock import DatabaseLock
 from tests._outdated_tests.test_basic import create_db
 
 

@@ -1,7 +1,7 @@
 import click
 
-from tablevault import _table_operations
-from tablevault._metadata_store import MetadataStore
+from tablevault.deprecated import _table_operations_DEPRECATED
+from tablevault._utils.metadata_store import MetadataStore
 
 
 @click.group()
@@ -64,7 +64,7 @@ def list_instances(database, table, version):
     Print table instances.
     """
     db_metadata = MetadataStore(database)
-    db_metadata.get_active_processes(table, version)
+    db_metadata.get_table_instances(table, version)
 
 
 # -----------------------------------------------------------------------------
@@ -79,7 +79,7 @@ def database(database, replace):
     """
     Setup a new database (or replace it).
     """
-    _table_operations.setup_database(database, replace)
+    _table_operations_DEPRECATED.setup_database(database, replace)
 
 
 # -----------------------------------------------------------------------------
@@ -96,11 +96,12 @@ def database(database, replace):
     default=False,
     help="Allow multiple table instance versions.",
 )
-def setup_table(database, author, table, multiple):
+@click.option("-pd", "--prompt-dir", default="", help="Directory of relevant prompts")
+def setup_table(database, author, table, multiple, prompt_dir):
     """
     Setup a new table in the database.
     """
-    _table_operations.setup_table(table, database, author, multiple)
+    _table_operations_DEPRECATED.setup_table(table, database, author, multiple, prompt_dir)
 
 
 # -----------------------------------------------------------------------------
@@ -115,13 +116,12 @@ def setup_table(database, author, table, multiple):
 @click.option(
     "-p", "--prompts", multiple=True, default=[], help="Prompts for this instance."
 )
-@click.option("-gp", "--gen-prompt", default="", help="Table Generating Prompt.")
-def setup_temp(database, author, table, version, prev_id, prompts, gen_prompt):
+def setup_temp(database, author, table, version, prev_id, prompts):
     """
     Setup a new instance in a table.
     """
-    _table_operations.setup_table_instance(
-        version, table, database, author, prev_id, list(prompts), gen_prompt
+    _table_operations_DEPRECATED.setup_table_instance(
+        version, table, database, author, prev_id, list(prompts)
     )
 
 
@@ -136,7 +136,7 @@ def delete_table(database, author, table):
     """
     Delete a table from the database.
     """
-    _table_operations.delete_table(table, database, author)
+    _table_operations_DEPRECATED.delete_table(table, database, author)
 
 
 # -----------------------------------------------------------------------------
@@ -151,7 +151,7 @@ def delete_instance(database, author, table, instance_id):
     """
     Delete a table instance from the database.
     """
-    _table_operations.delete_table_instance(instance_id, table, database, author)
+    _table_operations_DEPRECATED.delete_table_instance(instance_id, table, database, author)
 
 
 # -----------------------------------------------------------------------------
@@ -167,7 +167,7 @@ def execute(database, author, table, version, force):
     """
     Execute table processes in the database.
     """
-    _table_operations.execute_table(table, database, author, version, force)
+    _table_operations_DEPRECATED.execute_table(table, database, author, version, force)
 
 
 # -----------------------------------------------------------------------------
@@ -183,7 +183,7 @@ def restart(database, author, excluded):
     """
     Restart the database processes, optionally excluding some.
     """
-    _table_operations.restart_database(
+    _table_operations_DEPRECATED.restart_database(
         author, database, excluded_processes=list(excluded)
     )
 
