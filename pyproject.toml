@@ -24,6 +24,7 @@ dependencies = [
     "click"
 ]
 
+
 # [project.scripts]
 # tablevault = "tablevault.cli:main"
 
@@ -32,6 +33,10 @@ dev = [
     "black",
     "flake8"
 ]
+docs = [
+    "sphinx>=5.0",
+    "sphinx-rtd-theme"
+]
 
 [tool.flake8]
 max-line-length = 88
@@ -39,8 +44,4 @@ extend-ignore = ["E203", "W503"]
 exclude =[
     ".ipynb_checkpoints",
     "*/.ipynb_checkpoints/*"]
-# [tool.mypy]
-# python_version = "3.13"
-# warn_unused_configs = true
-# ignore_missing_imports = true
-# files = "tablevault"
+

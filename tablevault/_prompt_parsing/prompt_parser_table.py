@@ -6,7 +6,8 @@ from tablevault._prompt_parsing.types import (
     TableReference,
     TableString,
 )
-from tablevault.errors import DVPromptError
+from tablevault._utils.errors import TVPromptError
+
 
 def parse_arg_from_dict(data: PromptArg) -> PromptArg:
     if isinstance(data, dict):
@@ -69,7 +70,7 @@ def _parse_table_reference(s: str) -> TableReference:
     main_pattern = r"^([A-Za-z0-9_]+)(\([A-Za-z0-9_]*\))?\.([A-Za-z0-9_]+)(\[(.*)\])?$"
     m = re.match(main_pattern, s)
     if not m:
-        raise DVPromptError(f"Invalid TableReference string: {s}")
+        raise TVPromptError(f"Invalid TableReference string: {s}")
 
     main_table = m.group(1)
     main_instance = m.group(2)
@@ -88,7 +89,7 @@ def _parse_table_reference(s: str) -> TableReference:
         pair = pair.strip()
         kv_split = pair.split(":", 1)
         if len(kv_split) != 2:
-            raise DVPromptError(f"Invalid key-value pair: {pair}")
+            raise TVPromptError(f"Invalid key-value pair: {pair}")
         key_col = kv_split[0].strip()
         val_str = kv_split[1].strip()
         # Parse the value

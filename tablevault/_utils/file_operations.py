@@ -2,15 +2,19 @@ import os
 import shutil
 import pandas as pd
 import json
-from typing import Optional
 import yaml
 import filecmp
 from tablevault._prompt_parsing.types import Prompt
-from tablevault.errors import *
+from tablevault._utils.errors import TVFileError
+
+
+def delete_database_folder(db_dir) -> None:
+    shutil.rmtree(db_dir)
+
 
 def setup_database_folder(db_dir: str, replace: bool = False) -> None:
     if not replace and os.path.exists(db_dir):
-        raise FileExistsError("path already taken")
+        raise TVFileError(f"database path {db_dir} already taken")
     elif replace and os.path.isdir(db_dir):
         shutil.rmtree(db_dir)
     elif replace and os.path.isfile(db_dir):
@@ -18,6 +22,7 @@ def setup_database_folder(db_dir: str, replace: bool = False) -> None:
 
     os.makedirs(db_dir)
     os.makedirs(os.path.join(db_dir, "code_functions"))
+    os.makedirs(os.path.join(db_dir, "_temp"))
     meta_dir = os.path.join(db_dir, "metadata")
     os.makedirs(meta_dir)
 
@@ -37,24 +42,6 @@ def setup_database_folder(db_dir: str, replace: bool = False) -> None:
 
     with open(os.path.join(meta_dir, "tables_multiple.json"), "w") as file:
         json.dump({}, file)
-
-
-# def clear_table_instance(instance_id: str, table_name: str, db_dir: str) -> None:
-#     table_dir = os.path.join(db_dir, table_name)
-#     temp_dir = os.path.join(table_dir, instance_id)
-#     prompt_dir = os.path.join(temp_dir, "prompts")
-#     metadata_path = os.path.join(prompt_dir, "description.yaml")
-#     with open(metadata_path, "r") as file:
-#         metadata = yaml.safe_load(file)
-#     if "origin" in metadata:
-#         prev_dir = os.path.join(table_dir, metadata["origin"])
-#         prev_table_path = os.path.join(prev_dir, "table.csv")
-#         current_table_path = os.path.join(temp_dir, "table.csv")
-#         shutil.copy2(prev_table_path, current_table_path)
-#     else:
-#         df = pd.DataFrame()
-#         current_table_path = os.path.join(temp_dir, "table.csv")
-#         df.to_csv(current_table_path, index=False)
 
 
 def setup_table_instance_folder(
@@ -78,8 +65,6 @@ def setup_table_instance_folder(
         prev_dir = os.path.join(table_dir, str(origin))
         prev_prompt_dir = os.path.join(prev_dir, "prompts")
         shutil.copytree(prev_prompt_dir, prompt_dir, copy_function=shutil.copy2)
-        # prev_table_path = os.path.join(prev_dir, "table.csv")
-        # shutil.copy2(prev_table_path, current_table_path)
         with open(metadata_path, "r") as file:
             metadata = yaml.safe_load(file)
         if "copied_prompts" in metadata:
@@ -107,6 +92,7 @@ def setup_table_instance_folder(
     df = pd.DataFrame()
     df.to_csv(current_table_path, index=False)
 
+
 def setup_table_folder(table_name: str, db_dir: str) -> None:
     table_dir = os.path.join(db_dir, table_name)
     if os.path.isdir(table_dir):
@@ -124,7 +110,7 @@ def materialize_table_folder(
     table_dir = os.path.join(db_dir, table_name)
     temp_dir = os.path.join(table_dir, temp_instance_id)
     if not os.path.exists(temp_dir):
-        raise DVFileError("No Table In Progress")
+        raise TVFileError("No Table In Progress")
     new_dir = os.path.join(table_dir, instance_id)
     if os.path.exists(new_dir):
         print("Table already materialized")
@@ -140,24 +126,13 @@ def delete_table_folder(table_name: str, db_dir: str, instance_id: str = "") -> 
         shutil.rmtree(table_dir)
 
 
-# get table
-def get_table(
-    instance_id: str, table_name: str, db_dir: str, rows: Optional[int] = None
-) -> pd.DataFrame:
+def get_prompts(
+    instance_id: str, table_name: str, db_dir: str, get_metadata: bool = False
+) -> dict[str, Prompt]:
     table_dir = os.path.join(db_dir, table_name)
-    table_dir = os.path.join(table_dir, instance_id)
-    table_dir = os.path.join(table_dir, "table.csv")
-    try:
-        df = pd.read_csv(table_dir, nrows=rows, dtype=str)
-        return df
-    except pd.errors.EmptyDataError:
-        return pd.DataFrame()
-
-
-def get_prompts(instance_id: str, table_name: str, db_dir: str, get_metadata: bool = False) -> dict[str, Prompt]:
-    table_dir = os.path.join(db_dir, table_name)
-    instance_dir = os.path.join(table_dir, instance_id)
-    prompt_dir = os.path.join(instance_dir, "prompts")
+    if instance_id != "":
+        table_dir = os.path.join(table_dir, instance_id)
+    prompt_dir = os.path.join(table_dir, "prompts")
     prompts = {}
     for item in os.listdir(prompt_dir):
         if item.endswith(".yaml"):
@@ -168,23 +143,22 @@ def get_prompts(instance_id: str, table_name: str, db_dir: str, get_metadata: bo
                 prompt["name"] = name
             prompts[name] = prompt
     if not get_metadata:
-        del prompts["description"]
+        if "description" in prompts:
+            del prompts["description"]
     return prompts
 
 
-def write_table(
-    df: pd.DataFrame, instance_id: str, table_name: str, db_dir: str
-) -> None:
-    if "pos_index" in df.columns:
-        df.drop(columns="pos_index", inplace=True)
-    table_dir = os.path.join(db_dir, table_name)
-    table_dir = os.path.join(table_dir, instance_id)
-    table_dir = os.path.join(table_dir, "table.csv")
-    df = df.to_csv(table_dir, index=False)
+def get_db_prompts(db_dir: str, get_metadata: bool = False) -> dict[str, Prompt]:
+    prompts = {}
+    for table_name in os.listdir(db_dir):
+        prompt_dir = os.path.join(db_dir, table_name, "prompts")
+        if os.path.exists(prompt_dir):
+            prompts[table_name] = get_prompts("", table_name, db_dir, get_metadata)
+    return prompts
 
 
 def get_prompt_names(instance_id: str, table_name: str, db_dir: str) -> list[str]:
-    if instance_id != '':
+    if instance_id != "":
         prompt_dir = os.path.join(db_dir, table_name, instance_id, "prompts")
     else:
         prompt_dir = os.path.join(db_dir, table_name, "prompts")
@@ -205,42 +179,94 @@ def check_prompt_equality(
     return filecmp.cmp(prompt_dir_1, prompt_dir_2, shallow=False)
 
 
-def check_temp_instance_existance(instance_id: str, table_name: str, db_dir: str
-                                  ) -> str:
+def check_temp_instance_existance(
+    instance_id: str, table_name: str, db_dir: str
+) -> str:
     instance_dir = os.path.join(db_dir, table_name, instance_id)
     return os.path.exists(instance_dir)
 
-def move_prompts(org_dir:str, table_name:str, db_dir:str) -> None:
-    # move old prompts to subfolder until done?
-    try:
-        table_dir = os.path.join(db_dir, table_name)
-        prompt_dir = os.path.join(table_dir, 'prompts')
-        if org_dir.endswith('.yaml'):
-            shutil.copy2(org_dir, prompt_dir)
-        else:
-            for f in os.listdir(org_dir):
-                if f.endswith('.yaml'):
-                    p_path = os.path.join(org_dir, f)
-                    shutil.copy2(p_path, prompt_dir)
-    except Exception as e:
-        raise DVFileError(f'Error copying from {prompt_dir}: {e}')
 
-def move_code(org_dir:str, db_dir:str) -> None:
+def copy_files(file_dir: str, table_name: str, db_dir: str) -> None:
     try:
-        # move old prompts to subfolder until done?
-        code_dir = os.path.join(db_dir, 'code_functions')
-        if org_dir.endswith('.py'):
-            shutil.copy2(org_dir, code_dir)
+        if table_name != "":
+            new_dir = os.path.join(db_dir, table_name, "prompts")
+            if file_dir.endswith(".yaml"):
+                shutil.copy2(file_dir, new_dir)
+            else:
+                for f in os.listdir(file_dir):
+                    if f.endswith(".yaml"):
+                        p_path = os.path.join(file_dir, f)
+                        shutil.copy2(p_path, new_dir)
         else:
-            for f in os.listdir(org_dir):
-                if f.endswith('.py'):
-                    c_path = os.path.join(org_dir, f)
-                    shutil.copy2(c_path, code_dir)
+            new_dir = os.path.join(db_dir, "code_functions")
+            if file_dir.endswith(".py"):
+                shutil.copy2(file_dir, new_dir)
+            else:
+                for f in os.listdir(file_dir):
+                    if f.endswith(".py"):
+                        p_path = os.path.join(file_dir, f)
+                        shutil.copy2(p_path, new_dir)
     except Exception as e:
-        raise DVFileError(f'Error copying from {org_dir}: {e}')
+        raise TVFileError(f"Error copying from {file_dir}: {e}")
 
-def copy_table(temp_id:str, prev_instance_id:str,table_name:str, db_dir:str):
+
+def copy_table(temp_id: str, prev_instance_id: str, table_name: str, db_dir: str):
     table_dir = os.path.join(db_dir, table_name)
     prev_table_path = os.path.join(table_dir, prev_instance_id, "table.csv")
     current_table_path = os.path.join(table_dir, temp_id, "table.csv")
     shutil.copy2(prev_table_path, current_table_path)
+
+
+def copy_folder_to_temp(
+    process_id: str,
+    db_dir: str,
+    instance_id: str = "",
+    table_name: str = "",
+    subfolder: str = "",
+):
+    folder_dir = db_dir
+    if table_name != "":
+        folder_dir = os.path.join(folder_dir, table_name)
+    if instance_id != "":
+        folder_dir = os.path.join(folder_dir, instance_id)
+    if subfolder != "":
+        folder_dir = os.path.join(folder_dir, subfolder)
+    if os.path.isdir(folder_dir):
+        temp_dir = os.path.join(db_dir, "_temp", process_id)
+        shutil.copy2(folder_dir, temp_dir)
+
+
+def copy_temp_to_folder(
+    process_id: str,
+    db_dir: str,
+    instance_id: str = "",
+    table_name: str = "",
+    subfolder: str = "",
+):
+    folder_dir = db_dir
+    if table_name != "":
+        folder_dir = os.path.join(folder_dir, table_name)
+    if instance_id != "":
+        folder_dir = os.path.join(folder_dir, instance_id)
+    if subfolder != "":
+        folder_dir = os.path.join(folder_dir, subfolder)
+
+    temp_dir = os.path.join(db_dir, "_temp", process_id)
+    if os.path.isdir(temp_dir):
+        shutil.copy2(temp_dir, folder_dir)
+
+
+def delete_from_temp(process_id: str, db_dir: str):
+    temp_dir = os.path.join(db_dir, "_temp")
+    for sub_folder in os.listdir(temp_dir):
+        sub_dir = os.path.join(temp_dir, sub_folder)
+        if os.path.isdir(sub_dir) and sub_folder.startswith(process_id):
+            shutil.rmtree(sub_dir)
+
+
+def cleanup_temp(active_ids: list[str], db_dir: str):
+    temp_dir = os.path.join(db_dir, "_temp")
+    for sub_folder in os.listdir(temp_dir):
+        sub_dir = os.path.join(temp_dir, sub_folder)
+        if os.path.isdir(sub_dir) and sub_folder not in active_ids:
+            shutil.rmtree(sub_dir)

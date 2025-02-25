@@ -101,7 +101,9 @@ def setup_table(database, author, table, multiple, prompt_dir):
     """
     Setup a new table in the database.
     """
-    _table_operations_DEPRECATED.setup_table(table, database, author, multiple, prompt_dir)
+    _table_operations_DEPRECATED.setup_table(
+        table, database, author, multiple, prompt_dir
+    )
 
 
 # -----------------------------------------------------------------------------
@@ -151,7 +153,9 @@ def delete_instance(database, author, table, instance_id):
     """
     Delete a table instance from the database.
     """
-    _table_operations_DEPRECATED.delete_table_instance(instance_id, table, database, author)
+    _table_operations_DEPRECATED.delete_table_instance(
+        instance_id, table, database, author
+    )
 
 
 # -----------------------------------------------------------------------------

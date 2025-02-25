@@ -5,8 +5,11 @@ from dataclasses_json import dataclass_json
 from typing import Optional, Any
 import time
 from filelock import FileLock
-from tablevault.errors import *
+from tablevault._utils.errors import TVArgumentError, TVProcessError
 import pprint
+import mmap
+from tablevault._utils.file_operations import delete_from_temp, cleanup_temp
+
 
 @dataclass_json
 @dataclass
@@ -22,13 +25,14 @@ class ProcessLog:
     steps_data: list[dict[str, Any]]
     data: dict[str, Any]
     success: Optional[bool]
+    parent_id: str
 
     def get_completed_step(self):
         last_index = 0
         for i in range(len(self.complete_steps) - 1, -1, -1):
-            if self.complete_steps[i] == 'restart_forced':
+            if self.complete_steps[i] == "restart_forced":
                 last_index = i
-                break 
+                break
         return self.complete_steps[last_index:]
 
 
@@ -36,7 +40,7 @@ ColumnHistoryDict = dict[str, dict[str, dict[str, dict[str, float]]]]
 TableHistoryDict = dict[str, dict[str, tuple[float, float]]]
 TableMultipleDict = dict[str, bool]
 ActiveProcessDict = dict[str, ProcessLog]
-import mmap
+
 
 def _serialize_active_log(temp_logs: ActiveProcessDict) -> dict:
     serialized_logs = {key: value.to_dict() for key, value in temp_logs.items()}
@@ -49,20 +53,26 @@ def _deserialize_active_log(serialized_logs: dict) -> ActiveProcessDict:
     }
     return deserialized_dict
 
+
 def _is_string_in_file(filepath, search_string):
-    search_bytes = search_string.encode('utf-8')  # Convert to bytes
+    search_bytes = search_string.encode("utf-8")
     with open(filepath, "rb") as f:
-        # Memory-map the file, size 0 means whole file.
         with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
-            # mm.find() returns the lowest index where the byte string is found, or -1 if not found.
             return mm.find(search_bytes) != -1
 
 
-
 class MetadataStore:
-    valid_operations = ["setup_table", "setup_table_instance", "delete_table",
-                        "delete_table_instance", "restart_database", "execute_table", 
-                        "copy_files", ]
+    valid_operations = [
+        "copy_files",
+        "delete_table",
+        "delete_instance",
+        "execute_instance",
+        "setup_temp_instance",
+        "setup_table",
+        "copy_database_files",
+        "restart_database",
+    ]
+
     def _save_active_log(self, temp_logs: ActiveProcessDict) -> None:
         logs = _serialize_active_log(temp_logs)
         with open(self.active_file, "w") as f:
@@ -101,7 +111,7 @@ class MetadataStore:
             table_multiples = json.load(file)
             return table_multiples
 
-    def _write_to_log(self, log_entry: ProcessLog) -> None:
+    def _write_to_log_entry(self, log_entry: ProcessLog) -> None:
         log_entry.log_time = time.time()
         log_entry = asdict(log_entry)
         with open(self.log_file, "a") as file:
@@ -110,9 +120,9 @@ class MetadataStore:
     def _write_to_completed_log(self, process_id: str) -> None:
         with open(self.completed_file, "a") as file:
             file.write(process_id + "\n")
-    
-    def _check_completed_log(self, process_id:str) -> bool:
-       return _is_string_in_file(self.completed_file, process_id)
+
+    def _check_completed_log(self, process_id: str) -> bool:
+        return _is_string_in_file(self.completed_file, process_id)
 
     def __init__(self, db_dir: str) -> None:
         self.db_dir = db_dir
@@ -138,7 +148,6 @@ class MetadataStore:
         table_multiples = self._get_table_multiple()
         table_multiples[table_name] = log.data["allow_multiple"]
         self._save_table_multiple(table_multiples)
-
 
     def _delete_table_operation(self, log: ProcessLog) -> None:
         table_name = log.table_name
@@ -169,7 +178,7 @@ class MetadataStore:
 
     def _execute_operation(self, log: ProcessLog) -> None:
         table_name = log.table_name
-        start_time = log.data["start_time"]
+        # start_time = log.data["start_time"]
         instance_id = log.data["perm_instance_id"]
         changed_columns = log.data["to_change_columns"]
         all_columns = log.data["all_columns"]
@@ -192,53 +201,66 @@ class MetadataStore:
                 ][prev_instance_id][column]
         self._save_column_history(columns_history)
 
-    def write_to_log(self, process_id: str, success: Optional[bool] = True) -> None:
+    def _write_to_log(
+        self, process_id: str, success: bool = True, first_level=False
+    ) -> None:
+        logs = self._get_active_log()
+        if process_id not in logs:
+            return
+        if first_level and logs[process_id].parent_id != "":
+            return
+        log = logs[process_id]
+        if success is not None:
+            log.success = success
+        log.complete_steps.append("write_log")
+        log.steps_data.append({"step_time": time.time()})
+        log.log_time = time.time()
+        self._save_active_log(logs)
+        if log.operation == "setup_table":
+            self._setup_table_operation(log)
+        elif log.operation == "delete_table":
+            self._delete_table_operation(log)
+        elif log.operation == "delete_instance":
+            self._delete_instance_operation(log)
+        elif log.operation == "execute_instance" and success:
+            self._execute_operation(log)
+        elif log.operation in self.valid_operations:
+            pass
+        else:
+            raise TVProcessError("Operation {log.operation} not supported")
+        for log_id in logs:
+            if logs[log_id].parent_id == process_id:
+                self._write_to_log(log_id, success=success)
+        self._write_to_log_entry(log)
+        self._write_to_completed_log(process_id)
+        del logs[process_id]
+        self._save_active_log(logs)
+        delete_from_temp(process_id, self.db_dir)
+
+    def write_to_log(self, process_id: str, success: bool = True) -> None:
         with self.lock:
-            logs = self._get_active_log()
-            if process_id not in logs:
-                return
-            log = logs[process_id]
-            if success is not None:
-                log.success = success
-            log.complete_steps.append("write_log")
-            log.step_times.append(time.time())
-            log.log_time = time.time()
-            self._save_active_log(logs)
-            if log.operation == "setup_table":
-                self._setup_table_operation(log)
-            elif log.operation == "delete_table":
-                self._delete_table_operation(log)
-            elif log.operation == "delete_table_instance":
-                self._delete_instance_operation(log)
-            elif log.operation == "restart_database":
-                pass
-            elif log.operation == "execute_instance" and success:
-                self._execute_operation(log)
-            elif log.operation in self.valid_operations:
-                pass
-            else:
-                raise NotImplementedError()
-            self._write_to_log(log)
-            self._write_to_completed_log(process_id)
-            del logs[process_id]
-            self._save_active_log(logs)
+            self._write_to_log(process_id, success, first_level=True)
 
     def start_new_process(
         self,
-        process_id:str,
+        process_id: str,
         author: str,
         operation: str,
         table_name: str = "",
         instance_id: str = "",
         start_time: Optional[float] = None,
         data: dict[str, Any] = {},
+        parent_id: str = "",
     ) -> str:
         with self.lock:
             active_processes = self._get_active_log()
+            cleanup_temp(
+                list(active_processes.keys()), self.db_dir
+            )  # NOTE: Cleanup files
             if not start_time:
                 start_time = time.time()
             if process_id in active_processes:
-                raise DVProcessDuplicationError(f'{process_id} already initiated')
+                raise TVProcessError(f"{process_id} already initiated")
             active_processes[process_id] = ProcessLog(
                 process_id,
                 author,
@@ -251,6 +273,7 @@ class MetadataStore:
                 [],
                 data,
                 None,
+                parent_id,
             )
             self._save_active_log(active_processes)
             return process_id
@@ -262,9 +285,11 @@ class MetadataStore:
             active_processes[process_id].data.update(data)
             self._save_active_log(active_processes)
 
-    def _update_process_step_internal(self, process_id: str, step: str, data: dict) -> None:
+    def _update_process_step_internal(
+        self, process_id: str, step: str, data: dict
+    ) -> None:
         active_processes = self._get_active_log()
-        data['step_time'] = time.time()
+        data["step_time"] = time.time()
         active_processes[process_id].complete_steps.append(step)
         active_processes[process_id].steps_data.append(data)
         active_processes[process_id].log_time = time.time()
@@ -305,7 +330,7 @@ class MetadataStore:
     def get_last_table_update(
         self,
         table_name: str,
-        version: str = '',
+        version: str = "",
         before_time: Optional[int] = None,
     ) -> tuple[float, float, str]:
         """
@@ -317,11 +342,11 @@ class MetadataStore:
             table_history = self._get_table_history()
             max_changed_time = 0
             max_start_time = 0
-            max_id = ''
+            max_id = ""
             for instance_id, (changed_time, start_time) in table_history[
                 table_name
             ].items():
-                if version != '' and not instance_id.startswith(version):
+                if version != "" and not instance_id.startswith(version):
                     continue
                 if start_time > max_start_time and (
                     before_time is None or start_time < before_time
@@ -397,7 +422,9 @@ class MetadataStore:
             exists = False
             if table_name in column_history:
                 if instance_id == "" and column_name != "":
-                    raise DVArgumentError("Cannot determine column name without instance id.")
+                    raise TVArgumentError(
+                        "Cannot determine column name without instance id."
+                    )
                 elif instance_id == "" and column_name == "":
                     exists = True
                 elif (
@@ -413,7 +440,6 @@ class MetadataStore:
                     exists = True
             return exists
 
-    def check_completed_log(self, process_id:str)->bool:
+    def check_completed_log(self, process_id: str) -> bool:
         with self.lock:
             return self._check_completed_log(process_id)
-        

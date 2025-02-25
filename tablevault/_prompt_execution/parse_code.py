@@ -1,11 +1,10 @@
 import os
 from typing import Any, Callable
 from concurrent.futures import ThreadPoolExecutor
-import pandas as pd
 import re
-from tablevault._utils import file_operations
 from tablevault._prompt_parsing import prompt_parser
 from importlib import import_module
+from tablevault._utils import _table_operations
 
 
 def load_function_from_file(file_path: str, function_name: str) -> tuple[Callable, Any]:
@@ -42,18 +41,11 @@ def _execute_code_from_prompt(
     funct: Callable,
     cache: prompt_parser.Cache,
 ) -> tuple[Any]:
-    df = cache["self"]
-    empty = False
-    current_values = []
-    for col in prompt["parsed_changed_columns"]:
-        val = df.at[index, col]
-        if pd.isna(df.at[index, col]):
-            empty = True
-            break
-        else:
-            current_values.append(val)
-    if not empty:
-        return tuple(current_values)
+    is_filled, entry = _table_operations.check_entry(
+        index, prompt["parsed_changed_columns"], cache["self"]
+    )
+    if is_filled:
+        return entry
 
     args = prompt_parser.get_table_value(prompt["arguments"], index, cache)
     table_args = {}
@@ -130,12 +122,12 @@ def execute_code_from_prompt(
                 )
             )
             for col, values in zip(prompt["parsed_changed_columns"], zip(*results)):
-                df[col] = values
+                _table_operations.update_column(values, cache["self"], col)
     else:
         results = _execute_single_code_from_prompt(prompt, funct, cache)
         for col, values in prompt["parsed_changed_columns"]:
-            df[col] = results[col]
-    file_operations.write_table(df, instance_id, table_name, db_dir)
+            _table_operations.update_column(values, cache["self"], col)
+    _table_operations.write_table(df, instance_id, table_name, db_dir)
 
 
 def execute_gen_table_from_prompt(
@@ -160,16 +152,12 @@ def execute_gen_table_from_prompt(
         funct, _ = load_function_from_file(code_file, prompt_function)
 
     results = _execute_single_code_from_prompt(prompt, funct, cache)
-    columns = list(cache["self"].columns)
-    df = pd.merge(
-        results, cache["self"], how="left", on=prompt["parsed_changed_columns"]
+    merged_df, changed = _table_operations.merge_columns(
+        prompt["parsed_changed_columns"], results, cache["self"]
     )
-    df = df[columns]
-
-    if not df[prompt["parsed_changed_columns"]].equals(
-        cache["self"][prompt["parsed_changed_columns"]]
-    ):
-        file_operations.write_table(df, instance_id, table_name, db_dir)
+    if changed:
+        cache["self"] = merged_df
+        _table_operations.write_table(merged_df, instance_id, table_name, db_dir)
         return True
     else:
         return False

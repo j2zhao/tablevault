@@ -2,7 +2,6 @@ import os
 import openai
 from typing import Optional
 
-from tablevault._llm_functions import llm_prompts
 from time import sleep
 
 

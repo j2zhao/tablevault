@@ -1,27 +1,59 @@
 from tablevault._utils import file_operations
 from tablevault._utils.metadata_store import MetadataStore
+from tablevault._prompt_parsing.prompt_parser_common import topological_sort, parse_dep
 from tablevault._prompt_parsing.prompt_parser_table import (
     parse_arg_from_dict,
     parse_val_from_arg,
 )
-from tablevault._prompt_parsing.types import *
+from tablevault._prompt_parsing.types import (
+    Prompt,
+    PromptArg,
+    Cache,
+    PromptDeps,
+    InternalDeps,
+    ExternalDeps,
+)
 import copy
+from tablevault._utils.errors import TVPromptError
 import re
-from tablevault.errors import DVPromptError
 
 
-def get_changed_columns(prompt: Prompt) -> list[str]:
+def parse_column(changed_column: str) -> tuple[str, str]:
+    match = re.match(r"^(\w+)(?:\s+\[(\w+)\])?$", changed_column)
+    if match:
+        string1 = match.group(1)
+        string2 = match.group(2) if match.group(2) else None
+        return string1, string2
+    else:
+        return None, None
+
+
+def get_changed_columns(prompt: Prompt) -> tuple[list[str], dict[str, str]]:
+    dtypes = {}
     if prompt["type"] == "code":
         changed_columns = copy.deepcopy(prompt["changed_columns"])
+        changed_columns_ = []
+        for i, col_string in enumerate(changed_columns):
+            col, dtype = parse_column(col_string)
+            if col is None:
+                raise TVPromptError(f"{col_string} can't be parsed as output column")
+            changed_columns_.append(col)
+            if dtype is not None:
+                dtypes[col] = dtype
     elif prompt["type"] == "llm":
-        col = prompt["changed_columns"][0]
+        col_string = prompt["changed_columns"][0]
+        col, dtype = parse_column(col_string)
+        if col is None:
+            raise TVPromptError(f"{col_string} can't be parsed as output column")
         changed_columns = []
         for i in range(len(prompt["questions"]) - 1):
             changed_columns.append(col + "_" + str(i + 1))
         if prompt["output_type"] != "freeform":
             changed_columns.append(col + "_" + str(len(prompt["questions"])))
         changed_columns.append(col)
-    return changed_columns
+        if dtype is not None:
+            dtypes[col] = dtype
+    return changed_columns, dtypes
 
 
 def convert_reference(prompt: Prompt) -> Prompt:
@@ -32,72 +64,25 @@ def get_table_value(prompt_arg: PromptArg, index: int, cache: Cache) -> str:
     return parse_val_from_arg(prompt_arg, index, cache)
 
 
-def _topological_sort(items: list, dependencies: dict) -> list:
-    # Step 1: Build the graph based on parent -> child dependencies
-    graph = {item: [] for item in items}
-
-    for parent, children in dependencies.items():
-        for child in children:
-            if child not in graph:
-                graph[child] = []  # Ensure child exists in graph
-            graph[parent].append(child)  # Parent points to its children
-
-    # Step 2: Perform DFS-based topological sorting
-    visited = set()  # To track visited nodes
-    visiting = set()  # To track the current recursion stack (for cycle detection)
-    sorted_order = []
-
-    def dfs(node):
-        if node in visiting:
-            raise DVPromptError("Cycle detected! Topological sort of prompts not possible.")
-        if node in visited:
-            return
-
-        visiting.add(node)  # Mark node as visiting
-        for child in graph[node]:
-            dfs(child)  # Visit children first
-        visiting.remove(node)  # Remove from visiting
-        visited.add(node)  # Mark node as visited
-        sorted_order.append(node)  # Add node after processing children
-
-    # Step 3: Apply DFS to all items
-    for item in items:
-        if item not in visited:
-            dfs(item)
-    # Return the sorted order directly
-    # (no need to reverse because we're appending after dependencies)
-    return sorted_order
-
-
-def parse_string(input_string: str) -> tuple[str, str, str]:
-    # Define the regex pattern for all cases
-    pattern = r"^(\w+)(?:\.(\w+))?(?:\((\w+)\))?$"
-    match = re.match(pattern, input_string)
-
-    if match:
-        # Extract components
-        part1 = match.group(1)  # First ALPHANUMERIC
-        part2 = match.group(2)  # Second ALPHANUMERIC (optional)
-        part3 = match.group(3)  # ALPHANUMERIC inside parentheses (optional)
-        return part1, part2, part3
-    else:
-        raise DVPromptError("Input string does not match the expected format.")
-
-
 def _parse_dependencies(
-        prompts: dict[str, Prompt],
-        table_name:str,
-        start_time: float,
-        db_metadata: MetadataStore) -> tuple[PromptDeps, InternalDeps, ExternalDeps]:
-    
-    table_generator = ''
+    prompts: dict[str, Prompt],
+    table_name: str,
+    start_time: float,
+    db_metadata: MetadataStore,
+) -> tuple[PromptDeps, InternalDeps, ExternalDeps]:
+
+    table_generator = ""
     for prompt in prompts:
-        if prompt.startswith(f'gen_{table_name}') and table_generator == '':
+        if prompt.startswith(f"gen_{table_name}") and table_generator == "":
             table_generator = prompt
-        elif prompt.startswith(f'gen_{table_name}') and table_generator != '':
-            raise DVPromptError(f'Can only have one prompt that starts with: gen_{table_name}')
-    if table_generator == '':
-        raise DVPromptError(f'Needs one generator prompt that starts with gen_{table_name}')
+        elif prompt.startswith(f"gen_{table_name}") and table_generator != "":
+            raise TVPromptError(
+                f"Can only have one prompt that starts with: gen_{table_name}"
+            )
+    if table_generator == "":
+        raise TVPromptError(
+            f"Needs one generator prompt that starts with gen_{table_name}"
+        )
 
     external_deps = {}
     internal_prompt_deps = {}
@@ -113,7 +98,7 @@ def _parse_dependencies(
             internal_prompt_deps[pname] = set()
 
         for dep in prompts[pname]["dependencies"]:
-            table, column, instance = parse_string(dep)
+            table, column, instance = parse_dep(dep)
             if instance is None:
                 latest = True
             else:
@@ -125,7 +110,7 @@ def _parse_dependencies(
                         internal_prompt_deps[pname].add(pn)
                 continue
             elif not db_metadata.get_table_multiple(table) and instance is not None:
-                raise DVPromptError(
+                raise TVPromptError(
                     f"Table dependency ({table}, {column}, {instance}) for prompt {pname} doesn't have versions."  # noqa: E501
                 )
             elif column is not None:
@@ -144,7 +129,7 @@ def _parse_dependencies(
                         db_metadata.get_last_column_update(table, column, start_time)
                     )
                 if mat_time == 0 or start_time_ > start_time:
-                    raise DVPromptError(
+                    raise TVPromptError(
                         f"Table dependency ({table}, {instance},{column}) for {pname} not materialized at {start_time}"  # noqa: E501
                     )
             else:
@@ -164,7 +149,7 @@ def _parse_dependencies(
                         table, start_time
                     )
                 if mat_time == 0 or start_time_ > start_time:
-                    raise DVPromptError(
+                    raise TVPromptError(
                         f"Table dependency ({table}, {instance}) for prompt {pname} not materialized at {start_time}"  # noqa: E501
                     )
             external_deps[pname].add((table, column, instance, mat_time, latest))
@@ -186,16 +171,18 @@ def parse_prompts(
         prompts, table_name, start_time, db_metadata
     )
     pnames = list(prompts.keys())
-    top_pnames = _topological_sort(pnames, internal_prompt_deps)
+    top_pnames = topological_sort(pnames, internal_prompt_deps)
     all_columns = []
     to_change_columns = []
     for i, pname in enumerate(top_pnames):
         all_columns += prompts[pname]["parsed_changed_columns"]
 
-    if origin_id != '':
+    if origin_id != "":
         to_execute = []
         prev_mat_time, _ = db_metadata.get_table_times(origin_id, table_name)
-        prev_prompts = file_operations.get_prompt_names(origin_id, table_name, db_metadata.db_dir)
+        prev_prompts = file_operations.get_prompt_names(
+            origin_id, table_name, db_metadata.db_dir
+        )
 
         for pname in top_pnames:
             execute = False

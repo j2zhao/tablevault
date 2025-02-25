@@ -2,6 +2,7 @@ import time
 from collections import defaultdict
 from pprint import pprint
 
+
 class BasicTimer:
     def __init__(self):
         self.start_time = time.p()
@@ -12,6 +13,7 @@ class BasicTimer:
         print(f"{step} Time Interval: {delta_time}")
         self.start_time = time.perf_counter()
 
+
 class StepsTimer:
     def __init__(self):
         self.step_times = defaultdict(float)
@@ -19,11 +21,11 @@ class StepsTimer:
         self.step_temps = defaultdict(dict)
         # This dictionary keeps track of the next available index for each step.
         self.next_index = defaultdict(int)
-    
+
     def start_step(self, step: str) -> int:
         """
         Start timing for a given step.
-        
+
         Returns an index that must be passed to stop_step to match this start.
         """
         idx = self.next_index[step]
@@ -38,7 +40,7 @@ class StepsTimer:
         """
         if step not in self.step_temps or index not in self.step_temps[step]:
             raise ValueError("Step not started or invalid index provided.")
-        
+
         # Use the same high-precision timer
         start_time = self.step_temps[step].pop(index)
         end_time = time.perf_counter()
@@ -52,10 +54,9 @@ class StepsTimer:
         # Check for any ongoing (unfinished) steps
         for step, start_dict in self.step_temps.items():
             if start_dict:  # if the dict is not empty, there are unfinished timings.
-                raise RuntimeError(f"Step '{step}' has ongoing timing that hasn't been stopped.")
-        
+                raise RuntimeError(
+                    f"Step '{step}' has ongoing timing that hasn't been stopped."
+                )
+
         # All steps are stopped; print the accumulated times.
         pprint(dict(self.step_times))
-
-        
-        
