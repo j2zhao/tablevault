@@ -3,10 +3,10 @@ import time
 import shutil
 from typing import Optional
 from filelock import FileLock
-from tablevault._utils.constants import TIMEOUT, CHECK_INTERVAL
-from tablevault._utils.errors import TVLockError
-from tablevault._utils.utils import gen_process_id
-
+from tablevault._defintions import constants 
+from tablevault._defintions.tv_errors import TVLockError, TVArgumentError
+from tablevault._helper.utils import gen_tv_id
+from metadata_store import MetadataStore
 
 def _check_locks(process_id: str, lock_path: str, exclusive: bool) -> bool:
     for _, _, filenames in os.walk(lock_path):
@@ -24,7 +24,7 @@ def _check_locks(process_id: str, lock_path: str, exclusive: bool) -> bool:
 
 
 def _acquire_exclusive(process_id: str, lock_path: str) -> str:
-    lid = gen_process_id()
+    lid = gen_tv_id()
     legal = _check_locks(process_id, lock_path, exclusive=True)
     if not legal:
         return ""
@@ -36,7 +36,7 @@ def _acquire_exclusive(process_id: str, lock_path: str) -> str:
 
 
 def _acquire_shared(process_id: str, lock_path: str) -> str:
-    lid = gen_process_id()
+    lid = gen_tv_id()
     legal = _check_locks(process_id, lock_path, exclusive=False)
     if not legal:
         return ""
@@ -54,7 +54,8 @@ def _acquire_lock(
     timeout: Optional[float],
     check_interval: float,
 ) -> None:
-    os.makedirs(lock_path, exist_ok=True)
+    if not os.path.exists(lock_path):
+        raise TVLockError(f"lockpath {lock_path} does not exist")
     start_time = time.time()
     while True:
         if lock_type == "shared":
@@ -72,31 +73,22 @@ def _release_lock(
     lock_path: str,
     lid: str,
 ) -> None:
-
+    if not os.path.exists(lock_path):
+        return
     for dirpath, _, filenames in os.walk(lock_path, topdown=False):
-        empty = True
         for filename in filenames:
             if filename.endswith(".exlock") or filename.endswith(".shlock"):
                 lock_name = filename.split(".")[0]
                 lock_id = lock_name.split("_")[1]
                 if lock_id == lid:
                     os.remove(os.path.join(dirpath, filename))
-                else:
-                    empty = False
-        if empty:
-            empty = any(
-                os.path.isdir(os.path.join(dirpath, entry))
-                for entry in os.listdir(dirpath)
-            )
-            if empty:
-                shutil.rmtree(dirpath)
-
 
 def _release_all_lock(
     process_id: str,
     lock_path: str,
 ) -> None:
-
+    if not os.path.exists(lock_path):
+        return
     for dirpath, _, filenames in os.walk(lock_path, topdown=False):
         empty = True
         for filename in filenames:
@@ -115,9 +107,47 @@ def _release_all_lock(
             if empty:
                 shutil.rmtree(dirpath)
 
+def _make_lock_path(lock_path:str):
+    parent_dir = os.path.dirname(lock_path)
+    parent_locks = []
+    for filename in os.listdir(parent_dir):
+        if filename.endswith(".exlock") or filename.endswith(".shlock"):
+            parent_locks.append(filename)
+    os.makedirs(lock_path, exist_ok=True)
+    for filename in parent_locks:
+        lock_file = os.path.join(lock_path, filename)
+        with open(lock_file, "w"):
+            pass
 
-def get_all_process_ids(db_dir):
-    meta_lock = os.path.join(db_dir, "metadata", "LOCK.lock")
+def _delete_lock_path(lock_path:str):
+    if os.path.exists(lock_path):
+        for filename in os.listdir(lock_path):
+            if filename.endswith(".exlock") or filename.endswith(".shlock"):
+                raise TVLockError(f"Cannot delete lock_path {lock_path} with active lock: {filename}")
+        shutil.rmtree(lock_path)
+
+def cleanup_lock_paths(db_dir:str, table_history:dict[str, dict[str, tuple[float, float]]]):
+    meta_lock = os.path.join(db_dir, constants.METADATA_FOLDER, "LOCK.lock")
+    meta_lock = FileLock(meta_lock)
+    lock_path = os.path.join(db_dir, constants.LOCK_FOLDER)
+    for table_name in os.listdir(lock_path):
+        if table_name in constants.ILLEGAL_TABLE_NAMES:
+            continue
+        lock_dir = os.path.join(lock_path, table_name)
+        if os.path.isdir(lock_dir):
+            if table_name not in table_history:
+                shutil.rmtree(lock_dir)
+            else:
+                for instance_id in os.listdir(lock_dir):
+                    if instance_id == constants.PROMPT_FOLDER:
+                        continue
+                    lock_dir_ = os.path.join(lock_dir, instance_id)
+                    if os.path.isdir(lock_dir_):
+                        if instance_id not in table_history[table_history]:
+                            shutil.rmtree(lock_dir)
+
+def get_all_lock_processes(db_dir):
+    meta_lock = os.path.join(db_dir, constants.METADATA_FOLDER, "LOCK.lock")
     meta_lock = FileLock(meta_lock)
     process_ids = set()
     with meta_lock:
@@ -134,21 +164,33 @@ class DatabaseLock:
     def __init__(self, process_id: str, db_dir: str):
         self.db_dir = db_dir
         self.process_id = process_id
-        self.lock_path = os.path.join(self.db_dir, "locks")
-        meta_lock = os.path.join(self.db_dir, "metadata", "LOCK.lock")
+        self.lock_path = os.path.join(self.db_dir, constants.LOCK_FOLDER)
+        meta_lock = os.path.join(self.db_dir, constants.METADATA_FOLDER, "LOCK.lock")
         self.meta_lock = FileLock(meta_lock)
+        self.db_metadata = MetadataStore(db_dir)
 
     def acquire_shared_lock(
         self,
         table_name: str = "",
         instance_id: str = "",
-        timeout: Optional[float] = TIMEOUT,
-        check_interval: float = CHECK_INTERVAL,
+        timeout: Optional[float] = constants.TIMEOUT,
+        check_interval: float = constants.CHECK_INTERVAL,
+        check_existance = True
     ) -> tuple[str, str, str]:
+        lock_path = self.lock_path
         if table_name != "":
-            lock_path = os.path.join(self.lock_path, table_name)
+            lock_path = os.path.join(lock_path, table_name)
+            if table_name not in constants.ILLEGAL_TABLE_NAMES:
+                if check_existance and (instance_id == "" or instance_id in constants.ILLEGAL_TABLE_NAMES):
+                    exists = self.db_metadata.check_table_existance(table_name)
+                    if not exists:
+                        raise TVArgumentError(f"Table {table_name} Does not Exist")
         if instance_id != "":
             lock_path = os.path.join(lock_path, instance_id)
+            if check_existance and instance_id not in constants.ILLEGAL_TABLE_NAMES:
+                exists = self.db_metadata.check_table_existance(table_name, instance_id)
+                if not exists:
+                    raise TVArgumentError(f"Previous Instance ID {instance_id} doesn't exist")                
         with self.meta_lock:
             lid = _acquire_lock(
                 self.process_id,
@@ -163,8 +205,8 @@ class DatabaseLock:
         self,
         table_name: str = "",
         instance_id: str = "",
-        timeout: Optional[float] = TIMEOUT,
-        check_interval: float = CHECK_INTERVAL,
+        timeout: Optional[float] = constants.TIMEOUT,
+        check_interval: float = constants.CHECK_INTERVAL,
     ) -> tuple[str, str, str]:
 
         with self.meta_lock:
@@ -192,3 +234,25 @@ class DatabaseLock:
 
     def release_all_locks(self) -> None:
         _release_all_lock(self.process_id, self.lock_path)
+
+    def make_lock_path(self, 
+                   table_name:str = '',
+                   instance_id:str = ''):
+        lock_path = os.path.join(self.db_dir, constants.LOCK_FOLDER)
+        if table_name != "":
+            lock_path = os.path.join(lock_path, table_name)
+        if instance_id != "":
+            lock_path = os.path.join(lock_path, instance_id)   
+        with self.meta_lock:
+            _make_lock_path(lock_path)
+    
+    def delete_lock_path(self, 
+                   table_name:str = '',
+                   instance_id:str = ''):
+        lock_path = os.path.join(self.db_dir, constants.LOCK_FOLDER)
+        if table_name != "":
+            lock_path = os.path.join(lock_path, table_name)
+        if instance_id != "":
+            lock_path = os.path.join(lock_path, instance_id)   
+        with self.meta_lock:
+            _delete_lock_path(lock_path) 

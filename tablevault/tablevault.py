@@ -1,6 +1,6 @@
 from tablevault import _vault_operations
-from tablevault._utils.metadata_store import ActiveProcessDict
-from tablevault._utils.utils import gen_process_id
+from tablevault._helper.metadata_store import ActiveProcessDict
+from tablevault._helper.utils import gen_tv_id
 
 
 class TableVault:
@@ -60,12 +60,15 @@ class TableVault:
         elif restart:
             _vault_operations.restart_database(author=self.author, db_dir=self.db_dir)
 
+    def print_active_processes(self, print_all=False) -> ActiveProcessDict:
+        _vault_operations.print_active_processes(self.db_dir, print_all)
+
     def active_processes(self) -> ActiveProcessDict:
         """
         Return a dictionary of currently active processes.
 
         """
-        return _vault_operations.active_processes()
+        return _vault_operations.active_processes(self.db_dir)
 
     def list_instances(self, table_name: str, version: str = "") -> list[str]:
         """
@@ -82,27 +85,31 @@ class TableVault:
             table_name=table_name, db_dir=self.db_dir, version=version
         )
 
-    def stop_process(self, process_id):
+    def stop_process(self, process_id:str, force:bool = False):
         """
         Stop a currently active process and release all of its locks.
 
         Args:
             process_id (str): Active process ID.
+            force (bool): If True, actively running process stopped. If False,
+            raises exception on actively running process. Defauts to False.
 
         """
         _vault_operations.stop_process(process_id=process_id, db_dir=self.db_dir)
 
-    def copy_table_files(
-        self, table_name: str, file_dir: str, process_id: str = ""
+    def copy_files(
+        self, file_dir: str, table_name: str = "", process_id: str = ""
     ) -> None:
         """
         Copy prompt files into a table.
 
         Args:
-            table_name (str): Table name to copy into.
-
             prompt_dir (str): Directory of files or individual
             file directory.
+
+            table_name (str): Optional, table name to copy into. If filled, copies
+            into prompt directory of table. Otherwise, copies Python files into
+            code directory. Defaults to empty string.
 
             process_id (str): Optional, a identifier for the process (to re-execute).
             Defaults to empty string.
@@ -161,7 +168,6 @@ class TableVault:
         self,
         table_name: str,
         version: str = "",
-        force_restart: bool = False,
         force_execute: bool = False,
         process_id: str = "",
     ) -> None:
@@ -173,9 +179,6 @@ class TableVault:
 
             version (str): Version of the table. Defaults to empty string.
             On default, if table has versions, defaults to "base".
-
-            force_restart (bool): If True, completely re-execute everything on restart
-            of process. Default is False.
 
             force_execute (bool): If True, completely execute the whole table.
             Otherwise, copies table from previous version.
@@ -189,7 +192,6 @@ class TableVault:
             author=self.author,
             table_name=table_name,
             version=version,
-            force_restart=force_restart,
             force_execute=force_execute,
             process_id=process_id,
             db_dir=self.db_dir,
@@ -201,7 +203,7 @@ class TableVault:
         version: str = "",
         prev_id: str = "",
         copy_previous: bool = False,
-        prompts: list[str] = [],
+        prompt_names: list[str] = [],
         execute: bool = False,
         process_id: str = "",
     ) -> None:
@@ -223,7 +225,7 @@ class TableVault:
             copy_previous (bool): If true, copy prompts from latest materialized
             table of same version. Defaults to false.
 
-            Prompts (list[str]): If given, copies list of prompts from table prompts.
+            prompt_names (list[str]): If given, copies list of prompts from table prompts.
             Defaults to empty list.
 
             execute (bool): If True, executes instance after creation. Defaults to
@@ -240,7 +242,7 @@ class TableVault:
             table_name=table_name,
             prev_id=prev_id,
             copy_previous=copy_previous,
-            prompts=prompts,
+            prompt_names=prompt_names,
             execute=execute,
             process_id=process_id,
             db_dir=self.db_dir,
@@ -249,8 +251,8 @@ class TableVault:
     def setup_table(
         self,
         table_name: str,
-        execute: bool = False,
         create_temp: bool = False,
+        execute: bool = False,
         allow_multiple: bool = False,
         yaml_dir: str = "",
         process_id: str = "",
@@ -294,4 +296,4 @@ class TableVault:
              New process id (str)
 
         """
-        return gen_process_id()
+        return gen_tv_id()

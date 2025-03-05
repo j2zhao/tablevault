@@ -1,4 +1,4 @@
-from tablevault._utils.errors import TVPromptError
+from tablevault._defintions.tv_errors import TVPromptError
 import re
 
 

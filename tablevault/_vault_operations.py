@@ -1,47 +1,31 @@
-from tablevault._utils import file_operations
-from tablevault._utils.metadata_store import MetadataStore, ActiveProcessDict
-from tablevault._meta_operations import tablevault_operation
-from tablevault._utils.database_lock import DatabaseLock
-from tablevault import _table_execution
-from tablevault._prompt_parsing.types import Prompt, ExternalDeps
-from tablevault._roll_back_operations import ROLLBACK_MAP
+from tablevault._helper import file_operations
+from tablevault._helper.metadata_store import MetadataStore, ActiveProcessDict
+from tablevault._operations._meta_operations import tablevault_operation, stop_operation
+from tablevault._operations import _table_execution
+from tablevault._defintions.types import Prompt, ExternalDeps
+from tablevault._operations._takedown_operations import TAKEDOWN_MAP
+from tablevault._defintions import constants
 import os
 
 
-def setup_database(db_dir: str, replace: bool = False):
+def setup_database(db_dir: str, replace: bool = False) -> None:
     file_operations.setup_database_folder(db_dir, replace)
 
-
-def active_processes(db_dir: str, all_info: bool) -> ActiveProcessDict:
+def print_active_processes(db_dir: str, print_all: bool) -> ActiveProcessDict:
     db_metadata = MetadataStore(db_dir)
-    return db_metadata.get_active_processes(all_info, to_print=False)
+    return db_metadata.print_active_processes(print_all)
 
+def active_processes(db_dir: str) -> ActiveProcessDict:
+    db_metadata = MetadataStore(db_dir)
+    return db_metadata.get_active_processes(to_print=False)
 
 def list_instances(table_name: str, db_dir: str, version: str) -> list[str]:
     db_metadata = MetadataStore(db_dir)
     return db_metadata.get_table_instances(table_name, version, to_print=False)
 
 
-def _stop_process(
-    process_id: str, db_metadata: MetadataStore, processes: ActiveProcessDict
-):
-    process = processes[process_id]
-    if "step_ids" in process.data:
-        for pid in process.data["step_ids"]:
-            if pid in processes:
-                _stop_process(pid, db_metadata, processes)
-    if process.operation in ROLLBACK_MAP:
-        ROLLBACK_MAP[process.operation](process_id, db_metadata)
-
-
-def stop_process(process_id: str, db_dir: str):
-    db_metadata = MetadataStore(db_dir)
-    db_metadata.update_process_step(process_id, step="rollback")
-    processes = db_metadata.get_active_processes()
-    _stop_process(process_id, db_metadata, processes)
-    db_metadata.write_to_log(process_id, success=False)
-    db_locks = DatabaseLock(process_id, db_metadata.db_dir)
-    db_locks.release_all_locks()
+def stop_process(process_id: str, db_dir: str, force: bool):
+    stop_operation(process_id, db_dir, force)
 
 
 @tablevault_operation
@@ -64,11 +48,9 @@ def execute_instance(
     table_name: str,
     instance_id: str,
     perm_instance_id: str,
-    prompts: dict[Prompt],
     top_pnames: list[str],
     to_change_columns: list[str],
     all_columns: list[str],
-    column_dtypes: dict[str, str],
     external_deps: ExternalDeps,
     prev_instance_id: str,
     prev_completed_steps: list[str],
@@ -80,11 +62,9 @@ def execute_instance(
         table_name,
         instance_id,
         perm_instance_id,
-        prompts,
         top_pnames,
         to_change_columns,
         all_columns,
-        column_dtypes,
         external_deps,
         prev_instance_id,
         prev_completed_steps,
@@ -100,16 +80,16 @@ def setup_temp_instance(
     instance_id: str,
     table_name: str,
     prev_id: str,
-    prompts: list[str],
+    prompt_names: list[str],
     execute: bool,
     process_id: str,
     db_metadata: MetadataStore,
     step_ids: list[str],
 ):
-    complete_steps = db_metadata.get_active_processes()[process_id].complete_steps()
+    complete_steps = db_metadata.get_active_processes()[process_id].complete_steps
     if step_ids[0] not in complete_steps:
         file_operations.setup_table_instance_folder(
-            instance_id, table_name, db_metadata.db_dir, prev_id, prompts
+            instance_id, table_name, db_metadata.db_dir, prev_id, prompt_names
         )
         db_metadata.update_process_step(process_id, step_ids[0])
     if execute and step_ids[1] not in complete_steps:
@@ -135,7 +115,7 @@ def setup_table(
     db_metadata: MetadataStore,
     step_ids: list[str],
 ):
-    complete_steps = db_metadata.get_active_processes()[process_id].complete_steps()
+    complete_steps = db_metadata.get_active_processes()[process_id].complete_steps
     if step_ids[0] not in complete_steps:
         file_operations.setup_table_folder(table_name, db_metadata.db_dir)
         db_metadata.update_process_step(process_id, step_ids[0])
@@ -155,7 +135,7 @@ def setup_table(
             table_name=table_name,
             prev_id="",
             copy_previous=False,
-            prompts=True,
+            prompt_names=True,
             execute=execute,
             process_id=step_ids[2],
             db_dir=db_metadata.db_dir,
@@ -196,6 +176,7 @@ def copy_database_files(
             author=process_id,
             table_name=tname,
             yaml_dir=pdir,
+            create_temp= execute,
             execute=execute,
             allow_multiple=allow_multiple,
             process_id=step_ids[index],
@@ -211,71 +192,72 @@ def restart_database(
     db_metadata: MetadataStore,
 ):
     active_processes = db_metadata.get_active_processes()
-    for pid in active_processes:
-        data = active_processes[process_id].data
-        if active_processes[pid].operation == "copy_files":
-            copy_files(
-                author=process_id,
-                table_name="",
-                file_dir="",
-                process_id=pid,
-                db_dir=db_metadata.db_dir,
-            )
-        elif active_processes[pid].operation == "delete_table":
-            delete_table(
-                author=process_id,
-                table_name="",
-                process_id=pid,
-                db_dir=db_metadata.db_dir,
-            )
-        elif active_processes[pid].operation == "delete_instance":
-            delete_instance(
-                author=process_id,
-                table_name="",
-                instance_id="",
-                process_id=pid,
-                db_dir=db_metadata.db_dir,
-            )
-        elif active_processes[pid].operation == "execute_instance":
-            execute_instance(
-                author=process_id,
-                table_name=data["table_name"],
-                version=data["version"],
-                force_restart=False,
-                force_execute=False,
-                process_id=pid,
-                db_dir=db_metadata.db_dir,
-            )
-        elif active_processes[pid].operation == "setup_temp_instance":
-            setup_temp_instance(
-                author=process_id,
-                version="",
-                table_name="",
-                prev_id="",
-                copy_previous=False,
-                prompts=[],
-                execute=False,
-                process_id=pid,
-                db_dir=db_metadata.db_dir,
-            )
-        elif active_processes[pid].operation == "setup_table":
-            setup_table(
-                author=process_id,
-                table_name="",
-                yaml_dir="",
-                execute=False,
-                allow_multiple=False,
-                process_id=pid,
-                db_dir=db_metadata.db_dir,
-            )
-        elif active_processes[pid].operation == "copy_database_files":
-            copy_database_files(
-                author=process_id,
-                yaml_dir="",
-                code_dir="",
-                execute=False,
-                allow_multiple_tables=[],
-                process_id=pid,
-                db_dir=db_metadata.db_dir,
-            )
-        db_metadata.update_process_step(process_id, step=pid)
+    for prid in active_processes:
+        try:
+            if active_processes[prid].operation == constants.COPY_FILE_OP:
+                copy_files(
+                    author=process_id,
+                    table_name="",
+                    file_dir="",
+                    process_id=prid,
+                    db_dir=db_metadata.db_dir,
+                )
+            elif active_processes[prid].operation == constants.DELETE_TABLE_OP:
+                delete_table(
+                    author=process_id,
+                    table_name="",
+                    process_id=prid,
+                    db_dir=db_metadata.db_dir,
+                )
+            elif active_processes[prid].operation == constants.DELETE_INSTANCE_OP:
+                delete_instance(
+                    author=process_id,
+                    table_name="",
+                    instance_id="",
+                    process_id=prid,
+                    db_dir=db_metadata.db_dir,
+                )
+            elif active_processes[prid].operation == constants.EXECUTE_OP:
+                execute_instance(
+                    author=process_id,
+                    table_name="",
+                    version="",
+                    force_execute=False,
+                    process_id=prid,
+                    db_dir=db_metadata.db_dir,
+                )
+            elif active_processes[prid].operation == constants.SETUP_TEMP_OP:
+                setup_temp_instance(
+                    author=process_id,
+                    version="",
+                    table_name="",
+                    prev_id="",
+                    copy_previous=False,
+                    prompt_names=[],
+                    execute=False,
+                    process_id=prid,
+                    db_dir=db_metadata.db_dir,
+                )
+            elif active_processes[prid].operation == constants.SETUP_TABLE_OP:
+                setup_table(
+                    author=process_id,
+                    table_name="",
+                    yaml_dir="",
+                    execute=False,
+                    allow_multiple=False,
+                    process_id=prid,
+                    db_dir=db_metadata.db_dir,
+                )
+            elif active_processes[prid].operation == constants.COPY_DB_OP:
+                copy_database_files(
+                    author=process_id,
+                    yaml_dir="",
+                    code_dir="",
+                    execute=False,
+                    allow_multiple_tables=[],
+                    process_id=prid,
+                    db_dir=db_metadata.db_dir,
+                )
+            db_metadata.update_process_step(process_id, step=prid)
+        except:
+            continue

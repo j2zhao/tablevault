@@ -1,7 +1,7 @@
 import click
 
 from tablevault.deprecated import _table_operations_DEPRECATED
-from tablevault._utils.metadata_store import MetadataStore
+from tablevault._helper.metadata_store import MetadataStore
 
 
 @click.group()

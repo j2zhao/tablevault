@@ -10,10 +10,9 @@ import re
 from tablevault._llm_functions.open_ai_thread import Open_AI_Thread, add_open_ai_secret
 from tablevault._prompt_parsing import prompt_parser
 from tablevault._prompt_execution import llm_prompts
-from tablevault._utils import _table_operations
-
-# from tablevault._timing_helper.timing_helper import StepsTimer
-from tablevault._utils.errors import TVPromptError
+from tablevault._helper import table_operations
+from tablevault._defintions import prompt_constants
+from tablevault._defintions.tv_errors import TVPromptError
 
 # timer = StepsTimer()
 
@@ -28,8 +27,8 @@ def _execute_llm(
     table_name: str,
     db_dir: str,
 ) -> None:
-    is_filled, _ = _table_operations.check_entry(
-        index, prompt["changed_columns"], cache["self"]
+    is_filled, _ = table_operations.check_entry(
+        index, prompt[prompt_constants.CHANGED_COLUMNS], cache[prompt_constants.TABLE_SELF]
     )
     if is_filled:
         return
@@ -140,12 +139,12 @@ def _execute_llm(
         raise TVPromptError("Output type not supported")
 
     with lock:
-        for i, column in enumerate(prompt["parsed_changed_columns"]):
-            _table_operations.update_entry(results[i], index, column, cache["self"])
+        for i, column in enumerate(prompt[prompt_constants.CHANGED_COLUMNS]):
+            table_operations.update_entry(results[i], index, column, cache[prompt_constants.TABLE_SELF])
         # # it = timer.start_step("WriteTable")
         # # timer.stop_step("WriteTable", it)
         # # it = timer.start_step("WriteTable2")
-        _table_operations.write_table(cache["self"], instance_id, table_name, db_dir)
+        table_operations.write_table(cache[prompt_constants.TABLE_SELF], instance_id, table_name, db_dir)
         # # timer.stop_step("WriteTable2", it)
 
 
@@ -165,7 +164,7 @@ def execute_llm_from_prompt(
         secret = f.read()
         add_open_ai_secret(secret)
     client = openai.OpenAI()
-    indices = list(range(len(cache["self"])))
+    indices = list(range(len(cache[prompt_constants.TABLE_SELF])))
     lock = threading.Lock()
     # timer.stop_step('PreThread', it)
     with ThreadPoolExecutor(max_workers=n_threads) as executor:

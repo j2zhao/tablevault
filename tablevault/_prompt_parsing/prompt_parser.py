@@ -1,11 +1,11 @@
-from tablevault._utils import file_operations
-from tablevault._utils.metadata_store import MetadataStore
+from tablevault._helper import file_operations
+from tablevault._helper.metadata_store import MetadataStore
 from tablevault._prompt_parsing.prompt_parser_common import topological_sort, parse_dep
 from tablevault._prompt_parsing.prompt_parser_table import (
     parse_arg_from_dict,
     parse_val_from_arg,
 )
-from tablevault._prompt_parsing.types import (
+from tablevault._defintions.types import (
     Prompt,
     PromptArg,
     Cache,
@@ -13,47 +13,8 @@ from tablevault._prompt_parsing.types import (
     InternalDeps,
     ExternalDeps,
 )
-import copy
-from tablevault._utils.errors import TVPromptError
-import re
-
-
-def parse_column(changed_column: str) -> tuple[str, str]:
-    match = re.match(r"^(\w+)(?:\s+\[(\w+)\])?$", changed_column)
-    if match:
-        string1 = match.group(1)
-        string2 = match.group(2) if match.group(2) else None
-        return string1, string2
-    else:
-        return None, None
-
-
-def get_changed_columns(prompt: Prompt) -> tuple[list[str], dict[str, str]]:
-    dtypes = {}
-    if prompt["type"] == "code":
-        changed_columns = copy.deepcopy(prompt["changed_columns"])
-        changed_columns_ = []
-        for i, col_string in enumerate(changed_columns):
-            col, dtype = parse_column(col_string)
-            if col is None:
-                raise TVPromptError(f"{col_string} can't be parsed as output column")
-            changed_columns_.append(col)
-            if dtype is not None:
-                dtypes[col] = dtype
-    elif prompt["type"] == "llm":
-        col_string = prompt["changed_columns"][0]
-        col, dtype = parse_column(col_string)
-        if col is None:
-            raise TVPromptError(f"{col_string} can't be parsed as output column")
-        changed_columns = []
-        for i in range(len(prompt["questions"]) - 1):
-            changed_columns.append(col + "_" + str(i + 1))
-        if prompt["output_type"] != "freeform":
-            changed_columns.append(col + "_" + str(len(prompt["questions"])))
-        changed_columns.append(col)
-        if dtype is not None:
-            dtypes[col] = dtype
-    return changed_columns, dtypes
+from tablevault._defintions.tv_errors import TVPromptError
+from tablevault._defintions import prompt_constants
 
 
 def convert_reference(prompt: Prompt) -> Prompt:
@@ -87,7 +48,7 @@ def _parse_dependencies(
     external_deps = {}
     internal_prompt_deps = {}
     internal_deps = {}
-    gen_columns = prompts[table_generator]["parsed_changed_columns"]
+    gen_columns = prompts[table_generator][prompt_constants.CHANGED_COLUMNS]
     for pname in prompts:
         external_deps[pname] = set()
         if pname != table_generator:
@@ -97,16 +58,16 @@ def _parse_dependencies(
             internal_deps[pname] = set()
             internal_prompt_deps[pname] = set()
 
-        for dep in prompts[pname]["dependencies"]:
+        for dep in prompts[pname][prompt_constants.DEPENDENCIES]:
             table, column, instance = parse_dep(dep)
             if instance is None:
                 latest = True
             else:
                 latest = False
-            if table == "self":
+            if table == prompt_constants.TABLE_SELF:
                 internal_deps[pname].add(column)  # TODO check this
                 for pn in prompts:
-                    if column in prompts[pn]["parsed_changed_columns"]:
+                    if column in prompts[pn][prompt_constants.CHANGED_COLUMNS]:
                         internal_prompt_deps[pname].add(pn)
                 continue
             elif not db_metadata.get_table_multiple(table) and instance is not None:
@@ -175,7 +136,7 @@ def parse_prompts(
     all_columns = []
     to_change_columns = []
     for i, pname in enumerate(top_pnames):
-        all_columns += prompts[pname]["parsed_changed_columns"]
+        all_columns += prompts[pname][prompt_constants.CHANGED_COLUMNS]
 
     if origin_id != "":
         to_execute = []
@@ -204,10 +165,10 @@ def parse_prompts(
                     execute = True
             if execute:
                 to_execute.append(pname)
-                to_change_columns += prompts[pname]["parsed_changed_columns"]
+                to_change_columns += prompts[pname][prompt_constants.CHANGED_COLUMNS]
     else:
         for pname in top_pnames:
-            to_change_columns += prompts[pname]["parsed_changed_columns"]
+            to_change_columns += prompts[pname][prompt_constants.CHANGED_COLUMNS]
     return (
         top_pnames,
         to_change_columns,

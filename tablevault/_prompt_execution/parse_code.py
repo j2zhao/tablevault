@@ -4,16 +4,13 @@ from concurrent.futures import ThreadPoolExecutor
 import re
 from tablevault._prompt_parsing import prompt_parser
 from importlib import import_module
-from tablevault._utils import _table_operations
-
+from tablevault._helper import table_operations
+from tablevault._defintions import constants, prompt_constants
 
 def load_function_from_file(file_path: str, function_name: str) -> tuple[Callable, Any]:
-    # Define a namespace to execute the file in
     namespace = {}
-    # Read and execute the file
     with open(file_path, "r") as file:
         exec(file.read(), namespace)
-    # Retrieve the function from the namespace
     if function_name in namespace:
         return namespace[function_name], namespace
     else:
@@ -41,8 +38,8 @@ def _execute_code_from_prompt(
     funct: Callable,
     cache: prompt_parser.Cache,
 ) -> tuple[Any]:
-    is_filled, entry = _table_operations.check_entry(
-        index, prompt["parsed_changed_columns"], cache["self"]
+    is_filled, entry = table_operations.check_entry(
+        index, prompt[prompt_constants.CHANGED_COLUMNS], cache[prompt_constants.TABLE_SELF]
     )
     if is_filled:
         return entry
@@ -104,10 +101,10 @@ def execute_code_from_prompt(
     if is_global:
         code_file = code_file.split(".")[0]
         funct = get_function_from_module(
-            f"tablevault._code_functions.{code_file}", prompt_function
+            f"tablevault.code_functions.{code_file}", prompt_function
         )
     else:
-        code_dir = os.path.join(db_dir, "code_functions")
+        code_dir = os.path.join(db_dir, constants.CODE_FOLDER)
         code_file = os.path.join(code_dir, code_file)
         funct, _ = load_function_from_file(code_file, prompt_function)
 
@@ -121,13 +118,13 @@ def execute_code_from_prompt(
                     indices,
                 )
             )
-            for col, values in zip(prompt["parsed_changed_columns"], zip(*results)):
-                _table_operations.update_column(values, cache["self"], col)
+            for col, values in zip(prompt[prompt_constants.CHANGED_COLUMNS], zip(*results)):
+                table_operations.update_column(values, cache[prompt_constants.TABLE_SELF], col)
     else:
         results = _execute_single_code_from_prompt(prompt, funct, cache)
-        for col, values in prompt["parsed_changed_columns"]:
-            _table_operations.update_column(values, cache["self"], col)
-    _table_operations.write_table(df, instance_id, table_name, db_dir)
+        for col, values in prompt[prompt_constants.CHANGED_COLUMNS]:
+            table_operations.update_column(values, cache[prompt_constants.TABLE_SELF], col)
+    table_operations.write_table(df, instance_id, table_name, db_dir)
 
 
 def execute_gen_table_from_prompt(
@@ -144,20 +141,20 @@ def execute_gen_table_from_prompt(
     if is_global:
         code_file = code_file.split(".")[0]
         funct = get_function_from_module(
-            f"tablevault._code_functions.{code_file}", prompt_function
+            f"tablevault.code_functions.{code_file}", prompt_function
         )
     else:
-        code_dir = os.path.join(db_dir, "code_functions")
+        code_dir = os.path.join(db_dir, ƒ)
         code_file = os.path.join(code_dir, code_file)
         funct, _ = load_function_from_file(code_file, prompt_function)
 
     results = _execute_single_code_from_prompt(prompt, funct, cache)
-    merged_df, changed = _table_operations.merge_columns(
-        prompt["parsed_changed_columns"], results, cache["self"]
+    merged_df, changed = table_operations.merge_columns(
+        prompt[prompt_constants.CHANGED_COLUMNS], results, cache[prompt_constants.TABLE_SELF]
     )
     if changed:
-        cache["self"] = merged_df
-        _table_operations.write_table(merged_df, instance_id, table_name, db_dir)
+        cache[prompt_constants.TABLE_SELF] = merged_df
+        table_operations.write_table(merged_df, instance_id, table_name, db_dir)
         return True
     else:
         return False

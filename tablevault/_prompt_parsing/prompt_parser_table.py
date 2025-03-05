@@ -1,13 +1,13 @@
 from typing import Any, Optional, Union
 import re
-from tablevault._prompt_parsing.types import (
+from tablevault._defintions.types import (
     PromptArg,
     Cache,
     TableReference,
     TableString,
 )
-from tablevault._utils.errors import TVPromptError
-
+from tablevault._defintions.tv_errors import TVPromptError
+from tablevault._defintions import prompt_constants
 
 def parse_arg_from_dict(data: PromptArg) -> PromptArg:
     if isinstance(data, dict):
@@ -138,7 +138,7 @@ def _read_table_reference(
         df = cache[ref.table]
     conditions = {}
     if len(ref.key) == 0:
-        conditions["index"] = index
+        conditions[prompt_constants.TABLE_INDEX] = index
     for condition, value in ref.key.items():
         if isinstance(value, TableReference):
             value = _read_table_reference(value, index=index, cache=cache)

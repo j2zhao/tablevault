@@ -1,12 +1,12 @@
 import pandas as pd
 import os
 from typing import Optional
-from tablevault._prompt_parsing.types import Cache
+from tablevault._defintions.types import Cache
 from typing import Any
 import json
 import numpy as np
-from tablevault._utils.errors import TVTableError
-
+from tablevault._defintions.tv_errors import TVTableError
+from tablevault._defintions import constants
 
 def write_table(
     df: pd.DataFrame, instance_id: str, table_name: str, db_dir: str
@@ -15,10 +15,10 @@ def write_table(
         df.drop(columns="pos_index", inplace=True)
     table_dir = os.path.join(db_dir, table_name)
     table_dir = os.path.join(table_dir, instance_id)
-    table_path = os.path.join(table_dir, "table.csv")
+    table_path = os.path.join(table_dir, constants.TABLE_FILE)
     df.to_csv(table_path, index=False)
     dtypes = {col: str(dtype) for col, dtype in df.dtypes.items()}
-    type_path = os.path.join(table_dir, "dtypes.json")
+    type_path = os.path.join(table_dir, constants.DTYPE_FILE)
     with open(type_path, "w") as f:
         json.dump(dtypes, f)
 
@@ -28,8 +28,8 @@ def get_table(
 ) -> pd.DataFrame:
     table_dir = os.path.join(db_dir, table_name)
     table_dir = os.path.join(table_dir, instance_id)
-    table_path = os.path.join(table_dir, "table.csv")
-    type_path = os.path.join(table_dir, "dtypes.json")
+    table_path = os.path.join(table_dir, constants.TABLE_FILE)
+    type_path = os.path.join(table_dir, constants.DTYPE_FILE)
     try:
         with open(type_path, "r") as f:
             dtypes = json.load(f)
