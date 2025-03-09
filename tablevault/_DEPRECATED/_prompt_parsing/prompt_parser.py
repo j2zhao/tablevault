@@ -1,29 +1,15 @@
 from tablevault._helper import file_operations
 from tablevault._helper.metadata_store import MetadataStore
-from tablevault._prompt_parsing.prompt_parser_common import topological_sort, parse_dep
-from tablevault._prompt_parsing.prompt_parser_table import (
-    parse_arg_from_dict,
-    parse_val_from_arg,
-)
-from tablevault._defintions.types import (
+from tablevault._DEPRECATED.prompt_parser_common import topological_sort, parse_dep
+from tablevault.defintions.types import (
     Prompt,
-    PromptArg,
-    Cache,
     PromptDeps,
     InternalDeps,
     ExternalDeps,
 )
-from tablevault._defintions.tv_errors import TVPromptError
-from tablevault._defintions import prompt_constants
 
-
-def convert_reference(prompt: Prompt) -> Prompt:
-    return parse_arg_from_dict(prompt)
-
-
-def get_table_value(prompt_arg: PromptArg, index: int, cache: Cache) -> str:
-    return parse_val_from_arg(prompt_arg, index, cache)
-
+from tablevault.defintions.tv_errors import TVPromptError
+from tablevault.defintions import prompt_constants
 
 def _parse_dependencies(
     prompts: dict[str, Prompt],

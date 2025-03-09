@@ -1,6 +1,6 @@
 from tablevault import _vault_operations
 from tablevault._helper.metadata_store import ActiveProcessDict
-from tablevault._helper.utils import gen_tv_id
+from tablevault.defintions.utils import gen_tv_id
 
 
 class TableVault:

@@ -1,10 +1,12 @@
 from tablevault._helper import file_operations
 from tablevault._helper.metadata_store import MetadataStore, ActiveProcessDict
-from tablevault._operations._meta_operations import tablevault_operation, stop_operation
+from tablevault._operations._meta_operations import stop_operation, tablevault_operation
 from tablevault._operations import _table_execution
-from tablevault._defintions.types import Prompt, ExternalDeps
-from tablevault._operations._takedown_operations import TAKEDOWN_MAP
-from tablevault._defintions import constants
+from tablevault.defintions.types import ExternalDeps
+from tablevault._operations._takedown_operations import *
+from tablevault._operations._setup_operations import *
+
+from tablevault.defintions import constants
 import os
 
 
@@ -27,24 +29,72 @@ def list_instances(table_name: str, db_dir: str, version: str) -> list[str]:
 def stop_process(process_id: str, db_dir: str, force: bool):
     stop_operation(process_id, db_dir, force)
 
-
-@tablevault_operation
-def copy_files(file_dir: str, table_name: str, db_metadata: MetadataStore):
+#tablevault_operation
+def _copy_files(file_dir: str, table_name: str, db_metadata: MetadataStore):
     file_operations.copy_files(file_dir, table_name, db_metadata.db_dir)
 
+def copy_files(author:str,
+               table_name:str,
+               file_dir:str,
+               process_id:str,
+               db_dir:str):
+    setup_kwargs = {
+        'file_dir': file_dir,
+        'table_name': table_name
+    }
+    tablevault_operation(author,
+                        setup_copy_files,
+                        _copy_files,
+                        takedown_copy_files,
+                        db_dir, 
+                        process_id,
+                        setup_kwargs,
+                        )
 
-@tablevault_operation
-def delete_table(table_name: str, db_metadata: MetadataStore):
+#tablevault_operation
+def _delete_table(table_name: str, db_metadata: MetadataStore):
     file_operations.delete_table_folder(table_name, db_metadata.db_dir)
 
+def delete_table(author:str,
+               table_name:str,
+               process_id:str,
+               db_dir:str):
+    setup_kwargs = {
+        'table_name': table_name
+    }
+    tablevault_operation(author,
+                        setup_delete_table,
+                        _delete_table,
+                        takedown_delete_table,
+                        db_dir, 
+                        process_id,
+                        setup_kwargs,
+                        )
 
-@tablevault_operation
-def delete_instance(instance_id: str, table_name: str, db_metadata: MetadataStore):
+#tablevault_operation
+def _delete_instance(instance_id: str, table_name: str, db_metadata: MetadataStore):
     file_operations.delete_table_folder(table_name, db_metadata.db_dir, instance_id)
 
+def delete_instance(author:str,
+               table_name:str,
+               instance_id: str,
+               process_id:str,
+               db_dir:str):
+    setup_kwargs = {
+        'table_name': table_name,
+        'instance_id':instance_id
+    }
+    tablevault_operation(author,
+                        setup_delete_instance,
+                        _delete_instance,
+                        takedown_delete_instance,
+                        db_dir, 
+                        process_id,
+                        setup_kwargs,
+                        )
 
-@tablevault_operation
-def execute_instance(
+#tablevault_operation
+def _execute_instance(
     table_name: str,
     instance_id: str,
     perm_instance_id: str,
@@ -73,9 +123,29 @@ def execute_instance(
         db_metadata,
     )
 
+def execute_instance(author:str,
+               table_name:str,
+               version: str,
+               force_execute:str,
+               process_id:str,
+               db_dir:str):
+    setup_kwargs = {
+        'table_name': table_name,
+        'version':version,
+        'force_execute':force_execute
+    }
+    tablevault_operation(author,
+                        setup_execute_instance,
+                        _execute_instance,
+                        takedown_execute_instance,
+                        db_dir, 
+                        process_id,
+                        setup_kwargs,
+                        )
 
-@tablevault_operation
-def setup_temp_instance(
+
+#tablevault_operation
+def _setup_temp_instance(
     version: str,
     instance_id: str,
     table_name: str,
@@ -97,16 +167,40 @@ def setup_temp_instance(
             table_name=table_name,
             version=version,
             author=process_id,
-            force_restart=False,
             force_execute=False,
             process_id=step_ids[1],
             db_dir=db_metadata.db_dir,
         )
         db_metadata.update_process_step(process_id, step_ids[1])
 
-
-@tablevault_operation
-def setup_table(
+def setup_temp_instance(author:str,
+               table_name:str,
+               version: str,
+               prev_id:str,
+               copy_previous: bool,
+                prompt_names: list[str] | bool,
+                execute: bool,
+               process_id:str,
+               db_dir:str):
+    setup_kwargs = {
+        'table_name': table_name,
+        'version':version,
+        'prev_id': prev_id,
+        'copy_previous': copy_previous,
+        'prompt_names': prompt_names,
+        'execute': execute
+    }
+    tablevault_operation(author,
+                        setup_setup_temp_instance,
+                        _setup_temp_instance,
+                        takedown_setup_temp_instance,
+                        db_dir, 
+                        process_id,
+                        setup_kwargs,
+                        )
+    
+#tablevault_operation
+def _setup_table(
     table_name: str,
     yaml_dir: str,
     execute: bool,
@@ -142,9 +236,32 @@ def setup_table(
         )
         db_metadata.update_process_step(process_id, step_ids[2])
 
+def setup_table(author:str,
+               table_name:str,
+               create_temp: bool,
+               execute:bool,
+               allow_multiple: bool,
+                yaml_dir: str,
+               process_id:str,
+               db_dir:str):
+    setup_kwargs = {
+        'table_name': table_name,
+        'create_temp':create_temp,
+        'allow_multiple': allow_multiple,
+        'yaml_dir': yaml_dir,
+        'execute': execute
+    }
+    tablevault_operation(author,
+                        setup_setup_table,
+                        _setup_table,
+                        takedown_setup_table,
+                        db_dir, 
+                        process_id,
+                        setup_kwargs,
+                        )
 
-@tablevault_operation
-def copy_database_files(
+#tablevault_operation
+def _copy_database_files(
     yaml_dir: str,
     table_names: list[str],
     code_dir: str,
@@ -185,8 +302,29 @@ def copy_database_files(
         db_metadata.update_process_step(process_id, step_ids[index])
         index += 1
 
-
-@tablevault_operation
+def copy_database_files(author:str,
+               yaml_dir:str,
+               code_dir: str,
+               execute:bool,
+               allow_multiple_tables: list[str],
+               process_id:str,
+               db_dir:str):
+    setup_kwargs = {
+        'allow_multiple_tables':allow_multiple_tables,
+        'code_dir': code_dir,
+        'yaml_dir': yaml_dir,
+        'execute': execute
+    }
+    tablevault_operation(author,
+                        setup_copy_database_files,
+                        _copy_database_files,
+                        takedown_copy_database_files,
+                        db_dir, 
+                        process_id,
+                        setup_kwargs,
+                        )
+    
+#tablevault_operation
 def restart_database(
     process_id: str,
     db_metadata: MetadataStore,

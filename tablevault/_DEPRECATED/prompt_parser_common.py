@@ -1,4 +1,4 @@
-from tablevault._defintions.tv_errors import TVPromptError
+from tablevault.defintions.tv_errors import TVPromptError
 import re
 
 
@@ -36,14 +36,14 @@ def topological_sort(items: list, dependencies: dict) -> list:
     return sorted_order
 
 
-def parse_dep(input_string: str) -> tuple[str, str, str]:
-    pattern = r"^(\w+)(?:\.(\w+))?(?:\((\w+)\))?$"
-    match = re.match(pattern, input_string)
+# def parse_dep(input_string: str) -> tuple[str, str, str]:
+#     pattern = r"^(\w+)(?:\.(\w+))?(?:\((\w+)\))?$"
+#     match = re.match(pattern, input_string)
 
-    if match:
-        part1 = match.group(1)  # First ALPHANUMERIC
-        part2 = match.group(2)  # Second ALPHANUMERIC (optional)
-        part3 = match.group(3)  # ALPHANUMERIC inside parentheses (optional)
-        return part1, part2, part3
-    else:
-        raise TVPromptError("Input string does not match the expected format.")
+#     if match:
+#         part1 = match.group(1)  # First ALPHANUMERIC
+#         part2 = match.group(2)  # Second ALPHANUMERIC (optional)
+#         part3 = match.group(3)  # ALPHANUMERIC inside parentheses (optional)
+#         return part1, part2, part3
+#     else:
+#         raise TVPromptError("Input string does not match the expected format.")

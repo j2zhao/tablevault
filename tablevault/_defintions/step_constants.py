@@ -1,6 +1,0 @@
-WRITE_LOG = "write_log"
-EX_CLEAR_TABLE = "clear_table"
-EX_NO_UPDATE = "no_update"
-EX_MAT = "materialized"
-EX_RESTART_FORCED = "restart_forced"
-EX_RESTART = "restart"

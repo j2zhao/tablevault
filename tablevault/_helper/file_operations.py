@@ -4,10 +4,9 @@ import pandas as pd
 import json
 import yaml
 import filecmp
-from tablevault._defintions.types import Prompt
-from tablevault._defintions.tv_errors import TVFileError
+from tablevault.defintions.tv_errors import TVFileError
 from tablevault._helper.database_lock import DatabaseLock
-from tablevault._defintions import constants, prompt_constants
+from tablevault.defintions import constants
 
 def delete_database_folder(db_dir) -> None:
     shutil.rmtree(db_dir)
@@ -63,12 +62,13 @@ def setup_table_instance_folder(
     # create or copy promtpts
     prompt_dir = os.path.join(temp_dir, constants.PROMPT_FOLDER)
     current_table_path = os.path.join(temp_dir, constants.TABLE_FILE)
+    metadata = {}
 
     if origin != "":
         prev_dir = os.path.join(table_dir, str(origin))
         prev_prompt_dir = os.path.join(prev_dir, constants.PROMPT_FOLDER)
         shutil.copytree(prev_prompt_dir, prompt_dir, copy_function=shutil.copy2)
-
+        metadata[constants.INSTANCE_ORIGIN] = origin
     elif len(prompts) != 0:
         os.makedirs(prompt_dir)
         df = pd.DataFrame()
@@ -78,11 +78,17 @@ def setup_table_instance_folder(
             prompt_path_ = os.path.join(prompt_dir_, prompt + ".yaml")
             prompt_path = os.path.join(prompt_dir, prompt + ".yaml")
             shutil.copy2(prompt_path_, prompt_path)
+        metadata[constants.INSTANCE_ORIGIN] = ''
     else:
         os.makedirs(prompt_dir)
+        metadata[constants.INSTANCE_ORIGIN] = ''
+    metadata_dir = os.path.join(temp_dir, constants.METADATA_FOLDER)
+    os.makedirs(metadata_dir)
+    metadata_file = os.path.join(metadata_dir, constants.METADATA_FILE)
+    with open(metadata_file, 'w') as f:
+        yaml.safe_dump(metadata, f)
     df = pd.DataFrame()
     df.to_csv(current_table_path, index=False)
-
 
 def setup_table_folder(table_name: str, db_dir: str) -> None:
     table_dir = os.path.join(db_dir, table_name)
@@ -115,10 +121,19 @@ def delete_table_folder(table_name: str, db_dir: str, instance_id: str = "") -> 
     if os.path.isdir(table_dir):
         shutil.rmtree(table_dir)
 
-
-def get_prompts(
+def get_yaml_metadata(
     instance_id: str, table_name: str, db_dir: str
-) -> dict[str, Prompt]:
+) -> dict[str, dict]:
+    table_dir = os.path.join(db_dir, table_name)
+    if instance_id != "":
+        table_dir = os.path.join(table_dir, instance_id)
+    meta_file = os.path.join(table_dir, constants.METADATA_FOLDER, constants.METADATA_FILE)
+    with open(meta_file, "r") as file:
+        return yaml.safe_load(file)
+
+def get_yaml_prompts(
+    instance_id: str, table_name: str, db_dir: str
+) -> dict[str, dict]:
     table_dir = os.path.join(db_dir, table_name)
     if instance_id != "":
         table_dir = os.path.join(table_dir, instance_id)
@@ -130,17 +145,17 @@ def get_prompts(
             prompt_path = os.path.join(prompt_dir, item)
             with open(prompt_path, "r") as file:
                 prompt = yaml.safe_load(file)
-                prompt[prompt_constants.NAME] = name
+                prompt[constants.PNAME] = name
             prompts[name] = prompt
     return prompts
 
 
-def get_db_prompts(db_dir: str) -> dict[str, Prompt]:
+def get_db_yaml_prompts(db_dir: str) -> dict[str, dict[str, dict]]:
     prompts = {}
     for table_name in os.listdir(db_dir):
         prompt_dir = os.path.join(db_dir, table_name, constants.PROMPT_FOLDER)
         if os.path.exists(prompt_dir):
-            prompts[table_name] = get_prompts("", table_name, db_dir)
+            prompts[table_name] = get_yaml("", table_name, db_dir)
     return prompts
 
 

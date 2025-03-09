@@ -3,12 +3,12 @@ import os
 from typing import Optional, Any
 import time
 from filelock import FileLock
-from tablevault._defintions.tv_errors import TVArgumentError, TVProcessError
+from tablevault.defintions.tv_errors import TVArgumentError, TVProcessError
 import pprint
 import mmap
-from tablevault._defintions.types import ProcessLog, ColumnHistoryDict, TableHistoryDict, TableMultipleDict, ActiveProcessDict
+from tablevault.defintions.types import ProcessLog, ColumnHistoryDict, TableHistoryDict, TableMultipleDict, ActiveProcessDict
 from dataclasses import asdict
-from tablevault._defintions import constants
+from tablevault.defintions import constants
 import psutil
 import logging
 logger = logging.getLogger(__name__)
@@ -262,8 +262,6 @@ class MetadataStore:
             log = logs[process_id]
             if log.execution_success is not None:
                 raise  TVProcessError("Process id {process_id} completed. Cannot write afterwards.")
-            if log.start_success is None:
-                raise  TVProcessError("Process id {process_id} not started. Cannot write before.")
             log.log_time = time.time()
             logs[process_id].data.update(data)
             self._save_active_logs(logs)
@@ -338,10 +336,13 @@ class MetadataStore:
                     max_start_time = start_time
                     max_changed_time = changed_time
                     max_id = instance_id
+            if max_id == 0:
+                raise TVArgumentError(f"Cannot find instance for table_name: {table_name}, version: {version}")
             return max_changed_time, max_start_time, max_id
 
     def get_last_column_update(
-        self, table_name: str, column: str, before_time: Optional[int] = None
+        self, table_name: str, column: str, before_time: Optional[int] = None,
+        version: str = "base"
     ) -> tuple[float, float, str]:
         """
         Returns 0 when we didn't find any tables that meet conditions.
@@ -355,6 +356,8 @@ class MetadataStore:
             max_mat_time = 0
             max_id = 0
             for instance_id in columns_history[table_name]:
+                if version != "" and not instance_id.startswith(version):
+                    continue
                 if column in columns_history[table_name][instance_id]:
                     mat_time = columns_history[table_name][instance_id][column]
                     _, start_time = table_history[table_name][instance_id]
@@ -364,6 +367,8 @@ class MetadataStore:
                         max_mat_time = mat_time
                         max_start_time = start_time
                         max_id = instance_id
+            if max_id == 0:
+                raise TVArgumentError(f"Cannot find instance for table_name: {table_name}, version: {version}, column: {column}")
             return max_mat_time, max_start_time, max_id
 
     def print_active_processes(
@@ -384,7 +389,6 @@ class MetadataStore:
             if print_all:
                 pprint.pprint(active_logs)
             elif print:
-                #logs = "\n".join(list(active_logs.keys()))
                 print(active_logs)
             else:
                 return active_logs

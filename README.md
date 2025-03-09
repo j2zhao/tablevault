@@ -12,8 +12,11 @@ t.b.d.
 
 **LOOK HERE**: See examples/run_basic_script.ipynb and examples/run_basic_object.ipynb for a walkthrough of basic functionalities.
 
+
 **Advanced ToDos**
-- Write up better documentation (WEDNESDAY)
+- Think about how I can have time and money estimations (!)
+- Think about how I can enable multiple data type documents
+
+CURRENT
+- Write up better documentation (Thursday?)
 - rework testing so that it works (WEDNESDAY)
-- REDO yaml execution so that it is more universal (TUESDAY)
-- REDO yaml execution so that it is more universal 

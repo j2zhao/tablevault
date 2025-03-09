@@ -1,3 +1,4 @@
+
 class TableVaultError(Exception):
     """Base Class for all TableVault Errors."""
 
@@ -38,5 +39,6 @@ class TVTableError(TableVaultError):
     pass
 
 
-class TVRollbackError(TableVaultError):
+class TVImplementationError(TableVaultError):
+
     pass

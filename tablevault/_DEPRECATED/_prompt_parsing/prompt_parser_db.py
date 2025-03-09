@@ -1,7 +1,7 @@
 from tablevault._helper.file_operations import get_db_prompts
-from tablevault._defintions.types import Prompt
-from tablevault._prompt_parsing.prompt_parser_common import topological_sort, parse_dep
-from tablevault._defintions import prompt_constants
+from tablevault.defintions.types import Prompt
+from tablevault._DEPRECATED.prompt_parser_common import topological_sort, parse_dep
+from tablevault.defintions import prompt_constants
 
 def _get_table_dependencies(table_name: str, prompts: dict[str, Prompt]) -> list[str]:
     dependencies = set()

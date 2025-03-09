@@ -4,8 +4,8 @@ from concurrent.futures import ThreadPoolExecutor
 import re
 from tablevault._prompt_parsing import prompt_parser
 from importlib import import_module
-from tablevault._helper import table_operations
-from tablevault._defintions import constants, prompt_constants
+from tablevault.prompts.utils import table_operations
+from tablevault.defintions import constants, prompt_constants
 
 def load_function_from_file(file_path: str, function_name: str) -> tuple[Callable, Any]:
     namespace = {}
@@ -97,7 +97,6 @@ def execute_code_from_prompt(
         n_threads = prompt["n_threads"]
     else:
         n_threads = 1
-
     if is_global:
         code_file = code_file.split(".")[0]
         funct = get_function_from_module(
@@ -122,7 +121,7 @@ def execute_code_from_prompt(
                 table_operations.update_column(values, cache[prompt_constants.TABLE_SELF], col)
     else:
         results = _execute_single_code_from_prompt(prompt, funct, cache)
-        for col, values in prompt[prompt_constants.CHANGED_COLUMNS]:
+        for col, values in zip(prompt[prompt_constants.CHANGED_COLUMNS], results):
             table_operations.update_column(values, cache[prompt_constants.TABLE_SELF], col)
     table_operations.write_table(df, instance_id, table_name, db_dir)
 

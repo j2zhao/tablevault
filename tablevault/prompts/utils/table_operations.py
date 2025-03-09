@@ -1,12 +1,12 @@
 import pandas as pd
 import os
 from typing import Optional
-from tablevault._defintions.types import Cache
+from tablevault.defintions.types import Cache
 from typing import Any
 import json
 import numpy as np
-from tablevault._defintions.tv_errors import TVTableError
-from tablevault._defintions import constants
+from tablevault.defintions.tv_errors import TVTableError
+from tablevault.defintions import constants
 
 def write_table(
     df: pd.DataFrame, instance_id: str, table_name: str, db_dir: str

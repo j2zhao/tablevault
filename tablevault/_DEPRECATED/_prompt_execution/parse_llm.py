@@ -10,9 +10,8 @@ import re
 from tablevault._llm_functions.open_ai_thread import Open_AI_Thread, add_open_ai_secret
 from tablevault._prompt_parsing import prompt_parser
 from tablevault._prompt_execution import llm_prompts
-from tablevault._helper import table_operations
-from tablevault._defintions import prompt_constants
-from tablevault._defintions.tv_errors import TVPromptError
+from tablevault.prompts.utils import table_operations
+from tablevault.defintions.tv_errors import TVPromptError
 
 # timer = StepsTimer()
 

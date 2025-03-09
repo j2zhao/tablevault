@@ -1,9 +1,9 @@
-from tablevault._defintions import constants
+from tablevault.defintions import constants
 from tablevault._helper.database_lock import DatabaseLock
 from tablevault._helper.metadata_store import MetadataStore
 from tablevault._helper import file_operations
 
-def takedown_copy_files(process_id:str, 
+def takedown_copy_files(process_id:str,
                         db_metadata:MetadataStore, 
                         db_locks:DatabaseLock, 
                         execution_success: bool):
@@ -19,43 +19,62 @@ def takedown_delete_table(process_id:str,
                         db_metadata:MetadataStore, 
                         db_locks:DatabaseLock, 
                         execution_success: bool):
+    args = db_metadata.get_active_processes()[process_id].data
+
     if not execution_success:
         try:
             file_operations.copy_temp_to_db(process_id, db_metadata.db_dir)
+            if "table_name" in args:
+                db_locks.make_lock_path(args["table_name"])
         except:
             pass
     file_operations.delete_from_temp(process_id, db_metadata.db_dir)
+    if execution_success:
+        db_locks.delete_lock_path(args["table_name"])
     db_locks.release_all_locks()
 
-def takedown_delete_instance(process_id:str, 
+def takedown_delete_instance(process_id:str,
                         db_metadata:MetadataStore, 
                         db_locks:DatabaseLock, 
                         execution_success: bool):
+    args = db_metadata.get_active_processes()[process_id].data
     if not execution_success:
         try:
             file_operations.copy_temp_to_db(process_id, db_metadata.db_dir)
+            if "instance_id" in args:
+                db_locks.make_lock_path(args["table_name"], args["instance_id"])
         except:
             pass
+    
     file_operations.delete_from_temp(process_id, db_metadata.db_dir)
+    if execution_success:
+        db_locks.delete_lock_path(args["table_name"], args["instance_id"])
     db_locks.release_all_locks()
 
 def takedown_execute_instance(process_id:str, 
                         db_metadata:MetadataStore, 
                         db_locks:DatabaseLock, 
                         execution_success: bool):
+    args = db_metadata.get_active_processes()[process_id].data
     if not execution_success:
-        pass
+        if 'instance_id' in args:
+            db_locks.make_lock_path(args["table_name"], args["instance_id"])
+        if "perm_instance_id" in args:
+            db_locks.delete_lock_path(args["table_name"], args["perm_instance_id"])
+    if execution_success:
+        db_locks.delete_lock_path(args["table_name"], args["instance_id"])
     db_locks.release_all_locks()
 
 def takedown_setup_temp_instance(process_id:str, 
                         db_metadata:MetadataStore, 
                         db_locks:DatabaseLock, 
                         execution_success: bool):
+    args = db_metadata.get_active_processes()[process_id].data
     if not execution_success:
+        if 'instance_id' in args:
+            db_locks.make_lock_path(args["table_name"], args["instance_id"])
         try:
-            table_name = db_metadata.get_active_processes()[process_id].data["table_name"]
-            instance_id = db_metadata.get_active_processes()[process_id].data["instance_id"]
-            file_operations.delete_table_folder(table_name, db_metadata.db_dir, instance_id)
+            file_operations.delete_table_folder(args["table_name"], db_metadata.db_dir, args["instance_id"])
         except:
             pass
     file_operations.delete_from_temp(process_id, db_metadata.db_dir)
@@ -65,10 +84,12 @@ def takedown_setup_table(process_id:str,
                         db_metadata:MetadataStore, 
                         db_locks:DatabaseLock, 
                         execution_success: bool):
+    args = db_metadata.get_active_processes()[process_id].data
     if not execution_success:
+        if "table_name" in args:
+            db_locks.make_lock_path(args["table_name"])
         try:
-            table_name = db_metadata.get_active_processes()[process_id].data["table_name"]
-            file_operations.delete_table_folder(table_name, db_metadata.db_dir)
+            file_operations.delete_table_folder(args["table_name"], db_metadata.db_dir)
         except:
             pass
     file_operations.delete_from_temp(process_id, db_metadata.db_dir)
