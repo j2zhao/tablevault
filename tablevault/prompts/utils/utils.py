@@ -3,11 +3,10 @@ from typing import Any, Callable
 import os
 from tablevault.defintions import constants
 from tablevault.defintions import tv_errors
-from tablevault.defintions import constants
+ 
 
-def load_function_from_file(file_path: str, function_name: str, db_dir: str) -> tuple[Callable, Any]:
-    file_path_ = os.path.join(db_dir, constants.CODE_FOLDER)
-    file_path_ = os.path.join(db_dir, file_path)
+def load_function_from_file(module_name: str, function_name: str, db_dir: str) -> tuple[Callable, Any]:
+    file_path_ = os.path.join(db_dir, constants.CODE_FOLDER, module_name + '.py')
     try:
         namespace = {}
         with open(file_path_, "r") as file:
@@ -28,7 +27,6 @@ def get_function_from_module(module_name: str, function_name: str, is_tablevault
     func = getattr(module, function_name, None)
     # Validate it's actually callable
     if not callable(func):
-        print(type(func))
         raise TypeError(f"'{function_name}' in '{module_name}' is not a callable.")
 
     return func

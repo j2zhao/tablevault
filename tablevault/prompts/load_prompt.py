@@ -14,6 +14,7 @@ def load_prompt(yaml_prompt: dict) -> TVPrompt:
     if constants.PTYPE not in yaml_prompt:
         raise TVPromptError(f"Prompt {yaml_prompt[constants.PNAME]} doesn't contain required attribute {constants.PTYPE}.")
     try:
-        PTYPE_MAPPING[yaml_prompt["ptype"]](yaml_prompt)
+        prompt = PTYPE_MAPPING[yaml_prompt["ptype"]](**yaml_prompt)
+        return prompt
     except Exception as e:
         raise TVPromptError(f'Error {e} when generating prompt {yaml_prompt[constants.PNAME]}')

@@ -22,7 +22,7 @@ class ProcessLog:
     log_time: float
     operation: str
     complete_steps: list[str]
-    step_times = list[float]
+    step_times: list[float]
     data: dict[str, Any]
     execution_success: Optional[bool]
     start_success: Optional[bool]
@@ -35,8 +35,9 @@ class ProcessLog:
 
 
 ColumnHistoryDict = dict[str, dict[str, dict[str, dict[str, float]]]]
-TableHistoryDict = dict[str, dict[str, tuple[float, float]]]
-TableMultipleDict = dict[str, bool]
+TableHistoryDict = dict[str, dict[str, tuple[float, float, float]]]
+TableMetadataDict = dict[str, dict[str,Any]]
+InstanceMetadataDict = dict[str, dict[str,dict[str,Any]]]
 ActiveProcessDict = dict[str, ProcessLog]
 
 SETUP_OUTPUT =  dict[str, Any]

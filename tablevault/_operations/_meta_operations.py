@@ -4,15 +4,14 @@ For each operation we want to be able to write the logs to db, and fetch locks
 """
 
 from tablevault.defintions import tv_errors, constants
-from tablevault._helper.database_lock import DatabaseLock
-from tablevault._helper.metadata_store import MetadataStore
-from tablevault._operations._setup_operations import SETUP_MAP
+from tablevault.helper.database_lock import DatabaseLock
+from tablevault.helper.metadata_store import MetadataStore
 from tablevault._operations._takedown_operations import TAKEDOWN_MAP
+from tablevault._operations._setup_operations import SETUP_MAP
 from tablevault._operations._table_execution import execute_instance
 import inspect
-from tablevault.defintions.utils import gen_tv_id
+from tablevault.helper.utils import gen_tv_id
 from typing import Callable, Any
-from tablevault._helper.file_operations import get_prompts, get_db_prompts
 import os
 import logging
 import multiprocessing
@@ -38,17 +37,16 @@ def background_instance_execution(process_id, db_dir):
     except tv_errors.TableVaultError as e:
         error = (e.__class__.__name__, str(e))
         db_metadata.update_process_execution_status(process_id, success=False, error=error)
-        TAKEDOWN_MAP[constants.EXECUTE_OP](process_id, db_metadata, db_locks, False)
+        TAKEDOWN_MAP[constants.EXECUTE_OP](process_id, db_metadata, db_locks)
         db_metadata.write_process(process_id)
         raise e
     db_metadata.update_process_execution_status(process_id, success=True)
-    TAKEDOWN_MAP[constants.EXECUTE_OP](process_id, db_metadata, db_locks, True)
+    TAKEDOWN_MAP[constants.EXECUTE_OP](process_id, db_metadata, db_locks)
     db_metadata.write_process(process_id)
 
 def tablevault_operation(author:str,
-                        setup_func: Callable,
-                        tablevault_func: Callable,
-                        takedown_func: Callable,
+                        op_name:str,
+                        op_funct: Callable,
                         db_dir:str, 
                         process_id:str,
                         setup_kwargs: dict[str, Any],
@@ -56,7 +54,6 @@ def tablevault_operation(author:str,
                         ):
     db_metadata = MetadataStore(db_dir)
     
-    op_name = tablevault_func.__name__
     if process_id != "":
         process_id = process_id
     else:
@@ -66,19 +63,21 @@ def tablevault_operation(author:str,
     funct_kwargs = None
     if process_id in logs:
         log = logs[process_id]
+        if 'background' in log.data:
+            background = log.data['background']
         db_metadata.update_process_pid(process_id, os.getpid())
         if log.execution_success is False:
-            takedown_func(process_id, db_metadata, db_locks, False)
+            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
             db_metadata.write_process(process_id)
             if log.error is not None:
                 err = getattr(tv_errors, log.error[0], RuntimeError)
                 raise err(log.error[1])
         elif log.execution_success is True:
-            takedown_func(process_id, db_metadata, db_locks,  True)
+            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
             db_metadata.write_process(process_id)
             return
         elif log.start_success is False:
-            takedown_func(process_id, db_metadata, db_locks, True)
+            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
             db_metadata.write_process(process_id)
             if log.error is not None:
                 err = getattr(tv_errors, log.error[0], RuntimeError)
@@ -93,43 +92,44 @@ def tablevault_operation(author:str,
                                         op_name,
                                         os.getpid()
                                         )
+    if background:
+        db_metadata.update_process_data(process_id, {'background':background})
     if funct_kwargs == None:
         try:
-            setup_func['start_time'] = start_time
+            setup_kwargs['start_time'] = start_time
             setup_kwargs["db_locks"] = db_locks
             setup_kwargs["db_metadata"] = db_metadata
             setup_kwargs["process_id"] = process_id
-            setup_kwargs = filter_by_function_args(setup_kwargs, setup_func)
-            funct_kwargs = setup_func(**setup_kwargs)
-        except Exception as e:
+            setup_kwargs = filter_by_function_args(setup_kwargs, SETUP_MAP[op_name])
+            funct_kwargs = SETUP_MAP[op_name](**setup_kwargs)
+        except tv_errors.TableVaultError as e:
             error = (e.__class__.__name__, str(e))
             db_metadata.update_process_start_status(process_id, success=False, error=error)
-            takedown_func(process_id, db_metadata, db_locks, False)
+            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
             db_metadata.write_process(process_id)
             raise e
         db_metadata.update_process_start_status(process_id, success=True)
     
     if op_name == constants.EXECUTE_OP and background:
         p = multiprocessing.Process(target=background_instance_execution, args=(process_id, db_metadata.db_dir))
+        p.start()
         db_metadata.update_process_pid(process_id, p.pid, force=True)
         logger.info(f"Start background execution {op_name}: ({process_id}, {p.pid})")
-        p.start()
     else:
         funct_kwargs["db_metadata"] = db_metadata
         funct_kwargs["process_id"] = process_id
-        funct_kwargs = filter_by_function_args(funct_kwargs, tablevault_func)
+        funct_kwargs = filter_by_function_args(funct_kwargs, op_funct)
         logger.info(f"Start execution {op_name}: {process_id}")
         try:
-            logger.info(f"Start execution {op_name}: {process_id}")
-            tablevault_func(**funct_kwargs)
+            op_funct(**funct_kwargs)
         except tv_errors.TableVaultError as e:
             error = (e.__class__.__name__, str(e))
             db_metadata.update_process_execution_status(process_id, success=False, error=error)
-            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks, False)
+            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
             db_metadata.write_process(process_id)
             raise e
         db_metadata.update_process_execution_status(process_id, success=True)
-        TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks, True)
+        TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
         db_metadata.write_process(process_id)
 
 def stop_operation(process_id:str, db_dir:str, force:bool):
@@ -151,7 +151,17 @@ def stop_operation(process_id:str, db_dir:str, force:bool):
         except psutil.NoSuchProcess:
             pass
         db_locks = DatabaseLock(process_id, db_dir)
-        TAKEDOWN_MAP[logs[process_id].operation](process_id, db_metadata, db_locks,  True)
+        if logs[process_id].start_success is None:
+            db_metadata.update_process_start_status(process_id, False)
+            execution_success = False
+        elif logs[process_id].execution_success is None:
+            db_metadata.update_process_execution_status(process_id, success=False)
+            execution_success = False
+        elif logs[process_id].execution_success is True:
+            execution_success = True
+        else:
+            execution_success = False
+        TAKEDOWN_MAP[logs[process_id].operation](process_id, db_metadata, db_locks,  execution_success)
         db_metadata.write_process(process_id)
     else:
         raise tv_errors.TVProcessError(f"Process {process_id} not active.")

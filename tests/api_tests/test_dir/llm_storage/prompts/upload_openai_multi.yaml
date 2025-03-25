@@ -1,0 +1,11 @@
+ptype: CodePrompt
+dependencies: [self.paper_name, stories.paper_name, stories.artifact_name]
+changed_columns: [openai_id]
+python_function: upload_file_from_table
+code_module: open_ai_store
+is_custom: false
+is_udf: true
+arguments:
+  file_path: <<stories.artifact_name[paper_name:self.paper_name]>>
+  key_file: ../test_data/open_ai_key/key.txt
+n_threads: 3

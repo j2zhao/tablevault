@@ -1,31 +1,31 @@
-from pydantic import model_validator
+from pydantic import Field
 from tablevault.prompts.base_ptype import TVPrompt
 from tablevault.defintions.types import Cache
 from tablevault.prompts.utils import utils, table_operations
+from tablevault.prompts.table_string import apply_table_string
 from tablevault.defintions import constants
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, Any, Optional
 
 class CodePrompt(TVPrompt):
-    is_global: bool
-    is_udf: bool
-    n_threads: int = 1
-    code_file: str
-    python_function: str
-    arguments: dict[str, Any]
+    is_custom: bool = Field(description="Custom to database.")
+    is_udf: bool = Field(description="Is UDF function.")
+    n_threads: int = Field(default=1, description="Number of Threads to run (if udf).")
+    code_module: str = Field(description="Module of function.") 
+    python_function: str = Field(description="Function to execute.")
+    arguments: dict[str, Any] = Field(description="Function Arguments. DataTable and TableStrings are valid.")
 
     def execute(self,
                 cache: Cache,
                 instance_id: str,
                 table_name: str,
                 db_dir: str) -> bool:
-        if self.is_global:
-            code_file = self.code_file.split(".")[0]
+        if not self.is_custom:
             funct = utils.get_function_from_module(
-                code_file, self.python_function
+                self.code_module, self.python_function
             )
         else:
-            funct, _ = utils.load_function_from_file(self.code_file, self.python_function, db_dir)
+            funct, _ = utils.load_function_from_file(self.code_module, self.python_function, db_dir)
         df = cache[constants.TABLE_SELF]
 
         if self.is_udf:
@@ -40,26 +40,26 @@ class CodePrompt(TVPrompt):
                 for col, values in zip(self.changed_columns, zip(*results)):
                     table_operations.update_column(values, cache[constants.TABLE_SELF], col)
         else:
-            results = _execute_code_from_prompt(None, self, funct, cache)
+            results = _execute_code_from_prompt(-1, self, funct, cache)
             for col, values in zip(self.changed_columns, results):
                 table_operations.update_column(values, cache[constants.TABLE_SELF], col)
         table_operations.write_table(df, instance_id, table_name, db_dir)
 
 
 def _execute_code_from_prompt(
-    index: Optional[int],
+    index: int,
     prompt: CodePrompt,
     funct: Callable,
     cache: Cache,
 ) -> Any:
-    if index != None:
+    if index >=0:
         is_filled, entry = table_operations.check_entry(
             index, prompt.changed_columns, cache[constants.TABLE_SELF]
         )
         if is_filled:
             return entry
 
-    kwargs = utils.parse_table_string(prompt.arguments, cache)
+    kwargs = apply_table_string(prompt.arguments, cache, index)
     results = funct(**kwargs)
     return results
 

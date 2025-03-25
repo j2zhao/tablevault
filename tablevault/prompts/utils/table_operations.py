@@ -7,6 +7,8 @@ import json
 import numpy as np
 from tablevault.defintions.tv_errors import TVTableError
 from tablevault.defintions import constants
+from tablevault.helper.metadata_store import MetadataStore
+from tablevault.prompts.utils import artifact
 
 def write_table(
     df: pd.DataFrame, instance_id: str, table_name: str, db_dir: str
@@ -32,8 +34,13 @@ def get_table(
     type_path = os.path.join(table_dir, constants.DTYPE_FILE)
     try:
         with open(type_path, "r") as f:
-            dtypes = json.load(f)
+            content = f.read().strip()
+            if not content:
+                dtypes = {}
+            else:
+                dtypes = json.loads(content)
         df = pd.read_csv(table_path, nrows=rows, dtype=dtypes)
+        df.index.name = 'index'
         return df
     except pd.errors.EmptyDataError:
         return pd.DataFrame()
@@ -43,17 +50,28 @@ def fetch_table_cache(
     external_dependencies: list,
     instance_id: str,
     table_name: str,
-    db_dir: str,
+    db_metadata:MetadataStore,
 ) -> Cache:
+    table_meta = db_metadata.get_table_property()
     cache = {}
-    cache["self"] = get_table(instance_id, table_name, db_dir)
+    temp = get_table(instance_id, table_name, db_metadata.db_dir)
 
+    a_dir = artifact.get_artifact_folder(instance_id, 
+                                         table_name,
+                                         db_metadata.db_dir, 
+                                         table_meta[table_name][constants.TABLE_ALLOW_MARTIFACT])
+    
+    cache["self"] = artifact.df_artifact_to_path(temp, a_dir)
+    
     for dep in external_dependencies:
-        table, _, instance, _, latest = dep
-        if latest:
-            cache[table] = get_table(instance, table, db_dir)
-        else:
-            cache[(table, instance)] = get_table(instance, table, db_dir)
+        table, _, instance, _, version = dep
+        temp = get_table(instance, table, db_metadata.db_dir)
+        a_dir = artifact.get_artifact_folder(instance, 
+                                             table,
+                                             db_metadata.db_dir, 
+                                             table_meta[table][constants.TABLE_ALLOW_MARTIFACT])
+    
+        cache[(table, version)] = artifact.df_artifact_to_path(temp, a_dir)
     return cache
 
 
@@ -85,23 +103,35 @@ def update_table_columns(
 
 def merge_columns(
     columns: list[str], new_df: pd.DataFrame, old_df: pd.DataFrame
-) -> tuple[pd.DataFrame, bool]:
+) -> tuple[pd.DataFrame, bool, pd.DataFrame, pd.DataFrame]:
+    # Make sure new_df columns have the same dtype as in old_df
     all_columns = list(old_df.columns)
     for col in all_columns:
         if col in new_df.columns:
             new_df[col] = new_df[col].astype(old_df[col].dtype)
-
+    
+    # Merge on the provided key columns
     merged_df = pd.merge(new_df, old_df, how="left", on=columns)
     merged_df = merged_df[all_columns]
+    
+    # Check if key columns differ between merged_df and old_df
+    diff_flag = not merged_df[columns].equals(old_df[columns])
+    
+    # # Use a full outer merge with indicator to get differences
+    # diff_df = pd.merge(merged_df, old_df, how="outer", indicator=True)
+    
+    # # Rows that exist in merged_df but not in old_df
+    # only_in_merged = diff_df[diff_df["_merge"] == "left_only"].drop(columns=["_merge"])
+    
+    # # Rows that exist in old_df but not in merged_df
+    # only_in_old = diff_df[diff_df["_merge"] == "right_only"].drop(columns=["_merge"])
+    
+    return merged_df, diff_flag
 
-    if not merged_df[columns].equals(old_df[columns]):
-        return merged_df, True
-    else:
-        return merged_df, False
 
 
 def update_column(colunm: Any, df: pd.DataFrame, col_name: str) -> pd.DataFrame:
-    colunm = _convert_series_to_dtype(colunm)
+    colunm = _convert_series_to_dtype(colunm, df[col_name].dtype)
     df[col_name] = colunm
     return df
 

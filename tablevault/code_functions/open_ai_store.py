@@ -43,11 +43,8 @@ def delete_files(key_file):
 
     client = openai.OpenAI()
     files = list(client.files.list())
-    print(files)
     vector_stores = list(client.beta.vector_stores.list())
-    print(vector_stores)
     my_assistants = list(client.beta.assistants.list())
-    print(my_assistants)
     for store in tqdm(vector_stores):
         try:
             client.beta.vector_stores.delete(vector_store_id=store.id)
@@ -68,9 +65,6 @@ def delete_files(key_file):
             print(e)
             pass
 
-    print(client.beta.vector_stores.list())
-    print(client.files.list())
-    print(client.beta.assistants.list())
     df = pd.DataFrame(columns=["paper_name", "paper_path"])
     return df
 

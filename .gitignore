@@ -3,6 +3,8 @@
 examples/open_ai_key/key.txt
 test_database/
 sample_database/
+tests/test_data/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

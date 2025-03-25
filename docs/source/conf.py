@@ -20,10 +20,15 @@ release = '0.0.0'
 
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinxcontrib.autodoc_pydantic'
 ]
 
 templates_path = ['_templates']
 exclude_patterns = []
+
+
+autodoc_pydantic_model_show_json = False
+autodoc_pydantic_model_show_validator_members = False
 
 
 

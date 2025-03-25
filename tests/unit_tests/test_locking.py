@@ -1,4 +1,4 @@
-from tablevault._helper.database_lock import DatabaseLock
+from tablevault.helper.database_lock import DatabaseLock
 import shutil
 import os
 

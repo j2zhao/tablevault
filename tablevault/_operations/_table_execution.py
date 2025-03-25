@@ -1,5 +1,5 @@
-from tablevault._helper.metadata_store import MetadataStore
-from tablevault._helper import file_operations
+from tablevault.helper.metadata_store import MetadataStore
+from tablevault.helper import file_operations
 from tablevault.defintions.types import ExternalDeps
 from tablevault.prompts.utils import table_operations
 from tablevault.defintions import constants
@@ -13,20 +13,20 @@ def execute_instance(
     to_change_columns: list[str],
     all_columns: list[str],
     external_deps: ExternalDeps,
-    prev_instance_id: str,
     prev_completed_steps: list[str],
     update_rows: bool,
     process_id: str,
     db_metadata: MetadataStore,
 ):
+    db_metadata.start_execute_operation(table_name)
     yaml_prompts = file_operations.get_yaml_prompts(instance_id, table_name, db_metadata.db_dir)
     prompts = {pname: load_prompt(yprompt) for pname, yprompt in yaml_prompts.items()}
     column_dtypes = {}
     for pname in top_pnames:
         column_dtypes.update(prompts[pname].dtypes)
-    
-    if not constants.EX_CLEAR_TABLE not in prev_completed_steps:
-        if prev_instance_id != "":
+    if constants.EX_CLEAR_TABLE not in prev_completed_steps:
+        prev_instance_id = db_metadata.get_table_property(table_name, constants.INSTANCE_ORIGIN, instance_id)
+        if prev_instance_id != "": 
             file_operations.copy_table(
                 instance_id, prev_instance_id, table_name, db_metadata.db_dir
             )
@@ -51,7 +51,7 @@ def execute_instance(
             external_deps[pname],
             instance_id,
             table_name,
-            db_metadata.db_dir,
+            db_metadata,
         )
         if i == 0:
             update_rows = prompts[pname].execute(cache, instance_id, table_name, db_metadata.db_dir)
@@ -69,7 +69,11 @@ def execute_instance(
             db_metadata.update_process_step(process_id, constants.EX_NO_UPDATE)
     else:
         if constants.EX_MAT not in prev_completed_steps:
-            file_operations.materialize_table_folder(
+            file_operations.rename_table_instance(
                 perm_instance_id, instance_id, table_name, db_metadata.db_dir
             )
             db_metadata.update_process_step(process_id, constants.EX_MAT)
+        artifacts = db_metadata.get_table_property(table_name, property=constants.TABLE_ALLOW_MARTIFACT)
+        if not artifacts and constants.EX_ARTIFACTS not in prev_completed_steps:
+            file_operations.move_artifacts_to_table(db_metadata.db_dir, table_name, perm_instance_id)
+            db_metadata.update_process_step(process_id, constants.EX_ARTIFACTS)

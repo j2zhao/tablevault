@@ -1,9 +1,9 @@
-TableVault Documentation
+API Documentation
 ============================
 
 This page documents the `tablevault` and its contents.
 
-.. automodule:: tablevault.tablevault
+.. automodule:: tablevault.core
     :members:
     :undoc-members:
     :show-inheritance:
