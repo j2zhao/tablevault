@@ -27,5 +27,5 @@ def create_paper_table_from_folder(folder_dir, copies):
     return df
 
 
-def create_data_table_from_table(df: pd.DataFrame, columns: list[str]):
-    return df[columns].copy()
+def create_data_table_from_table(df: pd.DataFrame):
+    return df.copy()

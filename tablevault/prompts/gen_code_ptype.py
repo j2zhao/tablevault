@@ -2,7 +2,7 @@ from pydantic import Field, BaseModel
 from tablevault.prompts.base_ptype import TVPrompt
 from tablevault.defintions.types import Cache
 from tablevault.prompts.utils import utils, table_operations
-from tablevault.prompts.table_string import apply_table_string
+from tablevault.prompts.utils.table_string import apply_table_string
 from tablevault.defintions import constants
 from tablevault.helper import file_operations
 from typing import Any, Optional

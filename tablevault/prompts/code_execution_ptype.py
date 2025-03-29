@@ -2,7 +2,7 @@ from pydantic import Field
 from tablevault.prompts.base_ptype import TVPrompt
 from tablevault.defintions.types import Cache
 from tablevault.prompts.utils import utils, table_operations
-from tablevault.prompts.table_string import apply_table_string
+from tablevault.prompts.utils.table_string import apply_table_string
 from tablevault.defintions import constants
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, Any, Optional

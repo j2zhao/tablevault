@@ -83,11 +83,6 @@ def setup_table_instance_folder(
     else:
         os.makedirs(prompt_dir)
         os.makedirs(artifact_dir)
-    #metadata_dir = os.path.join(temp_dir, constants.METADATA_FOLDER)
-    #os.makedirs(metadata_dir)
-    #metadata_file = os.path.join(metadata_dir, constants.METADATA_FILE)
-    # with open(metadata_file, 'w') as f:
-    #     yaml.safe_dump(metadata, f)
     df = pd.DataFrame()
     df.to_csv(current_table_path, index=False)
     type_path = os.path.join(temp_dir, constants.DTYPE_FILE)
@@ -98,10 +93,8 @@ def setup_table_folder(table_name: str, db_dir: str) -> None:
     table_dir = os.path.join(db_dir, table_name)
     if os.path.isdir(table_dir):
         raise TVFileError("table folder already exists.")
-        #shutil.rmtree(table_dir)
     if os.path.isfile(table_dir):
         raise TVFileError("table folder already exists as file.")
-        #os.remove(table_dir)
     os.makedirs(table_dir)
     prompt_dir_ = os.path.join(table_dir, constants.PROMPT_FOLDER)
     os.makedirs(prompt_dir_)

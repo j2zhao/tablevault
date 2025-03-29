@@ -388,28 +388,31 @@ def _parse_dependencies(
 
         for dep in prompts[pname].dependencies:
             if dep.table == constants.TABLE_SELF:
-                internal_deps[pname].add(dep.column)
+                internal_deps[pname].union(dep.columns)
                 for pn in prompts:
-                    if dep.column in prompts[pn].changed_columns:
-                        internal_prompt_deps[pname].add(pn)
+                    for col in dep.columns:
+                        if col in prompts[pn].changed_columns:
+                            internal_prompt_deps[pname].add(pn)
                 continue
             if dep.table == table_name:
                 active_only = False
             else:
                 active_only = True
-            if dep.column != None:
-                mat_time, _, instance = (
-                         db_metadata.get_last_column_update(dep.table,
-                                                            dep.column,
-                                                            start_time,
-                                                            version=dep.version,
-                                                            active_only=active_only)
-                    )
+            if dep.columns != None:
+                for col in dep.columns:
+                    mat_time, _, instance = (
+                            db_metadata.get_last_column_update(dep.table,
+                                                                col,
+                                                                start_time,
+                                                                version=dep.version,
+                                                                active_only=active_only)
+                        )
+                external_deps[pname].add((dep.table, col, instance, mat_time, dep.version))
             else:
                 mat_time, _, instance = db_metadata.get_last_table_update(
                         dep.table, start_time= start_time, version=dep.version, active_only=active_only
                     )
-            external_deps[pname].add((dep.table, dep.column, instance, mat_time, dep.version))
+                external_deps[pname].add((dep.table, None, instance, mat_time, dep.version))
         external_deps[pname] = list(external_deps[pname])
         internal_deps[pname] = list(internal_deps[pname])
         internal_prompt_deps[pname] = list(internal_prompt_deps[pname])

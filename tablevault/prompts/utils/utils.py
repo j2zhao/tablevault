@@ -14,9 +14,9 @@ def load_function_from_file(module_name: str, function_name: str, db_dir: str) -
         if function_name in namespace:
             return namespace[function_name], namespace
         else:
-            raise tv_errors.TVPromptError(f"Function '{function_name}' not found in '{file_path}'")
+            raise tv_errors.TVPromptError(f"Function '{function_name}' not found in '{file_path_}'")
     except:
-        raise tv_errors.TVPromptError(f"Function '{function_name}' not found in '{file_path}'")
+        raise tv_errors.TVPromptError(f"Function '{function_name}' not found in '{file_path_}'")
 
 def get_function_from_module(module_name: str, function_name: str, is_tablevault:bool=True) -> Callable:
     if is_tablevault:

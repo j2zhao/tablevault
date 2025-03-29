@@ -48,6 +48,7 @@ EX_CLEAR_TABLE = "clear_table"
 EX_NO_UPDATE = "no_update"
 EX_MAT = "materialized"
 EX_ARTIFACTS = "move artifacts"
+EX_UPDATE_PROMPT = "update_prompt"
 
 TABLE_ALLOW_MARTIFACT = 'multiple_artifacts'
 TABLE_SIDE_EFFECTS = 'side_effects'

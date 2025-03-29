@@ -8,7 +8,7 @@ from tablevault.defintions import constants
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from tablevault.prompts.utils import table_operations
-from tablevault.prompts.table_string import TableString, apply_table_string
+from tablevault.prompts.utils.table_string import TableString, apply_table_string
 from tablevault.helper.utils import gen_tv_id
 import re
 from typing import Any

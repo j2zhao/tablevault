@@ -13,8 +13,8 @@ from tablevault.prompts.utils import artifact
 def write_table(
     df: pd.DataFrame, instance_id: str, table_name: str, db_dir: str
 ) -> None:
-    if "pos_index" in df.columns:
-        df.drop(columns="pos_index", inplace=True)
+    if constants.TABLE_INDEX in df.columns:
+        df.drop(columns=constants.TABLE_INDEX , inplace=True)
     table_dir = os.path.join(db_dir, table_name)
     table_dir = os.path.join(table_dir, instance_id)
     table_path = os.path.join(table_dir, constants.TABLE_FILE)
@@ -40,7 +40,8 @@ def get_table(
             else:
                 dtypes = json.loads(content)
         df = pd.read_csv(table_path, nrows=rows, dtype=dtypes)
-        df.index.name = 'index'
+        df.index.name = constants.TABLE_INDEX
+        df = df.reset_index()
         return df
     except pd.errors.EmptyDataError:
         return pd.DataFrame()

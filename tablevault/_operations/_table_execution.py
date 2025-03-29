@@ -1,7 +1,7 @@
 from tablevault.helper.metadata_store import MetadataStore
 from tablevault.helper import file_operations
 from tablevault.defintions.types import ExternalDeps
-from tablevault.prompts.utils import table_operations
+from tablevault.prompts.utils import table_operations, table_string
 from tablevault.defintions import constants
 from tablevault.prompts.load_prompt import load_prompt
 
@@ -64,10 +64,16 @@ def execute_instance(
                 prompts[pname].execute(cache, instance_id, table_name, db_metadata.db_dir)
         db_metadata.update_process_step(process_id, pname)
 
+
     if not update_rows and len(to_change_columns) == 0:
         if constants.EX_NO_UPDATE not in prev_completed_steps:
             db_metadata.update_process_step(process_id, constants.EX_NO_UPDATE)
     else:
+        if constants.EX_UPDATE_PROMPT not in prev_completed_steps:
+            for pname in yaml_prompts:
+                yaml_prompts[pname][constants.DEPENDENCIES] = table_string.get_dependencies_str(prompts[pname][constants.DEPENDENCIES])
+                file_operations.save_yaml_prompt(yaml_prompts[pname], instance_id, table_name, db_metadata.db_dir)
+            db_metadata.update_process_step(process_id, constants.EX_UPDATE_PROMPT)
         if constants.EX_MAT not in prev_completed_steps:
             file_operations.rename_table_instance(
                 perm_instance_id, instance_id, table_name, db_metadata.db_dir
@@ -77,3 +83,5 @@ def execute_instance(
         if not artifacts and constants.EX_ARTIFACTS not in prev_completed_steps:
             file_operations.move_artifacts_to_table(db_metadata.db_dir, table_name, perm_instance_id)
             db_metadata.update_process_step(process_id, constants.EX_ARTIFACTS)
+    
+    
