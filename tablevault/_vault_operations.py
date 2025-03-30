@@ -1,9 +1,9 @@
-from tablevault.helper import file_operations
+from tablevault.helper import file_operations, database_lock, utils
 from tablevault.helper.metadata_store import MetadataStore, ActiveProcessDict
 from tablevault._operations._meta_operations import stop_operation, tablevault_operation
 from tablevault._operations import _table_execution
 from tablevault.defintions.types import ExternalDeps
-
+from tablevault.prompts.utils import artifact, table_operations
 from tablevault.defintions import constants
 import os
 
@@ -17,12 +17,30 @@ def print_active_processes(db_dir: str, print_all: bool) -> ActiveProcessDict:
 
 def active_processes(db_dir: str) -> ActiveProcessDict:
     db_metadata = MetadataStore(db_dir)
-    return db_metadata.get_active_processes(to_print=False)
+    return db_metadata.get_active_processes()
+
+def complete_process(process_id: str, db_dir: str) -> bool:
+    db_metadata = MetadataStore(db_dir)
+    return db_metadata.check_written(process_id)
 
 def list_instances(table_name: str, db_dir: str, version: str) -> list[str]:
     db_metadata = MetadataStore(db_dir)
-    return db_metadata.get_table_instances(table_name, version, to_print=False)
+    return db_metadata.get_table_instances(table_name, version)
 
+def fetch_table(instance_id:str, version:str, table_name:str, db_dir:str, active_only:bool, safe_locking: bool):
+    db_metadata = MetadataStore(db_dir)
+    if instance_id == '':
+        _ , _ , instance_id = db_metadata.get_last_table_update(table_name, version, active_only=active_only)
+    if safe_locking:
+        process_id = utils.gen_tv_id()
+        db_lock = database_lock.DatabaseLock(process_id, db_dir)
+        db_lock.acquire_shared_lock(table_name, instance_id)
+    try:
+        df = table_operations.get_table(instance_id, table_name, db_dir)
+    finally:
+        if safe_locking:
+            db_lock.release_all_locks()
+    return df
 
 def stop_process(process_id: str, db_dir: str, force: bool):
     stop_operation(process_id, db_dir, force)
@@ -44,7 +62,7 @@ def copy_files(author:str,
         'file_dir': file_dir,
         'table_name': table_name
     }
-    tablevault_operation(author,
+    return tablevault_operation(author,
                         constants.COPY_FILE_OP,
                         _copy_files,
                         db_dir, 
@@ -63,7 +81,7 @@ def delete_table(author:str,
     setup_kwargs = {
         'table_name': table_name
     }
-    tablevault_operation(author,
+    return tablevault_operation(author,
                         constants.DELETE_TABLE_OP,
                         _delete_table,
                         db_dir, 
@@ -84,7 +102,7 @@ def delete_instance(author:str,
         'table_name': table_name,
         'instance_id':instance_id
     }
-    tablevault_operation(author,
+    return tablevault_operation(author,
                         constants.DELETE_INSTANCE_OP,
                         _delete_instance,
                         db_dir, 
@@ -131,7 +149,7 @@ def execute_instance(author:str,
         'version':version,
         'force_execute':force_execute
     }
-    tablevault_operation(author,
+    return tablevault_operation(author,
                         constants.EXECUTE_OP,
                         _execute_instance,
                         db_dir, 
@@ -163,7 +181,7 @@ def setup_temp_instance_inner(author:str,
         "prev_id":prev_id,
         "prompt_names":prompt_names
     }
-    tablevault_operation(author=author,
+    return tablevault_operation(author=author,
                          op_name=constants.SETUP_TEMP_INNER_OP,
                          op_funct=_setup_temp_instance_inner,
                         db_dir=db_dir, 
@@ -225,7 +243,7 @@ def setup_temp_instance(author:str,
         'execute': execute,
         'background_execute': background_execute
     }
-    tablevault_operation(author,
+    return tablevault_operation(author,
                         constants.SETUP_TEMP_OP,
                         _setup_temp_instance,
                         db_dir, 
@@ -248,7 +266,7 @@ def setup_table_inner(author:str,
         'allow_multiple_artifacts':allow_multiple_artifacts,
         'has_side_effects':has_side_effects,
     }
-    tablevault_operation(author,
+    return tablevault_operation(author,
                         constants.SETUP_TABLE_INNER_OP,
                         _setup_table_inner,
                         db_dir, 
@@ -321,7 +339,7 @@ def setup_table(author:str,
         'has_side_effects':has_side_effects,
         'yaml_dir': yaml_dir,
     }
-    tablevault_operation(author,
+    return tablevault_operation(author,
                         constants.SETUP_TABLE_OP,
                         _setup_table,
                         db_dir, 
@@ -391,7 +409,7 @@ def copy_database_files(author:str,
         'allow_multiple_artifacts': allow_multiple_artifacts,
         'has_side_effects': has_side_effects,
     }
-    tablevault_operation(author,
+    return tablevault_operation(author,
                         constants.COPY_DB_OP,
                         _copy_database_files,
                         db_dir, 
@@ -479,7 +497,7 @@ def restart_database(
         process_id: str,
         db_metadata: MetadataStore,
         ):
-    tablevault_operation(author,
+    return tablevault_operation(author,
                         constants.RESTART_OP,
                         _restart_database,
                         db_metadata.db_dir, 

@@ -51,7 +51,7 @@ def tablevault_operation(author:str,
                         process_id:str,
                         setup_kwargs: dict[str, Any],
                         background: bool = False,
-                        ):
+                        ) -> str:
     db_metadata = MetadataStore(db_dir)
     
     if process_id != "":
@@ -131,6 +131,7 @@ def tablevault_operation(author:str,
         db_metadata.update_process_execution_status(process_id, success=True)
         TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
         db_metadata.write_process(process_id)
+    return process_id
 
 def stop_operation(process_id:str, db_dir:str, force:bool):
     db_metadata = MetadataStore(db_dir)

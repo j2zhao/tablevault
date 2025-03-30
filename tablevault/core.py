@@ -64,9 +64,10 @@ class TableVault:
                 )
         elif restart:
             _vault_operations.restart_database(author=self.author, db_dir=self.db_dir)
-
-    def print_active_processes(self, print_all=False) -> ActiveProcessDict:
-        _vault_operations.print_active_processes(self.db_dir, print_all)
+        return None
+    
+    def complete_process(self, process_id:str)-> bool:
+        return _vault_operations.complete_process(process_id)
 
     def active_processes(self) -> ActiveProcessDict:
         """
@@ -102,6 +103,14 @@ class TableVault:
         """
         _vault_operations.stop_process(process_id=process_id, db_dir=self.db_dir, force=force)
 
+    def fetch_table(self, table_name:str, 
+                    instance_id:str = "", 
+                    version:str = "", 
+                    active_only: bool = True, 
+                    safe_locking: bool = True):
+        
+        return _vault_operations.fetch_table(instance_id, version, table_name, self.db_dir, active_only, safe_locking)
+
     def copy_files(
         self, file_dir: str, table_name: str = "", process_id: str = ""
     ) -> None:
@@ -120,7 +129,7 @@ class TableVault:
             Defaults to empty string.
 
         """
-        _vault_operations.copy_files(
+        return _vault_operations.copy_files(
             author=self.author,
             table_name=table_name,
             file_dir=file_dir,
@@ -139,7 +148,7 @@ class TableVault:
             Defaults to empty string.
 
         """
-        _vault_operations.delete_table(
+        return _vault_operations.delete_table(
             author=self.author,
             table_name=table_name,
             process_id=process_id,
@@ -161,7 +170,7 @@ class TableVault:
             Defaults to empty string.
 
         """
-        _vault_operations.delete_instance(
+        return _vault_operations.delete_instance(
             author=self.author,
             table_name=table_name,
             instance_id=instance_id,
@@ -195,7 +204,7 @@ class TableVault:
             background (bool): Optional, whether to execute the operation in a background
             process. Defaults to False.
         """
-        _vault_operations.execute_instance(
+        return _vault_operations.execute_instance(
             author=self.author,
             table_name=table_name,
             version=version,
@@ -245,7 +254,7 @@ class TableVault:
 
 
         """
-        _vault_operations.setup_temp_instance(
+        return _vault_operations.setup_temp_instance(
             self.author,
             version=version,
             table_name=table_name,
@@ -289,7 +298,7 @@ class TableVault:
              Defaults to empty string.
 
         """
-        _vault_operations.setup_table(
+        return _vault_operations.setup_table(
             author = self.author,
             table_name = table_name,
             yaml_dir = yaml_dir,

@@ -400,14 +400,21 @@ def _parse_dependencies(
                 active_only = True
             if dep.columns != None:
                 for col in dep.columns:
-                    mat_time, _, instance = (
-                            db_metadata.get_last_column_update(dep.table,
-                                                                col,
-                                                                start_time,
-                                                                version=dep.version,
-                                                                active_only=active_only)
-                        )
-                external_deps[pname].add((dep.table, col, instance, mat_time, dep.version))
+                    if col != constants.TABLE_INDEX:
+                        mat_time, _, instance = (
+                                db_metadata.get_last_column_update(dep.table,
+                                                                    col,
+                                                                    start_time,
+                                                                    version=dep.version,
+                                                                    active_only=active_only)
+                            )
+                        external_deps[pname].add((dep.table, col, instance, mat_time, dep.version))
+                    else:
+                        mat_time, _, instance = db_metadata.get_last_table_update(
+                                dep.table, start_time= start_time, version=dep.version, active_only=active_only
+                            )
+                        external_deps[pname].add((dep.table, None, instance, mat_time, dep.version))
+                
             else:
                 mat_time, _, instance = db_metadata.get_last_table_update(
                         dep.table, start_time= start_time, version=dep.version, active_only=active_only

@@ -13,15 +13,11 @@ class TVPrompt(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def transform_table_string_fields(cls, values):
-        print('hello')
         for field_name, model_field in cls.model_fields.items():
-            print('field_name')
             if field_name in values:
                 expected_type = model_field.annotation
                 values[field_name] = parse_table_string(expected_type, values[field_name])
-        print('HELLO')
         values[constants.DEPENDENCIES] = _get_prompt_dependencies(values)
-        print('HELLO2')
         return values
 
 

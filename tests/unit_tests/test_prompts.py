@@ -35,7 +35,6 @@ def test_table_values():
                  'self.x[index::\'0\':self.index]',
                  'self.x[index::\'0\':self.index, y::\'6\']',
                  'self.x[index::\'0\':"<<self.index>> + 1", y::\'4\']']
-    #test_strs = ['self.x[index::\'0\':"<<self.index>> + 1", y::\'4\']']
     for tstr in test_strs:
         print('PROMPT')
         print(tstr)

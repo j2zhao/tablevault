@@ -15,8 +15,5 @@ t.b.d.
 
 TODOS
 - clean up code
-- TEST dependecies + versioning (!) -> UNIT TESTS
-- Add testing code (!)
-- Write docs (!) -> WEEKEND?
+- Write docs (!)
 - Write up paper (!)
-- TRY to implement graph RAG with document filtering -> SUMMER

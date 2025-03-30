@@ -21,7 +21,9 @@ class TableValue():
         tables = []
         ttable = TableValue(self.table, self.columns, self.version, {})
         tables.append(ttable)
-        for _, vals in self.conditions.items():
+        for key, vals in self.conditions.items():
+            ttable = TableValue(self.table, key, self.version, {})
+            tables.append(ttable)
             for val in vals:
                 if isinstance(val, TableValue):
                     tables += val.get_data_tables()
@@ -124,11 +126,7 @@ class TableReference():
     def get_data_tables(self)-> list[TableValue]:
         tables = []
         for ref in self.references:
-            print(ref)
-            print('hello')
             tables += ref.get_data_tables()
-            print('hello2')
-            print(tables)
         return tables
 
 TableString = TableReference | str

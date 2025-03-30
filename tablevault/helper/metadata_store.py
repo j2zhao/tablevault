@@ -246,6 +246,10 @@ class MetadataStore:
             self._save_active_logs(logs)
             logger.info(f"Completed {log.operation}: {process_id}")
 
+    def check_written(self, process_id: str) -> bool:
+        with self.lock:
+            return _is_string_in_file(self.completed_file, process_id)
+    
     def start_new_process(
         self,
         process_id: str,
@@ -458,21 +462,19 @@ class MetadataStore:
             return active_logs
 
     def get_table_instances(
-        self, table_name: str, instance_id: str, to_print: bool = True
+        self, table_name: str, version: str
     ) -> None | list[str]:
         with self.lock:
             table_history = self._get_table_history()
             instances = list(table_history[table_name].keys())
-            if instance_id != "":
+            instances.sort(key = lambda x: table_history[table_name][1])
+            if version != "":
                 instances_ = [
                     instance
                     for instance in instances
-                    if instance.startswith(instance_id)
+                    if instance.startswith(version)
                 ]
                 instances = instances_
-            if to_print:
-                instances = "\n".join(instances)
-                print(instances)
             else:
                 return instances
 

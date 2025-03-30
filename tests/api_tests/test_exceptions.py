@@ -10,34 +10,41 @@ test restarts
 from unittest.mock import patch
 from tablevault.core import TableVault
 from tablevault.defintions import tv_errors
-
-def raise_except():
-    raise ValueError()
+import shutil
+import os
+from helper import compare_folders, evaluate_operation_logging, clean_up_open_ai
 
 def raise_tv_except():
     raise tv_errors.TableVaultError()
 
-
-def test_exception(funct_name, exception_func):
-    with patch(f'tablevault._vault_operations.{funct_name}', exception_func()):
-        tablevault = TableVault('test_dir', 'jinjin', create=True)
-        tablevault.setup_table('stories', allow_multiple_artifacts = False)
-        tablevault.setup_table('llm_storage', has_side_effects=True)
-        tablevault.setup_table('llm_questions')
-        tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-        tablevault.copy_files("../test_data/test_data_db/llm_storage", table_name="llm_storage")
-        tablevault.copy_files("../test_data/test_data_db/llm_questions", table_name="llm_questions")
-        tablevault.setup_temp_instance("stories", prompt_names=["gen_stories"])
-        tablevault.setup_temp_instance("llm_storage", prompt_names=["gen_llm_storage", "upload_openai"])
-        tablevault.setup_temp_instance("llm_questions", prompt_names=["gen_llm_questions", "question_1","question_2", "question_3"])
-        tablevault.execute_instance("stories")
-        tablevault.execute_instance("llm_storage")
-        tablevault.execute_instance("llm_questions")
-        tablevault.print_active_processes(print_all=True)
-        tablevault.print_active_processes(print_all=False)
-        instances = tablevault.list_instances(table_name= "stories")
-        tablevault.delete_table("llm_questions")
-        tablevault.delete_instance(instance_id=instances[0], table_name="stories")
+def test_exception(funct_name, module_path, exception_func):
+    instance = None
+    try:
+        with patch( module_path + funct_name, exception_func()):
+            tablevault = TableVault('test_dir', 'jinjin', create=True)
+            shutil.copytree('test_dir', 'test_dir_copy', dirs_exist_ok=True)
+            tablevault.setup_table('stories', allow_multiple_artifacts = False)
+            shutil.copytree('test_dir', 'test_dir_copy', dirs_exist_ok=True)
+            tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
+            shutil.copytree('test_dir', 'test_dir_copy', dirs_exist_ok=True)
+            
+            tablevault.setup_temp_instance("stories", prompt_names=["gen_stories"])
+            shutil.copytree('test_dir', 'test_dir_copy', dirs_exist_ok=True)
+            tablevault.execute_instance("stories")
+            shutil.copytree('test_dir', 'test_dir_copy', dirs_exist_ok=True)
+            instances = tablevault.list_instances(table_name= "stories")
+            instance = instances[0]
+            tablevault.delete_instance(instance_id=instances[0], table_name="stories")
+            shutil.copytree('test_dir', 'test_dir_copy', dirs_exist_ok=True)
+            tablevault.delete_table("stories")
+            
+    except tv_errors.TableVaultError:
+        evaluate_operation_logging([])
+        assert compare_folders('test_dir', 'test_dir_copy')
+        assert os.path.isdir('test_dir/stories')
+        if instance != None:
+            assert not os.path.isdir(f'test_dir/stories/{instance}')
+        
 
 setup_functions = ["setup_copy_files", 
                    "setup_delete_table", 
@@ -46,8 +53,27 @@ setup_functions = ["setup_copy_files",
                    "setup_setup_temp_instance", 
                    "setup_setup_table",
                    "setup_copy_database_files",
-                   "setup_restart_database",
                    "setup_setup_temp_instance_innner",
                    "setup_setup_table_inner"]
-execution_functions = []
 
+setup_module = 'tablevault._operations._setup_operations.'
+
+execute_functions = ["_copy_files", 
+                   "_delete_table", 
+                   "_delete_instance", 
+                   "_execute_instance", 
+                   "_setup_temp_instance", 
+                   "_setup_table",
+                   "_copy_database_files",
+                   "_setup_temp_instance_innner",
+                   "_setup_table_inner"]
+
+execute_module = 'tablevault._vault_operations.'
+
+if __name__ == "__main__":
+    for func in setup_functions:
+        test_exception(func, setup_module, raise_tv_except)
+    
+    for func in execute_functions: 
+        test_exception(func, execute_module, raise_tv_except)
+    clean_up_open_ai()
