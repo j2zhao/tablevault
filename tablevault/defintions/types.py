@@ -8,7 +8,6 @@ import json
 
 Cache = dict[str | tuple[str, str], pd.DataFrame]
 
-
 InternalDeps = dict[str, list[str]]
 ExternalDeps = dict[str, list[tuple[str, str, str, float, bool]]]
 PromptDeps = dict[str, list[str]]
@@ -36,8 +35,6 @@ class ProcessLog:
 
 ColumnHistoryDict = dict[str, dict[str, dict[str, dict[str, float]]]]
 TableHistoryDict = dict[str, dict[str, tuple[float, float, float]]]
-TableMetadataDict = dict[str, dict[str,Any]]
-InstanceMetadataDict = dict[str, dict[str,dict[str,Any]]]
 ActiveProcessDict = dict[str, ProcessLog]
 
 SETUP_OUTPUT =  dict[str, Any]

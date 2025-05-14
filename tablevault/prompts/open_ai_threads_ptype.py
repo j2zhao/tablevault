@@ -8,7 +8,7 @@ from tablevault.defintions import constants
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from tablevault.prompts.utils import table_operations
-from tablevault.prompts.utils.table_string import TableString, apply_table_string
+from tablevault.prompts.utils.table_string import TableString
 from tablevault.helper.utils import gen_tv_id
 import re
 from typing import Any
@@ -51,6 +51,7 @@ class OAIThreadPrompt(TVPrompt):
         table_name: str,
         db_dir: str
     ) -> None:
+        self.transform_table_string(cache, instance_id, table_name, db_dir)
         with open(self.key_file, "r") as f:
             secret = f.read()
             add_open_ai_secret(secret)
@@ -78,6 +79,10 @@ def _execute_llm(
     table_name: str,
     db_dir: str,
 ) -> None:
+    prompt = prompt.model_copy(deep=True)
+    prompt.transform_table_string(cache, instance_id, table_name, db_dir, index)
+
+
     is_filled, _ = table_operations.check_entry(
         index, prompt.changed_columns, cache[constants.TABLE_SELF]
     )
@@ -91,15 +96,15 @@ def _execute_llm(
         prompt.model,
         prompt.temperature,
         prompt.retry,
-        apply_table_string(prompt.instructions, cache, index),
+        prompt.instructions,
         client=client,
         uses_files=uses_files,
     )
     if thread.success is False:
         return
     
-    file_msgs = apply_table_string(prompt.file_msgs, cache, index)
-    cfiles = apply_table_string(prompt.upload_files, cache, index)
+    file_msgs = prompt.file_msgs
+    cfiles = prompt.upload_files
     if len(file_msgs) == len(cfiles):
         for i, cfile in enumerate(cfiles):
             thread.add_message(message=file_msgs[i], file_ids=[cfile])
@@ -112,10 +117,9 @@ def _execute_llm(
 
     results = []
     for question in prompt.questions:
-        question_ = apply_table_string(question.text, cache, index)
+        question_ = question.text
         for key, word in prompt.keywords.items():
-            word = str(apply_table_string(word, cache, index))
-            question_ = question_.replace(key, word)
+            question_ = question_.replace(key, str(word))
         thread.add_message(question_)
         result = thread.run_query()
         for pattern in  question.regex:
@@ -130,6 +134,6 @@ def _execute_llm(
 
     with lock:
         for i, column in enumerate(prompt.changed_columns):
-            table_operations.update_entry(results[i], index, column, cache[constants.TABLE_SELF])
-        table_operations.write_table(cache[constants.TABLE_SELF], instance_id, table_name, db_dir)
+            table_operations.update_entry(results[i], index, column, cache[constants.OUTPUT_SELF])
+        table_operations.write_table(cache[constants.OUTPUT_SELF], instance_id, table_name, db_dir)
 

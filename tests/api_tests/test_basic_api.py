@@ -1,5 +1,5 @@
 from tablevault.core import TableVault
-from helper import evaluate_operation_logging, clean_up_open_ai
+import helper 
 
 def basic_function()-> list[str]:
     ids = []
@@ -30,6 +30,13 @@ def basic_function()-> list[str]:
     ids.append(id)
     return ids
 
+
+
+# tablevault = TableVault('test_dir', 'jinjin', create=True)
+# tablevault.setup_table('stories', allow_multiple = False)
+# tablevault.copy_files("../test_data/test_data_db_selected/stories", table_name="stories")
+# tablevault.setup_temp_instance("stories", prompt_names=["gen_stories"], execute=True)
+
 def test_multi_execution_instance():
     ids = []
     tablevault = TableVault('test_dir', 'jinjin', create=True)
@@ -37,7 +44,7 @@ def test_multi_execution_instance():
     ids.append(id)
     id = tablevault.copy_files("../test_data/test_data_db_selected/stories", table_name="stories")
     ids.append(id)
-    id = tablevault.setup_temp_instance("stories", prompt_names=["gen_stories"],execute=True, background_execute=True)
+    id = tablevault.setup_temp_instance("stories", prompt_names=["gen_stories"],execute=True)
     ids.append(id)
     return ids
 
@@ -64,17 +71,28 @@ def test_deletion():
 
 
 def evaluate_tests():
+    # TODO: update helper
+    print('TEST BASIC')
     ids = basic_function()
-    evaluate_operation_logging(ids)
+    helper.evaluate_operation_logging(ids)
+    helper.evaluate_full_tables()
+    print('TEST MUTI-INSTANCE')
     ids = test_multi_execution_instance()
-    evaluate_operation_logging(ids)
+    helper.evaluate_operation_logging(ids)
+    helper.evaluate_full_tables(tables=["stories"])
+    print('TEST MUTI-TABLE')
     ids = test_multi_execution_table()
-    evaluate_operation_logging(ids)
+    helper.evaluate_operation_logging(ids)
+    helper.evaluate_full_tables(tables=["stories"])
+    print('TEST MUTI-DB')
     ids = test_multi_execution_db()
-    evaluate_operation_logging(ids)
+    helper.evaluate_operation_logging(ids)
+    helper.evaluate_full_tables()
+    print('TEST DELETION')
     ids = test_deletion()
-    evaluate_operation_logging(ids)
-    clean_up_open_ai()
+    helper.evaluate_operation_logging(ids)
+    helper.evaluate_deletion()
+    helper.clean_up_open_ai()
 
 if __name__ == "__main__":
     evaluate_tests()

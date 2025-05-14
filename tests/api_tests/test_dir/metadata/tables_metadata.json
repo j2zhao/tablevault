@@ -1,14 +1,1 @@
-{
-    "stories": {
-        "multiple_artifacts": false,
-        "side_effects": false
-    },
-    "llm_storage": {
-        "multiple_artifacts": true,
-        "side_effects": true
-    },
-    "llm_questions": {
-        "multiple_artifacts": true,
-        "side_effects": false
-    }
-}
+{}

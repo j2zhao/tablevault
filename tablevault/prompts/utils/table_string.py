@@ -3,7 +3,7 @@ from tablevault.defintions import constants
 import re
 from typing import Optional, Union, get_origin, get_args
 from dataclasses import dataclass
-from tablevault.defintions.tv_errors import TVPromptError
+from tablevault.defintions.tv_errors import TVPromptError, TableStringError
 from tablevault.defintions.types import Cache
 import pandas as pd
 from pandas.api.types import is_string_dtype
@@ -22,7 +22,7 @@ class TableValue():
         ttable = TableValue(self.table, self.columns, self.version, {})
         tables.append(ttable)
         for key, vals in self.conditions.items():
-            ttable = TableValue(self.table, key, self.version, {})
+            ttable = TableValue(self.table, [key], self.version, {})
             tables.append(ttable)
             for val in vals:
                 if isinstance(val, TableValue):
@@ -115,13 +115,16 @@ class TableReference():
     def parse(self, cache: Cache, index:Optional[int]= None)-> str:
         if len(self.references) == 0:
             return self.text
-        if self.text == "<<>>" and len(self.references) == 1:
-            return self.references[0].parse(cache, index)
-        tstring = self.text
-        for ref in self.references:
-            ref_ = ref.parse(cache, index)
-            tstring = tstring.replace("<<>>", str(ref_), 1)
-        return tstring
+        try:
+            if self.text == "<<>>" and len(self.references) == 1:
+                return self.references[0].parse(cache, index)
+            tstring = self.text
+            for ref in self.references:
+                ref_ = ref.parse(cache, index)
+                tstring = tstring.replace("<<>>", str(ref_), 1)
+            return tstring
+        except TableStringError:
+            return self
 
     def get_data_tables(self)-> list[TableValue]:
         tables = []
@@ -163,6 +166,10 @@ def apply_table_string(arg:Any, cache: Cache, index: Optional[int]= None) -> Any
             apply_table_string(k, cache, index): apply_table_string(v, cache, index)
             for k, v in arg.items()
         }
+    elif hasattr(arg, '__dict__'):
+        for attr, val in vars(arg).items():
+            val_ = apply_table_string(val, cache, index)
+            setattr(arg, attr, val_)
     else:
         return arg
 
@@ -213,6 +220,8 @@ def _read_table_reference(
     if (ref.table == constants.TABLE_SELF 
         and ref.columns == [constants.TABLE_INDEX] 
         and len(ref.conditions) == 0):
+        if index is None:
+            raise TableStringError()
         return index
 
     if ref.table != constants.TABLE_SELF:
@@ -234,7 +243,10 @@ def _read_table_reference(
         range_conditions = {}
         for condition, value in ref.conditions.items():
             if len(value) == 0:
-                conditions[condition] = index
+                if index is None:
+                    raise TableStringError()
+                else:
+                    conditions[condition] = index 
             elif len(value)== 1:
                 value = value[0]
                 if isinstance(value, TableValue):

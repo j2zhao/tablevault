@@ -1,8 +1,14 @@
 import os
 from tablevault.core import TableVault
+import shutil
+
+def copy_test_dir():
+    if os.path.isdir('test_dir_copy'):
+        shutil.rmtree('test_dir_copy')
+    shutil.copytree('test_dir', 'test_dir_copy', dirs_exist_ok=True)
 
 
-def clean_up_open_ai(key_file = "open_ai_key/key.txt"):
+def clean_up_open_ai(key_file = "../test_data/open_ai_key/key.txt"):
     import openai
     from tqdm import tqdm
     with open(key_file, 'r') as f:
@@ -41,10 +47,12 @@ def evaluate_operation_logging(ids):
     # check all ids are logged
     tablevault = TableVault('test_dir', 'jinjin')
     for id in ids:
-        assert tablevault.complete_process(id)
+        print(id)
+        assert tablevault.check_process_completion(id)
     # check no processes
     processes = tablevault.active_processes()
-    assert len(processes) > 0
+    print(processes)
+    assert len(processes) == 0
     # checked no locks
     lock_dir = 'test_dir/locks'
     for root, dirs, files in os.walk(lock_dir):
@@ -52,8 +60,9 @@ def evaluate_operation_logging(ids):
             assert not file.endswith('.shlock')
             assert not file.endswith('.exlock')
     # check no temp files
-    temp_dir = 'test_dir/locks'
+    temp_dir = 'test_dir/_temp'
     for entry in os.listdir(temp_dir):
+        print(entry)
         assert entry.startswith('.')
 
 
@@ -67,10 +76,14 @@ def evaluate_full_tables(tables = ["stories", "llm_storage","llm_questions" ], n
 
 def evaluate_deletion():
     temp_dir = 'test_dir/llm_storage'
-    assert not os.path.isdir(temp_dir)
+    entries = os.listdir(temp_dir)
+    assert 'table.csv' not in entries
     tablevault = TableVault('test_dir', 'jinjin')
     instances = tablevault.list_instances('stories')
     assert len(instances) == 0
+    temp_dir = 'test_dir/stories'
+    entries = os.listdir(temp_dir)
+    assert 'table.csv' not in entries
 
 def get_all_file_paths(folder):
     file_paths = set()

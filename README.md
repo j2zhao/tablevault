@@ -14,6 +14,6 @@ t.b.d.
 
 
 TODOS
-- clean up code
-- Write docs (!)
-- Write up paper (!)
+- Make small changes to match code to paper
+- i.e. 
+- setup operations

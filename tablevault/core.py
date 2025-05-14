@@ -1,7 +1,8 @@
 from tablevault import _vault_operations
 from tablevault.helper.metadata_store import ActiveProcessDict
 from tablevault.helper.utils import gen_tv_id
-
+from tablevault.defintions import constants
+import pandas as pd
 
 class TableVault:
     """A TableVault object that interfaces with a TableVault directory.
@@ -63,11 +64,26 @@ class TableVault:
                     background_execute = background_execute,
                 )
         elif restart:
-            _vault_operations.restart_database(author=self.author, db_dir=self.db_dir)
+            _vault_operations.restart_database(author=self.author, db_dir=self.db_dir, process_id = "")
         return None
     
-    def complete_process(self, process_id:str)-> bool:
-        return _vault_operations.complete_process(process_id)
+    
+    def check_process_completion(self, process_id:str)-> bool:
+        return _vault_operations.complete_process(process_id, self.db_dir)
+    
+    def get_artifact_folder(self, 
+                            table_name:str,
+                            instance_id:str = "", 
+                            version: str = constants.BASE_TABLE_VERSION,
+                            is_temp: bool = True,
+                            )->str:
+        return _vault_operations.get_artifact_folder(instance_id, 
+                                                     table_name,
+                                                     version,
+                                                     self.db_dir,
+                                                     is_temp)
+    
+    # def get_artifact_folder(instance_id:str, )
 
     def active_processes(self) -> ActiveProcessDict:
         """
@@ -76,7 +92,7 @@ class TableVault:
         """
         return _vault_operations.active_processes(self.db_dir)
 
-    def list_instances(self, table_name: str, version: str = "") -> list[str]:
+    def list_instances(self, table_name: str, version: str = constants.BASE_TABLE_VERSION,) -> list[str]:
         """
         Return a list of materialized instance names for a table.
 
@@ -90,8 +106,16 @@ class TableVault:
         return _vault_operations.list_instances(
             table_name=table_name, db_dir=self.db_dir, version=version
         )
+    
+    def get_descriptions():
+        "TODO: IMPLEMENT"
+        pass
 
-    def stop_process(self, process_id:str, force:bool = False):
+    def stop_process(self, 
+                     to_stop_process_id:str, 
+                     force: bool = False,
+                     materialize: bool =False,
+                     process_id: str = ""):
         """
         Stop a currently active process and release all of its locks.
 
@@ -101,14 +125,20 @@ class TableVault:
             raises exception on actively running process. Defauts to False.
 
         """
-        _vault_operations.stop_process(process_id=process_id, db_dir=self.db_dir, force=force)
+        # THIS CHANGES STATE -> NEEDS LOGGING
+        _vault_operations.stop_process(to_stop_process_id=to_stop_process_id,
+                                       force=force,
+                                       materialize=materialize,
+                                       db_dir=self.db_dir, 
+                                       process_id=process_id
+                                       )
 
-    def fetch_table(self, table_name:str, 
+    def fetch_table(self, 
+                    table_name:str, 
                     instance_id:str = "", 
-                    version:str = "", 
+                    version:str = constants.BASE_TABLE_VERSION,
                     active_only: bool = True, 
-                    safe_locking: bool = True):
-        
+                    safe_locking: bool = True) -> pd.DataFrame:
         return _vault_operations.fetch_table(instance_id, version, table_name, self.db_dir, active_only, safe_locking)
 
     def copy_files(
@@ -178,6 +208,47 @@ class TableVault:
             db_dir=self.db_dir,
         )
 
+    def materialize_instance(self,
+                            table_name:str,
+                            version:str=constants.BASE_TABLE_VERSION,
+                            dependencies: list[tuple[str, str]]= [],
+                            artifact_columns: list[str] = [],
+                            process_id: str = "",
+                            ):
+        _vault_operations.materialize_instance(self.author,
+                                               "",
+                                               table_name,
+                                               version,
+                                               "",
+                                               "",
+                                               "",
+                                               artifact_columns,
+                                               [],
+                                               [],
+                                               dependencies,
+                                               process_id)
+
+
+
+    def write_table(self,
+                    table_df: pd.DataFrame,
+                    table_name:str,
+                    version:str=constants.BASE_TABLE_VERSION,
+                    dependencies: list[tuple[str, str]]= [],
+                    artifact_columns: list[str] = [],
+                    process_id: str = "",
+                   ):
+        return _vault_operations.write_table(
+            author=self.author,
+            table_df = table_df,
+            table_name=table_name,
+            version=version,
+            dependencies=dependencies,
+            artifact_columns= artifact_columns,
+            process_id=process_id,
+            db_dir=self.db_dir,
+        )
+    
     def execute_instance(
         self,
         table_name: str,
@@ -214,16 +285,21 @@ class TableVault:
             background = background
         )
 
+    
+
     def setup_temp_instance(
         self,
         table_name: str,
         version: str = "",
-        prev_id: str = "",
+        origin_id: str = "",
+        origin_table: str = "",
+        external_edit: bool = False,
         copy_version: bool = False,
         prompt_names: list[str] = [],
         execute: bool = False,
         process_id: str = "",
         background_execute: bool = False,
+        description: str = ""
     ) -> None:
         """
         Setup temporary instance to execute.
@@ -258,13 +334,16 @@ class TableVault:
             self.author,
             version=version,
             table_name=table_name,
-            prev_id=prev_id,
+            origin_id=origin_id,
+            origin_table = origin_table,
+            external_edit = external_edit,
             copy_version=copy_version,
             prompt_names=prompt_names,
             execute=execute,
             process_id=process_id,
             db_dir=self.db_dir,
             background_execute = background_execute,
+            description = description,
         )
 
     def setup_table(
@@ -272,11 +351,12 @@ class TableVault:
         table_name: str,
         create_temp: bool = False,
         execute: bool = False,
-        allow_multiple_artifacts: bool = True,
+        allow_multiple_artifacts: bool = False,
         has_side_effects: bool = False,
         yaml_dir: str = "",
         process_id: str = "",
         background_execute:bool = False,
+        description = "",
     ) -> None:
         """
         Setup new table.
@@ -309,6 +389,7 @@ class TableVault:
             process_id = process_id,
             db_dir=self.db_dir,
             background_execute = background_execute,
+            description = description,
         )
 
     def gen_process_id(self) -> str:

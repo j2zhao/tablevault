@@ -3,16 +3,16 @@ import os
 from typing import Optional, Any
 import time
 from filelock import FileLock
-from tablevault.defintions.tv_errors import TVArgumentError, TVProcessError
+from tablevault.defintions.tv_errors import TVArgumentError, TVProcessError, TVForcedError
 import pprint
 import mmap
-from tablevault.defintions.types import ProcessLog, ColumnHistoryDict, TableHistoryDict, ActiveProcessDict, TableMetadataDict, InstanceMetadataDict
+from tablevault.defintions.types import ProcessLog, ColumnHistoryDict, TableHistoryDict, ActiveProcessDict
 from dataclasses import asdict
 from tablevault.defintions import constants
 import psutil
 import logging
 logger = logging.getLogger(__name__)
-
+from tablevault.helper.file_operations import get_description
 
 def _serialize_active_logs(temp_logs: ActiveProcessDict) -> dict:
     serialized_logs = {key: value.to_dict() for key, value in temp_logs.items()}
@@ -50,14 +50,6 @@ class MetadataStore:
         with open(self.table_history_file, "w") as f:
             json.dump(table_history, f, indent=4)
 
-    def _save_table_meta(self, table_meta: TableMetadataDict):
-        with open(self.table_meta_file, "w") as f:
-            json.dump(table_meta, f, indent=4)
-    
-    def _save_instance_meta(self, instance_meta: InstanceMetadataDict):
-        with open(self.instance_meta_file, "w") as f:
-            json.dump(instance_meta, f, indent=4)
-
     def _get_active_logs(self) -> ActiveProcessDict:
         with open(self.active_file, "r") as file:
             data = json.load(file)
@@ -73,16 +65,6 @@ class MetadataStore:
         with open(self.table_history_file, "r") as file:
             table_history = json.load(file)
             return table_history
-
-    def _get_table_meta(self) -> TableMetadataDict:
-        with open(self.table_meta_file, "r") as file:
-            table_meta = json.load(file)
-            return table_meta
-    
-    def _get_instance_meta(self) -> InstanceMetadataDict:
-        with open(self.instance_meta_file, "r") as file:
-            instance_meta = json.load(file)
-            return instance_meta
 
     def _write_to_history(self, log_entry: ProcessLog) -> None:
         log_entry.log_time = time.time()
@@ -103,8 +85,6 @@ class MetadataStore:
         self.log_file = os.path.join(meta_dir, "logs.txt")
         self.column_history_file = os.path.join(meta_dir, constants.META_CHIST_FILE)
         self.table_history_file = os.path.join(meta_dir, constants.META_THIST_FILE)
-        self.table_meta_file = os.path.join(meta_dir, constants.META_TABLE_FILE)
-        self.instance_meta_file = os.path.join(meta_dir, constants.META_INSTANCE_FILE)
         self.active_file = os.path.join(meta_dir, constants.META_ALOG_FILE)
         self.completed_file = os.path.join(meta_dir, constants.META_CLOG_FILE)
         meta_lock = os.path.join(meta_dir, "LOG.lock")
@@ -112,10 +92,10 @@ class MetadataStore:
 
     def start_execute_operation(self, table_name:str) -> None:
         with self.lock:
+            table_metadata = get_description(instance_id='', table_name=table_name, db_dir=self.db_dir)
             start_time = time.time()
-            table_metadata = self._get_table_meta()
             table_history = self._get_table_history()
-            if table_metadata[table_name][constants.TABLE_SIDE_EFFECTS]:
+            if table_metadata[constants.TABLE_SIDE_EFFECTS]:
                 for id in table_history[table_name]:
                     changed_time, mat_time, stop_time = table_history[table_name][id]
                     if stop_time is None:
@@ -130,14 +110,6 @@ class MetadataStore:
         table_history = self._get_table_history()
         table_history[table_name] = {}
         self._save_table_history(table_history)
-        table_metadata = self._get_table_meta()
-        table_metadata[table_name] = {}
-        table_metadata[table_name][constants.TABLE_ALLOW_MARTIFACT] = log.data[constants.TABLE_ALLOW_MARTIFACT]
-        table_metadata[table_name][constants.TABLE_SIDE_EFFECTS] = log.data[constants.TABLE_SIDE_EFFECTS]
-        self._save_table_meta(table_metadata)
-        instance_metadata = self._get_instance_meta()
-        instance_metadata[table_name] = {}
-        self._save_instance_meta(instance_metadata)
 
     def _delete_table_operation(self, log: ProcessLog) -> None:
         table_name = log.data["table_name"]
@@ -149,12 +121,6 @@ class MetadataStore:
         if table_name in column_history:
             del column_history[table_name]
         self._save_column_history(column_history)
-        table_metadata = self._get_table_meta()
-        del table_metadata[table_name]
-        self._save_table_meta(table_metadata)
-        instance_metadata = self._get_instance_meta()
-        del instance_metadata[table_name]
-        self._save_instance_meta(instance_metadata)
 
     def _delete_instance_operation(self, log: ProcessLog) -> None:
         table_history = self._get_table_history()
@@ -167,39 +133,25 @@ class MetadataStore:
             del column_history[table_name][instance_id]
         self._save_table_history(table_history)
         self._save_column_history(column_history)
-        instance_metadata = self._get_instance_meta()
-        del instance_metadata[table_name][instance_id]
-        self._save_instance_meta(instance_metadata)
 
     def _setup_instance_operation(self, log:ProcessLog) -> None:
-        table_name = log.data["table_name"]
-        instance_id = log.data["instance_id"]
-        prev_id = log.data["prev_id"]
-        instance_metadata = self._get_instance_meta()
-        instance_metadata[table_name][instance_id] = {}
-        instance_metadata[table_name][instance_id][constants.INSTANCE_ORIGIN] = prev_id
-        self._save_instance_meta(instance_metadata)
+        pass
 
-    def _execute_operation(self, log: ProcessLog) -> None:
+    def _materialize_operation(self, log: ProcessLog) -> None:
         table_name = log.data["table_name"]
         perm_instance_id = log.data["perm_instance_id"]
-        changed_columns = log.data["to_change_columns"]
-        all_columns = log.data["all_columns"]
-        prev_instance_id = log.data["prev_instance_id"]
-        temp_instance_id = log.data["instance_id"]
+        changed_columns = log.data["changed_columns"] #TODO
+        all_columns = log.data["all_columns"] #TODO
+        origin_id = log.data["origin_id"]
+        origin_table = log.data["origin_table"]
         table_history = self._get_table_history()
-        table_metadata = self._get_table_meta()
-        instance_metadata = self._get_instance_meta()
-        instance_metadata[table_name][perm_instance_id] = instance_metadata[table_name][temp_instance_id]
-        del instance_metadata[table_name][temp_instance_id]
-        self._save_instance_meta(instance_metadata)
-        
+        table_metadata = get_description(instance_id='', table_name=table_name, db_dir=self.db_dir)
         if len(changed_columns) > 0:
             table_history[table_name][perm_instance_id] = (log.log_time, log.log_time, None)
         else:
-            prev_changed_time = table_history[table_name][prev_instance_id][0]
+            prev_changed_time = table_history[origin_table][origin_id][0]
             table_history[table_name][perm_instance_id] = (prev_changed_time, log.log_time, None)
-        if table_metadata[table_name][constants.TABLE_SIDE_EFFECTS]:
+        if table_metadata[constants.TABLE_SIDE_EFFECTS]:
             for id in table_history[table_name]:
                 changed_time, mat_time, stop_time = table_history[table_name][id]
                 if stop_time is None:
@@ -211,40 +163,38 @@ class MetadataStore:
             if column in changed_columns:
                 columns_history[table_name][perm_instance_id][column] = log.log_time
             else:
-                columns_history[table_name][perm_instance_id][column] = columns_history[
-                    table_name
-                ][prev_instance_id][column]
+                columns_history[table_name][perm_instance_id][column] = columns_history[origin_table][origin_id][column]
         self._save_column_history(columns_history) 
         
+    def _write_process(self, process_id: str) -> None:
+        logs = self._get_active_logs()
+        if process_id not in logs:
+            raise TVProcessError("No Active Process")
+        log = logs[process_id]
+        if log.execution_success is None and log.start_success is not False:
+            raise  TVProcessError("Process id {process_id} not completed.")
+        if log.operation not in constants.VALID_OPS:
+            raise TVProcessError("Operation {log.operation} not supported")
+        if log.execution_success:
+            if log.operation == constants.SETUP_TABLE_INNER_OP:
+                self._setup_table_operation(log)
+            if log.operation == constants.SETUP_TEMP_INNER_OP:
+                self._setup_instance_operation(log)
+            elif log.operation == constants.DELETE_TABLE_OP:
+                self._delete_table_operation(log)
+            elif log.operation == constants.DELETE_INSTANCE_OP:
+                self._delete_instance_operation(log)
+            elif log.operation ==  constants.MAT_OP:
+                self._materialize_operation(log)
+        self._write_to_history(log)
+        self._write_to_completed(process_id)
+        del logs[process_id]
+        self._save_active_logs(logs)
+        logger.info(f"Completed {log.operation}: {process_id}")
+
     def write_process(self, process_id: str) -> None:
         with self.lock:
-            logs = self._get_active_logs()
-            if process_id not in logs:
-                raise TVProcessError("No Active Process")
-            log = logs[process_id]
-            if log.execution_success is None and log.start_success is not False:
-                raise  TVProcessError("Process id {process_id} not completed.")
-            if log.operation not in constants.VALID_OPS:
-                raise TVProcessError("Operation {log.operation} not supported")
-            if log.execution_success:
-                pass
-                if log.operation == constants.SETUP_TABLE_INNER_OP:
-                    self._setup_table_operation(log)
-                if log.operation == constants.SETUP_TEMP_INNER_OP:
-                    self._setup_instance_operation(log)
-                elif log.operation == constants.DELETE_TABLE_OP:
-                    self._delete_table_operation(log)
-                elif log.operation == constants.DELETE_INSTANCE_OP:
-                    self._delete_instance_operation(log)
-                elif log.operation ==  constants.EXECUTE_OP:
-                    self._execute_operation(log)
-            else:
-                pass
-            self._write_to_history(log)
-            self._write_to_completed(process_id)
-            del logs[process_id]
-            self._save_active_logs(logs)
-            logger.info(f"Completed {log.operation}: {process_id}")
+            self._write_process(process_id)
 
     def check_written(self, process_id: str) -> bool:
         with self.lock:
@@ -345,37 +295,6 @@ class MetadataStore:
         with self.lock:
             self._update_process_step_internal(process_id, step)
 
-    def _get_table_property(self, table_name:str, property:str) -> Any:
-        table_meta = self._get_table_meta()
-        if table_name == '':
-            return table_meta
-        if table_name not in table_meta:
-            raise TVArgumentError("Table Name Does not exist")
-        if property == "":
-            return table_meta[table_name]
-        else:
-            return table_meta[table_name][property]
-        
-    def _get_instance_property(self, table_name: str, instance_id: str, property:str) -> Any:
-        with self.lock:
-            instance_meta = self._get_instance_meta()
-            if table_name not in instance_meta:
-                raise TVArgumentError("Table Name Does not exist")
-            if instance_id not in instance_meta[table_name]:
-                raise TVArgumentError("Instance ID doesn't exist")
-            if property == "":
-                return instance_meta[table_name][instance_id]
-            else:
-                return instance_meta[table_name][instance_id][property]
-
-    def get_table_property(self, table_name: str = '', property:str='', instance_id:str = '') -> Any:
-        with self.lock:
-            if instance_id == '':
-                return self._get_table_property(table_name, property)
-            else:
-                return self._get_instance_property(table_name, instance_id, property)
-        
-
     def get_table_times(self, instance_id: str, table_name: str) -> tuple[float, float, float]:
         with self.lock:
             table_history = self._get_table_history()
@@ -399,10 +318,11 @@ class MetadataStore:
         active_only:bool = True
     ) -> tuple[float, float, str]:
         table_history = self._get_table_history()
-        allow_multiple_artifacts = self._get_table_property(table_name, constants.TABLE_ALLOW_MARTIFACT)
         max_changed_time = 0
         max_start_time = 0
         max_id = ""
+        table_metadata = get_description(instance_id='', table_name=table_name, db_dir=self.db_dir)
+        allow_multiple_artifacts = table_metadata[constants.TABLE_ALLOW_MARTIFACT]
         for instance_id, (changed_time, start_time, end_time) in table_history[
             table_name
         ].items():
@@ -467,7 +387,7 @@ class MetadataStore:
         with self.lock:
             table_history = self._get_table_history()
             instances = list(table_history[table_name].keys())
-            instances.sort(key = lambda x: table_history[table_name][1])
+            instances.sort(key = lambda x: table_history[table_name][x][1])
             if version != "":
                 instances_ = [
                     instance
@@ -486,14 +406,52 @@ class MetadataStore:
             if process_id not in logs:
                 raise TVProcessError("Process ID not active {process_id}")
             old_pid = logs[process_id].pid
-            if force:
+            if force or old_pid == pid:
                 logs[process_id].pid = pid
                 self._save_active_logs(logs)
                 return old_pid
             try:
                 psutil.Process(old_pid)
-                raise TVProcessError("Process ID {process_id} already running at: {pid}")
+                
             except psutil.NoSuchProcess:
                 logs[process_id].pid = pid
                 self._save_active_logs(logs)
                 return old_pid
+            raise TVProcessError("Process ID {process_id} already running at: {old_pid}")
+
+    def stop_operation(self, process_ids:list[str], force:bool):
+        with self.lock:
+            new_process_ids = {}
+            logs = self._get_active_logs()
+            pid = os.getpid()
+            for process_id_ in process_ids:
+                if process_id_ not in logs:
+                    continue
+                old_pid = logs[process_id_].pid
+                try:
+                    proc = psutil.Process(old_pid)
+                    if not force:
+                        raise TVProcessError("Process {process_id} Currently Running. Cannot be stopped unless forced.")
+                    if force and pid != old_pid:
+                        try:
+                            proc.terminate()
+                            proc.wait(timeout=5)
+                        except psutil.TimeoutExpired:
+                            proc.kill()
+                            proc.wait(timeout=5)
+                except psutil.NoSuchProcess:
+                    pass
+                logs[process_id_].pid = pid
+                error = (TVForcedError.__class__.__name__, "User Stopped")
+                if logs[process_id_].start_success is None:
+                    logs[process_id_].start_success = False
+                elif logs[process_id_].execution_success is None:
+                    logs[process_id_].execution_success = False
+                if not logs[process_id_].start_success or not logs[process_id_].execution_success:
+                    logs[process_id_].error = error
+                new_process_ids[process_id_] = logs[process_id_].operation
+                self._save_active_logs(logs)
+                
+        if len(process_ids) == 0:
+            raise TVProcessError(f"Process {process_id_} not active.")
+        return new_process_ids

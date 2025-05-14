@@ -8,7 +8,7 @@ from helper import clean_up_open_ai
 
 def fake_execution():
     print("successfully faked")
-    time.sleep(200)
+    time.sleep(100)
 
 def test_multiprocessing_execute():
     with patch('tablevault._vault_operations._execute_instance',fake_execution):
@@ -34,7 +34,7 @@ def test_multiprocessing_other_instance():
 def test_multiprocessing():
     t = threading.Thread(target=test_multiprocessing_execute)
     t.start()
-    time.sleep(10)
+    time.sleep(5)
     failed_execution = False
     try:
         test_multiprocessing_other_table()

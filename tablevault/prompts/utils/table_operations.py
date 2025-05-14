@@ -10,6 +10,27 @@ from tablevault.defintions import constants
 from tablevault.helper.metadata_store import MetadataStore
 from tablevault.prompts.utils import artifact
 
+def update_dtypes(dtypes:dict[str, str],
+                           instance_id:str,
+                           table_name:str,
+                           db_dir:str):
+    type_path = os.path.join(db_dir, table_name, instance_id, constants.DTYPE_FILE)
+    with open(type_path, "r") as f:
+        dtypes_ = json.load(f)
+    
+    dtypes_.update(dtypes)
+
+    with open(type_path, 'w') as f:
+        json.dump(dtypes_, f)
+
+
+def write_dtype(dtypes, instance_id, table_name, db_dir):
+    table_dir = os.path.join(db_dir, table_name, instance_id)
+    dtypes = {col: str(dtype) for col, dtype in dtypes.items()}
+    type_path = os.path.join(table_dir, constants.DTYPE_FILE)
+    with open(type_path, "w") as f:
+        json.dump(dtypes, f)
+
 def write_table(
     df: pd.DataFrame, instance_id: str, table_name: str, db_dir: str
 ) -> None:
@@ -19,19 +40,21 @@ def write_table(
     table_dir = os.path.join(table_dir, instance_id)
     table_path = os.path.join(table_dir, constants.TABLE_FILE)
     df.to_csv(table_path, index=False)
-    dtypes = {col: str(dtype) for col, dtype in df.dtypes.items()}
-    type_path = os.path.join(table_dir, constants.DTYPE_FILE)
-    with open(type_path, "w") as f:
-        json.dump(dtypes, f)
 
 
 def get_table(
-    instance_id: str, table_name: str, db_dir: str, rows: Optional[int] = None
+    instance_id: str, 
+    table_name: str, 
+    db_dir: str, 
+    rows: Optional[int] = None,
+    artifact_dir: bool = False,
 ) -> pd.DataFrame:
     table_dir = os.path.join(db_dir, table_name)
     table_dir = os.path.join(table_dir, instance_id)
     table_path = os.path.join(table_dir, constants.TABLE_FILE)
     type_path = os.path.join(table_dir, constants.DTYPE_FILE)
+    if not os.path.exists(table_path):
+        raise TVTableError("Table doesn't exist")
     try:
         with open(type_path, "r") as f:
             content = f.read().strip()
@@ -42,6 +65,11 @@ def get_table(
         df = pd.read_csv(table_path, nrows=rows, dtype=dtypes)
         df.index.name = constants.TABLE_INDEX
         df = df.reset_index()
+        if artifact_dir:
+            a_dir = artifact.get_artifact_folder(instance_id, 
+                                         table_name,
+                                         db_dir)
+            df = artifact.df_artifact_to_path(df, a_dir)
         return df
     except pd.errors.EmptyDataError:
         return pd.DataFrame()
@@ -53,31 +81,23 @@ def fetch_table_cache(
     table_name: str,
     db_metadata:MetadataStore,
 ) -> Cache:
-    table_meta = db_metadata.get_table_property()
     cache = {}
-    temp = get_table(instance_id, table_name, db_metadata.db_dir)
-
+    temp = get_table(instance_id, table_name, db_metadata.db_dir, artifact_dir=False)
+    cache[constants.OUTPUT_SELF] = temp.copy(deep=True)
     a_dir = artifact.get_artifact_folder(instance_id, 
                                          table_name,
-                                         db_metadata.db_dir, 
-                                         table_meta[table_name][constants.TABLE_ALLOW_MARTIFACT])
+                                         db_metadata.db_dir)
     
-    cache["self"] = artifact.df_artifact_to_path(temp, a_dir)
+    cache[constants.TABLE_SELF] = artifact.df_artifact_to_path(temp, a_dir)
     
     for dep in external_dependencies:
         table, _, instance, _, version = dep
-        temp = get_table(instance, table, db_metadata.db_dir)
-        a_dir = artifact.get_artifact_folder(instance, 
-                                             table,
-                                             db_metadata.db_dir, 
-                                             table_meta[table][constants.TABLE_ALLOW_MARTIFACT])
-    
-        cache[(table, version)] = artifact.df_artifact_to_path(temp, a_dir)
+        cache[(table, version)] = get_table(instance, table, db_metadata.db_dir, artifact_dir=True)
     return cache
 
 
 def update_table_columns(
-    to_change_columns: list[str],
+    changed_columns: list[str],
     all_columns: list[str],
     dtypes: dict[str, str],
     instance_id: str,
@@ -93,14 +113,14 @@ def update_table_columns(
             df.drop(col, axis=1)
         elif len(df) == 0:
             df[col] = pd.Series()
-        elif col in to_change_columns or col not in df.columns:
+        elif col in changed_columns or col not in df.columns:
             df[col] = pd.NA
         if col in dtypes:
             df[col] = df[col].astype(dtypes[col])
         else:
             df[col] = df[col].astype("string")
     write_table(df, instance_id, table_name, db_dir)
-
+    write_dtype(df.dtypes, instance_id, table_name, db_dir)
 
 def merge_columns(
     columns: list[str], new_df: pd.DataFrame, old_df: pd.DataFrame
@@ -158,7 +178,7 @@ def check_entry(
 
 def _convert_series_to_dtype(values: Any, dtype: Any) -> pd.Series:
     s = pd.Series(values)
-    if pd.api.types.is_categorical_dtype(dtype):
+    if isinstance(dtype, pd.CategoricalDtype) :
         return s.astype(dtype)
     try:
         return s.astype(dtype)
@@ -175,7 +195,6 @@ def _convert_series_to_dtype(values: Any, dtype: Any) -> pd.Series:
                 raise TVTableError(
                     f"Could not convert {x!r} to dtype {dtype!r}: {inner_e}"
                 )
-
         return s.apply(convert_element)
 
 
@@ -192,3 +211,43 @@ def _convert_to_dtype(value: Any, dtype: Any) -> Any:
             return np.dtype(dtype).type(value)
     except Exception as e:
         raise TVTableError(f"Could not convert value {value!r} to dtype {dtype!r}: {e}")
+
+def check_table_artifacts(instance_id: str, 
+                          table_name: str, 
+                          db_dir: str, 
+                          rows: Optional[int] = None
+                          )-> None:
+    
+    df = get_table(instance_id, table_name, db_dir, rows, artifact_dir=True)
+    df_artifacts = df.select_dtypes(include=[constants.ARTIFACT_DTYPE])
+    if df_artifacts.shape[1] == 0:
+        return
+    for _ , row in df_artifacts.iterrows():
+        for _ , val in row.items():
+            if not os.path.exists(val):
+                raise TVTableError(f"Artifact {val} not found")
+    
+
+
+def check_changed_columns(y: pd.DataFrame, 
+                 instance_id:str,
+                 table_name,
+                 db_dir) -> list[str]:
+    try:
+        x = get_table(instance_id, table_name, db_dir)
+    except TVTableError:
+        return list(y.columns)
+    
+    if len(x) != len(y):
+        return list(y.columns)
+        
+    new_cols = set(y.columns) - set(x.columns)
+    common = set(y.columns).intersection(x.columns)
+    
+    changed = {
+        col
+        for col in common
+        if not x[col].equals(y[col])
+    }
+    
+    return list(new_cols | changed)

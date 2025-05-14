@@ -15,7 +15,6 @@ from typing import Callable, Any
 import os
 import logging
 import multiprocessing
-import psutil
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -53,7 +52,6 @@ def tablevault_operation(author:str,
                         background: bool = False,
                         ) -> str:
     db_metadata = MetadataStore(db_dir)
-    
     if process_id != "":
         process_id = process_id
     else:
@@ -132,37 +130,3 @@ def tablevault_operation(author:str,
         TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
         db_metadata.write_process(process_id)
     return process_id
-
-def stop_operation(process_id:str, db_dir:str, force:bool):
-    db_metadata = MetadataStore(db_dir)
-    logs = db_metadata.get_active_processes()
-    if process_id in logs:
-        old_pid = logs[process_id].pid
-        try:
-            proc = psutil.Process(old_pid)
-            if not force:
-                raise tv_errors.TVProcessError("Process {process_id} Currently Running. Cannot be stopped unless forced.")
-            if force:
-                try:
-                    proc.terminate()
-                    proc.wait(timeout=5)
-                except psutil.TimeoutExpired:
-                    proc.kill()
-                    proc.wait(timeout=5)
-        except psutil.NoSuchProcess:
-            pass
-        db_locks = DatabaseLock(process_id, db_dir)
-        if logs[process_id].start_success is None:
-            db_metadata.update_process_start_status(process_id, False)
-            execution_success = False
-        elif logs[process_id].execution_success is None:
-            db_metadata.update_process_execution_status(process_id, success=False)
-            execution_success = False
-        elif logs[process_id].execution_success is True:
-            execution_success = True
-        else:
-            execution_success = False
-        TAKEDOWN_MAP[logs[process_id].operation](process_id, db_metadata, db_locks,  execution_success)
-        db_metadata.write_process(process_id)
-    else:
-        raise tv_errors.TVProcessError(f"Process {process_id} not active.")

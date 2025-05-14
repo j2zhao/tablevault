@@ -25,7 +25,10 @@ class TVOpenAIError(TableVaultError):
 
 class TVProcessError(TableVaultError):
     """Re-execute Completed process"""
+    pass
 
+class TVForcedError(TableVaultError):
+    pass
 
 class TVFileError(TableVaultError):
     pass
@@ -42,3 +45,8 @@ class TVTableError(TableVaultError):
 class TVImplementationError(TableVaultError):
 
     pass
+
+class TableStringError(Exception):
+    pass
+
+ 

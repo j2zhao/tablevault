@@ -3,10 +3,11 @@ from pandas.api.extensions import ExtensionDtype, ExtensionArray, register_exten
 import os
 import pandas as pd
 from tablevault.defintions import constants
+from tablevault.helper.file_operations import get_description
+from typing import Any
 
 def join_path(artifact:str, path_dir:str)->str:
     return os.path.join(path_dir, artifact)
-
 
 def df_artifact_to_path(df:pd.DataFrame, path_dir:str):
     for col in df.columns:
@@ -16,17 +17,46 @@ def df_artifact_to_path(df:pd.DataFrame, path_dir:str):
 
 def get_artifact_folder(instance_id:str,
                         table_name:str,        
-                        db_dir: str, 
-                        allow_multiple: bool) -> str:
-    if allow_multiple:
-        return os.path.join(db_dir, table_name, instance_id, constants.ARTIFACT_FOLDER)
+                        db_dir: str) -> str:
+    instance_folder = os.path.join(db_dir, table_name, instance_id, constants.ARTIFACT_FOLDER)
+    if instance_id.startswith(constants.TEMP_INSTANCE):
+        return instance_folder
+    table_data = get_description("", table_name, db_dir)
+    if table_data[constants.TABLE_ALLOW_MARTIFACT]:
+        return instance_folder
     else:
-        return os.path.join(db_dir, table_name, constants.ARTIFACT_FOLDER)
+        table_folder = os.path.join(db_dir, table_name, constants.ARTIFACT_FOLDER)
+        return table_folder
 
- 
+def apply_artifact_path(arg:Any, 
+                        instance_id:str,
+                        table_name:str,
+                        db_dir:str):
+    artifact_path = get_artifact_folder(instance_id, table_name, db_dir)
+    if isinstance(arg, str):
+        arg.replace(constants.ARTIFACT_REFERENCE, artifact_path)
+        return arg
+    elif isinstance(arg, list):
+        return [apply_artifact_path(item, instance_id, table_name, db_dir) for item in arg]
+    elif isinstance(arg, set):
+        return set([apply_artifact_path(item, instance_id, table_name, db_dir) for item in arg])
+    elif isinstance(arg, dict):
+        return {
+            apply_artifact_path(k, instance_id, table_name, db_dir): apply_artifact_path(v, instance_id, table_name, db_dir)
+            for k, v in arg.items()
+        }
+    elif hasattr(arg, '__dict__'):
+        for attr, val in vars(arg).items():
+            val_ = apply_artifact_path(val, instance_id, table_name, db_dir)
+            setattr(arg, attr, val_)
+    else:
+        return arg
+
+
+        
 @register_extension_dtype
 class ArtifactStringDtype(ExtensionDtype):
-    name = 'artifact_string'
+    name = constants.ARTIFACT_DTYPE
     type = str
     kind = 'O'  # object
 

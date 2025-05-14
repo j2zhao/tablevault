@@ -1,5 +1,4 @@
 type: llm
-dependencies: [llm_storage.openai_id, self.paper_name]
 changed_columns: [q1]
 n_threads: 1
 retry: 5
