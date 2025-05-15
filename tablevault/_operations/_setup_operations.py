@@ -96,7 +96,7 @@ def setup_materialize_instance(instance_id:str,
             perm_instance_id = version + perm_instance_id
 
     
-    db_metadata.update_process_data(process_id, funct_kwargs)
+    #db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     db_locks.make_lock_path(table_name, perm_instance_id)
     db_locks.acquire_exclusive_lock(table_name, perm_instance_id)
@@ -109,10 +109,15 @@ def setup_materialize_instance(instance_id:str,
         if constants.DESCRIPTION_ORIGIN in instance_data:
             origin_id, origin_table = instance_data[constants.DESCRIPTION_ORIGIN]
         table_df = table_operations.get_table(instance_id, table_name, db_metadata.db_dir)
+        
+        all_columns = list(table_df.columns)
+        if constants.TABLE_INDEX in all_columns:
+            all_columns.remove(constants.TABLE_INDEX)
+        changed_columns = all_columns
         if origin_id != "":
             try:
                 temp_lock = db_locks.acquire_shared_lock(origin_table, origin_id)
-                changed_columns = table_operations.check_changed_columns(table_df, origin_id, origin_table)
+                changed_columns = table_operations.check_changed_columns(table_df, origin_id, origin_table, db_metadata.db_dir)
                 db_locks.release_lock(temp_lock)
             except tv_errors.TVLockError:
                 pass
@@ -138,74 +143,61 @@ def setup_materialize_instance(instance_id:str,
     return funct_kwargs
 
 def setup_stop_process(to_stop_process_id:str,
-                      force: bool,
-                      materialize:bool,
-                      process_id:str,
-                      db_metadata: MetadataStore,
-                      db_locks: DatabaseLock):
-    logs = db_metadata.get_active_processes()
-    process_ids = []
+                       force: bool,
+                       materialize:bool,
+                       process_id:str,
+                       db_metadata: MetadataStore,
+                       db_locks: DatabaseLock):
+    
+    if '_' in to_stop_process_id:
+        raise tv_errors.TVArgumentError("Only can stop top-level processes.")
+    logs, process_ids_ = db_metadata.stop_operation(to_stop_process_id, force)
     step_ids = []
     step_ids.append(process_id + '_' + gen_tv_id())
+    materialize_ops = {}
+    if materialize:
+        prev_materialized = False
+        for process_id_ in process_ids_:
+            if logs[process_id_].operation == constants.MAT_OP and logs[process_id_].execution_success:
+                prev_materialized = True
+        if not prev_materialized and logs[to_stop_process_id].start_success and not logs[to_stop_process_id].execution_success:
+            if logs[to_stop_process_id].operation == constants.EXECUTE_OP:
+                step_ids.append(process_id + '_' + gen_tv_id())
+                materialize_ops["instance_id"] = logs[to_stop_process_id].data["instance_id"]
+                materialize_ops["table_name"] = logs[to_stop_process_id].data["table_name"]
+                materialize_ops["perm_instance_id"] = logs[to_stop_process_id].data["perm_instance_id"]
+                materialize_ops["origin_id"] = logs[to_stop_process_id].data["origin_id"]
+                materialize_ops["origin_table"] = logs[to_stop_process_id].data["origin_table"]
+                materialize_ops["artifact_columns"] = []
+                materialize_ops["all_columns"] = logs[to_stop_process_id].data["all_columns"]
+                materialize_ops["changed_columns"] = logs[to_stop_process_id].data["changed_columns"]
+                materialize_ops["dependencies"] = logs[to_stop_process_id].data["dependencies"]
+            elif logs[to_stop_process_id].operation == constants.WRITE_TABLE_OP:
+                step_ids.append(process_id + '_' + gen_tv_id())
+                materialize_ops["instance_id"] = logs[to_stop_process_id].data["instance_id"]
+                materialize_ops["table_name"] = logs[to_stop_process_id].data["table_name"]
+                materialize_ops["perm_instance_id"] = logs[to_stop_process_id].data["perm_instance_id"]
+                materialize_ops["origin_id"] = logs[to_stop_process_id].data["origin_id"]
+                materialize_ops["origin_table"] = logs[to_stop_process_id].data["origin_table"]
+                materialize_ops["artifact_columns"] = logs[to_stop_process_id].data["artifact_columns"]
+                materialize_ops["all_columns"] = logs[to_stop_process_id].data["all_columns"]
+                materialize_ops["changed_columns"] = logs[to_stop_process_id].data["changed_columns"]
+                materialize_ops["dependencies"] = logs[to_stop_process_id].data["dependencies"]
+            elif logs[to_stop_process_id].operation == constants.MAT_OP:
+                step_ids.append(process_id + '_' + gen_tv_id())
+                materialize_ops["instance_id"] = logs[to_stop_process_id].data["instance_id"]
+                materialize_ops["table_name"] = logs[to_stop_process_id].data["table_name"]
+                materialize_ops["perm_instance_id"] = logs[to_stop_process_id].data["perm_instance_id"]
+                materialize_ops["origin_id"] = logs[to_stop_process_id].data["origin_id"]
+                materialize_ops["origin_table"] = logs[to_stop_process_id].data["origin_table"]
+                materialize_ops["artifact_columns"] = logs[to_stop_process_id].data["artifact_columns"]
+                materialize_ops["all_columns"] = logs[to_stop_process_id].data["all_columns"]
+                materialize_ops["changed_columns"] = logs[to_stop_process_id].data["changed_columns"]
+                materialize_ops["dependencies"] = logs[to_stop_process_id].data["dependencies"]
 
-    instance_ids = []
-    table_names = []
-    perm_instance_ids = []
-    origin_ids = []
-    origin_tables = []
-    artifact_columns = []
-    all_columns = []
-    changed_columns = []
-    dependencies = []
-    for process_id_ in logs:
-        if process_id_.startswith(to_stop_process_id):
-            process_ids.append(process_id_)
-            if materialize and logs[process_id_].start_success:
-                if logs[process_id_].operation == constants.EXECUTE_OP:
-                    step_ids.append(process_id + '_' + gen_tv_id())
-                    instance_ids.append(logs[process_id_].data["instance_id"])
-                    table_names.append(logs[process_id_].data["table_name"])
-                    perm_instance_ids.append(logs[process_id_].data["perm_instance_id"])
-                    origin_ids.append(logs[process_id_].data["origin_id"])
-                    origin_tables.append(logs[process_id_].data["origin_table"])
-                    artifact_columns.append([])
-                    all_columns.append(logs[process_id_].data["all_columns"])
-                    changed_columns.append(logs[process_id_].data["changed_columns"])
-                    dependencies.append(logs[process_id_].data["dependencies"])
-                elif logs[process_id_].operation == constants.WRITE_TABLE_OP:
-                    step_ids.append(process_id + '_' + gen_tv_id())
-                    instance_ids.append(logs[process_id_].data["instance_id"])
-                    table_names.append(logs[process_id_].data["table_name"])
-                    perm_instance_ids.append(logs[process_id_].data["perm_instance_id"])
-                    origin_ids.append("")
-                    origin_tables.append("")
-                    artifact_columns.append(logs[process_id_].data["artifact_columns"])
-                    all_columns.append(logs[process_id_].data["all_columns"])
-                    changed_columns.append(logs[process_id_].data["changed_columns"])
-                    dependencies.append(logs[process_id_].data["dependencies"])
-                elif logs[process_id_].operation == constants.MAT_OP:
-                    if logs[process_id_].data["top_level"]:
-                        step_ids.append(process_id + '_' + gen_tv_id())
-                        instance_ids.append(logs[process_id_].data["instance_id"])
-                        table_names.append(logs[process_id_].data["table_name"])
-                        perm_instance_ids.append(logs[process_id_].data["perm_instance_id"])
-                        origin_ids.append(logs[process_id_].data["origin_id"])
-                        origin_tables.append(logs[process_id_].data["origin_table"])
-                        artifact_columns.append(logs[process_id_].data["artifact_columns"])
-                        all_columns.append(logs[process_id_].data["all_columns"])
-                        changed_columns.append(logs[process_id_].data["changed_columns"])
-                        dependencies.append(logs[process_id_].data["dependencies"])
-                    
-    process_ids.sort(reverse=True)
     funct_kwargs = {
-        "process_ids":process_ids,
-        "instance_ids": instance_ids,
-        "table_names": table_names,
-        "perm_instance_ids": perm_instance_ids,
-        "origin_ids": origin_ids,
-        "origin_tables": origin_tables,
-        "dependencies": dependencies,
-        "force":force,
+        "process_ids":process_ids_,
+        "materialize_args": materialize_ops,
         "step_ids":step_ids
     }
     db_metadata.update_process_data(process_id, funct_kwargs)
@@ -263,12 +255,14 @@ def setup_write_table(table_df:Optional[pd.DataFrame],
     step_ids.append(process_id + '_' + gen_tv_id())
 
     all_columns = list(table_df.columns)
+    if constants.TABLE_INDEX in all_columns:
+        all_columns.remove(constants.TABLE_INDEX)
     changed_columns = all_columns
-    origin_id, origin_table = instance_data[constants.DESCRIPTION_EDIT]
+    origin_id, origin_table = instance_data[constants.DESCRIPTION_ORIGIN]
     if origin_id != "":
         try:
             temp_lock = db_locks.acquire_shared_lock(origin_table, origin_id)
-            changed_columns = table_operations.check_changed_columns(table_df, origin_id, origin_table)
+            changed_columns = table_operations.check_changed_columns(table_df, origin_id, origin_table, db_metadata.db_dir)
             db_locks.release_lock(temp_lock)
         except tv_errors.TVLockError:
             pass
@@ -348,8 +342,8 @@ def setup_execute_instance(
     perm_instance_id = version + perm_instance_id
     instance_id = constants.TEMP_INSTANCE + version
     instance_data = file_operations.get_description(instance_id, table_name, db_metadata.db_dir)
-    if not instance_data[constants.DESCRIPTION_EDIT]:
-        raise tv_errors.TVArgumentError("Internal edit table cannot be executed.")
+    if instance_data[constants.DESCRIPTION_EDIT]:
+        raise tv_errors.TVArgumentError("External edit table cannot be executed.")
 
     db_metadata.update_process_data(process_id, {"perm_instance_id": perm_instance_id, 
                                                  "instance_id": instance_id, 
@@ -374,7 +368,7 @@ def setup_execute_instance(
         origin_id = ""
         
         if constants.DESCRIPTION_ORIGIN in instance_data:
-            origin_table, origin_id = instance_data[constants.DESCRIPTION_ORIGIN]
+            origin_id, origin_table = instance_data[constants.DESCRIPTION_ORIGIN]
         if origin_id == "":
             _, _, origin_id = db_metadata.get_last_table_update(
                 table_name, version, before_time=start_time
@@ -436,11 +430,12 @@ def setup_execute_instance(
 def setup_setup_temp_instance(
     table_name: str,
     version: str,
+    description: str,
     origin_id: str,
     origin_table:str,
     external_edit:bool,
     copy_version: bool,
-    prompt_names: list[str],
+    prompt_names: list[str] | bool,
     execute: bool,
     background_execute:bool,
     process_id: str,
@@ -450,7 +445,7 @@ def setup_setup_temp_instance(
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
     if external_edit:
-        if len(prompt_names) > 0 or execute or background_execute or origin_id != "" or copy_version:
+        if prompt_names or execute or background_execute:
             raise tv_errors.TVArgumentError("Non-Executable Table does not have prompts, origin, or execute.")
     if background_execute and not execute:
         raise tv_errors.TVArgumentError("background_execute cannot be True when execute is False.")
@@ -468,12 +463,15 @@ def setup_setup_temp_instance(
         if origin_table == "":
             origin_table = table_name
         db_locks.acquire_shared_lock(origin_table, origin_id)
-    elif len(prompt_names) != 0:
+    elif prompt_names:
         db_locks.acquire_shared_lock(table_name, constants.PROMPT_FOLDER)
+        if isinstance(prompt_names, bool):
+            prompt_names = file_operations.get_prompt_names("",table_name, db_metadata.db_dir)
     funct_kwargs = {
         "version": version,
         "instance_id": instance_id,
         "table_name": table_name,
+        "description":description,
         "origin_id": origin_id,
         "origin_table": origin_table,
         "external_edit":external_edit,
@@ -584,12 +582,11 @@ def setup_setup_temp_instance_innner(
         origin_table:str,
         external_edit:bool,
         prompt_names: list[str],
+        description: str,
         process_id: str,
         db_metadata: MetadataStore,
         db_locks: DatabaseLock, 
     )-> SETUP_OUTPUT:
-    if prev_table == "":
-        prev_table = table_name
     funct_kwargs = {
         "table_name": table_name,
         "instance_id": instance_id,
@@ -597,6 +594,7 @@ def setup_setup_temp_instance_innner(
         "origin_table":origin_table,
         "external_edit":external_edit,
         "prompt_names": prompt_names,
+        "description": description,
     }
     db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.acquire_exclusive_lock(table_name, instance_id)
@@ -617,8 +615,8 @@ def setup_setup_table_inner(table_name:str,
     funct_kwargs = {
         'table_name': table_name,
         'description': description,
-        constants.TABLE_ALLOW_MARTIFACT:allow_multiple_artifacts,
-        constants.TABLE_SIDE_EFFECTS:has_side_effects,
+        'allow_multiple_artifacts':allow_multiple_artifacts,
+        'has_side_effects':has_side_effects,
     }
     db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.acquire_exclusive_lock(table_name)

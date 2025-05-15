@@ -12,6 +12,7 @@ from tablevault.prompts.utils.table_string import TableString
 from tablevault.helper.utils import gen_tv_id
 import re
 from typing import Any
+from tablevault.defintions import tv_errors
 
 class Message(BaseModel):
     text: TableString = Field(description='Message to model')
@@ -101,8 +102,7 @@ def _execute_llm(
         uses_files=uses_files,
     )
     if thread.success is False:
-        return
-    
+        raise tv_errors.TVPromptError("Thread Not Created")
     file_msgs = prompt.file_msgs
     cfiles = prompt.upload_files
     if len(file_msgs) == len(cfiles):
@@ -114,7 +114,6 @@ def _execute_llm(
         else:
             file_msg = ''
         thread.add_message(file_msg, file_ids=cfiles)
-
     results = []
     for question in prompt.questions:
         question_ = question.text

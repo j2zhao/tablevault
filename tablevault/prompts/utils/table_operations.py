@@ -17,9 +17,7 @@ def update_dtypes(dtypes:dict[str, str],
     type_path = os.path.join(db_dir, table_name, instance_id, constants.DTYPE_FILE)
     with open(type_path, "r") as f:
         dtypes_ = json.load(f)
-    
     dtypes_.update(dtypes)
-
     with open(type_path, 'w') as f:
         json.dump(dtypes_, f)
 
@@ -62,7 +60,10 @@ def get_table(
                 dtypes = {}
             else:
                 dtypes = json.loads(content)
-        df = pd.read_csv(table_path, nrows=rows, dtype=dtypes)
+        try:
+            df = pd.read_csv(table_path, nrows=rows, dtype=dtypes)
+        except:
+            raise TVTableError("Error Reading Table (likely datatype mismatch)")
         df.index.name = constants.TABLE_INDEX
         df = df.reset_index()
         if artifact_dir:
@@ -212,17 +213,18 @@ def _convert_to_dtype(value: Any, dtype: Any) -> Any:
     except Exception as e:
         raise TVTableError(f"Could not convert value {value!r} to dtype {dtype!r}: {e}")
 
-def check_table_artifacts(instance_id: str, 
+def check_table(instance_id: str, 
                           table_name: str, 
                           db_dir: str, 
                           rows: Optional[int] = None
                           )-> None:
     
     df = get_table(instance_id, table_name, db_dir, rows, artifact_dir=True)
-    df_artifacts = df.select_dtypes(include=[constants.ARTIFACT_DTYPE])
-    if df_artifacts.shape[1] == 0:
+    cols = [col for col, dt in df.dtypes.items() if dt.name == 'artifact_string']
+    df_custom = df[cols]
+    if df_custom.shape[1] == 0:
         return
-    for _ , row in df_artifacts.iterrows():
+    for _ , row in df_custom.iterrows():
         for _ , val in row.items():
             if not os.path.exists(val):
                 raise TVTableError(f"Artifact {val} not found")

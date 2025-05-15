@@ -1,0 +1,7 @@
+ptype: GeneratorPrompt
+changed_columns: [paper_name]
+python_function: create_data_table_from_table
+code_module: table_generation
+is_custom: false
+arguments:
+  df: <<stories.paper_name>>

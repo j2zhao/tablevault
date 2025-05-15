@@ -1,0 +1,11 @@
+ptype: OAIThreadPrompt
+changed_columns: [q1]
+upload_files:
+  - <<llm_storage.openai_id[paper_name::self.paper_name[index]]>>
+file_msgs:
+  - "Use this story to answer questions"
+questions:
+  - text: "How does Clara's curiosity shape her journey and development throughout the story?"
+key_file: ../test_data/open_ai_key/key.txt
+model: 'gpt-4o-mini'
+temperature: 0.2

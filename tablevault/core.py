@@ -38,6 +38,7 @@ class TableVault:
         self,
         db_dir: str,
         author: str,
+        description: str = "",
         create: bool = False,
         restart: bool = False,
         allow_multiple_artifacts: list[str] = [],
@@ -50,7 +51,7 @@ class TableVault:
         self.db_dir = db_dir
         self.author = author
         if create:
-            _vault_operations.setup_database(db_dir=db_dir, replace=True)
+            _vault_operations.setup_database(db_dir=db_dir, description=description, replace=True)
             if yaml_dir != "" or code_dir != "":
                 _vault_operations.copy_database_files(
                     author=self.author,
@@ -83,7 +84,6 @@ class TableVault:
                                                      self.db_dir,
                                                      is_temp)
     
-    # def get_artifact_folder(instance_id:str, )
 
     def active_processes(self) -> ActiveProcessDict:
         """
@@ -113,7 +113,7 @@ class TableVault:
 
     def stop_process(self, 
                      to_stop_process_id:str, 
-                     force: bool = False,
+                     force: False,
                      materialize: bool =False,
                      process_id: str = ""):
         """
@@ -125,6 +125,7 @@ class TableVault:
             raises exception on actively running process. Defauts to False.
 
         """
+        
         # THIS CHANGES STATE -> NEEDS LOGGING
         _vault_operations.stop_process(to_stop_process_id=to_stop_process_id,
                                        force=force,
@@ -139,7 +140,7 @@ class TableVault:
                     version:str = constants.BASE_TABLE_VERSION,
                     active_only: bool = True, 
                     safe_locking: bool = True) -> pd.DataFrame:
-        return _vault_operations.fetch_table(instance_id, version, table_name, self.db_dir, active_only, safe_locking)
+        return _vault_operations.fetch_table(instance_id, table_name, version, self.db_dir, active_only, safe_locking)
 
     def copy_files(
         self, file_dir: str, table_name: str = "", process_id: str = ""
@@ -215,7 +216,7 @@ class TableVault:
                             artifact_columns: list[str] = [],
                             process_id: str = "",
                             ):
-        _vault_operations.materialize_instance(self.author,
+        return _vault_operations.materialize_instance(self.author,
                                                "",
                                                table_name,
                                                version,
@@ -226,7 +227,8 @@ class TableVault:
                                                [],
                                                [],
                                                dependencies,
-                                               process_id)
+                                               process_id,
+                                               self.db_dir)
 
 
 
@@ -332,18 +334,20 @@ class TableVault:
         """
         return _vault_operations.setup_temp_instance(
             self.author,
-            version=version,
             table_name=table_name,
+            version=version,
+            description = description,
             origin_id=origin_id,
             origin_table = origin_table,
             external_edit = external_edit,
             copy_version=copy_version,
             prompt_names=prompt_names,
             execute=execute,
+            
             process_id=process_id,
             db_dir=self.db_dir,
             background_execute = background_execute,
-            description = description,
+            
         )
 
     def setup_table(

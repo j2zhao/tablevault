@@ -36,7 +36,7 @@ MAT_OP = "materialize_instance"
 WRITE_TABLE_OP = "write_table"
 WRITE_TABLE_INNER_OP = "write_table_inner"
 EXECUTE_OP = "execute_instance"
-EXECUTE_INNER_OP = "execute_instance"
+EXECUTE_INNER_OP = "execute_instance_inner"
 SETUP_TEMP_OP = "setup_temp_instance"
 SETUP_TEMP_INNER_OP = "setup_temp_instance_inner"
 SETUP_TABLE_OP = "setup_table"
@@ -44,8 +44,9 @@ SETUP_TABLE_INNER_OP = "setup_table_inner"
 COPY_DB_OP = "copy_database_files"
 RESTART_OP = "restart_database"
 ROLLBACK_OP = "rollback"
-VALID_OPS = [COPY_FILE_OP, DELETE_TABLE_OP, DELETE_INSTANCE_OP, EXECUTE_OP, SETUP_TEMP_OP, SETUP_TABLE_OP,
-              COPY_DB_OP, RESTART_OP, ROLLBACK_OP, SETUP_TABLE_INNER_OP, SETUP_TEMP_INNER_OP]
+VALID_OPS = [STOP_PROCESS_OP, COPY_FILE_OP, DELETE_TABLE_OP, DELETE_INSTANCE_OP, EXECUTE_OP, SETUP_TEMP_OP, SETUP_TABLE_OP,
+              COPY_DB_OP, RESTART_OP, ROLLBACK_OP, SETUP_TABLE_INNER_OP, SETUP_TEMP_INNER_OP, MAT_OP, WRITE_TABLE_OP, WRITE_TABLE_INNER_OP, 
+              EXECUTE_INNER_OP, ]
 
 TABLE_SELF = "self"
 OUTPUT_SELF = "self"

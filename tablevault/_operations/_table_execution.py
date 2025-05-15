@@ -18,7 +18,7 @@ def execute_instance(
     db_metadata: MetadataStore,
 ):  
     
-    db_metadata.start_execute_operation(table_name)
+    # db_metadata.start_execute_operation(table_name)
     log = db_metadata.get_active_processes()[process_id]
     prev_completed_steps = log.complete_steps
     update_rows = log.data['update_rows']
@@ -48,7 +48,7 @@ def execute_instance(
         )
             
         db_metadata.update_process_step(process_id, constants.EX_CLEAR_TABLE)
-        
+    
     for i, pname in enumerate(top_pnames):
         if pname in prev_completed_steps:
             continue
@@ -58,6 +58,9 @@ def execute_instance(
             table_name,
             db_metadata,
         )
+        # print(cache[constants.OUTPUT_SELF])
+        # print(cache[constants.OUTPUT_SELF].dtypes)
+        # raise ValueError()
         if i == 0:
             update_rows = prompts[pname].execute(cache, instance_id, table_name, db_metadata.db_dir)
             db_metadata.update_process_data(process_id, {"update_rows": update_rows})

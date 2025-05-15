@@ -47,11 +47,9 @@ def evaluate_operation_logging(ids):
     # check all ids are logged
     tablevault = TableVault('test_dir', 'jinjin')
     for id in ids:
-        print(id)
         assert tablevault.check_process_completion(id)
     # check no processes
     processes = tablevault.active_processes()
-    print(processes)
     assert len(processes) == 0
     # checked no locks
     lock_dir = 'test_dir/locks'
@@ -62,7 +60,6 @@ def evaluate_operation_logging(ids):
     # check no temp files
     temp_dir = 'test_dir/_temp'
     for entry in os.listdir(temp_dir):
-        print(entry)
         assert entry.startswith('.')
 
 

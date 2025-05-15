@@ -2,7 +2,7 @@ from tablevault.core import TableVault
 from unittest.mock import patch
 from helper import evaluate_operation_logging, compare_folders, clean_up_open_ai, copy_test_dir
 import shutil
-
+# todo add materialize
 def raise_except():
     raise ValueError()
 

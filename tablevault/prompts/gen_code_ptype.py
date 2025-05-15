@@ -12,7 +12,7 @@ class GeneratorPrompt(TVPrompt):
     is_custom: Union[bool, TableReference] = Field(description="Custom to database.")
     code_module: Union[str, TableReference] = Field(description="Module of function.") 
     python_function: Union[str, TableReference] = Field(description="Function to execute.")
-    arguments: Union[bool, TableReference] = Field(description="Function Arguments. DataTable and TableStrings are valid.")
+    arguments: dict[Union[str, TableReference], Any]= Field(description="Function Arguments. DataTable and TableStrings are valid.")
     
     def execute(
         self,
@@ -28,6 +28,7 @@ class GeneratorPrompt(TVPrompt):
             )
         else:
             funct, _ = utils.load_function_from_file(self.code_module, self.python_function, db_dir)
+        
         results = funct(**self.arguments)
         merged_df, diff_flag = table_operations.merge_columns(
             self.changed_columns, results, cache[constants.OUTPUT_SELF]

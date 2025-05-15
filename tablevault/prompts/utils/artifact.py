@@ -13,6 +13,7 @@ def df_artifact_to_path(df:pd.DataFrame, path_dir:str):
     for col in df.columns:
         if df[col].dtype == 'artifact_string':
             df[col] = df[col].apply(lambda x : join_path(x, path_dir))
+            df[col] = df[col].astype('artifact_string')
     return df
 
 def get_artifact_folder(instance_id:str,
@@ -34,7 +35,7 @@ def apply_artifact_path(arg:Any,
                         db_dir:str):
     artifact_path = get_artifact_folder(instance_id, table_name, db_dir)
     if isinstance(arg, str):
-        arg.replace(constants.ARTIFACT_REFERENCE, artifact_path)
+        arg = arg.replace(constants.ARTIFACT_REFERENCE, artifact_path)
         return arg
     elif isinstance(arg, list):
         return [apply_artifact_path(item, instance_id, table_name, db_dir) for item in arg]
@@ -49,6 +50,7 @@ def apply_artifact_path(arg:Any,
         for attr, val in vars(arg).items():
             val_ = apply_artifact_path(val, instance_id, table_name, db_dir)
             setattr(arg, attr, val_)
+        return arg
     else:
         return arg
 

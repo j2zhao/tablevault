@@ -3,7 +3,7 @@ import helper
 
 def basic_function()-> list[str]:
     ids = []
-    tablevault = TableVault('test_dir', 'jinjin', create=True)
+    tablevault = TableVault('test_dir', 'jinjin', create=True,)
     id = tablevault.setup_table('stories', allow_multiple_artifacts = False)
     ids.append(id)
     id = tablevault.setup_table('llm_storage', has_side_effects=True)
@@ -26,16 +26,11 @@ def basic_function()-> list[str]:
     ids.append(id)
     id = tablevault.execute_instance("llm_storage")
     ids.append(id)
+    #raise ValueError()
     id = tablevault.execute_instance("llm_questions")
     ids.append(id)
     return ids
 
-
-
-# tablevault = TableVault('test_dir', 'jinjin', create=True)
-# tablevault.setup_table('stories', allow_multiple = False)
-# tablevault.copy_files("../test_data/test_data_db_selected/stories", table_name="stories")
-# tablevault.setup_temp_instance("stories", prompt_names=["gen_stories"], execute=True)
 
 def test_multi_execution_instance():
     ids = []
@@ -59,10 +54,11 @@ def test_multi_execution_db():
     return []
 
 def test_deletion():
-    basic_function()
+    # basic_function()
     ids = []
     tablevault = TableVault('test_dir', 'jinjin')
     instances = tablevault.list_instances("stories")
+    print(instances)
     id = tablevault.delete_instance(instances[0], "stories")
     ids.append(id)
     id = tablevault.delete_table("llm_storage")
@@ -71,7 +67,6 @@ def test_deletion():
 
 
 def evaluate_tests():
-    # TODO: update helper
     print('TEST BASIC')
     ids = basic_function()
     helper.evaluate_operation_logging(ids)

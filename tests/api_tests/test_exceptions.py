@@ -44,6 +44,7 @@ setup_functions = [
                    "setup_delete_table", 
                    "setup_delete_instance", 
                    "setup_execute_instance", 
+                   "setup_execute_instance_inner",
                    "setup_setup_temp_instance", 
                    "setup_setup_table",
                    "setup_copy_database_files",
@@ -55,7 +56,8 @@ setup_module = 'tablevault._operations._setup_operations.'
 execute_functions = [ 
                    "_delete_table", 
                    "_delete_instance", 
-                   "_execute_instance", 
+                   "_execute_instance",
+                   "_execute_instance_inner",
                    "_setup_temp_instance", 
                    "_setup_table",
                    "_copy_database_files",

@@ -11,7 +11,7 @@ from tablevault._operations._takedown_operations import TAKEDOWN_MAP
 from tablevault.prompts.utils import artifact 
 import os
 import pandas as pd 
-from typing import Optional
+from typing import Optional, Any
 
 def get_artifact_folder(instance_id:str, 
                         table_name:str, 
@@ -26,8 +26,8 @@ def get_artifact_folder(instance_id:str,
             _, _, instance_id =  db_metadata.get_last_table_update(table_name, version)
     return artifact.get_artifact_folder(instance_id, table_name, db_dir)
 
-def setup_database(db_dir: str, replace: bool = False) -> None:
-    file_operations.setup_database_folder(db_dir, replace)
+def setup_database(db_dir: str, description:str, replace: bool = False) -> None:
+    file_operations.setup_database_folder(db_dir, description, replace)
 
 def print_active_processes(db_dir: str, print_all: bool) -> ActiveProcessDict:
     db_metadata = MetadataStore(db_dir)
@@ -45,12 +45,10 @@ def list_instances(table_name: str, db_dir: str, version: str) -> list[str]:
     db_metadata = MetadataStore(db_dir)
     return db_metadata.get_table_instances(table_name, version)
 
-def fetch_table(instance_id:str, version:str, table_name:str, db_dir:str, temporary:bool, active_only:bool, safe_locking: bool):
+def fetch_table(instance_id:str, table_name:str,  version:str, db_dir:str, active_only:bool, safe_locking: bool):
     
     db_metadata = MetadataStore(db_dir)
-    if instance_id != '' and temporary:
-        raise tv_errors.TVArgumentError("Shouldn't reques temporary while defining instance id.")
-    elif instance_id == '' and not temporary:
+    if instance_id == '':
         _ , _ , instance_id = db_metadata.get_last_table_update(table_name, version, active_only=active_only)
     if safe_locking:
         process_id = utils.gen_tv_id()
@@ -137,17 +135,19 @@ def _materialize_instance(instance_id: str,
                           artifact_columns: list[str],
                           dependencies: list[tuple[str, str]],
                           db_metadata: MetadataStore):
-
     artifact_dtypes = {}
     for col in artifact_columns:
         artifact_dtypes[col] = constants.ARTIFACT_DTYPE
+
     
-    table_operations.update_dtypes(artifact_dtypes, instance_id, table_name, db_metadata.db_dir)
+    if len(artifact_dtypes) > 0:
+        table_operations.update_dtypes(artifact_dtypes, instance_id, table_name, db_metadata.db_dir)
     
-    table_operations.check_table_artifacts(instance_id, table_name, db_metadata.db_dir, rows=constants.ARTIFACT_ROWS)
+    table_operations.check_table(instance_id, table_name, db_metadata.db_dir, rows=constants.ARTIFACT_ROWS)
 
     file_operations.rename_table_instance(perm_instance_id, instance_id, table_name, db_metadata.db_dir)
     table_data = file_operations.get_description("", table_name, db_metadata.db_dir)
+
     if not table_data[constants.TABLE_ALLOW_MARTIFACT]:
         file_operations.move_artifacts_to_table(db_metadata.db_dir, table_name, perm_instance_id)
     
@@ -157,10 +157,10 @@ def _materialize_instance(instance_id: str,
 
     if origin_id != '':
         parent_descript = file_operations.get_description(origin_id, origin_table, db_metadata.db_dir)
-        if constants.DESCRIPTION_CHILDREN not in parent_descript:
-            parent_descript[constants.DESCRIPTION_CHILDREN] = []
+        if constants.DESCRIPTION_FUTURE not in parent_descript:
+            parent_descript[constants.DESCRIPTION_FUTURE] = []
         recorded = False
-        for id, name in parent_descript[constants.DESCRIPTION_CHILDREN]:
+        for id, name in parent_descript[constants.DESCRIPTION_FUTURE]:
             if id == perm_instance_id or name == table_name:
                 recorded = True
         if not recorded:
@@ -213,46 +213,42 @@ def materialize_instance(author:str,
 
 
 def _stop_process(process_ids:list[str],
-                  instance_ids:list[str],
-                  table_names:list[str],
-                  perm_instance_ids:list[str],
-                  origin_ids:list[str],
-                  origin_tables:list[str],
-                  artifact_columns:list[list[str]],
-                  changed_columns:list[list[str]],
-                  all_columns:list[list[str]],
-                  dependencies:list[list[str]],
-                  force:bool,
+                 materialize_args:dict[str, Any],
                   step_ids: list[str],
                   process_id: str,
                   db_metadata: MetadataStore,
                   ):
+    logs = db_metadata.get_active_processes()
     complete_steps = db_metadata.get_active_processes()[process_id].complete_steps
     if step_ids[0] not in complete_steps:
-        new_process_ids = db_metadata.stop_operation(process_ids, force)
-        for process_id_, op_name in new_process_ids.items():
+        error = (tv_errors.TVForcedError.__class__.__name__, "User Stopped")
+        for process_id_ in process_ids:
+            if logs[process_id_].start_success is None:
+                db_metadata.update_process_start_status(process_id_, False, error)
+            elif logs[process_id_].execution_success is None:
+                db_metadata.update_process_execution_status(process_id_, False, error)
             db_locks = DatabaseLock(process_id_, db_metadata.db_dir)
-            TAKEDOWN_MAP[op_name](process_id_, db_metadata, db_locks)
+            TAKEDOWN_MAP[logs[process_id_].operation](process_id_, db_metadata, db_locks)
             db_metadata.write_process(process_id_)
-        
-    for i, step_id in enumerate(step_ids[1:]):
+        db_metadata.update_process_step(process_id, step_ids[0])
+    if len(step_ids) > 1:
         try:
-            #TODO fix
             materialize_instance(process_id,
-                                instance_ids[i-1], 
-                                table_names[i-1],
+                                materialize_args["instance_id"],
+                                materialize_args["table_name"],
                                 "",
-                                perm_instance_ids[i-1],
-                                origin_ids[i-1],
-                                origin_tables[i-1],
-                                artifact_columns[i-1],
-                                changed_columns[i-1],
-                                all_columns[i-1],
-                                dependencies[i-1],
-                                step_id,
+                                materialize_args["perm_instance_id"],
+                                materialize_args["origin_id"],
+                                materialize_args["origin_table"],
+                                materialize_args["artifact_columns"],
+                                materialize_args["changed_columns"],
+                                materialize_args["all_columns"],
+                                materialize_args["all_columns"],
+                                materialize_args["dependencies"],
+                                step_ids[1],
                                 db_metadata.db_dir)
         finally:
-            db_metadata.update_process_step(process_id, step_id)
+            db_metadata.update_process_step(process_id, step_ids[1])
 
 def stop_process(author:str,
                  to_stop_process_id: str, 
@@ -262,8 +258,8 @@ def stop_process(author:str,
                  db_dir:str):
     setup_kwargs = {
         'to_stop_process_id':to_stop_process_id,
-        'force':force,
         'materialize': materialize,
+        'force': force,
     }
     return tablevault_operation(author,
                         constants.STOP_PROCESS_OP,
@@ -279,7 +275,7 @@ def _write_table_inner(table_df: Optional[pd.DataFrame],
                  table_name:str,
                  db_metadata: MetadataStore
                  ):
-    if table_df == None:
+    if table_df is None:
         raise tv_errors.TVProcessError("Cannot Restart Write Table")
     table_operations.write_table(table_df, instance_id, table_name, db_metadata.db_dir)
     table_operations.write_dtype(table_df.dtypes, instance_id, table_name,db_metadata.db_dir)
@@ -504,8 +500,9 @@ def _setup_temp_instance_inner(instance_id:str,
                                description:str,
                                db_metadata: MetadataStore):
     file_operations.setup_table_instance_folder(
-            instance_id, table_name, db_metadata.db_dir, origin_id, origin_table, prompt_names, external_edit
+            instance_id, table_name, db_metadata.db_dir, external_edit, origin_id, origin_table, prompt_names
         )
+    
     descript_yaml = {constants.DESCRIPTION_SUMMARY: description,
                      constants.DESCRIPTION_ORIGIN: [origin_id, origin_table],
                      constants.DESCRIPTION_EDIT: external_edit
@@ -518,6 +515,7 @@ def setup_temp_instance_inner(author:str,
                               origin_id:str,
                               origin_table:str,
                               prompt_names: list[str],
+                              external_edit:bool,
                               process_id: str,
                               db_dir:str,
                               description:str):
@@ -527,7 +525,8 @@ def setup_temp_instance_inner(author:str,
         "origin_id":origin_id,
         "origin_table":origin_table,
         "prompt_names":prompt_names,
-        "description": description
+        "description": description,
+        "external_edit": external_edit,
     }
     return tablevault_operation(author=author,
                          op_name=constants.SETUP_TEMP_INNER_OP,
@@ -539,9 +538,10 @@ def setup_temp_instance_inner(author:str,
     
 
 def _setup_temp_instance(
-    version: str,
     instance_id: str,
     table_name: str,
+    version: str,
+    description:str,
     origin_id: str,
     origin_table:str,
     external_edit:bool,
@@ -551,7 +551,6 @@ def _setup_temp_instance(
     step_ids: list[str],
     process_id: str,
     db_metadata: MetadataStore,
-    description: str
 ):
     complete_steps = db_metadata.get_active_processes()[process_id].complete_steps
     if step_ids[0] not in complete_steps:
@@ -580,20 +579,22 @@ def _setup_temp_instance(
     
     
 def setup_temp_instance(author:str,
-               table_name:str,
-               version: str,
-               origin_id:str,
-               origin_table:str,
-               external_edit:bool,
-               copy_version: bool,
-               prompt_names: list[str] | bool,
-               execute: bool,
-               process_id:str,
-               db_dir:str,
-               background_execute:bool):
+                        table_name:str,
+                        version: str,
+                        description:str,
+                        origin_id:str,
+                        origin_table:str,
+                        external_edit:bool,
+                        copy_version: bool,
+                        prompt_names: list[str] | bool,
+                        execute: bool,
+                        process_id:str,
+                        db_dir:str,
+                        background_execute:bool):
     setup_kwargs = {
         'table_name': table_name,
         'version':version,
+        'description':description,
         'origin_id': origin_id,
         'origin_table': origin_table,
         'external_edit': external_edit,
@@ -614,7 +615,8 @@ def _setup_table_inner(table_name:str,
                        allow_multiple_artifacts:bool,
                        has_side_effects:bool,
                        db_metadata: MetadataStore):
-    file_operations.setup_table_folder(table_name, db_metadata.db_dir, allow_multiple_artifacts)
+    make_artifacts = not allow_multiple_artifacts
+    file_operations.setup_table_folder(table_name, db_metadata.db_dir, make_artifacts)
     descript_yaml = {constants.DESCRIPTION_SUMMARY: description,
                      constants.TABLE_ALLOW_MARTIFACT:allow_multiple_artifacts,
                      constants.TABLE_SIDE_EFFECTS:has_side_effects,
@@ -653,8 +655,8 @@ def _setup_table(
     background_execute: bool,
     allow_multiple_artifacts: bool,
     has_side_effects: bool,
-    step_ids: list[str],
     description: str,
+    step_ids: list[str],
     process_id: str,
     db_metadata: MetadataStore,
 ):
@@ -681,10 +683,12 @@ def _setup_table(
     if yaml_dir and create_temp and step_ids[2] not in complete_steps:
         setup_temp_instance(
             author=process_id,
-            version="",
             table_name=table_name,
+            version="",
+            description="",
             origin_id="",
             origin_table="",
+            external_edit=False,
             copy_version=False,
             prompt_names=True,
             execute=execute,
@@ -754,14 +758,15 @@ def _copy_database_files(
         setup_table(
             author=process_id,
             table_name=tname,
-            yaml_dir=pdir,
             create_temp= execute,
             execute=execute,
+            background_execute=background_execute,
             allow_multiple_artifacts=allow_m_artifacts,
             has_side_effects=has_s_effects,
+            description="",
+            yaml_dir=pdir,
             process_id=step_ids[index],
             db_dir=db_metadata.db_dir,
-            background_execute=background_execute
         )
         db_metadata.update_process_step(process_id, step_ids[index])
         index += 1

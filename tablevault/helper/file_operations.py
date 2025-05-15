@@ -68,45 +68,65 @@ def setup_table_instance_folder(
     prompts: list[str] = [],
 ) -> None:
     table_dir = os.path.join(db_dir, table_name)
-    temp_dir = os.path.join(table_dir, instance_id)
-    if os.path.exists(temp_dir):
-        shutil.rmtree(temp_dir)
-    os.makedirs(temp_dir)
-    prompt_dir = os.path.join(temp_dir, constants.PROMPT_FOLDER)
-    artifact_dir = os.path.join(temp_dir, constants.ARTIFACT_FOLDER)
-    current_table_path = os.path.join(temp_dir, constants.TABLE_FILE)
-    if origin_id != "":
-        prev_dir = os.path.join(db_dir, origin_table, str(origin_id))
-        if not external_edit:
+    instance_dir = os.path.join(table_dir, instance_id)
+    if os.path.exists(instance_dir):
+        shutil.rmtree(instance_dir)
+    os.makedirs(instance_dir)
+
+    prompt_dir = os.path.join(instance_dir, constants.PROMPT_FOLDER)
+    artifact_dir = os.path.join(instance_dir, constants.ARTIFACT_FOLDER)
+    current_table_path = os.path.join(instance_dir, constants.TABLE_FILE)
+    description_path = os.path.join(table_dir, instance_id, constants.META_DESCRIPTION_FILE)
+    if not external_edit:
+        if origin_id != "":
+            prev_dir = os.path.join(db_dir, origin_table, str(origin_id))
             prev_prompt_dir = os.path.join(prev_dir, constants.PROMPT_FOLDER)
             shutil.copytree(prev_prompt_dir, prompt_dir, copy_function=shutil.copy2)
-        else:
-            copy_table(instance_id, table_name, origin_id, origin_table, db_dir)
-        prev_artifact_dir = os.path.join(prev_dir, constants.ARTIFACT_FOLDER)
-        if os.path.isdir(prev_artifact_dir):
-            shutil.copytree(prev_artifact_dir, artifact_dir, copy_function=shutil.copy2)
-        else:
-            os.makedirs(artifact_dir)
-    elif len(prompts) != 0:
-        os.makedirs(prompt_dir)
-        prompt_dir_ = os.path.join(table_dir, constants.PROMPT_FOLDER)
-        for prompt in prompts:
-            prompt_path_ = os.path.join(prompt_dir_, prompt + ".yaml")
-            prompt_path = os.path.join(prompt_dir, prompt + ".yaml")
-            shutil.copy2(prompt_path_, prompt_path)
-        os.makedirs(artifact_dir)
-    else:
-        if not external_edit:
+
+            prev_artifact_dir = os.path.join(prev_dir, constants.ARTIFACT_FOLDER)
+            if os.path.isdir(prev_artifact_dir):
+                shutil.copytree(prev_artifact_dir, artifact_dir, copy_function=shutil.copy2)
+            else:
+                os.makedirs(artifact_dir)
+        elif len(prompts) != 0:
             os.makedirs(prompt_dir)
-        os.makedirs(artifact_dir)
-    df = pd.DataFrame()
-    df.to_csv(current_table_path, index=False)
-    type_path = os.path.join(temp_dir, constants.DTYPE_FILE)
-    with open(type_path, "w") as f:
-        pass
-    description_dir = os.path.join(table_dir, constants.META_DESCRIPTION_FILE)
-    with open(description_dir, "w") as f:
-        pass
+            prompt_dir_ = os.path.join(table_dir, constants.PROMPT_FOLDER)
+            for prompt in prompts:
+                prompt_path_ = os.path.join(prompt_dir_, prompt + ".yaml")
+                prompt_path = os.path.join(prompt_dir, prompt + ".yaml")
+                shutil.copy2(prompt_path_, prompt_path)
+            os.makedirs(artifact_dir)
+        else:
+            os.makedirs(prompt_dir)
+            os.makedirs(artifact_dir)
+        df = pd.DataFrame()
+        df.to_csv(current_table_path, index=False)
+        type_path = os.path.join(instance_dir, constants.DTYPE_FILE)
+        with open(type_path, "w") as f:
+            json.dump({}, f)
+        
+        with open(description_path, "w") as f:
+            pass
+    else:
+        if origin_id != "":
+            copy_table(instance_id, table_name, origin_id, origin_table, db_dir)
+            prev_artifact_dir_instance = os.path.join(db_dir, origin_table, str(origin_id), constants.ARTIFACT_FOLDER)
+            prev_artifact_dir_table = os.path.join(db_dir, origin_table, constants.ARTIFACT_FOLDER)
+            if os.path.isdir(prev_artifact_dir_instance):
+                shutil.copytree(prev_artifact_dir_instance, artifact_dir, copy_function=shutil.copy2)
+            elif os.path.isdir(prev_artifact_dir_table):
+                shutil.copytree(prev_artifact_dir_table, artifact_dir, copy_function=shutil.copy2)
+            else:
+                os.makedirs(artifact_dir)
+        else:
+            df = pd.DataFrame()
+            df.to_csv(current_table_path, index=False)
+            type_path = os.path.join(instance_dir, constants.DTYPE_FILE)
+            with open(type_path, "w") as f:
+                json.dump({}, f)
+            os.makedirs(artifact_dir)
+        with open(description_path, "w") as f:
+            pass
 
 def get_description(instance_id:str, 
                     table_name: str, 
@@ -115,7 +135,7 @@ def get_description(instance_id:str,
     if table_name != '':
         meta_file = os.path.join(meta_file, table_name)
         if instance_id != '':
-            meta_file = os.path.join(meta_file, table_name)
+            meta_file = os.path.join(meta_file, instance_id)
     elif instance_id != '':
         raise TVFileError("Need table_name with instance_id")
     meta_file = os.path.join(meta_file, constants.META_DESCRIPTION_FILE)
@@ -131,7 +151,7 @@ def write_description(descript_yaml:dict,
     if table_name != '':
         meta_file = os.path.join(meta_file, table_name)
         if instance_id != '':
-            meta_file = os.path.join(meta_file, table_name)
+            meta_file = os.path.join(meta_file, instance_id)
     elif instance_id != '':
         raise TVFileError("Need table_name with instance_id")
     meta_file = os.path.join(meta_file, constants.META_DESCRIPTION_FILE)
@@ -313,17 +333,9 @@ def move_artifacts_to_table(db_dir: str,
         return
     old_artifact_dir = os.path.join(db_dir, table_name, instance_id, constants.ARTIFACT_FOLDER)
     new_artifact_dir = os.path.join(db_dir, table_name, constants.ARTIFACT_FOLDER)
-    shutil.rmtree(new_artifact_dir)  # Remove the preexisting directory
-    for filename in os.listdir(new_artifact_dir):
-        file_path = os.path.join(new_artifact_dir, filename)
-        if os.path.isfile(file_path) or os.path.islink(file_path):
-            os.remove(file_path) # Delete the file
-        elif os.path.isdir(file_path):
-                os.rmdir(file_path)
-    for name in os.listdir(old_artifact_dir):
-        src_path = os.path.join(old_artifact_dir, name)
-        dst_path = os.path.join(new_artifact_dir, name)
-        shutil.move(src_path, dst_path)
+    if os.path.exists(new_artifact_dir):
+        shutil.rmtree(new_artifact_dir)
+    shutil.move(old_artifact_dir, new_artifact_dir)
 
 def upload_artifact(artifact_name:str,
                     path_name:str,

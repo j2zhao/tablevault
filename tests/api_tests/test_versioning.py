@@ -7,7 +7,7 @@ from helper import evaluate_operation_logging, compare_folders, evaluate_full_ta
 import shutil
 
 def copy_story(base_dir= '../test_data/stories', story_name = 'The_Clockmakers_Secret.pdf'):
-    org_path = os.path.jo in(base_dir, story_name)
+    org_path = os.path.join(base_dir, story_name)
     new_name = story_name.split(".")[0] + '_copy.pdf'
     new_path = os.path.join(base_dir, new_name)
     shutil.copy2(org_path, new_path)
@@ -106,8 +106,8 @@ def test_new_row_change():
     evaluate_full_tables(num_entries=2)
 
 if __name__ == "__main__":
-    # test_copy_instance_no_change()
-    # test_copy_instance_prompt_change()
-    # test_copy_dep_change()
+    test_copy_instance_no_change()
+    test_copy_instance_prompt_change()
+    test_copy_dep_change()
     test_new_row_change()
     clean_up_open_ai()

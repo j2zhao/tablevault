@@ -170,6 +170,7 @@ def apply_table_string(arg:Any, cache: Cache, index: Optional[int]= None) -> Any
         for attr, val in vars(arg).items():
             val_ = apply_table_string(val, cache, index)
             setattr(arg, attr, val_)
+        return arg
     else:
         return arg
 

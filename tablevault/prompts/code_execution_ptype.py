@@ -23,19 +23,20 @@ class CodePrompt(TVPrompt):
                 instance_id: str,
                 table_name: str,
                 db_dir: str) -> bool:
-        self.transform_table_string(cache, index=None)
+        self.transform_table_string(cache, instance_id, table_name, db_dir, index=None)
         if not self.is_custom:
             funct = utils.get_function_from_module(
                 self.code_module, self.python_function
             )
         else:
             funct, _ = utils.load_function_from_file(self.code_module, self.python_function, db_dir)
+        #raise ValueError()
         if self.is_udf:
             indices = list(range(len(cache[constants.TABLE_SELF])))
             with ThreadPoolExecutor(max_workers=self.n_threads) as executor:
                 results = list(
                     executor.map(
-                        lambda i: _execute_code_from_prompt(i, self, funct, cache),
+                        lambda i: _execute_code_from_prompt(i, self, funct, cache, instance_id, table_name, db_dir),
                         indices,
                     )
                 )

@@ -1,0 +1,13 @@
+children:
+- - base_1747264821_3e397390-c1df-4b80-911c-4091a0bb763d
+  - llm_storage
+- - base_1747264821_8f732501-22dd-4534-b581-117eff77dbf4
+  - llm_questions
+dependencies: []
+external_edit: false
+origin:
+- ''
+- ''
+prompt_dependencies:
+  gen_stories: []
+summary: ''

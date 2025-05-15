@@ -4,6 +4,16 @@ Test materialization and write table
 """
 import helper
 import pandas as pd
+from tablevault.prompts.utils import table_operations
+
+def update_table():
+    df = pd.DataFrame({
+    'id':    [1, 2, 3],
+    'name':  ['Alice', 'Bob', 'Charlie'],
+    'score': [85.5, 92.0, 78.0]
+    })    
+    table_operations.write_dtype(dict(df.dtypes), "TEMP_base", "stories", "test_dir")
+    table_operations.write_table(df, "TEMP_base", "stories", "test_dir")
 
 def test_materialize_basic():
     ids = []
@@ -12,12 +22,12 @@ def test_materialize_basic():
     ids.append(id)
     id = tablevault.setup_temp_instance('stories', external_edit=True)
     ids.append(id)
+    update_table()
     id = tablevault.materialize_instance('stories')
     ids.append(id)
     helper.evaluate_operation_logging(ids)
     instances = tablevault.list_instances("stories")
     assert len(instances) == 1
-    
 
 
 def test_write_table_basic():
@@ -35,6 +45,7 @@ def test_write_table_basic():
     id = tablevault.write_table(df, 'stories')
     ids.append(id)
     df2 = tablevault.fetch_table("stories")
+    df2.drop(columns=["index"], inplace=True)
     assert df.equals(df2)
     helper.evaluate_operation_logging(ids)
 
@@ -57,6 +68,7 @@ def test_materialize_copy():
     ids.append(id)
     tablevault.materialize_instance("stories")
     df2 = tablevault.fetch_table("stories")
+    df2.drop(columns=["index"], inplace=True)
     assert df.equals(df2)
     helper.evaluate_operation_logging(ids)
 
@@ -78,6 +90,7 @@ def test_write_table_copy():
     ids.append(id)
     tablevault.write_table(df, "stories")
     df2 = tablevault.fetch_table("stories")
+    df2.drop(columns=["index"], inplace=True)
     assert df.equals(df2)
     helper.evaluate_operation_logging(ids)
     

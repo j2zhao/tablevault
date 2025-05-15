@@ -90,17 +90,17 @@ class MetadataStore:
         meta_lock = os.path.join(meta_dir, "LOG.lock")
         self.lock = FileLock(meta_lock)
 
-    def start_execute_operation(self, table_name:str) -> None:
-        with self.lock:
-            table_metadata = get_description(instance_id='', table_name=table_name, db_dir=self.db_dir)
-            start_time = time.time()
-            table_history = self._get_table_history()
-            if table_metadata[constants.TABLE_SIDE_EFFECTS]:
-                for id in table_history[table_name]:
-                    changed_time, mat_time, stop_time = table_history[table_name][id]
-                    if stop_time is None:
-                        table_history[table_name][id] = (changed_time, mat_time, start_time)
-            self._save_table_history(table_history)
+    # def start_execute_operation(self, table_name:str) -> None:
+    #     with self.lock:
+    #         table_metadata = get_description(instance_id='', table_name=table_name, db_dir=self.db_dir)
+    #         start_time = time.time()
+    #         table_history = self._get_table_history()
+    #         if table_metadata[constants.TABLE_SIDE_EFFECTS]:
+    #             for id in table_history[table_name]:
+    #                 changed_time, mat_time, stop_time = table_history[table_name][id]
+    #                 if stop_time is None:
+    #                     table_history[table_name][id] = (changed_time, mat_time, start_time)
+    #         self._save_table_history(table_history)
 
     def _setup_table_operation(self, log: ProcessLog) -> None:
         table_name = log.data["table_name"]
@@ -146,16 +146,17 @@ class MetadataStore:
         origin_table = log.data["origin_table"]
         table_history = self._get_table_history()
         table_metadata = get_description(instance_id='', table_name=table_name, db_dir=self.db_dir)
+        if table_metadata[constants.TABLE_SIDE_EFFECTS] and len(changed_columns) > 0:
+            for id in table_history[table_name]:
+                changed_time, mat_time, stop_time = table_history[table_name][id]
+                if stop_time is None:
+                    table_history[table_name][id] = (changed_time, mat_time, log.log_time)
         if len(changed_columns) > 0:
             table_history[table_name][perm_instance_id] = (log.log_time, log.log_time, None)
         else:
             prev_changed_time = table_history[origin_table][origin_id][0]
             table_history[table_name][perm_instance_id] = (prev_changed_time, log.log_time, None)
-        if table_metadata[constants.TABLE_SIDE_EFFECTS]:
-            for id in table_history[table_name]:
-                changed_time, mat_time, stop_time = table_history[table_name][id]
-                if stop_time is None:
-                    table_history[table_name][id] = (changed_time, mat_time, log.log_time)
+        
         self._save_table_history(table_history)
         columns_history = self._get_column_history()
         columns_history[table_name][perm_instance_id] = {}
@@ -395,6 +396,7 @@ class MetadataStore:
                     if instance.startswith(version)
                 ]
                 instances = instances_
+                return instances
             else:
                 return instances
 
@@ -406,6 +408,13 @@ class MetadataStore:
             if process_id not in logs:
                 raise TVProcessError("Process ID not active {process_id}")
             old_pid = logs[process_id].pid
+            for process_id_ in logs:
+                if process_id_ == process_id:
+                    continue
+                if logs[process_id_].operation == constants.STOP_PROCESS_OP and logs[process_id_].start_success:
+                    if logs[process_id_].pid == old_pid:
+                        raise TVProcessError("Process ID {process_id} in operation to being stopped")
+
             if force or old_pid == pid:
                 logs[process_id].pid = pid
                 self._save_active_logs(logs)
@@ -419,39 +428,70 @@ class MetadataStore:
                 return old_pid
             raise TVProcessError("Process ID {process_id} already running at: {old_pid}")
 
-    def stop_operation(self, process_ids:list[str], force:bool):
+    def stop_operation(self, process_id:str, force: bool) -> tuple[ActiveProcessDict, list[str]]:
         with self.lock:
-            new_process_ids = {}
             logs = self._get_active_logs()
             pid = os.getpid()
-            for process_id_ in process_ids:
-                if process_id_ not in logs:
-                    continue
-                old_pid = logs[process_id_].pid
-                try:
-                    proc = psutil.Process(old_pid)
-                    if not force:
-                        raise TVProcessError("Process {process_id} Currently Running. Cannot be stopped unless forced.")
-                    if force and pid != old_pid:
-                        try:
-                            proc.terminate()
-                            proc.wait(timeout=5)
-                        except psutil.TimeoutExpired:
-                            proc.kill()
-                            proc.wait(timeout=5)
-                except psutil.NoSuchProcess:
-                    pass
-                logs[process_id_].pid = pid
-                error = (TVForcedError.__class__.__name__, "User Stopped")
-                if logs[process_id_].start_success is None:
-                    logs[process_id_].start_success = False
-                elif logs[process_id_].execution_success is None:
-                    logs[process_id_].execution_success = False
-                if not logs[process_id_].start_success or not logs[process_id_].execution_success:
-                    logs[process_id_].error = error
-                new_process_ids[process_id_] = logs[process_id_].operation
-                self._save_active_logs(logs)
+            if process_id not in logs:
+                raise TVProcessError("Process not currently active.")
+            if logs[process_id].operation == constants.STOP_PROCESS_OP:
+                raise TVArgumentError("Cannot stop another stop_process operation")
+            old_pid = logs[process_id].pid
+            try:
+                proc = psutil.Process(old_pid)
+                if not force:
+                    raise TVProcessError("Process {process_id} Currently Running. Cannot be stopped unless forced.")
+                if force and pid != old_pid:
+                    try:
+                        proc.terminate()
+                        proc.wait(timeout=5)
+                    except psutil.TimeoutExpired:
+                        proc.kill()
+                        proc.wait(timeout=5)
+            except psutil.NoSuchProcess:
+                pass
+            logs[process_id].pid = pid
+            relevant_logs = []
+            for process_id_ in logs:
+                if process_id_.startswith(process_id):
+                    logs[process_id_].pid = pid
+                    relevant_logs.append(process_id_)
+            relevant_logs.sort(reverse=True)
+            self._save_active_logs(logs)
+            return (logs, relevant_logs)
+
+
+    # def stop_operation(self, process_id:str, force:bool):
+    #     with self.lock:
+    #         new_process_ids = {}
+    #         logs = self._get_active_logs()
+    #         pid = os.getpid()
+    #         for process_id_ in process_ids:
+    #             if process_id_ not in logs:
+    #                 continue
+    #             old_pid = logs[process_id_].pid
+    #             try:
+    #                 proc = psutil.Process(old_pid)
+    #                 if not force:
+    #                     raise TVProcessError("Process {process_id} Currently Running. Cannot be stopped unless forced.")
+    #                 if force and pid != old_pid:
+    #                     try:
+    #                         proc.terminate()
+    #                         proc.wait(timeout=5)
+    #                     except psutil.TimeoutExpired:
+    #                         proc.kill()
+    #                         proc.wait(timeout=5)
+    #             except psutil.NoSuchProcess:
+    #                 pass
+    #             logs[process_id_].pid = pid
+    #             error = (TVForcedError.__class__.__name__, "User Stopped")
+    #             if logs[process_id_].start_success is None:
+    #                 logs[process_id_].start_success = False
+    #             elif logs[process_id_].execution_success is None:
+    #                 logs[process_id_].execution_success = False
+    #             if not logs[process_id_].start_success or not logs[process_id_].execution_success:
+    #                 logs[process_id_].error = error
+    #             new_process_ids[process_id_] = logs[process_id_].operation
+    #             self._save_active_logs(logs)
                 
-        if len(process_ids) == 0:
-            raise TVProcessError(f"Process {process_id_} not active.")
-        return new_process_ids
+    #     return new_process_ids
