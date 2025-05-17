@@ -46,7 +46,7 @@ class MetadataStore:
         with open(self.column_history_file, "w") as f:
             json.dump(columns_history, f, indent=4)
 
-    def _save_table_history(self, table_history: TableHistoryDict):
+    def _save_table_history(self, table_history: TableHistoryDict)-> None:
         with open(self.table_history_file, "w") as f:
             json.dump(table_history, f, indent=4)
 
@@ -68,9 +68,9 @@ class MetadataStore:
 
     def _write_to_history(self, log_entry: ProcessLog) -> None:
         log_entry.log_time = time.time()
-        log_entry = asdict(log_entry)
+        log_entry_ = asdict(log_entry)
         with open(self.log_file, "a") as file:
-            file.write(json.dumps(log_entry) + "\n")
+            file.write(json.dumps(log_entry_) + "\n")
 
     def _write_to_completed(self, process_id: str) -> None:
         with open(self.completed_file, "a") as file:
@@ -89,18 +89,6 @@ class MetadataStore:
         self.completed_file = os.path.join(meta_dir, constants.META_CLOG_FILE)
         meta_lock = os.path.join(meta_dir, "LOG.lock")
         self.lock = FileLock(meta_lock)
-
-    # def start_execute_operation(self, table_name:str) -> None:
-    #     with self.lock:
-    #         table_metadata = get_description(instance_id='', table_name=table_name, db_dir=self.db_dir)
-    #         start_time = time.time()
-    #         table_history = self._get_table_history()
-    #         if table_metadata[constants.TABLE_SIDE_EFFECTS]:
-    #             for id in table_history[table_name]:
-    #                 changed_time, mat_time, stop_time = table_history[table_name][id]
-    #                 if stop_time is None:
-    #                     table_history[table_name][id] = (changed_time, mat_time, start_time)
-    #         self._save_table_history(table_history)
 
     def _setup_table_operation(self, log: ProcessLog) -> None:
         table_name = log.data["table_name"]
@@ -140,8 +128,8 @@ class MetadataStore:
     def _materialize_operation(self, log: ProcessLog) -> None:
         table_name = log.data["table_name"]
         perm_instance_id = log.data["perm_instance_id"]
-        changed_columns = log.data["changed_columns"] #TODO
-        all_columns = log.data["all_columns"] #TODO
+        changed_columns = log.data["changed_columns"] 
+        all_columns = log.data["all_columns"]
         origin_id = log.data["origin_id"]
         origin_table = log.data["origin_table"]
         table_history = self._get_table_history()
@@ -296,14 +284,14 @@ class MetadataStore:
         with self.lock:
             self._update_process_step_internal(process_id, step)
 
-    def get_table_times(self, instance_id: str, table_name: str) -> tuple[float, float, float]:
+    def get_table_times(self, instance_id: str, table_name: str) -> tuple[float, float, Optional[float]]:
         with self.lock:
             table_history = self._get_table_history()
             return table_history[table_name][instance_id]
 
     def get_column_times(
         self, column_name: str, instance_id: str, table_name: str
-    ) -> tuple[float, float, float]:
+    ) -> tuple[float, float, Optional[float]]:
         with self.lock:
             column_history = self._get_column_history()
             table_history = self._get_table_history()
@@ -315,7 +303,7 @@ class MetadataStore:
         self,
         table_name: str,
         version: str = "",
-        before_time: Optional[int] = None,
+        before_time: Optional[float] = None,
         active_only:bool = True
     ) -> tuple[float, float, str]:
         table_history = self._get_table_history()
@@ -345,13 +333,13 @@ class MetadataStore:
         self,
         table_name: str,
         version: str = "",
-        before_time: Optional[int] = None,
+        before_time: Optional[float] = None,
         active_only:bool = True
     ) -> tuple[float, float, str]:
         return self._get_last_table_update(table_name,version, before_time, active_only) 
     
     def get_last_column_update(
-        self, table_name: str, column: str, before_time: Optional[int] = None,
+        self, table_name: str, column: str, before_time: Optional[float] = None,
         version: str = "base", active_only:bool = True
     ) -> tuple[float, float, str]:
         """
@@ -401,8 +389,8 @@ class MetadataStore:
                 return instances
 
     def update_process_pid(self, process_id:str, 
-                           pid:int, 
-                           force:bool = False) -> int:
+                           pid:Optional[int], 
+                           force:bool = False) -> Optional[int]:
         with self.lock:
             logs = self._get_active_logs()
             if process_id not in logs:
@@ -459,39 +447,3 @@ class MetadataStore:
             relevant_logs.sort(reverse=True)
             self._save_active_logs(logs)
             return (logs, relevant_logs)
-
-
-    # def stop_operation(self, process_id:str, force:bool):
-    #     with self.lock:
-    #         new_process_ids = {}
-    #         logs = self._get_active_logs()
-    #         pid = os.getpid()
-    #         for process_id_ in process_ids:
-    #             if process_id_ not in logs:
-    #                 continue
-    #             old_pid = logs[process_id_].pid
-    #             try:
-    #                 proc = psutil.Process(old_pid)
-    #                 if not force:
-    #                     raise TVProcessError("Process {process_id} Currently Running. Cannot be stopped unless forced.")
-    #                 if force and pid != old_pid:
-    #                     try:
-    #                         proc.terminate()
-    #                         proc.wait(timeout=5)
-    #                     except psutil.TimeoutExpired:
-    #                         proc.kill()
-    #                         proc.wait(timeout=5)
-    #             except psutil.NoSuchProcess:
-    #                 pass
-    #             logs[process_id_].pid = pid
-    #             error = (TVForcedError.__class__.__name__, "User Stopped")
-    #             if logs[process_id_].start_success is None:
-    #                 logs[process_id_].start_success = False
-    #             elif logs[process_id_].execution_success is None:
-    #                 logs[process_id_].execution_success = False
-    #             if not logs[process_id_].start_success or not logs[process_id_].execution_success:
-    #                 logs[process_id_].error = error
-    #             new_process_ids[process_id_] = logs[process_id_].operation
-    #             self._save_active_logs(logs)
-                
-    #     return new_process_ids

@@ -34,7 +34,7 @@ class TVFileError(TableVaultError):
     pass
 
 
-class TVPromptError(TableVaultError):
+class TVBuilderError(TableVaultError):
     pass
 
 

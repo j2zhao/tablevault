@@ -74,25 +74,27 @@ class Open_AI_Thread:
         self.success = False
 
     def run_query(self):
-        for i in range(self.retry):
-            try:
-                run = self.client.beta.threads.runs.create_and_poll(
-                    thread_id=self.thread.id, assistant_id=self.assistant.id, timeout=10
-                )
-                if run.status == "completed":
-                    messages = self.client.beta.threads.messages.list(
-                        thread_id=self.thread.id
+        if self.thread is not None and self.assistant is not None:
+            for i in range(self.retry):
+                try:
+                    
+                    run = self.client.beta.threads.runs.create_and_poll(
+                        thread_id=self.thread.id, assistant_id=self.assistant.id, timeout=10
                     )
-                    msg = messages.data[0].content[0].text.value
-                    return msg
-                else:
-                    print(f"Run Status Error: {self.name}")
-                    print(run.last_error)
-                    print(run.status)
-                    sleep(1)
-            except Exception as e:
-                print(f"Error Calling LLM for {self.name} Run: {e}")
-            sleep(1)
+                    if run.status == "completed":
+                        messages = self.client.beta.threads.messages.list(
+                            thread_id=self.thread.id
+                        )
+                        msg = messages.data[0].content[0].text.value
+                        return msg
+                    else:
+                        print(f"Run Status Error: {self.name}")
+                        print(run.last_error)
+                        print(run.status)
+                        sleep(1)
+                except Exception as e:
+                    print(f"Error Calling LLM for {self.name} Run: {e}")
+                sleep(1)
         return None
 
     def add_message(self, message, role="user", file_ids=None):

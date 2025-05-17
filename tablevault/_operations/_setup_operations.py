@@ -5,12 +5,13 @@ from tablevault.helper import file_operations
 from tablevault.helper.utils import gen_tv_id
 from tablevault.defintions import constants, types 
 from tablevault.defintions.types import SETUP_OUTPUT, ExternalDeps
-from tablevault.prompts.base_ptype import TVPrompt, order_tables_by_prompts
-from tablevault.prompts.load_prompt import load_prompt
-from tablevault.prompts.utils.utils import topological_sort
-from tablevault.prompts.utils import table_operations
+from tablevault.col_builders.base_builder_type import TVBuilder, order_tables_by_builders
+from tablevault.col_builders.load_builder import load_builder
+from tablevault.col_builders.utils.utils import topological_sort
+from tablevault.col_builders.utils import table_operations
 import pandas as pd
 from typing import Optional
+
 
 def setup_copy_files(
     file_dir: str,
@@ -27,11 +28,11 @@ def setup_copy_files(
                                             db_metadata.db_dir,
                                             subfolder=constants.CODE_FOLDER)
     else:
-        db_locks.acquire_exclusive_lock(table_name, constants.PROMPT_FOLDER)
+        db_locks.acquire_exclusive_lock(table_name, constants.BUILDER_FOLDER)
         file_operations.copy_folder_to_temp(process_id, 
                                             db_metadata.db_dir,
                                             table_name=table_name,
-                                            subfolder=constants.PROMPT_FOLDER)
+                                            subfolder=constants.BUILDER_FOLDER)
     funct_kwargs = {"file_dir": file_dir, "table_name": table_name}
     db_metadata.update_process_data(process_id,funct_kwargs)
     return funct_kwargs
@@ -82,9 +83,10 @@ def setup_materialize_instance(instance_id:str,
                                 all_columns: list[str],
                                 artifact_columns: list[str],
                                 dependencies: list[tuple[str, str]],
+                                success:bool,
                                 process_id: str,
                                 db_metadata: MetadataStore,
-                                db_locks: DatabaseLock):
+                                db_locks: DatabaseLock)-> SETUP_OUTPUT:
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
     
@@ -105,7 +107,7 @@ def setup_materialize_instance(instance_id:str,
     if "_" not in process_id:
         instance_data = file_operations.get_description(instance_id, table_name, db_metadata.db_dir)
         if not instance_data[constants.DESCRIPTION_EDIT]:
-            raise tv_errors.TVArgumentError("External edit table cannot be executed for this Instance.")
+            raise tv_errors.TVArgumentError("Instance cannot be externally materialized.")
         if constants.DESCRIPTION_ORIGIN in instance_data:
             origin_id, origin_table = instance_data[constants.DESCRIPTION_ORIGIN]
         table_df = table_operations.get_table(instance_id, table_name, db_metadata.db_dir)
@@ -122,7 +124,7 @@ def setup_materialize_instance(instance_id:str,
             except tv_errors.TVLockError:
                 pass
         
-    if not table_data[constants.TABLE_ALLOW_MARTIFACT]:
+    if not table_data[constants.TABLE_ALLOW_MARTIFACT] and success:
         db_locks.acquire_exclusive_lock(table_name, constants.ARTIFACT_FOLDER)
         file_operations.copy_folder_to_temp(process_id, 
                                     db_metadata.db_dir,
@@ -137,7 +139,8 @@ def setup_materialize_instance(instance_id:str,
                     "artifact_columns": artifact_columns,
                     "all_columns": all_columns,
                     "changed_columns": changed_columns,
-                    "dependencies": dependencies}
+                    "dependencies": dependencies,
+                    "success":success}
     
     db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
@@ -171,7 +174,12 @@ def setup_stop_process(to_stop_process_id:str,
                 materialize_ops["artifact_columns"] = []
                 materialize_ops["all_columns"] = logs[to_stop_process_id].data["all_columns"]
                 materialize_ops["changed_columns"] = logs[to_stop_process_id].data["changed_columns"]
-                materialize_ops["dependencies"] = logs[to_stop_process_id].data["dependencies"]
+                dependencies = []
+                external_deps = logs[to_stop_process_id].data["external_deps"]
+                for builder_name in external_deps:
+                    for tname, _, id, _, _ in external_deps[builder_name]:
+                        dependencies.append([tname, id])
+                materialize_ops["dependencies"] = dependencies
             elif logs[to_stop_process_id].operation == constants.WRITE_TABLE_OP:
                 step_ids.append(process_id + '_' + gen_tv_id())
                 materialize_ops["instance_id"] = logs[to_stop_process_id].data["instance_id"]
@@ -211,7 +219,7 @@ def setup_write_table_inner(table_df: Optional[pd.DataFrame],
                             table_name:str,
                             process_id:str,
                             db_metadata: MetadataStore,
-                            db_locks: DatabaseLock,):
+                            db_locks: DatabaseLock)-> SETUP_OUTPUT:
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     funct_kwargs = {
         "instance_id": instance_id,
@@ -229,10 +237,12 @@ def setup_write_table(table_df:Optional[pd.DataFrame],
                       dependencies: list[tuple[str, str]],
                       process_id: str,
                       db_metadata: MetadataStore,
-                      db_locks: DatabaseLock,):
+                      db_locks: DatabaseLock) -> SETUP_OUTPUT:
     step_ids = []
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
+    if table_df is None:
+        raise tv_errors.TVProcessError("Cannot Re-execute Write Table")
     if len(table_df.columns) == 0 or len(table_df) == 0:
         raise tv_errors.TVArgumentError("Empty Table")
     if version == "":
@@ -241,7 +251,7 @@ def setup_write_table(table_df:Optional[pd.DataFrame],
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     instance_data = file_operations.get_description(instance_id, table_name, db_metadata.db_dir)
     if not instance_data[constants.DESCRIPTION_EDIT]:
-        raise tv_errors.TVArgumentError("External edit table cannot be executed for this Instance.")
+        raise tv_errors.TVArgumentError("External edit table cannot be executed for this instance.")
 
     step_ids.append(process_id + '_' + gen_tv_id())
     table_data = file_operations.get_description("", table_name, db_metadata.db_dir)
@@ -282,13 +292,19 @@ def setup_write_table(table_df:Optional[pd.DataFrame],
         "all_columns": list(table_df.columns) #TODO: STOPPED HERE
     }
     db_metadata.update_process_data(process_id, funct_kwargs)
+    for col in artifact_columns:
+        if col in table_df.columns:
+            table_df[col] = table_df[col].astype(constants.ARTIFACT_DTYPE)
+        else:
+            raise tv_errors.TVArgumentError("Artifact column not in Dataframe")
     funct_kwargs["table_df"] = table_df
+    
     return funct_kwargs
 
 
 def setup_execute_instance_inner(instance_id:str,
                                  table_name:str,
-                                 top_pnames: list[str],
+                                 top_builder_names: list[str],
                                  changed_columns: list[str],
                                  all_columns: list[str],
                                  external_deps: ExternalDeps,
@@ -297,13 +313,12 @@ def setup_execute_instance_inner(instance_id:str,
                                  process_id: str,
                                  db_metadata: MetadataStore,
                                  db_locks: DatabaseLock,
-                                 ):
+                                 )-> SETUP_OUTPUT:
     
-
     funct_kwargs = {
         "table_name": table_name,
         'instance_id': instance_id,
-        "top_pnames": top_pnames,
+        "top_builder_names": top_builder_names,
         "changed_columns": changed_columns,
         "all_columns": all_columns,
         "external_deps": external_deps,
@@ -314,8 +329,8 @@ def setup_execute_instance_inner(instance_id:str,
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     if origin_id != "":
         db_locks.acquire_shared_lock(origin_table, origin_id)
-    for pname in external_deps:
-        for table, _, instance, _, _ in external_deps[pname]:
+    for builder_name in external_deps:
+        for table, _, instance, _, _ in external_deps[builder_name]:
             db_locks.acquire_shared_lock(table_name=table, instance_id=instance)
             table_data = file_operations.get_description("", table, db_metadata.db_dir)
             if not table_data[constants.TABLE_ALLOW_MARTIFACT]:
@@ -360,8 +375,8 @@ def setup_execute_instance(
     else:
         db_locks.acquire_exclusive_lock(table_name)
             
-    yaml_prompts = file_operations.get_yaml_prompts(instance_id, table_name, db_metadata.db_dir)
-    prompts = {pname: load_prompt(yprompt) for pname, yprompt in yaml_prompts.items()}
+    yaml_builders = file_operations.get_yaml_builders(instance_id, table_name, db_metadata.db_dir)
+    builders = {builder_name: load_builder(ybuilder) for builder_name, ybuilder in yaml_builders.items()}
 
     if not force_execute:
         origin_table = ""
@@ -385,14 +400,13 @@ def setup_execute_instance(
     else:
         origin_id = ''
         origin_table = ''
-    (
-        top_pnames,
+    (   top_builder_names,
         changed_columns,
         all_columns,
-        internal_prompt_deps,
+        internal_builder_deps,
         external_deps,
-    ) = parse_prompts(
-        prompts,
+    ) = parse_builders(
+        builders,
         db_metadata,
         start_time,
         instance_id,
@@ -404,20 +418,20 @@ def setup_execute_instance(
         "table_name": table_name,
         'instance_id': instance_id,
         "perm_instance_id": perm_instance_id,
-        "top_pnames": top_pnames,
+        "top_builder_names": top_builder_names,
         "changed_columns": changed_columns,
         "all_columns": all_columns,
         "external_deps": external_deps,
         "origin_id": origin_id,
         "origin_table": origin_table,
         "update_rows": True,
-        "internal_prompt_deps": internal_prompt_deps,
+        "internal_builder_deps": internal_builder_deps,
     }
     funct_kwargs["step_ids"] = [process_id + '_' + gen_tv_id()]
     funct_kwargs["step_ids"].append(process_id + '_' + gen_tv_id())
 
-    for pname in external_deps:
-        for table, _, instance, _, _ in external_deps[pname]:
+    for builder_name in external_deps:
+        for table, _, instance, _, _ in external_deps[builder_name]:
             db_locks.acquire_shared_lock(table_name=table, instance_id=instance)
             try:
                 db_locks.acquire_shared_lock(table, constants.ARTIFACT_FOLDER)
@@ -435,7 +449,7 @@ def setup_setup_temp_instance(
     origin_table:str,
     external_edit:bool,
     copy_version: bool,
-    prompt_names: list[str] | bool,
+    builder_names: list[str] | bool,
     execute: bool,
     background_execute:bool,
     process_id: str,
@@ -445,8 +459,8 @@ def setup_setup_temp_instance(
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
     if external_edit:
-        if prompt_names or execute or background_execute:
-            raise tv_errors.TVArgumentError("Non-Executable Table does not have prompts, origin, or execute.")
+        if builder_names or execute or background_execute:
+            raise tv_errors.TVArgumentError("Non-Executable Table does not have builders, origin, or execute.")
     if background_execute and not execute:
         raise tv_errors.TVArgumentError("background_execute cannot be True when execute is False.")
     if version == "":
@@ -463,10 +477,10 @@ def setup_setup_temp_instance(
         if origin_table == "":
             origin_table = table_name
         db_locks.acquire_shared_lock(origin_table, origin_id)
-    elif prompt_names:
-        db_locks.acquire_shared_lock(table_name, constants.PROMPT_FOLDER)
-        if isinstance(prompt_names, bool):
-            prompt_names = file_operations.get_prompt_names("",table_name, db_metadata.db_dir)
+    elif builder_names:
+        db_locks.acquire_shared_lock(table_name, constants.BUILDER_FOLDER)
+        if isinstance(builder_names, bool):
+            builder_names = file_operations.get_builder_names("",table_name, db_metadata.db_dir)
     funct_kwargs = {
         "version": version,
         "instance_id": instance_id,
@@ -475,7 +489,7 @@ def setup_setup_temp_instance(
         "origin_id": origin_id,
         "origin_table": origin_table,
         "external_edit":external_edit,
-        "prompt_names": prompt_names,
+        "builder_names": builder_names,
         "execute": execute,
         "background_execute": background_execute
     }
@@ -503,7 +517,7 @@ def setup_setup_table(
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
     if execute and yaml_dir == "":
-        raise tv_errors.TVArgumentError(f"Cannot Execute {table_name} without Prompts Directory")
+        raise tv_errors.TVArgumentError(f"Cannot Execute {table_name} without Builders Directory")
     funct_kwargs = {
         "table_name": table_name,
         "yaml_dir": yaml_dir,
@@ -522,7 +536,7 @@ def setup_setup_table(
         funct_kwargs["step_ids"].append(process_id + '_' + gen_tv_id())
     db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.make_lock_path(table_name)
-    db_locks.make_lock_path(table_name, constants.PROMPT_FOLDER)
+    db_locks.make_lock_path(table_name, constants.BUILDER_FOLDER)
     db_locks.make_lock_path(table_name, constants.ARTIFACT_FOLDER)
     db_locks.acquire_exclusive_lock(table_name)
     return funct_kwargs
@@ -545,11 +559,11 @@ def setup_copy_database_files(
     table_names = []
     if yaml_dir != "":
         try:
-            yaml_prompts = file_operations.get_external_yaml_prompts(yaml_dir)
-            for table_name in yaml_prompts:
-                prompts = {pname: load_prompt(yprompt) for pname, yprompt in yaml_prompts[table_name].items()}
-                yaml_prompts[table_name] = prompts
-            table_names = order_tables_by_prompts(yaml_prompts)
+            yaml_builders = file_operations.get_external_yaml_builders(yaml_dir)
+            for table_name in yaml_builders:
+                builders = {builder_name: load_builder(ybuilder) for builder_name, ybuilder in yaml_builders[table_name].items()}
+                yaml_builders[table_name] = builders
+            table_names = order_tables_by_builders(yaml_builders)
         except Exception as e:
             raise tv_errors.TVFileError(f"Error ordering {yaml_dir}: {e}")
         for table_name in table_names:
@@ -581,7 +595,7 @@ def setup_setup_temp_instance_innner(
         origin_id:str,
         origin_table:str,
         external_edit:bool,
-        prompt_names: list[str],
+        builder_names: list[str],
         description: str,
         process_id: str,
         db_metadata: MetadataStore,
@@ -593,15 +607,15 @@ def setup_setup_temp_instance_innner(
         "origin_id": origin_id,
         "origin_table":origin_table,
         "external_edit":external_edit,
-        "prompt_names": prompt_names,
+        "builder_names": builder_names,
         "description": description,
     }
     db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     if origin_id != '':
         db_locks.acquire_shared_lock(table_name, origin_id)
-    if len(prompt_names) > 0:
-        db_locks.acquire_shared_lock(table_name, constants.PROMPT_FOLDER)
+    if len(builder_names) > 0:
+        db_locks.acquire_shared_lock(table_name, constants.BUILDER_FOLDER)
     return funct_kwargs
 
 def setup_setup_table_inner(table_name:str,
@@ -643,43 +657,43 @@ SETUP_MAP = {
 
 
 def _parse_dependencies(
-    prompts: dict[str, TVPrompt],
+    builders: dict[str, TVBuilder],
     table_name: str,
     start_time: float,
     db_metadata: MetadataStore,
-) -> tuple[types.PromptDeps, types.InternalDeps, types.ExternalDeps]:
+) -> tuple[types.BuilderDeps, types.InternalDeps, types.ExternalDeps]:
     table_generator = ""
-    for prompt in prompts:
-        if prompt.startswith(f"gen_{table_name}") and table_generator == "":
-            table_generator = prompt
-        elif prompt.startswith(f"gen_{table_name}") and table_generator != "":
-            raise tv_errors.TVPromptError(
-                f"Can only have one prompt that starts with: gen_{table_name}"
+    for builder_name in builders:
+        if builder_name.startswith(f"gen_{table_name}") and table_generator == "":
+            table_generator = builder_name
+        elif builder_name.startswith(f"gen_{table_name}") and table_generator != "":
+            raise tv_errors.TVBuilderError(
+                f"Can only have one builder that starts with: gen_{table_name}"
             )
     if table_generator == "":
-        raise tv_errors.TVPromptError(
-            f"Needs one generator prompt that starts with gen_{table_name}"
+        raise tv_errors.TVBuilderError(
+            f"Needs one generator builder that starts with gen_{table_name}"
         )
     external_deps = {}
-    internal_prompt_deps = {}
+    internal_builder_deps = {}
     internal_deps = {}
-    gen_columns = prompts[table_generator].changed_columns
-    for pname in prompts:
-        external_deps[pname] = set()
-        if pname != table_generator:
-            internal_deps[pname] = set(gen_columns)
-            internal_prompt_deps[pname] = {table_generator}
+    gen_columns = builders[table_generator].changed_columns
+    for builder_name in builders:
+        external_deps[builder_name] = set()
+        if builder_name != table_generator:
+            internal_deps[builder_name] = set(gen_columns)
+            internal_builder_deps[builder_name] = {table_generator}
         else:
-            internal_deps[pname] = set()
-            internal_prompt_deps[pname] = set()
+            internal_deps[builder_name] = set()
+            internal_builder_deps[builder_name] = set()
 
-        for dep in prompts[pname].dependencies:
+        for dep in builders[builder_name].dependencies:
             if dep.table == constants.TABLE_SELF:
-                internal_deps[pname].union(dep.columns)
-                for pn in prompts:
+                internal_deps[builder_name].union(dep.columns)
+                for bn in builders:
                     for col in dep.columns:
-                        if col in prompts[pn].changed_columns:
-                            internal_prompt_deps[pname].add(pn)
+                        if col in builders[bn].changed_columns:
+                            internal_builder_deps[builder_name].add(bn)
                 continue
             if dep.table == table_name:
                 active_only = False
@@ -695,77 +709,77 @@ def _parse_dependencies(
                                                                     version=dep.version,
                                                                     active_only=active_only)
                             )
-                        external_deps[pname].add((dep.table, col, instance, mat_time, dep.version))
+                        external_deps[builder_name].add((dep.table, col, instance, mat_time, dep.version))
                     else:
                         mat_time, _, instance = db_metadata.get_last_table_update(
-                                dep.table, start_time= start_time, version=dep.version, active_only=active_only
+                                dep.table, version=dep.version,before_time=start_time, active_only=active_only
                             )
-                        external_deps[pname].add((dep.table, None, instance, mat_time, dep.version))
+                        external_deps[builder_name].add((dep.table, None, instance, mat_time, dep.version))
                 
             else:
                 mat_time, _, instance = db_metadata.get_last_table_update(
-                        dep.table, start_time= start_time, version=dep.version, active_only=active_only
+                        dep.table, version=dep.version, before_time= start_time, active_only=active_only
                     )
-                external_deps[pname].add((dep.table, None, instance, mat_time, dep.version))
-        external_deps[pname] = list(external_deps[pname])
-        internal_deps[pname] = list(internal_deps[pname])
-        internal_prompt_deps[pname] = list(internal_prompt_deps[pname])
-    return internal_prompt_deps, internal_deps, external_deps
+                external_deps[builder_name].add((dep.table, None, instance, mat_time, dep.version))
+        external_deps[builder_name] = list(external_deps[builder_name])
+        internal_deps[builder_name] = list(internal_deps[builder_name])
+        internal_builder_deps[builder_name] = list(internal_builder_deps[builder_name])
+    return internal_builder_deps, internal_deps, external_deps
 
 
-def parse_prompts(
-    prompts: dict[str, TVPrompt],
+def parse_builders(
+    builders: dict[str, TVBuilder],
     db_metadata: MetadataStore,
     start_time: float,
     instance_id: str,
     table_name: str,
     origin_id: str,
     origin_table: str,
-) -> tuple[list[str], list[str], list[str], list[str], types.InternalDeps, types.ExternalDeps]:
-    internal_prompt_deps, internal_deps, external_deps = _parse_dependencies(
-        prompts, table_name, start_time, db_metadata
+) -> tuple[list[str], list[str], list[str], types.InternalDeps, types.ExternalDeps]:
+    internal_builder_deps, internal_deps, external_deps = _parse_dependencies(
+        builders, table_name, start_time, db_metadata
     )
-    pnames = list(prompts.keys())
-    top_pnames = topological_sort(pnames, internal_prompt_deps)
+    builder_names = list(builders.keys())
+    top_builder_names = topological_sort(builder_names, internal_builder_deps)
     all_columns = []
     changed_columns = []
-    for pname in top_pnames:
-        all_columns += prompts[pname].changed_columns
+    for builder_name in top_builder_names:
+        all_columns += builders[builder_name].changed_columns
 
     if origin_id != "":
         to_execute = []
         prev_mat_time, _ , _ = db_metadata.get_table_times(origin_id, table_name)
-        prev_prompts = file_operations.get_prompt_names(
+        prev_builders = file_operations.get_builder_names(
             origin_id, origin_table, db_metadata.db_dir
         )
 
-        for pname in top_pnames:
+        for builder_name in top_builder_names:
             execute = False
-            for dep in internal_prompt_deps[pname]:
-                if dep in to_execute and dep != top_pnames[0]:
+            for dep in internal_builder_deps[builder_name]:
+                if dep in to_execute and dep != top_builder_names[0]:
                     execute = True
                     break
             if not execute:
-                for dep in external_deps[pname]:
+                for dep in external_deps[builder_name]:
                     if dep[3] >= prev_mat_time:
                         execute = True
                         break
             if not execute:
-                if pname not in prev_prompts:
+                if builder_name not in prev_builders:
                     execute = True
-                elif not file_operations.check_prompt_equality(
-                    pname, instance_id, table_name, origin_id, origin_table, db_metadata.db_dir
+                elif not file_operations.check_builder_equality(
+                    builder_name, instance_id, table_name, origin_id, origin_table, db_metadata.db_dir
                 ):
                     execute = True
             if execute:
-                to_execute.append(pname)
-                changed_columns += prompts[pname].changed_columns
+                to_execute.append(builder_name)
+                changed_columns += builders[builder_name].changed_columns
     else:
-        for pname in top_pnames:
-            changed_columns += prompts[pname].changed_columns
+        for builder_name in top_builder_names:
+            changed_columns += builders[builder_name].changed_columns
 
     return (
-        top_pnames,
+        top_builder_names,
         changed_columns,
         all_columns,
         internal_deps,

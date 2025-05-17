@@ -6,6 +6,8 @@ import yaml
 from tablevault.defintions.tv_errors import TVFileError
 from tablevault.helper.database_lock import DatabaseLock
 from tablevault.defintions import constants
+from tablevault.col_builders.base_builder_type import TVBuilder
+from typing import Any
 
 def delete_database_folder(db_dir) -> None:
     shutil.rmtree(db_dir)
@@ -65,7 +67,7 @@ def setup_table_instance_folder(
     external_edit: bool,
     origin_id: str = "",
     origin_table:str = "",
-    prompts: list[str] = [],
+    builders: list[str] = [],
 ) -> None:
     table_dir = os.path.join(db_dir, table_name)
     instance_dir = os.path.join(table_dir, instance_id)
@@ -73,31 +75,31 @@ def setup_table_instance_folder(
         shutil.rmtree(instance_dir)
     os.makedirs(instance_dir)
 
-    prompt_dir = os.path.join(instance_dir, constants.PROMPT_FOLDER)
+    builder_dir = os.path.join(instance_dir, constants.BUILDER_FOLDER)
     artifact_dir = os.path.join(instance_dir, constants.ARTIFACT_FOLDER)
     current_table_path = os.path.join(instance_dir, constants.TABLE_FILE)
     description_path = os.path.join(table_dir, instance_id, constants.META_DESCRIPTION_FILE)
     if not external_edit:
         if origin_id != "":
             prev_dir = os.path.join(db_dir, origin_table, str(origin_id))
-            prev_prompt_dir = os.path.join(prev_dir, constants.PROMPT_FOLDER)
-            shutil.copytree(prev_prompt_dir, prompt_dir, copy_function=shutil.copy2)
+            prev_builder_dir = os.path.join(prev_dir, constants.BUILDER_FOLDER)
+            shutil.copytree(prev_builder_dir, builder_dir, copy_function=shutil.copy2)
 
             prev_artifact_dir = os.path.join(prev_dir, constants.ARTIFACT_FOLDER)
             if os.path.isdir(prev_artifact_dir):
                 shutil.copytree(prev_artifact_dir, artifact_dir, copy_function=shutil.copy2)
             else:
                 os.makedirs(artifact_dir)
-        elif len(prompts) != 0:
-            os.makedirs(prompt_dir)
-            prompt_dir_ = os.path.join(table_dir, constants.PROMPT_FOLDER)
-            for prompt in prompts:
-                prompt_path_ = os.path.join(prompt_dir_, prompt + ".yaml")
-                prompt_path = os.path.join(prompt_dir, prompt + ".yaml")
-                shutil.copy2(prompt_path_, prompt_path)
+        elif len(builders) != 0:
+            os.makedirs(builder_dir)
+            builder_dir_ = os.path.join(table_dir, constants.BUILDER_FOLDER)
+            for builder_name in builders:
+                builder_path_ = os.path.join(builder_dir_, builder_name + ".yaml")
+                builder_path = os.path.join(builder_dir_, builder_name + ".yaml")
+                shutil.copy2(builder_path_, builder_path)
             os.makedirs(artifact_dir)
         else:
-            os.makedirs(prompt_dir)
+            os.makedirs(builder_dir)
             os.makedirs(artifact_dir)
         df = pd.DataFrame()
         df.to_csv(current_table_path, index=False)
@@ -130,7 +132,7 @@ def setup_table_instance_folder(
 
 def get_description(instance_id:str, 
                     table_name: str, 
-                    db_dir: str):
+                    db_dir: str)->Any:
     meta_file = db_dir
     if table_name != '':
         meta_file = os.path.join(meta_file, table_name)
@@ -158,15 +160,15 @@ def write_description(descript_yaml:dict,
     with open(meta_file, 'w') as f:
         yaml.safe_dump(descript_yaml, f)
 
-def setup_table_folder(table_name: str, db_dir: str, make_artifacts: True) -> None:
+def setup_table_folder(table_name: str, db_dir: str, make_artifacts:bool = True) -> None:
     table_dir = os.path.join(db_dir, table_name)
     if os.path.isdir(table_dir):
         raise TVFileError("table folder already exists.")
     if os.path.isfile(table_dir):
         raise TVFileError("table folder already exists as file.")
     os.makedirs(table_dir)
-    prompt_dir_ = os.path.join(table_dir, constants.PROMPT_FOLDER)
-    os.makedirs(prompt_dir_)
+    builder_dir_ = os.path.join(table_dir, constants.BUILDER_FOLDER)
+    os.makedirs(builder_dir_)
     if make_artifacts:
         os.makedirs(os.path.join(table_dir, constants.ARTIFACT_FOLDER))
     description_dir = os.path.join(table_dir, constants.META_DESCRIPTION_FILE)
@@ -202,98 +204,94 @@ def delete_table_folder(table_name: str, db_dir: str, instance_id: str = "") -> 
                 if os.path.exists(df_dir):
                     os.remove(df_dir)
 
-def get_yaml_prompts(
+def get_yaml_builders(
     instance_id: str, table_name: str, db_dir: str, yaml_name:str = ''
 ) -> dict[str, dict]:
     table_dir = os.path.join(db_dir, table_name)
     if instance_id != "":
         table_dir = os.path.join(table_dir, instance_id)
-    prompt_dir = os.path.join(table_dir, constants.PROMPT_FOLDER)
-    if not os.path.isdir(prompt_dir):
+    builder_dir = os.path.join(table_dir, constants.BUILDER_FOLDER)
+    if not os.path.isdir(builder_dir):
         return {}
     if yaml_name == '':
-        prompts = {}
-        for item in os.listdir(prompt_dir):
+        builders = {}
+        for item in os.listdir(builder_dir):
             if item.endswith(".yaml"):
                 name = item.split(".")[0]
-                prompt_path = os.path.join(prompt_dir, item)
-                with open(prompt_path, "r") as file:
-                    prompt = yaml.safe_load(file)
-                    prompt[constants.PNAME] = name
-                prompts[name] = prompt
-        return prompts
+                builder_path = os.path.join(builder_dir, item)
+                with open(builder_path, "r") as file:
+                    builder = yaml.safe_load(file)
+                    builders[constants.BUILDER_NAME] = name
+                builders[name] = builder
+        return builders
     else:
-        prompt_path = os.path.join(prompt_dir, yaml_name)
-        with open(prompt_path, "r") as file:
-            prompt = yaml.safe_load(file)
-            prompt[constants.PNAME] = name
-        return prompts
+        builder_path = os.path.join(builder_dir, yaml_name)
+        with open(builder_path, "r") as file:
+            builders = {}
+            name = yaml_name.split(".")[0]
+            builder = yaml.safe_load(file)
+            builder[constants.BUILDER_NAME] = name
+            builders[name] = builder
+        return builders
     
-def save_yaml_prompt(prompt: dict,
+def save_yaml_builder(builder: Any,
                     instance_id: str, 
                     table_name: str, 
                     db_dir: str) -> None:
     table_dir = os.path.join(db_dir, table_name)
     if instance_id != "":
         table_dir = os.path.join(table_dir, instance_id)
-    prompt_dir = os.path.join(table_dir, constants.PROMPT_FOLDER)
-    yaml_name = prompt[constants.PNAME] + '.yaml'
-    prompt_path = os.path.join(prompt_dir, yaml_name)
-    with open(prompt_path, "w") as file:
-        yaml.safe_dump(prompt, file)
+    builder_dir = os.path.join(table_dir, constants.BUILDER_FOLDER)
+    yaml_name = builder[constants.BUILDER_NAME] + '.yaml'
+    builder_path = os.path.join(builder_dir, yaml_name)
+    with open(builder_path, "w") as file:
+        yaml.safe_dump(builder, file)
 
-def get_external_yaml_prompts(external_dir: str) -> dict[str, dict[str, dict]]:
-    prompts = {}
+def get_external_yaml_builders(external_dir: str) -> dict[str, dict[str, Any]]:
+    builders = {}
     for table_name in os.listdir(external_dir):
-        prompt_dir = os.path.join(external_dir, table_name)
-        prompts[table_name] = {}
-        for item in os.listdir(prompt_dir):
+        builder_dir = os.path.join(external_dir, table_name)
+        builders[table_name] = {}
+        for item in os.listdir(builder_dir):
             if item.endswith(".yaml"):
                 name = item.split(".")[0]
-                prompt_path = os.path.join(prompt_dir, item)
-                with open(prompt_path, "r") as file:
-                    prompt = yaml.safe_load(file)
-                    prompt[constants.PNAME] = name
-                prompts[table_name][name] = prompt
-    return prompts
+                builder_path = os.path.join(builder_dir, item)
+                with open(builder_path, "r") as file:
+                    builder = yaml.safe_load(file)
+                    builder[constants.BUILDER_NAME] = name
+                builders[table_name][name] = builder
+    return builders
 
-def get_prompt_names(instance_id: str, table_name: str, db_dir: str) -> list[str]:
+def get_builder_names(instance_id: str, table_name: str, db_dir: str) -> list[str]:
     if instance_id != "":
-        prompt_dir = os.path.join(db_dir, table_name, instance_id, constants.PROMPT_FOLDER)
-        if not os.path.isdir(prompt_dir):
+        builder_dir = os.path.join(db_dir, table_name, instance_id, constants.BUILDER_FOLDER)
+        if not os.path.isdir(builder_dir):
             return []
     else:
-        prompt_dir = os.path.join(db_dir, table_name, constants.PROMPT_FOLDER)
-    prompt_names = []
-    for file in os.listdir(prompt_dir):
+        builder_dir = os.path.join(db_dir, table_name, constants.BUILDER_FOLDER)
+    builder_names = []
+    for file in os.listdir(builder_dir):
         if file.endswith(".yaml"):
-            prompt = file.split(".")[0]
-            prompt_names.append(prompt)
-    return prompt_names
+            builder_name = file.split(".")[0]
+            builder_names.append(builder_name)
+    return builder_names
 
 
-def check_prompt_equality(
-    pname: str, instance_id_1: str, table_name_1: str, instance_id_2: str, table_name_2: str, 
+def check_builder_equality(
+    builder_name: str, instance_id_1: str, table_name_1: str, instance_id_2: str, table_name_2: str, 
     db_dir: str
 ) -> bool:
-    prompt_dir_1 = os.path.join(db_dir, table_name_1, instance_id_1, constants.PROMPT_FOLDER, f"{pname}.yaml")
-    prompt_dir_2 = os.path.join(db_dir, table_name_2, instance_id_2, constants.PROMPT_FOLDER, f"{pname}.yaml")
-    with open(prompt_dir_1, "r") as file:
-        prompt1 = yaml.safe_load(file)
-        if constants.PNAME in prompt1:
-            del prompt1[constants.PNAME]
-    with open(prompt_dir_2, "r") as file:
-        prompt2 = yaml.safe_load(file)
-        if constants.PNAME in prompt2:
-            del prompt2[constants.PNAME]
-    return prompt1 == prompt2
-
-def check_temp_instance_existance(
-    instance_id: str, table_name: str, db_dir: str
-) -> str:
-    instance_dir = os.path.join(db_dir, table_name, instance_id)
-    return os.path.exists(instance_dir)
-
+    builder_dir_1 = os.path.join(db_dir, table_name_1, instance_id_1, constants.BUILDER_FOLDER, f"{builder_name}.yaml")
+    builder_dir_2 = os.path.join(db_dir, table_name_2, instance_id_2, constants.BUILDER_FOLDER, f"{builder_name}.yaml")
+    with open(builder_dir_1, "r") as file:
+        builder1 = yaml.safe_load(file)
+        if constants.BUILDER_NAME in builder1:
+            del builder1[constants.BUILDER_NAME]
+    with open(builder_dir_2, "r") as file:
+        builder2 = yaml.safe_load(file)
+        if constants.BUILDER_NAME in builder2:
+            del builder2[constants.BUILDER_NAME]
+    return builder1 == builder2
 
 def copy_files(file_dir: str, 
                sub_folder:str,
@@ -301,7 +299,7 @@ def copy_files(file_dir: str,
                table_name: str, 
                db_dir: str,
                ) -> None:
-    if sub_folder not in [constants.CODE_FOLDER, constants.PROMPT_FOLDER]:
+    if sub_folder not in [constants.CODE_FOLDER, constants.BUILDER_FOLDER]:
         raise TVFileError(f"subfolder {sub_folder} not supported.")
     try:
         new_dir = db_dir
@@ -310,13 +308,13 @@ def copy_files(file_dir: str,
         if instance_id != '':
             new_dir = os.path.join(new_dir, instance_id)
         new_dir = os.path.join(new_dir, sub_folder)
-        if file_dir.endswith(".yaml") and sub_folder == constants.PROMPT_FOLDER:
+        if file_dir.endswith(".yaml") and sub_folder == constants.BUILDER_FOLDER:
             shutil.copy2(file_dir, new_dir)
-        elif file_dir.endswith(".py") and sub_folder == constants.PROMPT_FOLDER:
+        elif file_dir.endswith(".py") and sub_folder == constants.BUILDER_FOLDER:
             shutil.copy2(file_dir, new_dir)
         else:
             for f in os.listdir(file_dir):
-                if f.endswith(".yaml") and sub_folder == constants.PROMPT_FOLDER:
+                if f.endswith(".yaml") and sub_folder == constants.BUILDER_FOLDER:
                     p_path = os.path.join(file_dir, f)
                     shutil.copy2(p_path, new_dir)
                 if f.endswith(".py") and sub_folder == constants.CODE_FOLDER:

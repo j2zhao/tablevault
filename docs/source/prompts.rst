@@ -6,34 +6,34 @@ Populate the fields using a yaml file.
 Base Prompt
 ---------------
 
-.. automodule:: tablevault.prompts.base_ptype
+.. automodule:: tablevault.col_builders.base_ptype
    :members:
 
 
 Generator Prompt
 ------------------
 
-.. automodule:: tablevault.prompts.gen_code_ptype
+.. automodule:: tablevault.col_builders.gen_code_ptype
    :members:
 
 Code Prompt
 ---------------
 
-.. automodule:: tablevault.prompts.code_execution_ptype
+.. automodule:: tablevault.col_builders.code_execution_ptype
    :members:
 
 LLM Prompt
 ---------------
 
 
-.. automodule:: tablevault.prompts.open_ai_threads_ptype
+.. automodule:: tablevault.col_builders.open_ai_threads_ptype
    :members:
 
 DataTable
 ------------------
 
 
-.. autoclass:: tablevault.prompts.table_string.DataTable
+.. autoclass:: tablevault.col_builders.table_string.DataTable
     :members:
     :undoc-members:
     :show-inheritance:
@@ -42,7 +42,7 @@ Table Reference
 -------------------------
 
 
-.. autoclass:: tablevault.prompts.table_string.TableReference
+.. autoclass:: tablevault.col_builders.table_string.TableReference
     :members:
     :undoc-members:
     :show-inheritance:

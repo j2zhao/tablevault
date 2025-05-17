@@ -12,8 +12,7 @@ from tablevault.defintions import tv_errors
 from helper import compare_folders, evaluate_operation_logging, clean_up_open_ai, copy_test_dir
 #from tablevault._operations._setup_operations import setup_setup_table
 def raise_tv_except():
-    print("HELLO")
-    #raise ValueError()
+    print("Exception Raised")
     raise tv_errors.TableVaultError()
 
 def test_exception(module_path, funct_name, exception_func):
@@ -27,14 +26,22 @@ def test_exception(module_path, funct_name, exception_func):
             copy_test_dir()
             tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
             copy_test_dir()
-            tablevault.setup_temp_instance("stories", prompt_names=["gen_stories"])
+            tablevault.setup_temp_instance("stories", builder_names=["gen_stories"])
             copy_test_dir()
             tablevault.execute_instance("stories")
             copy_test_dir()
-            instances = tablevault.list_instances(table_name= "stories")
+            table = tablevault.get_table("stories")
+            tablevault.setup_temp_instance("stories", external_edit=True, copy_version=True)
+            tablevault.write_table(table, "stories")
+            # copy_test_dir()
+            # tablevault.setup_temp_instance("stories", external_edit=True, copy_version=True)
+            # tablevault.materialize_instance("stories")
+            copy_test_dir()
+            instances = tablevault.get_instances(table_name= "stories")
             tablevault.delete_instance(instance_id=instances[0], table_name="stories")
             copy_test_dir()
             tablevault.delete_table("stories")
+            assert False
             
     except tv_errors.TableVaultError as e:
         evaluate_operation_logging([])
@@ -45,9 +52,11 @@ setup_functions = [
                    "setup_delete_instance", 
                    "setup_execute_instance", 
                    "setup_execute_instance_inner",
+                   "setup_write_table",
+                   "setup_write_table_inner",
+                   "setup_materialize_instance",
                    "setup_setup_temp_instance", 
                    "setup_setup_table",
-                   "setup_copy_database_files",
                    "setup_setup_temp_instance_inner",
                    "setup_setup_table_inner"]
 
@@ -58,10 +67,12 @@ execute_functions = [
                    "_delete_instance", 
                    "_execute_instance",
                    "_execute_instance_inner",
+                   "_write_table",
+                   "_write_table_inner",
+                   "_materialize_instance",
                    "_setup_temp_instance", 
+                   "_setup_temp_instance_inner",
                    "_setup_table",
-                   "_copy_database_files",
-                   "_setup_table_inner",
                    "_setup_table_inner"]
 
 execute_module = 'tablevault._vault_operations.'

@@ -69,7 +69,7 @@ class TableVault:
         return None
     
     
-    def check_process_completion(self, process_id:str)-> bool:
+    def get_process_completion(self, process_id:str)-> bool:
         return _vault_operations.complete_process(process_id, self.db_dir)
     
     def get_artifact_folder(self, 
@@ -85,14 +85,14 @@ class TableVault:
                                                      is_temp)
     
 
-    def active_processes(self) -> ActiveProcessDict:
+    def get_active_processes(self) -> ActiveProcessDict:
         """
         Return a dictionary of currently active processes.
 
         """
         return _vault_operations.active_processes(self.db_dir)
 
-    def list_instances(self, table_name: str, version: str = constants.BASE_TABLE_VERSION,) -> list[str]:
+    def get_instances(self, table_name: str, version: str = constants.BASE_TABLE_VERSION,) -> list[str]:
         """
         Return a list of materialized instance names for a table.
 
@@ -113,9 +113,9 @@ class TableVault:
 
     def stop_process(self, 
                      to_stop_process_id:str, 
-                     force: False,
+                     force:bool = False,
                      materialize: bool =False,
-                     process_id: str = ""):
+                     process_id: str = "")->str:
         """
         Stop a currently active process and release all of its locks.
 
@@ -127,26 +127,27 @@ class TableVault:
         """
         
         # THIS CHANGES STATE -> NEEDS LOGGING
-        _vault_operations.stop_process(to_stop_process_id=to_stop_process_id,
+        return _vault_operations.stop_process(author=self.author,
+                                       to_stop_process_id=to_stop_process_id,
                                        force=force,
                                        materialize=materialize,
                                        db_dir=self.db_dir, 
                                        process_id=process_id
                                        )
 
-    def fetch_table(self, 
+    def get_table(self, 
                     table_name:str, 
                     instance_id:str = "", 
                     version:str = constants.BASE_TABLE_VERSION,
                     active_only: bool = True, 
                     safe_locking: bool = True) -> pd.DataFrame:
-        return _vault_operations.fetch_table(instance_id, table_name, version, self.db_dir, active_only, safe_locking)
+        return _vault_operations.get_table(instance_id, table_name, version, self.db_dir, active_only, safe_locking)
 
     def copy_files(
         self, file_dir: str, table_name: str = "", process_id: str = ""
     ) -> None:
         """
-        Copy prompt files into a table.
+        Copy builder files into a table.
 
         Args:
             prompt_dir (str): Directory of files or individual
@@ -297,7 +298,7 @@ class TableVault:
         origin_table: str = "",
         external_edit: bool = False,
         copy_version: bool = False,
-        prompt_names: list[str] = [],
+        builder_names: list[str] = [],
         execute: bool = False,
         process_id: str = "",
         background_execute: bool = False,
@@ -341,7 +342,7 @@ class TableVault:
             origin_table = origin_table,
             external_edit = external_edit,
             copy_version=copy_version,
-            prompt_names=prompt_names,
+            builder_names=builder_names,
             execute=execute,
             
             process_id=process_id,
@@ -396,7 +397,7 @@ class TableVault:
             description = description,
         )
 
-    def gen_process_id(self) -> str:
+    def generate_process_id(self) -> str:
         """
         Generates new valid process id.
 

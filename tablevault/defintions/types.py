@@ -10,7 +10,7 @@ Cache = dict[str | tuple[str, str], pd.DataFrame]
 
 InternalDeps = dict[str, list[str]]
 ExternalDeps = dict[str, list[tuple[str, str, str, float, bool]]]
-PromptDeps = dict[str, list[str]]
+BuilderDeps = dict[str, list[str]]
 
 @dataclass_json
 @dataclass
@@ -26,15 +26,15 @@ class ProcessLog:
     execution_success: Optional[bool]
     start_success: Optional[bool]
     error: Optional[tuple[str, str]]
-    pid: int
+    pid: Optional[int]
     def __str__(self) -> str:
         obj_dict = self.to_dict()
         obj_dict.pop("data", None)
         return json.dumps(obj_dict, indent=4)
 
 
-ColumnHistoryDict = dict[str, dict[str, dict[str, dict[str, float]]]]
-TableHistoryDict = dict[str, dict[str, tuple[float, float, float]]]
+ColumnHistoryDict = dict[str, dict[str, dict[str, float]]]
+TableHistoryDict = dict[str, dict[str, tuple[float, float, Optional[float]]]]
 ActiveProcessDict = dict[str, ProcessLog]
 
 SETUP_OUTPUT =  dict[str, Any]

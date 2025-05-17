@@ -13,7 +13,7 @@ def _check_locks(process_id: str, lock_path: str, exclusive: bool) -> bool:
         for filename in filenames:
             if filename.endswith(".exlock") or filename.endswith(".shlock"):
                 lock_name = filename.split(".")[0]
-                process_name = lock_name.split("_")[0]
+                process_name = lock_name.split("__")[0]
                 if filename.endswith(".exlock"):
                     if not process_id.startswith(process_name):
                         return False
@@ -29,7 +29,7 @@ def _acquire_exclusive(process_id: str, lock_path: str) -> str:
     if not legal:
         return ""
     for dirpath, _, _ in os.walk(lock_path):
-        lock_file = os.path.join(dirpath, f"{process_id}_{lid}.exlock")
+        lock_file = os.path.join(dirpath, f"{process_id}__{lid}.exlock")
         with open(lock_file, "w"):
             pass
     return lid
@@ -41,7 +41,7 @@ def _acquire_shared(process_id: str, lock_path: str) -> str:
     if not legal:
         return ""
     for dirpath, _, _ in os.walk(lock_path):
-        lock_file = os.path.join(dirpath, f"{process_id}_{lid}.shlock")
+        lock_file = os.path.join(dirpath, f"{process_id}__{lid}.shlock")
         with open(lock_file, "w"):
             pass
     return lid
@@ -79,7 +79,7 @@ def _release_lock(
         for filename in filenames:
             if filename.endswith(".exlock") or filename.endswith(".shlock"):
                 lock_name = filename.split(".")[0]
-                lock_id = lock_name.split("_")[1]
+                lock_id = lock_name.split("__")[1]
                 if lock_id == lid:
                     os.remove(os.path.join(dirpath, filename))
 
@@ -93,9 +93,16 @@ def _release_all_lock(
         # empty = True
         for filename in filenames:
             if filename.endswith(".exlock") or filename.endswith(".shlock"):
+                
                 lock_name = filename.split(".")[0]
-                lock_name = lock_name.split("_")[0]
+                lock_name = lock_name.split("__")[0]
+                # print("HELLO5")
+                # print(filename)
+                # print(process_id)
+                # print(lock_name)
                 if lock_name.startswith(process_id):
+                    # print('HELLO4')
+                    # print(lock_name)
                     os.remove(os.path.join(dirpath, filename))
                 # else:
                 #     empty = False
@@ -107,7 +114,7 @@ def _release_all_lock(
         #     if empty:
         #         shutil.rmtree(dirpath)
 
-def _make_lock_path(lock_path:str):
+def _make_lock_path(lock_path:str)->None:
     parent_dir = os.path.dirname(lock_path)
     parent_locks = []
     for filename in os.listdir(parent_dir):
@@ -119,18 +126,18 @@ def _make_lock_path(lock_path:str):
         with open(lock_file, "w"):
             pass
 
-def _delete_lock_path(process_id, lock_path:str):
+def _delete_lock_path(process_id, lock_path:str)-> None:
     if os.path.exists(lock_path):
         for filename in os.listdir(lock_path):
             if filename.endswith(".exlock") or filename.endswith(".shlock"):
                 lock_name = filename.split(".")[0]
-                process_name = lock_name.split("_")[0]
+                process_name = lock_name.split("__")[0]
                 if not process_id.startswith(process_name):
                     raise TVLockError(f"Cannot delete lock_path {lock_path} with active lock: {filename}")
         shutil.rmtree(lock_path)
 
 class DatabaseLock:
-    def __init__(self, process_id: str, db_dir: str):
+    def __init__(self, process_id: str, db_dir: str)-> None:
         self.db_dir = db_dir
         self.process_id = process_id
         self.lock_path = os.path.join(self.db_dir, constants.LOCK_FOLDER)
@@ -207,7 +214,7 @@ class DatabaseLock:
     
     def delete_lock_path(self, 
                    table_name:str = '',
-                   instance_id:str = ''):
+                   instance_id:str = '')->None:
         lock_path = os.path.join(self.db_dir, constants.LOCK_FOLDER)
         if table_name != "":
             lock_path = os.path.join(lock_path, table_name)

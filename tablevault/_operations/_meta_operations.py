@@ -19,12 +19,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def filter_by_function_args(kwargs:dict, 
-                            func:Callable):
+                            func:Callable) -> dict[str, Any]:
     func_params = list(inspect.signature(func).parameters.keys())
     args = {key: kwargs[key] for key in func_params if key in kwargs}
     return args
 
-def background_instance_execution(process_id, db_dir):
+def background_instance_execution(process_id:str, 
+                                  db_dir:str) ->None:
     db_metadata = MetadataStore(db_dir)
     db_locks = DatabaseLock(process_id, db_dir)
     funct_kwargs = db_metadata.get_active_processes()[process_id].data
@@ -73,7 +74,7 @@ def tablevault_operation(author:str,
         elif log.execution_success is True:
             TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
             db_metadata.write_process(process_id)
-            return
+            return process_id
         elif log.start_success is False:
             TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
             db_metadata.write_process(process_id)

@@ -30,31 +30,31 @@ def test_copy_instance_no_change():
     ids.append(id)
     id = tablevault.execute_instance("llm_storage")
     ids.append(id)
-    instances = tablevault.list_instances("llm_questions")
+    instances = tablevault.get_instances("llm_questions")
     assert len(instances) == 2
-    df1 = tablevault.fetch_table("llm_questions", instances[0])
-    df2 = tablevault.fetch_table("llm_questions", instances[1])
+    df1 = tablevault.get_table("llm_questions", instances[0])
+    df2 = tablevault.get_table("llm_questions", instances[1])
     assert df1.equals(df2)
-    instances = tablevault.list_instances("llm_storage")
+    instances = tablevault.get_instances("llm_storage")
     assert len(instances) == 2
-    df1 = tablevault.fetch_table("llm_storage", instances[0])
-    df2 = tablevault.fetch_table("llm_storage", instances[1])
+    df1 = tablevault.get_table("llm_storage", instances[0])
+    df2 = tablevault.get_table("llm_storage", instances[1])
     assert df1.equals(df2)
     evaluate_operation_logging(ids)
 
-def test_copy_instance_prompt_change():
+def test_copy_instance_builder_change():
     basic_function()
     ids = []
     tablevault = TableVault('test_dir', 'jinjin2')
-    id = tablevault.setup_temp_instance("llm_questions", prompt_names=["gen_llm_questions", "question_1a","question_2", "question_3"])
+    id = tablevault.setup_temp_instance("llm_questions", builder_names=["gen_llm_questions", "question_1a","question_2", "question_3"])
     ids.append(id)
     id = tablevault.execute_instance("llm_questions")
     ids.append(id)
     evaluate_operation_logging(ids)
-    instances = tablevault.list_instances("llm_questions")
+    instances = tablevault.get_instances("llm_questions")
     assert len(instances) == 2
-    df1 = tablevault.fetch_table("llm_questions", instances[0])
-    df2 = tablevault.fetch_table("llm_questions", instances[1])
+    df1 = tablevault.get_table("llm_questions", instances[0])
+    df2 = tablevault.get_table("llm_questions", instances[1])
     cols_to_compare = ['paper_name', 'q2a', 'q2', 'q3a', 'q3']
     assert df1[cols_to_compare].equals(df2[cols_to_compare])
     assert not df2['q1'].equals(df1['q1'])
@@ -73,10 +73,10 @@ def test_copy_dep_change():
     id = tablevault.execute_instance("llm_questions")
     ids.append(id)
     evaluate_operation_logging(ids)
-    instances = tablevault.list_instances("llm_questions")
+    instances = tablevault.get_instances("llm_questions")
     assert len(instances) == 2
-    df1 = tablevault.fetch_table("llm_questions", instances[0])
-    df2 = tablevault.fetch_table("llm_questions", instances[1])
+    df1 = tablevault.get_table("llm_questions", instances[0])
+    df2 = tablevault.get_table("llm_questions", instances[1])
     cols_to_compare = ['q1', 'q2a', 'q2', 'q3a', 'q3']
     assert len(df2) == 1
     for col in cols_to_compare:
@@ -107,7 +107,7 @@ def test_new_row_change():
 
 if __name__ == "__main__":
     test_copy_instance_no_change()
-    test_copy_instance_prompt_change()
+    test_copy_instance_builder_change()
     test_copy_dep_change()
     test_new_row_change()
     clean_up_open_ai()

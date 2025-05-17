@@ -14,6 +14,5 @@ t.b.d.
 
 
 TODOS
-- Make small changes to match code to paper
-- i.e. 
-- setup operations
+- rewrite prompts -> names
+- make failed executions more obvious (!) -> first just write it on the discription

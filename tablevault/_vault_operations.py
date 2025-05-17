@@ -3,12 +3,12 @@ from tablevault.helper.metadata_store import MetadataStore, ActiveProcessDict
 from tablevault._operations._meta_operations import tablevault_operation
 from tablevault._operations import _table_execution
 from tablevault.defintions.types import ExternalDeps
-from tablevault.prompts.utils import table_operations
+from tablevault.col_builders.utils import table_operations
 from tablevault.defintions import constants
 from tablevault.defintions import tv_errors
 from tablevault.helper.database_lock import DatabaseLock
 from tablevault._operations._takedown_operations import TAKEDOWN_MAP
-from tablevault.prompts.utils import artifact 
+from tablevault.col_builders.utils import artifact 
 import os
 import pandas as pd 
 from typing import Optional, Any
@@ -29,7 +29,7 @@ def get_artifact_folder(instance_id:str,
 def setup_database(db_dir: str, description:str, replace: bool = False) -> None:
     file_operations.setup_database_folder(db_dir, description, replace)
 
-def print_active_processes(db_dir: str, print_all: bool) -> ActiveProcessDict:
+def print_active_processes(db_dir: str, print_all: bool) -> None:
     db_metadata = MetadataStore(db_dir)
     return db_metadata.print_active_processes(print_all)
 
@@ -41,18 +41,18 @@ def complete_process(process_id: str, db_dir: str) -> bool:
     db_metadata = MetadataStore(db_dir)
     return db_metadata.check_written(process_id)
 
-def list_instances(table_name: str, db_dir: str, version: str) -> list[str]:
+def list_instances(table_name: str, db_dir: str, version: str) -> list[str] | None:
     db_metadata = MetadataStore(db_dir)
     return db_metadata.get_table_instances(table_name, version)
 
-def fetch_table(instance_id:str, table_name:str,  version:str, db_dir:str, active_only:bool, safe_locking: bool):
+def get_table(instance_id:str, table_name:str,  version:str, db_dir:str, active_only:bool, safe_locking: bool):
     
     db_metadata = MetadataStore(db_dir)
     if instance_id == '':
         _ , _ , instance_id = db_metadata.get_last_table_update(table_name, version, active_only=active_only)
+    process_id = utils.gen_tv_id()
+    db_lock = database_lock.DatabaseLock(process_id, db_dir)
     if safe_locking:
-        process_id = utils.gen_tv_id()
-        db_lock = database_lock.DatabaseLock(process_id, db_dir)
         db_lock.acquire_shared_lock(table_name, instance_id)
     try:
         df = table_operations.get_table(instance_id, table_name, db_dir)
@@ -62,12 +62,11 @@ def fetch_table(instance_id:str, table_name:str,  version:str, db_dir:str, activ
     return df
 
 
-
 def _copy_files(file_dir: str, table_name: str, db_metadata: MetadataStore):
     if table_name == '':
         sub_folder = constants.CODE_FOLDER
     else:
-        sub_folder = constants.PROMPT_FOLDER
+        sub_folder = constants.BUILDER_FOLDER
     file_operations.copy_files(file_dir, sub_folder, "", table_name, db_metadata.db_dir)
 
 def copy_files(author:str,
@@ -133,26 +132,29 @@ def _materialize_instance(instance_id: str,
                           origin_id:str,
                           origin_table:str,
                           artifact_columns: list[str],
+                          success: bool,
                           dependencies: list[tuple[str, str]],
                           db_metadata: MetadataStore):
     artifact_dtypes = {}
     for col in artifact_columns:
         artifact_dtypes[col] = constants.ARTIFACT_DTYPE
-
     
     if len(artifact_dtypes) > 0:
         table_operations.update_dtypes(artifact_dtypes, instance_id, table_name, db_metadata.db_dir)
     
-    table_operations.check_table(instance_id, table_name, db_metadata.db_dir, rows=constants.ARTIFACT_ROWS)
+    if success:
+        table_operations.check_table(instance_id, table_name, db_metadata.db_dir, rows=constants.ARTIFACT_ROWS)
 
     file_operations.rename_table_instance(perm_instance_id, instance_id, table_name, db_metadata.db_dir)
     table_data = file_operations.get_description("", table_name, db_metadata.db_dir)
 
-    if not table_data[constants.TABLE_ALLOW_MARTIFACT]:
+    if not table_data[constants.TABLE_ALLOW_MARTIFACT] and success:
         file_operations.move_artifacts_to_table(db_metadata.db_dir, table_name, perm_instance_id)
     
     instance_descript = file_operations.get_description(perm_instance_id, table_name, db_metadata.db_dir)
+
     instance_descript[constants.DESCRIPTION_DEPENDENCIES] = dependencies
+    instance_descript[constants.DESCRIPTION_SUCCESS] = success
     file_operations.write_description(instance_descript, perm_instance_id, table_name, db_metadata.db_dir)
 
     if origin_id != '':
@@ -191,7 +193,8 @@ def materialize_instance(author:str,
                          all_columns: list[str],
                          dependencies: list[tuple[str, str]],
                          process_id:str,
-                         db_dir:str):
+                         db_dir:str,
+                         success:bool = True):
     setup_kwargs = {
         "table_name": table_name,
         "instance_id":instance_id,
@@ -203,6 +206,7 @@ def materialize_instance(author:str,
         "changed_columns": changed_columns,
         "all_columns": all_columns,
         "dependencies":dependencies,
+        "success":success,
     }
     return tablevault_operation(author,
                         constants.MAT_OP,
@@ -223,6 +227,8 @@ def _stop_process(process_ids:list[str],
     if step_ids[0] not in complete_steps:
         error = (tv_errors.TVForcedError.__class__.__name__, "User Stopped")
         for process_id_ in process_ids:
+            if process_id_ not in logs:
+                continue
             if logs[process_id_].start_success is None:
                 db_metadata.update_process_start_status(process_id_, False, error)
             elif logs[process_id_].execution_success is None:
@@ -242,7 +248,6 @@ def _stop_process(process_ids:list[str],
                                 materialize_args["origin_table"],
                                 materialize_args["artifact_columns"],
                                 materialize_args["changed_columns"],
-                                materialize_args["all_columns"],
                                 materialize_args["all_columns"],
                                 materialize_args["dependencies"],
                                 step_ids[1],
@@ -342,7 +347,7 @@ def _write_table(table_df: Optional[pd.DataFrame],
 
 def write_table(
         author:str,
-        table_df: pd.DataFrame,
+        table_df: Optional[pd.DataFrame],
         table_name:str,
         version:str,
         artifact_columns: list[str],
@@ -368,7 +373,7 @@ def write_table(
 
 def _execute_instance_inner(instance_id: str,
     table_name: str,
-    top_pnames: list[str],
+    top_builder_names: list[str],
     changed_columns: list[str],
     all_columns: list[str],
     external_deps: ExternalDeps,
@@ -380,7 +385,7 @@ def _execute_instance_inner(instance_id: str,
     _table_execution.execute_instance(
         table_name,
         instance_id,
-        top_pnames,
+        top_builder_names,
         changed_columns,
         all_columns,
         external_deps,
@@ -394,7 +399,7 @@ def _execute_instance_inner(instance_id: str,
 def execute_instance_inner(author:str,
                             instance_id: str,
                             table_name: str,
-                            top_pnames: list[str],
+                            top_builder_names: list[str],
                             changed_columns: list[str],
                             all_columns: list[str],
                             external_deps: ExternalDeps,
@@ -406,7 +411,7 @@ def execute_instance_inner(author:str,
     setup_kwargs = {
         'instance_id': instance_id,
         "table_name": table_name,
-        "top_pnames": top_pnames,
+        "top_builder_names": top_builder_names,
         "changed_columns": changed_columns,
         "all_columns": all_columns,
         "external_deps": external_deps,
@@ -423,7 +428,7 @@ def execute_instance_inner(author:str,
 def _execute_instance(instance_id: str,
                       perm_instance_id: str,
                       table_name: str,
-                      top_pnames: list[str],
+                      top_builder_names: list[str],
                       changed_columns: list[str],
                       all_columns: list[str],
                       external_deps: ExternalDeps,
@@ -438,7 +443,7 @@ def _execute_instance(instance_id: str,
         execute_instance_inner(process_id,
                             instance_id,
                             table_name,
-                            top_pnames,
+                            top_builder_names,
                             changed_columns,
                             all_columns,
                             external_deps,
@@ -450,8 +455,8 @@ def _execute_instance(instance_id: str,
         db_metadata.update_process_step(process_id, step_ids[0])
     if step_ids[1] not in complete_steps:
         dependencies = []
-        for prompt in external_deps:
-            for tname, _, id, _, _ in external_deps[prompt]:
+        for builder_name in external_deps:
+            for tname, _, id, _, _ in external_deps[builder_name]:
                 dependencies.append([tname, id])
 
         materialize_instance(process_id,
@@ -496,11 +501,11 @@ def _setup_temp_instance_inner(instance_id:str,
                                origin_id:str,
                                origin_table:str,
                                external_edit:bool,
-                               prompt_names: list[str],
+                               builder_names: list[str],
                                description:str,
                                db_metadata: MetadataStore):
     file_operations.setup_table_instance_folder(
-            instance_id, table_name, db_metadata.db_dir, external_edit, origin_id, origin_table, prompt_names
+            instance_id, table_name, db_metadata.db_dir, external_edit, origin_id, origin_table, builder_names
         )
     
     descript_yaml = {constants.DESCRIPTION_SUMMARY: description,
@@ -514,7 +519,7 @@ def setup_temp_instance_inner(author:str,
                               instance_id:str,
                               origin_id:str,
                               origin_table:str,
-                              prompt_names: list[str],
+                              builder_names: list[str],
                               external_edit:bool,
                               process_id: str,
                               db_dir:str,
@@ -524,7 +529,7 @@ def setup_temp_instance_inner(author:str,
         "instance_id": instance_id,
         "origin_id":origin_id,
         "origin_table":origin_table,
-        "prompt_names":prompt_names,
+        "builder_names":builder_names,
         "description": description,
         "external_edit": external_edit,
     }
@@ -545,7 +550,7 @@ def _setup_temp_instance(
     origin_id: str,
     origin_table:str,
     external_edit:bool,
-    prompt_names: list[str],
+    builder_names: list[str],
     execute: bool,
     background_execute: bool,
     step_ids: list[str],
@@ -560,7 +565,7 @@ def _setup_temp_instance(
                                   origin_id=origin_id,
                                   origin_table=origin_table,
                                   external_edit=external_edit,
-                                  prompt_names=prompt_names,
+                                  builder_names=builder_names,
                                   process_id=step_ids[0],
                                   db_dir=db_metadata.db_dir,
                                   description = description)
@@ -586,7 +591,7 @@ def setup_temp_instance(author:str,
                         origin_table:str,
                         external_edit:bool,
                         copy_version: bool,
-                        prompt_names: list[str] | bool,
+                        builder_names: list[str] | bool,
                         execute: bool,
                         process_id:str,
                         db_dir:str,
@@ -599,7 +604,7 @@ def setup_temp_instance(author:str,
         'origin_table': origin_table,
         'external_edit': external_edit,
         'copy_version': copy_version,
-        'prompt_names': prompt_names,
+        'builder_names': builder_names,
         'execute': execute,
         'background_execute': background_execute
     }
@@ -690,7 +695,7 @@ def _setup_table(
             origin_table="",
             external_edit=False,
             copy_version=False,
-            prompt_names=True,
+            builder_names=True,
             execute=execute,
             process_id=step_ids[2],
             db_dir=db_metadata.db_dir,
@@ -863,8 +868,7 @@ def _restart_database(
                 table_df = None,
                 table_name = "",
                 version = "",
-                artifact_column = "",
-                artifact_dir_column = "",
+                artifact_columns = [],
                 dependencies = [],
                 process_id = prid,
                 db_dir =db_metadata.db_dir,
@@ -884,11 +888,12 @@ def _restart_database(
                 author=process_id,
                 table_name="",
                 version="",
+                description="",
                 origin_id="",
                 origin_table="",
                 external_edit = False,
                 copy_version=False,
-                prompt_names=[],
+                builder_names=[],
                 execute=False,
                 process_id=prid,
                 db_dir=db_metadata.db_dir,

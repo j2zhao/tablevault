@@ -160,7 +160,10 @@ def takedown_setup_table_inner(process_id:str,
         db_locks.release_all_locks()
         return
     if log.execution_success is False:
-        file_operations.delete_table_folder(log.data["table_name"], db_metadata.db_dir)
+        try:
+            file_operations.delete_table_folder(log.data["table_name"], db_metadata.db_dir)
+        except FileNotFoundError:
+            pass
     if log.start_success is False or log.execution_success is False:
         if "table_name" in log.data:
             db_locks.delete_lock_path(log.data["table_name"])

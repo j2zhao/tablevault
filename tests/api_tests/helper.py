@@ -47,9 +47,9 @@ def evaluate_operation_logging(ids):
     # check all ids are logged
     tablevault = TableVault('test_dir', 'jinjin')
     for id in ids:
-        assert tablevault.check_process_completion(id)
+        assert tablevault.get_process_completion(id)
     # check no processes
-    processes = tablevault.active_processes()
+    processes = tablevault.get_active_processes()
     assert len(processes) == 0
     # checked no locks
     lock_dir = 'test_dir/locks'
@@ -66,7 +66,7 @@ def evaluate_operation_logging(ids):
 def evaluate_full_tables(tables = ["stories", "llm_storage","llm_questions" ], num_entries:int = 1):
     tablevault = TableVault('test_dir', 'jinjin')
     for table_name in tables:
-        df = tablevault.fetch_table(table_name)
+        df = tablevault.get_table(table_name)
         assert not df.isnull().values.any()
         assert len(df) == num_entries
 
@@ -76,7 +76,7 @@ def evaluate_deletion():
     entries = os.listdir(temp_dir)
     assert 'table.csv' not in entries
     tablevault = TableVault('test_dir', 'jinjin')
-    instances = tablevault.list_instances('stories')
+    instances = tablevault.get_instances('stories')
     assert len(instances) == 0
     temp_dir = 'test_dir/stories'
     entries = os.listdir(temp_dir)
