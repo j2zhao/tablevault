@@ -24,11 +24,11 @@ def create_paper_table_from_folder(folder_dir, copies, artifact_folder):
                 papers.append([name, file_name, path])
             else:
                 for i in range(copies):
-                    name_ = name + "_" + str(i) 
-                    file_name_ =  name_ + '.' + extension
+                    name_ = name + "_" + str(i)
+                    file_name_ = name_ + "." + extension
                     artifact_path = os.path.join(artifact_folder, file_name_)
                     shutil.copy(path, artifact_path)
-                    papers.append([name_,file_name_, path])
+                    papers.append([name_, file_name_, path])
     df = pd.DataFrame(papers, columns=["paper_name", "artifact_name", "original_path"])
     return df
 

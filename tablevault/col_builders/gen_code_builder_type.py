@@ -2,17 +2,21 @@ from pydantic import Field
 from tablevault.col_builders.base_builder_type import TVBuilder
 from tablevault.defintions.types import Cache
 from tablevault.col_builders.utils import utils, table_operations
-from tablevault.col_builders.utils.table_string import apply_table_string
 from tablevault.defintions import constants
 from typing import Any, Union
 from tablevault.col_builders.utils.table_string import TableReference
 
+
 class GeneratorBuilder(TVBuilder):
     is_custom: Union[bool, TableReference] = Field(description="Custom to database.")
-    code_module: Union[str, TableReference] = Field(description="Module of function.") 
-    python_function: Union[str, TableReference] = Field(description="Function to execute.")
-    arguments: dict[Union[str, TableReference], Any]= Field(description="Function Arguments. DataTable and TableStrings are valid.")
-    
+    code_module: Union[str, TableReference] = Field(description="Module of function.")
+    python_function: Union[str, TableReference] = Field(
+        description="Function to execute."
+    )
+    arguments: dict[Union[str, TableReference], Any] = Field(
+        description="Function Arguments. DataTable and TableStrings are valid."
+    )
+
     def execute(
         self,
         cache: Cache,
@@ -26,8 +30,10 @@ class GeneratorBuilder(TVBuilder):
                 self.code_module, self.python_function
             )
         else:
-            funct, _ = utils.load_function_from_file(self.code_module, self.python_function, db_dir)
-        
+            funct, _ = utils.load_function_from_file(
+                self.code_module, self.python_function, db_dir
+            )
+
         results = funct(**self.arguments)
         merged_df, diff_flag = table_operations.merge_columns(
             self.changed_columns, results, cache[constants.OUTPUT_SELF]
@@ -37,7 +43,3 @@ class GeneratorBuilder(TVBuilder):
             return True
         else:
             return False
-        
-
-        
-    

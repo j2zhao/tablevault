@@ -10,15 +10,15 @@ from tablevault.defintions import constants
 from tablevault.helper.metadata_store import MetadataStore
 from tablevault.col_builders.utils import artifact
 
-def update_dtypes(dtypes:dict[str, str],
-                           instance_id:str,
-                           table_name:str,
-                           db_dir:str) -> None:
+
+def update_dtypes(
+    dtypes: dict[str, str], instance_id: str, table_name: str, db_dir: str
+) -> None:
     type_path = os.path.join(db_dir, table_name, instance_id, constants.DTYPE_FILE)
     with open(type_path, "r") as f:
         dtypes_ = json.load(f)
     dtypes_.update(dtypes)
-    with open(type_path, 'w') as f:
+    with open(type_path, "w") as f:
         json.dump(dtypes_, f)
 
 
@@ -29,11 +29,12 @@ def write_dtype(dtypes, instance_id, table_name, db_dir) -> None:
     with open(type_path, "w") as f:
         json.dump(dtypes, f)
 
+
 def write_table(
     df: pd.DataFrame, instance_id: str, table_name: str, db_dir: str
 ) -> None:
     if constants.TABLE_INDEX in df.columns:
-        df.drop(columns=constants.TABLE_INDEX , inplace=True)
+        df.drop(columns=constants.TABLE_INDEX, inplace=True)
     table_dir = os.path.join(db_dir, table_name)
     table_dir = os.path.join(table_dir, instance_id)
     table_path = os.path.join(table_dir, constants.TABLE_FILE)
@@ -41,9 +42,9 @@ def write_table(
 
 
 def get_table(
-    instance_id: str, 
-    table_name: str, 
-    db_dir: str, 
+    instance_id: str,
+    table_name: str,
+    db_dir: str,
     rows: Optional[int] = None,
     artifact_dir: bool = False,
 ) -> pd.DataFrame:
@@ -64,35 +65,33 @@ def get_table(
     except pd.errors.EmptyDataError:
         return pd.DataFrame()
     except Exception as e:
-        raise TVTableError("Error Reading Table (likely datatype mismatch): {e}")
+        raise TVTableError(f"Error Reading Table (likely datatype mismatch): {e}")
     df.index.name = constants.TABLE_INDEX
     df = df.reset_index()
     if artifact_dir:
-        a_dir = artifact.get_artifact_folder(instance_id, 
-                                        table_name,
-                                        db_dir)
+        a_dir = artifact.get_artifact_folder(instance_id, table_name, db_dir)
         df = artifact.df_artifact_to_path(df, a_dir)
     return df
-    
+
 
 def fetch_table_cache(
     external_dependencies: list,
     instance_id: str,
     table_name: str,
-    db_metadata:MetadataStore,
+    db_metadata: MetadataStore,
 ) -> Cache:
     cache = {}
     temp = get_table(instance_id, table_name, db_metadata.db_dir, artifact_dir=False)
     cache[constants.OUTPUT_SELF] = temp.copy(deep=True)
-    a_dir = artifact.get_artifact_folder(instance_id, 
-                                         table_name,
-                                         db_metadata.db_dir)
-    
+    a_dir = artifact.get_artifact_folder(instance_id, table_name, db_metadata.db_dir)
+
     cache[constants.TABLE_SELF] = artifact.df_artifact_to_path(temp, a_dir)
-    
+
     for dep in external_dependencies:
         table, _, instance, _, version = dep
-        cache[(table, version)] = get_table(instance, table, db_metadata.db_dir, artifact_dir=True)
+        cache[(table, version)] = get_table(
+            instance, table, db_metadata.db_dir, artifact_dir=True
+        )
     return cache
 
 
@@ -122,33 +121,21 @@ def update_table_columns(
     write_table(df, instance_id, table_name, db_dir)
     write_dtype(df.dtypes, instance_id, table_name, db_dir)
 
+
 def merge_columns(
     columns: list[str], new_df: pd.DataFrame, old_df: pd.DataFrame
 ) -> tuple[pd.DataFrame, bool]:
-    # Make sure new_df columns have the same dtype as in old_df
     all_columns = list(old_df.columns)
     for col in all_columns:
         if col in new_df.columns:
             new_df[col] = new_df[col].astype(old_df[col].dtype)
-    
-    # Merge on the provided key columns
+
     merged_df = pd.merge(new_df, old_df, how="left", on=columns)
     merged_df = merged_df[all_columns]
-    
-    # Check if key columns differ between merged_df and old_df
-    diff_flag = not merged_df[columns].equals(old_df[columns])
-    
-    # # Use a full outer merge with indicator to get differences
-    # diff_df = pd.merge(merged_df, old_df, how="outer", indicator=True)
-    
-    # # Rows that exist in merged_df but not in old_df
-    # only_in_merged = diff_df[diff_df["_merge"] == "left_only"].drop(columns=["_merge"])
-    
-    # # Rows that exist in old_df but not in merged_df
-    # only_in_old = diff_df[diff_df["_merge"] == "right_only"].drop(columns=["_merge"])
-    
-    return merged_df, diff_flag
 
+    diff_flag = not merged_df[columns].equals(old_df[columns])
+
+    return merged_df, diff_flag
 
 
 def update_column(colunm: Any, df: pd.DataFrame, col_name: str) -> pd.DataFrame:
@@ -178,7 +165,7 @@ def check_entry(
 
 def _convert_series_to_dtype(values: Any, dtype: Any) -> pd.Series:
     s = pd.Series(values)
-    if isinstance(dtype, pd.CategoricalDtype) :
+    if isinstance(dtype, pd.CategoricalDtype):
         return s.astype(dtype)
     try:
         return s.astype(dtype)
@@ -195,6 +182,7 @@ def _convert_series_to_dtype(values: Any, dtype: Any) -> pd.Series:
                 raise TVTableError(
                     f"Could not convert {x!r} to dtype {dtype!r}: {inner_e}"
                 )
+
         return s.apply(convert_element)
 
 
@@ -212,42 +200,35 @@ def _convert_to_dtype(value: Any, dtype: Any) -> Any:
     except Exception as e:
         raise TVTableError(f"Could not convert value {value!r} to dtype {dtype!r}: {e}")
 
-def check_table(instance_id: str, 
-                          table_name: str, 
-                          db_dir: str, 
-                          rows: Optional[int] = None
-                          )-> None:
+
+def check_table(
+    instance_id: str, table_name: str, db_dir: str, rows: Optional[int] = None
+) -> None:
     df = get_table(instance_id, table_name, db_dir, rows, artifact_dir=True)
-    cols = [col for col, dt in df.dtypes.items() if dt.name == 'artifact_string']
+    cols = [col for col, dt in df.dtypes.items() if dt.name == "artifact_string"]
     df_custom = df[cols]
     if df_custom.shape[1] == 0:
         return
-    for _ , row in df_custom.iterrows():
-        for _ , val in row.items():
+    for _, row in df_custom.iterrows():
+        for _, val in row.items():
             if not os.path.exists(val):
                 raise TVTableError(f"Artifact {val} not found")
-    
 
 
-def check_changed_columns(y: pd.DataFrame, 
-                 instance_id:str,
-                 table_name,
-                 db_dir) -> list[str]:
+def check_changed_columns(
+    y: pd.DataFrame, instance_id: str, table_name, db_dir
+) -> list[str]:
     try:
         x = get_table(instance_id, table_name, db_dir)
     except TVTableError:
         return list(y.columns)
-    
+
     if len(x) != len(y):
         return list(y.columns)
-        
+
     new_cols = set(y.columns) - set(x.columns)
     common = set(y.columns).intersection(x.columns)
-    
-    changed = {
-        col
-        for col in common
-        if not x[col].equals(y[col])
-    }
-    
+
+    changed = {col for col in common if not x[col].equals(y[col])}
+
     return list(new_cols | changed)

@@ -77,9 +77,11 @@ class Open_AI_Thread:
         if self.thread is not None and self.assistant is not None:
             for i in range(self.retry):
                 try:
-                    
+
                     run = self.client.beta.threads.runs.create_and_poll(
-                        thread_id=self.thread.id, assistant_id=self.assistant.id, timeout=10
+                        thread_id=self.thread.id,
+                        assistant_id=self.assistant.id,
+                        timeout=10,
                     )
                     if run.status == "completed":
                         messages = self.client.beta.threads.messages.list(

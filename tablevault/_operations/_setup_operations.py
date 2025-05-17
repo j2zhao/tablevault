@@ -3,9 +3,12 @@ from tablevault.defintions import tv_errors
 from tablevault.helper.database_lock import DatabaseLock
 from tablevault.helper import file_operations
 from tablevault.helper.utils import gen_tv_id
-from tablevault.defintions import constants, types 
+from tablevault.defintions import constants, types
 from tablevault.defintions.types import SETUP_OUTPUT, ExternalDeps
-from tablevault.col_builders.base_builder_type import TVBuilder, order_tables_by_builders
+from tablevault.col_builders.base_builder_type import (
+    TVBuilder,
+    order_tables_by_builders,
+)
 from tablevault.col_builders.load_builder import load_builder
 from tablevault.col_builders.utils.utils import topological_sort
 from tablevault.col_builders.utils import table_operations
@@ -24,17 +27,19 @@ def setup_copy_files(
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
     if table_name == "":
         db_locks.acquire_exclusive_lock(constants.CODE_FOLDER)
-        file_operations.copy_folder_to_temp(process_id, 
-                                            db_metadata.db_dir,
-                                            subfolder=constants.CODE_FOLDER)
+        file_operations.copy_folder_to_temp(
+            process_id, db_metadata.db_dir, subfolder=constants.CODE_FOLDER
+        )
     else:
         db_locks.acquire_exclusive_lock(table_name, constants.BUILDER_FOLDER)
-        file_operations.copy_folder_to_temp(process_id, 
-                                            db_metadata.db_dir,
-                                            table_name=table_name,
-                                            subfolder=constants.BUILDER_FOLDER)
+        file_operations.copy_folder_to_temp(
+            process_id,
+            db_metadata.db_dir,
+            table_name=table_name,
+            subfolder=constants.BUILDER_FOLDER,
+        )
     funct_kwargs = {"file_dir": file_dir, "table_name": table_name}
-    db_metadata.update_process_data(process_id,funct_kwargs)
+    db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
 
 
@@ -47,9 +52,9 @@ def setup_delete_table(
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
     db_locks.acquire_exclusive_lock(table_name)
-    file_operations.copy_folder_to_temp(process_id, 
-                                        db_metadata.db_dir,
-                                        table_name=table_name)
+    file_operations.copy_folder_to_temp(
+        process_id, db_metadata.db_dir, table_name=table_name
+    )
     funct_kwargs = {"table_name": table_name}
     db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
@@ -65,31 +70,33 @@ def setup_delete_instance(
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
     db_locks.acquire_exclusive_lock(table_name, instance_id)
-    file_operations.copy_folder_to_temp(process_id, 
-                                        db_metadata.db_dir,
-                                        instance_id=instance_id,
-                                        table_name=table_name)
+    file_operations.copy_folder_to_temp(
+        process_id, db_metadata.db_dir, instance_id=instance_id, table_name=table_name
+    )
     funct_kwargs = {"table_name": table_name, "instance_id": instance_id}
     db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
 
-def setup_materialize_instance(instance_id:str,
-                                table_name: str,
-                                version:str,
-                                perm_instance_id:str,
-                                origin_id:str,
-                                origin_table:str,
-                                changed_columns: list[str],
-                                all_columns: list[str],
-                                artifact_columns: list[str],
-                                dependencies: list[tuple[str, str]],
-                                success:bool,
-                                process_id: str,
-                                db_metadata: MetadataStore,
-                                db_locks: DatabaseLock)-> SETUP_OUTPUT:
+
+def setup_materialize_instance(
+    instance_id: str,
+    table_name: str,
+    version: str,
+    perm_instance_id: str,
+    origin_id: str,
+    origin_table: str,
+    changed_columns: list[str],
+    all_columns: list[str],
+    artifact_columns: list[str],
+    dependencies: list[tuple[str, str]],
+    success: bool,
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+) -> SETUP_OUTPUT:
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
-    
+
     if "_" not in process_id:
         instance_id = constants.TEMP_INSTANCE + version
         if perm_instance_id == "":
@@ -97,21 +104,28 @@ def setup_materialize_instance(instance_id:str,
             perm_instance_id = "_" + str(int(start_time)) + "_" + gen_tv_id()
             perm_instance_id = version + perm_instance_id
 
-    
-    #db_metadata.update_process_data(process_id, funct_kwargs)
+    # db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     db_locks.make_lock_path(table_name, perm_instance_id)
     db_locks.acquire_exclusive_lock(table_name, perm_instance_id)
-    table_data = file_operations.get_description(instance_id = "", table_name=table_name, db_dir=db_metadata.db_dir)
-    
+    table_data = file_operations.get_description(
+        instance_id="", table_name=table_name, db_dir=db_metadata.db_dir
+    )
+
     if "_" not in process_id:
-        instance_data = file_operations.get_description(instance_id, table_name, db_metadata.db_dir)
+        instance_data = file_operations.get_description(
+            instance_id, table_name, db_metadata.db_dir
+        )
         if not instance_data[constants.DESCRIPTION_EDIT]:
-            raise tv_errors.TVArgumentError("Instance cannot be externally materialized.")
+            raise tv_errors.TVArgumentError(
+                "Instance cannot be externally materialized."
+            )
         if constants.DESCRIPTION_ORIGIN in instance_data:
             origin_id, origin_table = instance_data[constants.DESCRIPTION_ORIGIN]
-        table_df = table_operations.get_table(instance_id, table_name, db_metadata.db_dir)
-        
+        table_df = table_operations.get_table(
+            instance_id, table_name, db_metadata.db_dir
+        )
+
         all_columns = list(table_df.columns)
         if constants.TABLE_INDEX in all_columns:
             all_columns.remove(constants.TABLE_INDEX)
@@ -119,61 +133,90 @@ def setup_materialize_instance(instance_id:str,
         if origin_id != "":
             try:
                 temp_lock = db_locks.acquire_shared_lock(origin_table, origin_id)
-                changed_columns = table_operations.check_changed_columns(table_df, origin_id, origin_table, db_metadata.db_dir)
+                changed_columns = table_operations.check_changed_columns(
+                    table_df, origin_id, origin_table, db_metadata.db_dir
+                )
                 db_locks.release_lock(temp_lock)
             except tv_errors.TVLockError:
                 pass
-        
+
     if not table_data[constants.TABLE_ALLOW_MARTIFACT] and success:
         db_locks.acquire_exclusive_lock(table_name, constants.ARTIFACT_FOLDER)
-        file_operations.copy_folder_to_temp(process_id, 
-                                    db_metadata.db_dir,
-                                    table_name=table_name,
-                                    subfolder=constants.ARTIFACT_FOLDER)
+        file_operations.copy_folder_to_temp(
+            process_id,
+            db_metadata.db_dir,
+            table_name=table_name,
+            subfolder=constants.ARTIFACT_FOLDER,
+        )
     funct_kwargs = {
-                    "instance_id": instance_id, 
-                    "table_name": table_name,
-                    "perm_instance_id": perm_instance_id, 
-                    "origin_id": origin_id,
-                    "origin_table": origin_table,
-                    "artifact_columns": artifact_columns,
-                    "all_columns": all_columns,
-                    "changed_columns": changed_columns,
-                    "dependencies": dependencies,
-                    "success":success}
-    
+        "instance_id": instance_id,
+        "table_name": table_name,
+        "perm_instance_id": perm_instance_id,
+        "origin_id": origin_id,
+        "origin_table": origin_table,
+        "artifact_columns": artifact_columns,
+        "all_columns": all_columns,
+        "changed_columns": changed_columns,
+        "dependencies": dependencies,
+        "success": success,
+    }
+
     db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
 
-def setup_stop_process(to_stop_process_id:str,
-                       force: bool,
-                       materialize:bool,
-                       process_id:str,
-                       db_metadata: MetadataStore,
-                       db_locks: DatabaseLock):
-    
-    if '_' in to_stop_process_id:
+
+def setup_stop_process(
+    to_stop_process_id: str,
+    force: bool,
+    materialize: bool,
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+):
+
+    if "_" in to_stop_process_id:
         raise tv_errors.TVArgumentError("Only can stop top-level processes.")
     logs, process_ids_ = db_metadata.stop_operation(to_stop_process_id, force)
     step_ids = []
-    step_ids.append(process_id + '_' + gen_tv_id())
+    step_ids.append(process_id + "_" + gen_tv_id())
     materialize_ops = {}
     if materialize:
         prev_materialized = False
         for process_id_ in process_ids_:
-            if logs[process_id_].operation == constants.MAT_OP and logs[process_id_].execution_success:
+            if (
+                logs[process_id_].operation == constants.MAT_OP
+                and logs[process_id_].execution_success
+            ):
                 prev_materialized = True
-        if not prev_materialized and logs[to_stop_process_id].start_success and not logs[to_stop_process_id].execution_success:
+        if (
+            not prev_materialized
+            and logs[to_stop_process_id].start_success
+            and not logs[to_stop_process_id].execution_success
+        ):
             if logs[to_stop_process_id].operation == constants.EXECUTE_OP:
-                step_ids.append(process_id + '_' + gen_tv_id())
-                materialize_ops["instance_id"] = logs[to_stop_process_id].data["instance_id"]
-                materialize_ops["table_name"] = logs[to_stop_process_id].data["table_name"]
-                materialize_ops["perm_instance_id"] = logs[to_stop_process_id].data["perm_instance_id"]
-                materialize_ops["origin_id"] = logs[to_stop_process_id].data["origin_id"]
-                materialize_ops["origin_table"] = logs[to_stop_process_id].data["origin_table"]
+                step_ids.append(process_id + "_" + gen_tv_id())
+                materialize_ops["instance_id"] = logs[to_stop_process_id].data[
+                    "instance_id"
+                ]
+                materialize_ops["table_name"] = logs[to_stop_process_id].data[
+                    "table_name"
+                ]
+                materialize_ops["perm_instance_id"] = logs[to_stop_process_id].data[
+                    "perm_instance_id"
+                ]
+                materialize_ops["origin_id"] = logs[to_stop_process_id].data[
+                    "origin_id"
+                ]
+                materialize_ops["origin_table"] = logs[to_stop_process_id].data[
+                    "origin_table"
+                ]
                 materialize_ops["artifact_columns"] = []
-                materialize_ops["all_columns"] = logs[to_stop_process_id].data["all_columns"]
-                materialize_ops["changed_columns"] = logs[to_stop_process_id].data["changed_columns"]
+                materialize_ops["all_columns"] = logs[to_stop_process_id].data[
+                    "all_columns"
+                ]
+                materialize_ops["changed_columns"] = logs[to_stop_process_id].data[
+                    "changed_columns"
+                ]
                 dependencies = []
                 external_deps = logs[to_stop_process_id].data["external_deps"]
                 for builder_name in external_deps:
@@ -181,63 +224,102 @@ def setup_stop_process(to_stop_process_id:str,
                         dependencies.append([tname, id])
                 materialize_ops["dependencies"] = dependencies
             elif logs[to_stop_process_id].operation == constants.WRITE_TABLE_OP:
-                step_ids.append(process_id + '_' + gen_tv_id())
-                materialize_ops["instance_id"] = logs[to_stop_process_id].data["instance_id"]
-                materialize_ops["table_name"] = logs[to_stop_process_id].data["table_name"]
-                materialize_ops["perm_instance_id"] = logs[to_stop_process_id].data["perm_instance_id"]
-                materialize_ops["origin_id"] = logs[to_stop_process_id].data["origin_id"]
-                materialize_ops["origin_table"] = logs[to_stop_process_id].data["origin_table"]
-                materialize_ops["artifact_columns"] = logs[to_stop_process_id].data["artifact_columns"]
-                materialize_ops["all_columns"] = logs[to_stop_process_id].data["all_columns"]
-                materialize_ops["changed_columns"] = logs[to_stop_process_id].data["changed_columns"]
-                materialize_ops["dependencies"] = logs[to_stop_process_id].data["dependencies"]
+                step_ids.append(process_id + "_" + gen_tv_id())
+                materialize_ops["instance_id"] = logs[to_stop_process_id].data[
+                    "instance_id"
+                ]
+                materialize_ops["table_name"] = logs[to_stop_process_id].data[
+                    "table_name"
+                ]
+                materialize_ops["perm_instance_id"] = logs[to_stop_process_id].data[
+                    "perm_instance_id"
+                ]
+                materialize_ops["origin_id"] = logs[to_stop_process_id].data[
+                    "origin_id"
+                ]
+                materialize_ops["origin_table"] = logs[to_stop_process_id].data[
+                    "origin_table"
+                ]
+                materialize_ops["artifact_columns"] = logs[to_stop_process_id].data[
+                    "artifact_columns"
+                ]
+                materialize_ops["all_columns"] = logs[to_stop_process_id].data[
+                    "all_columns"
+                ]
+                materialize_ops["changed_columns"] = logs[to_stop_process_id].data[
+                    "changed_columns"
+                ]
+                materialize_ops["dependencies"] = logs[to_stop_process_id].data[
+                    "dependencies"
+                ]
             elif logs[to_stop_process_id].operation == constants.MAT_OP:
-                step_ids.append(process_id + '_' + gen_tv_id())
-                materialize_ops["instance_id"] = logs[to_stop_process_id].data["instance_id"]
-                materialize_ops["table_name"] = logs[to_stop_process_id].data["table_name"]
-                materialize_ops["perm_instance_id"] = logs[to_stop_process_id].data["perm_instance_id"]
-                materialize_ops["origin_id"] = logs[to_stop_process_id].data["origin_id"]
-                materialize_ops["origin_table"] = logs[to_stop_process_id].data["origin_table"]
-                materialize_ops["artifact_columns"] = logs[to_stop_process_id].data["artifact_columns"]
-                materialize_ops["all_columns"] = logs[to_stop_process_id].data["all_columns"]
-                materialize_ops["changed_columns"] = logs[to_stop_process_id].data["changed_columns"]
-                materialize_ops["dependencies"] = logs[to_stop_process_id].data["dependencies"]
+                step_ids.append(process_id + "_" + gen_tv_id())
+                materialize_ops["instance_id"] = logs[to_stop_process_id].data[
+                    "instance_id"
+                ]
+                materialize_ops["table_name"] = logs[to_stop_process_id].data[
+                    "table_name"
+                ]
+                materialize_ops["perm_instance_id"] = logs[to_stop_process_id].data[
+                    "perm_instance_id"
+                ]
+                materialize_ops["origin_id"] = logs[to_stop_process_id].data[
+                    "origin_id"
+                ]
+                materialize_ops["origin_table"] = logs[to_stop_process_id].data[
+                    "origin_table"
+                ]
+                materialize_ops["artifact_columns"] = logs[to_stop_process_id].data[
+                    "artifact_columns"
+                ]
+                materialize_ops["all_columns"] = logs[to_stop_process_id].data[
+                    "all_columns"
+                ]
+                materialize_ops["changed_columns"] = logs[to_stop_process_id].data[
+                    "changed_columns"
+                ]
+                materialize_ops["dependencies"] = logs[to_stop_process_id].data[
+                    "dependencies"
+                ]
 
     funct_kwargs = {
-        "process_ids":process_ids_,
+        "process_ids": process_ids_,
         "materialize_args": materialize_ops,
-        "step_ids":step_ids
+        "step_ids": step_ids,
     }
     db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
-                
 
 
-
-def setup_write_table_inner(table_df: Optional[pd.DataFrame],
-                            instance_id:str,
-                            table_name:str,
-                            process_id:str,
-                            db_metadata: MetadataStore,
-                            db_locks: DatabaseLock)-> SETUP_OUTPUT:
+def setup_write_table_inner(
+    table_df: Optional[pd.DataFrame],
+    instance_id: str,
+    table_name: str,
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+) -> SETUP_OUTPUT:
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     funct_kwargs = {
         "instance_id": instance_id,
         "table_name": table_name,
-        "table_df": None
+        "table_df": None,
     }
     db_metadata.update_process_data(process_id, funct_kwargs)
     funct_kwargs["table_df"] = table_df
     return funct_kwargs
 
-def setup_write_table(table_df:Optional[pd.DataFrame],
-                      table_name:str,
-                      version:str,
-                      artifact_columns: list[str],
-                      dependencies: list[tuple[str, str]],
-                      process_id: str,
-                      db_metadata: MetadataStore,
-                      db_locks: DatabaseLock) -> SETUP_OUTPUT:
+
+def setup_write_table(
+    table_df: Optional[pd.DataFrame],
+    table_name: str,
+    version: str,
+    artifact_columns: list[str],
+    dependencies: list[tuple[str, str]],
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+) -> SETUP_OUTPUT:
     step_ids = []
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
@@ -249,11 +331,15 @@ def setup_write_table(table_df:Optional[pd.DataFrame],
         version = constants.BASE_TABLE_VERSION
     instance_id = constants.TEMP_INSTANCE + version
     db_locks.acquire_exclusive_lock(table_name, instance_id)
-    instance_data = file_operations.get_description(instance_id, table_name, db_metadata.db_dir)
+    instance_data = file_operations.get_description(
+        instance_id, table_name, db_metadata.db_dir
+    )
     if not instance_data[constants.DESCRIPTION_EDIT]:
-        raise tv_errors.TVArgumentError("External edit table cannot be executed for this instance.")
+        raise tv_errors.TVArgumentError(
+            "External edit table cannot be executed for this instance."
+        )
 
-    step_ids.append(process_id + '_' + gen_tv_id())
+    step_ids.append(process_id + "_" + gen_tv_id())
     table_data = file_operations.get_description("", table_name, db_metadata.db_dir)
     start_time = db_metadata.get_active_processes()[process_id].start_time
     perm_instance_id = "_" + str(int(start_time)) + "_" + gen_tv_id()
@@ -262,7 +348,7 @@ def setup_write_table(table_df:Optional[pd.DataFrame],
     db_locks.acquire_exclusive_lock(table_name, perm_instance_id)
     if not table_data[constants.TABLE_ALLOW_MARTIFACT] and len(artifact_columns) > 0:
         db_locks.acquire_exclusive_lock(table_name, constants.ARTIFACT_FOLDER)
-    step_ids.append(process_id + '_' + gen_tv_id())
+    step_ids.append(process_id + "_" + gen_tv_id())
 
     all_columns = list(table_df.columns)
     if constants.TABLE_INDEX in all_columns:
@@ -272,16 +358,18 @@ def setup_write_table(table_df:Optional[pd.DataFrame],
     if origin_id != "":
         try:
             temp_lock = db_locks.acquire_shared_lock(origin_table, origin_id)
-            changed_columns = table_operations.check_changed_columns(table_df, origin_id, origin_table, db_metadata.db_dir)
+            changed_columns = table_operations.check_changed_columns(
+                table_df, origin_id, origin_table, db_metadata.db_dir
+            )
             db_locks.release_lock(temp_lock)
         except tv_errors.TVLockError:
             pass
-    
+
     funct_kwargs = {
         "instance_id": instance_id,
         "table_name": table_name,
         "artifact_columns": artifact_columns,
-        "dependencies":dependencies,
+        "dependencies": dependencies,
         "perm_instance_id": perm_instance_id,
         "step_ids": step_ids,
         "table_df": None,
@@ -289,7 +377,6 @@ def setup_write_table(table_df:Optional[pd.DataFrame],
         "origin_table": origin_table,
         "all_columns": all_columns,
         "changed_columns": changed_columns,
-        "all_columns": list(table_df.columns) #TODO: STOPPED HERE
     }
     db_metadata.update_process_data(process_id, funct_kwargs)
     for col in artifact_columns:
@@ -298,26 +385,27 @@ def setup_write_table(table_df:Optional[pd.DataFrame],
         else:
             raise tv_errors.TVArgumentError("Artifact column not in Dataframe")
     funct_kwargs["table_df"] = table_df
-    
+
     return funct_kwargs
 
 
-def setup_execute_instance_inner(instance_id:str,
-                                 table_name:str,
-                                 top_builder_names: list[str],
-                                 changed_columns: list[str],
-                                 all_columns: list[str],
-                                 external_deps: ExternalDeps,
-                                 origin_id:str,
-                                 origin_table:str,
-                                 process_id: str,
-                                 db_metadata: MetadataStore,
-                                 db_locks: DatabaseLock,
-                                 )-> SETUP_OUTPUT:
-    
+def setup_execute_instance_inner(
+    instance_id: str,
+    table_name: str,
+    top_builder_names: list[str],
+    changed_columns: list[str],
+    all_columns: list[str],
+    external_deps: ExternalDeps,
+    origin_id: str,
+    origin_table: str,
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+) -> SETUP_OUTPUT:
+
     funct_kwargs = {
         "table_name": table_name,
-        'instance_id': instance_id,
+        "instance_id": instance_id,
         "top_builder_names": top_builder_names,
         "changed_columns": changed_columns,
         "all_columns": all_columns,
@@ -338,8 +426,7 @@ def setup_execute_instance_inner(instance_id:str,
     db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
 
-# artifacts -> means that we only have one version of the artifacts? -> NO that isn't how we should deal with artifacts....UGH.
-# deal with side effect on datasets
+
 def setup_execute_instance(
     table_name: str,
     version: str,
@@ -356,14 +443,21 @@ def setup_execute_instance(
     perm_instance_id = "_" + str(int(start_time)) + "_" + gen_tv_id()
     perm_instance_id = version + perm_instance_id
     instance_id = constants.TEMP_INSTANCE + version
-    instance_data = file_operations.get_description(instance_id, table_name, db_metadata.db_dir)
+    instance_data = file_operations.get_description(
+        instance_id, table_name, db_metadata.db_dir
+    )
     if instance_data[constants.DESCRIPTION_EDIT]:
         raise tv_errors.TVArgumentError("External edit table cannot be executed.")
 
-    db_metadata.update_process_data(process_id, {"perm_instance_id": perm_instance_id, 
-                                                 "instance_id": instance_id, 
-                                                 "table_name": table_name,
-                                                 "version": version})
+    db_metadata.update_process_data(
+        process_id,
+        {
+            "perm_instance_id": perm_instance_id,
+            "instance_id": instance_id,
+            "table_name": table_name,
+            "version": version,
+        },
+    )
     db_locks.make_lock_path(table_name, perm_instance_id)
 
     table_data = file_operations.get_description("", table_name, db_metadata.db_dir)
@@ -374,14 +468,19 @@ def setup_execute_instance(
             db_locks.acquire_exclusive_lock(table_name, constants.ARTIFACT_FOLDER)
     else:
         db_locks.acquire_exclusive_lock(table_name)
-            
-    yaml_builders = file_operations.get_yaml_builders(instance_id, table_name, db_metadata.db_dir)
-    builders = {builder_name: load_builder(ybuilder) for builder_name, ybuilder in yaml_builders.items()}
+
+    yaml_builders = file_operations.get_yaml_builders(
+        instance_id, table_name, db_metadata.db_dir
+    )
+    builders = {
+        builder_name: load_builder(ybuilder)
+        for builder_name, ybuilder in yaml_builders.items()
+    }
 
     if not force_execute:
         origin_table = ""
         origin_id = ""
-        
+
         if constants.DESCRIPTION_ORIGIN in instance_data:
             origin_id, origin_table = instance_data[constants.DESCRIPTION_ORIGIN]
         if origin_id == "":
@@ -398,9 +497,10 @@ def setup_execute_instance(
         if origin_id != "":
             db_locks.acquire_shared_lock(origin_table, origin_id)
     else:
-        origin_id = ''
-        origin_table = ''
-    (   top_builder_names,
+        origin_id = ""
+        origin_table = ""
+    (
+        top_builder_names,
         changed_columns,
         all_columns,
         internal_builder_deps,
@@ -416,7 +516,7 @@ def setup_execute_instance(
     )
     funct_kwargs = {
         "table_name": table_name,
-        'instance_id': instance_id,
+        "instance_id": instance_id,
         "perm_instance_id": perm_instance_id,
         "top_builder_names": top_builder_names,
         "changed_columns": changed_columns,
@@ -427,8 +527,8 @@ def setup_execute_instance(
         "update_rows": True,
         "internal_builder_deps": internal_builder_deps,
     }
-    funct_kwargs["step_ids"] = [process_id + '_' + gen_tv_id()]
-    funct_kwargs["step_ids"].append(process_id + '_' + gen_tv_id())
+    funct_kwargs["step_ids"] = [process_id + "_" + gen_tv_id()]
+    funct_kwargs["step_ids"].append(process_id + "_" + gen_tv_id())
 
     for builder_name in external_deps:
         for table, _, instance, _, _ in external_deps[builder_name]:
@@ -441,17 +541,18 @@ def setup_execute_instance(
     db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
 
+
 def setup_setup_temp_instance(
     table_name: str,
     version: str,
     description: str,
     origin_id: str,
-    origin_table:str,
-    external_edit:bool,
+    origin_table: str,
+    external_edit: bool,
     copy_version: bool,
     builder_names: list[str] | bool,
     execute: bool,
-    background_execute:bool,
+    background_execute: bool,
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
@@ -460,9 +561,13 @@ def setup_setup_temp_instance(
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
     if external_edit:
         if builder_names or execute or background_execute:
-            raise tv_errors.TVArgumentError("Non-Executable Table does not have builders, origin, or execute.")
+            raise tv_errors.TVArgumentError(
+                "Non-Executable Table does not have builders, origin, or execute."
+            )
     if background_execute and not execute:
-        raise tv_errors.TVArgumentError("background_execute cannot be True when execute is False.")
+        raise tv_errors.TVArgumentError(
+            "background_execute cannot be True when execute is False."
+        )
     if version == "":
         version = constants.BASE_TABLE_VERSION
     instance_id = constants.TEMP_INSTANCE + version
@@ -480,36 +585,39 @@ def setup_setup_temp_instance(
     elif builder_names:
         db_locks.acquire_shared_lock(table_name, constants.BUILDER_FOLDER)
         if isinstance(builder_names, bool):
-            builder_names = file_operations.get_builder_names("",table_name, db_metadata.db_dir)
+            builder_names = file_operations.get_builder_names(
+                "", table_name, db_metadata.db_dir
+            )
     funct_kwargs = {
         "version": version,
         "instance_id": instance_id,
         "table_name": table_name,
-        "description":description,
+        "description": description,
         "origin_id": origin_id,
         "origin_table": origin_table,
-        "external_edit":external_edit,
+        "external_edit": external_edit,
         "builder_names": builder_names,
         "execute": execute,
-        "background_execute": background_execute
+        "background_execute": background_execute,
     }
-    funct_kwargs["step_ids"] = [process_id + '_' + gen_tv_id()]
+    funct_kwargs["step_ids"] = [process_id + "_" + gen_tv_id()]
     if execute:
-        funct_kwargs["step_ids"].append(process_id + '_' + gen_tv_id())
+        funct_kwargs["step_ids"].append(process_id + "_" + gen_tv_id())
     db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.make_lock_path(table_name, instance_id)
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     return funct_kwargs
 
+
 def setup_setup_table(
     table_name: str,
     create_temp: bool,
     execute: bool,
-    background_execute:bool,
+    background_execute: bool,
     allow_multiple_artifacts: bool,
     has_side_effects: bool,
     yaml_dir: str,
-    description:str,
+    description: str,
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
@@ -517,29 +625,31 @@ def setup_setup_table(
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
     if execute and yaml_dir == "":
-        raise tv_errors.TVArgumentError(f"Cannot Execute {table_name} without Builders Directory")
+        raise tv_errors.TVArgumentError(
+            f"Cannot Execute {table_name} without Builders Directory"
+        )
     funct_kwargs = {
         "table_name": table_name,
         "yaml_dir": yaml_dir,
         "create_temp": create_temp,
         "execute": execute,
-        "background_execute":background_execute,
-        "allow_multiple_artifacts":allow_multiple_artifacts,
+        "background_execute": background_execute,
+        "allow_multiple_artifacts": allow_multiple_artifacts,
         "has_side_effects": has_side_effects,
-        "description":description,
-        
+        "description": description,
     }
-    funct_kwargs["step_ids"] = [process_id + '_' + gen_tv_id()]
+    funct_kwargs["step_ids"] = [process_id + "_" + gen_tv_id()]
     if yaml_dir != "":
-        funct_kwargs["step_ids"].append(process_id + '_' + gen_tv_id())
+        funct_kwargs["step_ids"].append(process_id + "_" + gen_tv_id())
     if execute:
-        funct_kwargs["step_ids"].append(process_id + '_' + gen_tv_id())
+        funct_kwargs["step_ids"].append(process_id + "_" + gen_tv_id())
     db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.make_lock_path(table_name)
     db_locks.make_lock_path(table_name, constants.BUILDER_FOLDER)
     db_locks.make_lock_path(table_name, constants.ARTIFACT_FOLDER)
     db_locks.acquire_exclusive_lock(table_name)
     return funct_kwargs
+
 
 def setup_copy_database_files(
     yaml_dir: str,
@@ -555,13 +665,16 @@ def setup_copy_database_files(
     step_ids = []
     if code_dir != "":
         db_locks.acquire_exclusive_lock(constants.CODE_FOLDER)
-        step_ids.append(process_id + '_' + gen_tv_id())
+        step_ids.append(process_id + "_" + gen_tv_id())
     table_names = []
     if yaml_dir != "":
         try:
             yaml_builders = file_operations.get_external_yaml_builders(yaml_dir)
             for table_name in yaml_builders:
-                builders = {builder_name: load_builder(ybuilder) for builder_name, ybuilder in yaml_builders[table_name].items()}
+                builders = {
+                    builder_name: load_builder(ybuilder)
+                    for builder_name, ybuilder in yaml_builders[table_name].items()
+                }
                 yaml_builders[table_name] = builders
             table_names = order_tables_by_builders(yaml_builders)
         except Exception as e:
@@ -569,72 +682,75 @@ def setup_copy_database_files(
         for table_name in table_names:
             db_locks.make_lock_path(table_name)
             db_locks.acquire_exclusive_lock(table_name)
-            step_ids.append(process_id + '_' + gen_tv_id())
+            step_ids.append(process_id + "_" + gen_tv_id())
     funct_kwargs = {
         "yaml_dir": yaml_dir,
         "table_names": table_names,
         "code_dir": code_dir,
         "execute": execute,
-        'allow_multiple_artifacts':allow_multiple_artifacts,
-        'has_side_effects': has_side_effects,
+        "allow_multiple_artifacts": allow_multiple_artifacts,
+        "has_side_effects": has_side_effects,
         "step_ids": step_ids,
-        'background_execute': background_execute,
+        "background_execute": background_execute,
     }
     db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
 
 
-def setup_restart_database(db_locks: DatabaseLock
-                           ) -> SETUP_OUTPUT:
+def setup_restart_database(db_locks: DatabaseLock) -> SETUP_OUTPUT:
     db_locks.acquire_exclusive_lock(constants.RESTART_LOCK)
     return {}
 
+
 def setup_setup_temp_instance_innner(
-        table_name:str,
-        instance_id:str,
-        origin_id:str,
-        origin_table:str,
-        external_edit:bool,
-        builder_names: list[str],
-        description: str,
-        process_id: str,
-        db_metadata: MetadataStore,
-        db_locks: DatabaseLock, 
-    )-> SETUP_OUTPUT:
+    table_name: str,
+    instance_id: str,
+    origin_id: str,
+    origin_table: str,
+    external_edit: bool,
+    builder_names: list[str],
+    description: str,
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+) -> SETUP_OUTPUT:
     funct_kwargs = {
         "table_name": table_name,
         "instance_id": instance_id,
         "origin_id": origin_id,
-        "origin_table":origin_table,
-        "external_edit":external_edit,
+        "origin_table": origin_table,
+        "external_edit": external_edit,
         "builder_names": builder_names,
         "description": description,
     }
     db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.acquire_exclusive_lock(table_name, instance_id)
-    if origin_id != '':
+    if origin_id != "":
         db_locks.acquire_shared_lock(table_name, origin_id)
     if len(builder_names) > 0:
         db_locks.acquire_shared_lock(table_name, constants.BUILDER_FOLDER)
     return funct_kwargs
 
-def setup_setup_table_inner(table_name:str,
-                            allow_multiple_artifacts:bool,
-                            has_side_effects:bool,
-                            description: str,
-                            process_id: str,
-                            db_metadata: MetadataStore,
-                            db_locks: DatabaseLock
-                            )-> SETUP_OUTPUT :
+
+def setup_setup_table_inner(
+    table_name: str,
+    allow_multiple_artifacts: bool,
+    has_side_effects: bool,
+    description: str,
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+) -> SETUP_OUTPUT:
     funct_kwargs = {
-        'table_name': table_name,
-        'description': description,
-        'allow_multiple_artifacts':allow_multiple_artifacts,
-        'has_side_effects':has_side_effects,
+        "table_name": table_name,
+        "description": description,
+        "allow_multiple_artifacts": allow_multiple_artifacts,
+        "has_side_effects": has_side_effects,
     }
     db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.acquire_exclusive_lock(table_name)
     return funct_kwargs
+
 
 SETUP_MAP = {
     constants.COPY_FILE_OP: setup_copy_files,
@@ -652,7 +768,6 @@ SETUP_MAP = {
     constants.RESTART_OP: setup_restart_database,
     constants.SETUP_TEMP_INNER_OP: setup_setup_temp_instance_innner,
     constants.SETUP_TABLE_INNER_OP: setup_setup_table_inner,
-    
 }
 
 
@@ -699,28 +814,40 @@ def _parse_dependencies(
                 active_only = False
             else:
                 active_only = True
-            if dep.columns != None:
+            if dep.columns is not None:
                 for col in dep.columns:
                     if col != constants.TABLE_INDEX:
-                        mat_time, _, instance = (
-                                db_metadata.get_last_column_update(dep.table,
-                                                                    col,
-                                                                    start_time,
-                                                                    version=dep.version,
-                                                                    active_only=active_only)
-                            )
-                        external_deps[builder_name].add((dep.table, col, instance, mat_time, dep.version))
+                        mat_time, _, instance = db_metadata.get_last_column_update(
+                            dep.table,
+                            col,
+                            start_time,
+                            version=dep.version,
+                            active_only=active_only,
+                        )
+                        external_deps[builder_name].add(
+                            (dep.table, col, instance, mat_time, dep.version)
+                        )
                     else:
                         mat_time, _, instance = db_metadata.get_last_table_update(
-                                dep.table, version=dep.version,before_time=start_time, active_only=active_only
-                            )
-                        external_deps[builder_name].add((dep.table, None, instance, mat_time, dep.version))
-                
+                            dep.table,
+                            version=dep.version,
+                            before_time=start_time,
+                            active_only=active_only,
+                        )
+                        external_deps[builder_name].add(
+                            (dep.table, None, instance, mat_time, dep.version)
+                        )
+
             else:
                 mat_time, _, instance = db_metadata.get_last_table_update(
-                        dep.table, version=dep.version, before_time= start_time, active_only=active_only
-                    )
-                external_deps[builder_name].add((dep.table, None, instance, mat_time, dep.version))
+                    dep.table,
+                    version=dep.version,
+                    before_time=start_time,
+                    active_only=active_only,
+                )
+                external_deps[builder_name].add(
+                    (dep.table, None, instance, mat_time, dep.version)
+                )
         external_deps[builder_name] = list(external_deps[builder_name])
         internal_deps[builder_name] = list(internal_deps[builder_name])
         internal_builder_deps[builder_name] = list(internal_builder_deps[builder_name])
@@ -748,7 +875,7 @@ def parse_builders(
 
     if origin_id != "":
         to_execute = []
-        prev_mat_time, _ , _ = db_metadata.get_table_times(origin_id, table_name)
+        prev_mat_time, _, _ = db_metadata.get_table_times(origin_id, table_name)
         prev_builders = file_operations.get_builder_names(
             origin_id, origin_table, db_metadata.db_dir
         )
@@ -768,7 +895,12 @@ def parse_builders(
                 if builder_name not in prev_builders:
                     execute = True
                 elif not file_operations.check_builder_equality(
-                    builder_name, instance_id, table_name, origin_id, origin_table, db_metadata.db_dir
+                    builder_name,
+                    instance_id,
+                    table_name,
+                    origin_id,
+                    origin_table,
+                    db_metadata.db_dir,
                 ):
                     execute = True
             if execute:

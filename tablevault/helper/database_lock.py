@@ -3,7 +3,7 @@ import time
 import shutil
 from typing import Optional
 from filelock import FileLock
-from tablevault.defintions import constants 
+from tablevault.defintions import constants
 from tablevault.defintions.tv_errors import TVLockError
 from tablevault.helper.utils import gen_tv_id
 
@@ -83,6 +83,7 @@ def _release_lock(
                 if lock_id == lid:
                     os.remove(os.path.join(dirpath, filename))
 
+
 def _release_all_lock(
     process_id: str,
     lock_path: str,
@@ -93,7 +94,7 @@ def _release_all_lock(
         # empty = True
         for filename in filenames:
             if filename.endswith(".exlock") or filename.endswith(".shlock"):
-                
+
                 lock_name = filename.split(".")[0]
                 lock_name = lock_name.split("__")[0]
                 # print("HELLO5")
@@ -114,7 +115,8 @@ def _release_all_lock(
         #     if empty:
         #         shutil.rmtree(dirpath)
 
-def _make_lock_path(lock_path:str)->None:
+
+def _make_lock_path(lock_path: str) -> None:
     parent_dir = os.path.dirname(lock_path)
     parent_locks = []
     for filename in os.listdir(parent_dir):
@@ -126,18 +128,22 @@ def _make_lock_path(lock_path:str)->None:
         with open(lock_file, "w"):
             pass
 
-def _delete_lock_path(process_id, lock_path:str)-> None:
+
+def _delete_lock_path(process_id, lock_path: str) -> None:
     if os.path.exists(lock_path):
         for filename in os.listdir(lock_path):
             if filename.endswith(".exlock") or filename.endswith(".shlock"):
                 lock_name = filename.split(".")[0]
                 process_name = lock_name.split("__")[0]
                 if not process_id.startswith(process_name):
-                    raise TVLockError(f"Cannot delete lock_path {lock_path} with active lock: {filename}")
+                    raise TVLockError(
+                        f"Cannot delete {lock_path} with active lock: {filename}"
+                    )
         shutil.rmtree(lock_path)
 
+
 class DatabaseLock:
-    def __init__(self, process_id: str, db_dir: str)-> None:
+    def __init__(self, process_id: str, db_dir: str) -> None:
         self.db_dir = db_dir
         self.process_id = process_id
         self.lock_path = os.path.join(self.db_dir, constants.LOCK_FOLDER)
@@ -201,24 +207,20 @@ class DatabaseLock:
     def release_all_locks(self) -> None:
         _release_all_lock(self.process_id, self.lock_path)
 
-    def make_lock_path(self, 
-                   table_name:str = '',
-                   instance_id:str = ''):
+    def make_lock_path(self, table_name: str = "", instance_id: str = ""):
         lock_path = os.path.join(self.db_dir, constants.LOCK_FOLDER)
         if table_name != "":
             lock_path = os.path.join(lock_path, table_name)
         if instance_id != "":
-            lock_path = os.path.join(lock_path, instance_id)   
+            lock_path = os.path.join(lock_path, instance_id)
         with self.meta_lock:
             _make_lock_path(lock_path)
-    
-    def delete_lock_path(self, 
-                   table_name:str = '',
-                   instance_id:str = '')->None:
+
+    def delete_lock_path(self, table_name: str = "", instance_id: str = "") -> None:
         lock_path = os.path.join(self.db_dir, constants.LOCK_FOLDER)
         if table_name != "":
             lock_path = os.path.join(lock_path, table_name)
         if instance_id != "":
-            lock_path = os.path.join(lock_path, instance_id)   
+            lock_path = os.path.join(lock_path, instance_id)
         with self.meta_lock:
-            _delete_lock_path(self.process_id, lock_path) 
+            _delete_lock_path(self.process_id, lock_path)

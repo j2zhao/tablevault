@@ -3,10 +3,12 @@ from typing import Any, Callable
 import os
 from tablevault.defintions import constants
 from tablevault.defintions import tv_errors
- 
 
-def load_function_from_file(module_name: str, function_name: str, db_dir: str) -> tuple[Callable, Any]:
-    file_path_ = os.path.join(db_dir, constants.CODE_FOLDER, module_name + '.py')
+
+def load_function_from_file(
+    module_name: str, function_name: str, db_dir: str
+) -> tuple[Callable, Any]:
+    file_path_ = os.path.join(db_dir, constants.CODE_FOLDER, module_name + ".py")
     try:
         namespace = {}
         with open(file_path_, "r") as file:
@@ -14,11 +16,18 @@ def load_function_from_file(module_name: str, function_name: str, db_dir: str) -
         if function_name in namespace:
             return namespace[function_name], namespace
         else:
-            raise tv_errors.TVBuilderError(f"Function '{function_name}' not found in '{file_path_}'")
-    except:
-        raise tv_errors.TVBuilderError(f"Function '{function_name}' not found in '{file_path_}'")
+            raise tv_errors.TVBuilderError(
+                f"Function '{function_name}' not found in '{file_path_}'"
+            )
+    except Exception:
+        raise tv_errors.TVBuilderError(
+            f"Function '{function_name}' not found in '{file_path_}'"
+        )
 
-def get_function_from_module(module_name: str, function_name: str, is_tablevault:bool=True) -> Callable:
+
+def get_function_from_module(
+    module_name: str, function_name: str, is_tablevault: bool = True
+) -> Callable:
     if is_tablevault:
         module_name = f"tablevault.code_functions.{module_name}"
     # Import the module by its absolute name
@@ -30,6 +39,7 @@ def get_function_from_module(module_name: str, function_name: str, is_tablevault
         raise TypeError(f"'{function_name}' in '{module_name}' is not a callable.")
 
     return func
+
 
 def topological_sort(items: list, dependencies: dict) -> list:
     graph = {item: [] for item in items}

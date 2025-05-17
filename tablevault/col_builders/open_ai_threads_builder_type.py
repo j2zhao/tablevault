@@ -13,9 +13,11 @@ import re
 from typing import Any
 from tablevault.defintions import tv_errors
 
+
 class Message(BaseModel):
-    text: TableString = Field(description='Message to model')
-    regex: list[str] = Field(default=[], description='regex of output')
+    text: TableString = Field(description="Message to model")
+    regex: list[str] = Field(default=[], description="regex of output")
+
 
 # CATEGORY_MSG = """Based on the previous messages and your analysis,
 # respond with the option(s) that the paper matches out of: ENTITIES.
@@ -31,25 +33,30 @@ class Message(BaseModel):
 # return a succint phase that captures ENTITY_NAME.
 # If there is no ENTITY_NAME, return a message that says "NONE" only."""
 
+
 class OAIThreadBuilder(TVBuilder):
     n_threads: int = Field(default=1, description="Number of Threads to run.")
-    upload_files: list[TableString] = Field(default=[], description="List of files to upload.")
-    file_msgs: list[TableString] = Field(default=[], description= "Context message for files.")
-    context_msgs: list[TableString] = Field(default=[], description="Context message for thread.")
-    instructions: TableString = Field(default='', description="Instructions for model.")
+    upload_files: list[TableString] = Field(
+        default=[], description="List of files to upload."
+    )
+    file_msgs: list[TableString] = Field(
+        default=[], description="Context message for files."
+    )
+    context_msgs: list[TableString] = Field(
+        default=[], description="Context message for thread."
+    )
+    instructions: TableString = Field(default="", description="Instructions for model.")
     questions: list[Message] = Field(description="List of Messages (output recorded).")
     model: str = Field(description="Model name.")
     temperature: float = Field(description="Model temperature.")
     retry: int = Field(default=5, description="Retry on fail.")
     key_file: str = Field(description="File location of OpenAI secret.")
-    keywords: dict[str, Any] = Field(default={}, description="Keywords to replace message.")
-    
+    keywords: dict[str, Any] = Field(
+        default={}, description="Keywords to replace message."
+    )
+
     def execute(
-        self,
-        cache: Cache,
-        instance_id: str,
-        table_name: str,
-        db_dir: str
+        self, cache: Cache, instance_id: str, table_name: str, db_dir: str
     ) -> None:
         self.transform_table_string(cache, instance_id, table_name, db_dir)
         with open(self.key_file, "r") as f:
@@ -61,13 +68,22 @@ class OAIThreadBuilder(TVBuilder):
         with ThreadPoolExecutor(max_workers=self.n_threads) as executor:
             futures = [
                 executor.submit(
-                    _execute_llm, i, self, client, lock, cache, instance_id, table_name, db_dir
+                    _execute_llm,
+                    i,
+                    self,
+                    client,
+                    lock,
+                    cache,
+                    instance_id,
+                    table_name,
+                    db_dir,
                 )
                 for i in indices
             ]
             # Iterate over futures to force evaluation and raise any exceptions
             for future in futures:
                 future.result()
+
 
 def _execute_llm(
     index: int,
@@ -88,7 +104,7 @@ def _execute_llm(
     if is_filled:
         return
 
-    name = '_'.join([builder.name, str(index), gen_tv_id()])
+    name = "_".join([builder.name, str(index), gen_tv_id()])
     uses_files = len(builder.upload_files) > 0
     thread = Open_AI_Thread(
         name,
@@ -108,9 +124,9 @@ def _execute_llm(
             thread.add_message(message=file_msgs[i], file_ids=[cfile])
     elif len(builder.upload_files) > 0:
         if len(file_msgs) > 0:
-            file_msg = '\n'.join(file_msgs)
+            file_msg = "\n".join(file_msgs)
         else:
-            file_msg = ''
+            file_msg = ""
         thread.add_message(file_msg, file_ids=cfiles)
     results = []
     for question in builder.questions:
@@ -119,10 +135,10 @@ def _execute_llm(
             question_ = question_.replace(key, str(word))
         thread.add_message(question_)
         result = thread.run_query()
-        for pattern in  question.regex:
+        for pattern in question.regex:
             cleaned_text = result.replace("\n", "")
             match = re.search(pattern, cleaned_text)
-            if match == None:
+            if match is None:
                 continue
             str_match = match.group(0)
             result = str_match
@@ -131,6 +147,9 @@ def _execute_llm(
 
     with lock:
         for i, column in enumerate(builder.changed_columns):
-            table_operations.update_entry(results[i], index, column, cache[constants.OUTPUT_SELF])
-        table_operations.write_table(cache[constants.OUTPUT_SELF], instance_id, table_name, db_dir)
-
+            table_operations.update_entry(
+                results[i], index, column, cache[constants.OUTPUT_SELF]
+            )
+        table_operations.write_table(
+            cache[constants.OUTPUT_SELF], instance_id, table_name, db_dir
+        )

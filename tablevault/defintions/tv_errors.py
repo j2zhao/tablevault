@@ -1,4 +1,3 @@
-
 class TableVaultError(Exception):
     """Base Class for all TableVault Errors."""
 
@@ -25,10 +24,13 @@ class TVOpenAIError(TableVaultError):
 
 class TVProcessError(TableVaultError):
     """Re-execute Completed process"""
+
     pass
+
 
 class TVForcedError(TableVaultError):
     pass
+
 
 class TVFileError(TableVaultError):
     pass
@@ -46,7 +48,6 @@ class TVImplementationError(TableVaultError):
 
     pass
 
+
 class TableStringError(Exception):
     pass
-
- 
