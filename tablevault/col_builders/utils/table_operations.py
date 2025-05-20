@@ -228,7 +228,7 @@ def check_changed_columns(
 
     new_cols = set(y.columns) - set(x.columns)
     common = set(y.columns).intersection(x.columns)
-
+    print(common)
     changed = {col for col in common if not x[col].equals(y[col])}
 
     return list(new_cols | changed)

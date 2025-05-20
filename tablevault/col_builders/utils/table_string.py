@@ -39,10 +39,10 @@ class TableValue:
     def from_string(cls, args: str) -> "TableValue":
         s = args.strip()
         main_pattern = (
-            r"^([-A-Za-z0-9_]+)"           # group 1: object name
-            r"(\([-A-Za-z0-9_]*\))?"       # group 2: optional paren-args
+            r"^([-A-Za-z0-9_]+)"  # group 1: object name
+            r"(\([-A-Za-z0-9_]*\))?"  # group 2: optional paren-args
             r"\.([-A-Za-z0-9_\{\},\s]+)?"  # group 3: dot + fields
-            r"(\[(.*)\])?$"                # group 4: optional […]
+            r"(\[(.*)\])?$"  # group 4: optional […]
         )
         m = re.match(main_pattern, s)
         if not m:
@@ -126,7 +126,7 @@ class TableReference:
 
     def parse(
         self, cache: Cache, index: Optional[int] = None
-    ) -> str | "TableReference":
+    ) -> Union[str, "TableReference"]:
         if len(self.references) == 0:
             return self.text
         try:

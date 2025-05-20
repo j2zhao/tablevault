@@ -1,11 +1,11 @@
-ptype: GeneratorPrompt
+builder_type: GeneratorBuilder
 changed_columns: [paper_name, artifact_name, original_path]
 python_function: create_paper_table_from_folder
 code_module: table_generation
 is_custom: false
 arguments:
   folder_dir: ../test_data/stories
-  copies: 5
+  copies: 1
   artifact_folder: ~ARTIFACT_FOLDER~
 dtypes: 
   artifact_name: artifact_string

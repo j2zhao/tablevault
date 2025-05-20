@@ -105,11 +105,11 @@ def compare_folders(folder1, folder2):
     else:
         print("❌ Folders are different.\n")
         if missing_in_folder2:
-            print("Files missing in folder2:")
+            print(f"Files missing in {folder2}:")
             for file in sorted(missing_in_folder2):
                 print(f"  {file}")
         if missing_in_folder1:
-            print("\nFiles missing in folder1:")
+            print(f"\nFiles missing in {folder1}:")
             for file in sorted(missing_in_folder1):
                 print(f"  {file}")
         return False

@@ -135,3 +135,23 @@ class ArtifactStringArray(ExtensionArray):
         # Concatenate the underlying data from each array in the list.
         concatenated = np.concatenate([x._data for x in to_concat])
         return ArtifactStringArray(concatenated)
+
+    def __eq__(self, other):
+        """
+        Elementwise == comparison. Returns a pandas BooleanArray (nullable Boolean).
+        """
+        if isinstance(other, ArtifactStringArray):
+            other_vals = other._data
+        else:
+            other_vals = other
+        mask = self._data == other_vals
+        return pd.array(mask, dtype="boolean")
+
+    def equals(self, other):
+        """
+        True if `other` is same type, same length, and all values equal.
+        """
+        if not isinstance(other, ArtifactStringArray):
+            return False
+        # compare underlying numpy arrays for exact match (including None)
+        return bool(np.array_equal(self._data, other._data))

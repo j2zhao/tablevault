@@ -14,6 +14,7 @@ BUILDER_TYPE_MAPPING = {
 
 def load_builder(yaml_builder: dict) -> TVBuilder:
     if constants.BUILDER_TYPE not in yaml_builder:
+        print(yaml_builder)
         raise TVBuilderError(
             f"""Builder {yaml_builder[constants.BUILDER_NAME]}
               doesn't contain attribute {constants.BUILDER_TYPE}."""

@@ -505,6 +505,8 @@ def setup_execute_instance(
         all_columns,
         internal_builder_deps,
         external_deps,
+        code_dependencies,
+        custom_code,
     ) = parse_builders(
         builders,
         db_metadata,
@@ -514,6 +516,8 @@ def setup_execute_instance(
         origin_id,
         origin_table,
     )
+    if custom_code:
+        db_locks.acquire_shared_lock(constants.CODE_FOLDER)
     funct_kwargs = {
         "table_name": table_name,
         "instance_id": instance_id,
@@ -526,6 +530,7 @@ def setup_execute_instance(
         "origin_table": origin_table,
         "update_rows": True,
         "internal_builder_deps": internal_builder_deps,
+        "code_dependencies": code_dependencies,
     }
     funct_kwargs["step_ids"] = [process_id + "_" + gen_tv_id()]
     funct_kwargs["step_ids"].append(process_id + "_" + gen_tv_id())
@@ -603,6 +608,7 @@ def setup_setup_temp_instance(
     funct_kwargs["step_ids"] = [process_id + "_" + gen_tv_id()]
     if execute:
         funct_kwargs["step_ids"].append(process_id + "_" + gen_tv_id())
+        db_locks.acquire_shared_lock(constants.CODE_FOLDER)
     db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.make_lock_path(table_name, instance_id)
     db_locks.acquire_exclusive_lock(table_name, instance_id)
@@ -643,6 +649,7 @@ def setup_setup_table(
         funct_kwargs["step_ids"].append(process_id + "_" + gen_tv_id())
     if execute:
         funct_kwargs["step_ids"].append(process_id + "_" + gen_tv_id())
+        db_locks.acquire_shared_lock(constants.CODE_FOLDER)
     db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.make_lock_path(table_name)
     db_locks.make_lock_path(table_name, constants.BUILDER_FOLDER)
@@ -776,7 +783,7 @@ def _parse_dependencies(
     table_name: str,
     start_time: float,
     db_metadata: MetadataStore,
-) -> tuple[types.BuilderDeps, types.InternalDeps, types.ExternalDeps]:
+) -> tuple[types.BuilderDeps, types.InternalDeps, types.ExternalDeps, types.CodeDeps]:
     table_generator = ""
     for builder_name in builders:
         if builder_name.startswith(f"gen_{table_name}") and table_generator == "":
@@ -851,7 +858,31 @@ def _parse_dependencies(
         external_deps[builder_name] = list(external_deps[builder_name])
         internal_deps[builder_name] = list(internal_deps[builder_name])
         internal_builder_deps[builder_name] = list(internal_builder_deps[builder_name])
-    return internal_builder_deps, internal_deps, external_deps
+    # get code dependencies
+    code_dependencies = {}
+    for builder_name in builders:
+        if (
+            hasattr(builders[builder_name], "code_module")
+            and hasattr(builders[builder_name], "is_custom")
+            and hasattr(builders[builder_name], "python_function")
+        ):
+            if isinstance(builders[builder_name].is_custom, bool):
+                if builders[builder_name].is_custom:
+                    if isinstance(builders[builder_name].code_module, str):
+                        if isinstance(builders[builder_name].python_function, str):
+                            code_func = (
+                                builders[builder_name].code_module,
+                                builders[builder_name].python_function,
+                            )
+                        else:
+                            code_func = (builders[builder_name].code_module, None)
+                        code_dependencies[builder_name] = code_func
+                    else:
+                        code_dependencies[builder_name] = None
+            else:
+                code_dependencies[builder_name] = None
+
+    return internal_builder_deps, internal_deps, external_deps, code_dependencies
 
 
 def parse_builders(
@@ -862,9 +893,11 @@ def parse_builders(
     table_name: str,
     origin_id: str,
     origin_table: str,
-) -> tuple[list[str], list[str], list[str], types.InternalDeps, types.ExternalDeps]:
-    internal_builder_deps, internal_deps, external_deps = _parse_dependencies(
-        builders, table_name, start_time, db_metadata
+) -> tuple[
+    list[str], list[str], list[str], types.InternalDeps, types.ExternalDeps, bool
+]:
+    internal_builder_deps, internal_deps, external_deps, code_dependencies = (
+        _parse_dependencies(builders, table_name, start_time, db_metadata)
     )
     builder_names = list(builders.keys())
     top_builder_names = topological_sort(builder_names, internal_builder_deps)
@@ -873,6 +906,7 @@ def parse_builders(
     for builder_name in top_builder_names:
         all_columns += builders[builder_name].changed_columns
 
+    custom_code = False
     if origin_id != "":
         to_execute = []
         prev_mat_time, _, _ = db_metadata.get_table_times(origin_id, table_name)
@@ -882,10 +916,25 @@ def parse_builders(
 
         for builder_name in top_builder_names:
             execute = False
-            for dep in internal_builder_deps[builder_name]:
-                if dep in to_execute and dep != top_builder_names[0]:
+            if builder_name in code_dependencies:
+                custom_code = True
+                if code_dependencies[builder_name] is None:
                     execute = True
-                    break
+                else:
+                    code_function_eq = file_operations.check_code_function_equality(
+                        code_dependencies[builder_name][1],
+                        code_dependencies[builder_name][0],
+                        origin_id,
+                        origin_table,
+                        db_metadata.db_dir,
+                    )
+                    if not code_function_eq:
+                        execute = True
+            if not execute:
+                for dep in internal_builder_deps[builder_name]:
+                    if dep in to_execute and dep != top_builder_names[0]:
+                        execute = True
+                        break
             if not execute:
                 for dep in external_deps[builder_name]:
                     if dep[3] >= prev_mat_time:
@@ -908,6 +957,9 @@ def parse_builders(
                 changed_columns += builders[builder_name].changed_columns
     else:
         for builder_name in top_builder_names:
+            if builder_name in code_dependencies:
+                if builder_name in code_dependencies:
+                    custom_code = True
             changed_columns += builders[builder_name].changed_columns
 
     return (
@@ -916,4 +968,6 @@ def parse_builders(
         all_columns,
         internal_deps,
         external_deps,
+        code_dependencies,
+        custom_code,
     )

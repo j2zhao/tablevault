@@ -6,7 +6,8 @@ import yaml
 from tablevault.defintions.tv_errors import TVFileError
 from tablevault.helper.database_lock import DatabaseLock
 from tablevault.defintions import constants
-from typing import Any
+from typing import Any, Optional
+import filecmp
 
 
 def delete_database_folder(db_dir) -> None:
@@ -77,6 +78,7 @@ def setup_table_instance_folder(
     builder_dir = os.path.join(instance_dir, constants.BUILDER_FOLDER)
     artifact_dir = os.path.join(instance_dir, constants.ARTIFACT_FOLDER)
     current_table_path = os.path.join(instance_dir, constants.TABLE_FILE)
+    code_dir = os.path.join(instance_dir, constants.CODE_FOLDER)
     description_path = os.path.join(
         table_dir, instance_id, constants.META_DESCRIPTION_FILE
     )
@@ -93,17 +95,25 @@ def setup_table_instance_folder(
                 )
             else:
                 os.makedirs(artifact_dir)
+
+            prev_code_dir = os.path.join(prev_dir, constants.CODE_FOLDER)
+            if os.path.isdir(prev_code_dir):
+                shutil.copytree(prev_code_dir, code_dir, copy_function=shutil.copy2)
+            else:
+                os.makedirs(code_dir)
         elif len(builders) != 0:
             os.makedirs(builder_dir)
             builder_dir_ = os.path.join(table_dir, constants.BUILDER_FOLDER)
             for builder_name in builders:
                 builder_path_ = os.path.join(builder_dir_, builder_name + ".yaml")
-                builder_path = os.path.join(builder_dir_, builder_name + ".yaml")
+                builder_path = os.path.join(builder_dir, builder_name + ".yaml")
                 shutil.copy2(builder_path_, builder_path)
             os.makedirs(artifact_dir)
+            os.makedirs(code_dir)
         else:
             os.makedirs(builder_dir)
             os.makedirs(artifact_dir)
+            os.makedirs(code_dir)
         df = pd.DataFrame()
         df.to_csv(current_table_path, index=False)
         type_path = os.path.join(instance_dir, constants.DTYPE_FILE)
@@ -235,7 +245,7 @@ def get_yaml_builders(
                 builder_path = os.path.join(builder_dir, item)
                 with open(builder_path, "r") as file:
                     builder = yaml.safe_load(file)
-                    builders[constants.BUILDER_NAME] = name
+                    builder[constants.BUILDER_NAME] = name
                 builders[name] = builder
         return builders
     else:
@@ -407,7 +417,6 @@ def has_artifact(instance_id: str, table_name: str, db_dir: str) -> bool:
     return False
 
 
-# TODO: copy artifacts into temp-> during execution?
 def copy_folder_to_temp(
     process_id: str,
     db_dir: str,
@@ -472,3 +481,69 @@ def copy_table(
     )
     current_dtype_path = os.path.join(db_dir, table_name, temp_id, constants.DTYPE_FILE)
     shutil.copy2(prev_dtype_path, current_dtype_path)
+
+
+def load_code_function(
+    python_function: str,
+    module_name: str,
+    db_dir: str,
+    instance_id: str = "",
+    table_name: str = "",
+):
+    if table_name != "":
+        file_path_ = os.path.join(db_dir, table_name)
+    if instance_id != "":
+        file_path_ = os.path.join(file_path_, instance_id)
+
+    file_path_ = os.path.join(file_path_, constants.CODE_FOLDER, module_name + ".py")
+    try:
+        namespace = {}
+        with open(file_path_, "r") as file:
+            exec(file.read(), namespace)
+        if python_function in namespace:
+            return namespace[python_function], namespace
+        else:
+            raise TVFileError(
+                f"Function '{python_function}' not found in '{file_path_}'"
+            )
+    except Exception as e:
+        raise TVFileError(
+            f"Function '{python_function}' not found in '{file_path_}': {e}"
+        )
+
+
+def move_code_to_instance(
+    module_name: str, instance_id: str, table_name: str, db_dir: str
+):
+    file_path = os.path.join(db_dir, constants.CODE_FOLDER, module_name + ".py")
+    if not os.path.exists(file_path):
+        raise TVFileError(f"Function '{module_name}' not found")
+    file_path_ = os.path.join(
+        db_dir, table_name, instance_id, constants.CODE_FOLDER, module_name + ".py"
+    )
+    shutil.copy2(file_path, file_path_)
+
+
+def check_code_function_equality(
+    python_function: Optional[str],
+    module_name: str,
+    instance_id: str,
+    table_name: str,
+    db_dir: str,
+):
+    if python_function is None:
+        file_path = os.path.join(db_dir, constants.CODE_FOLDER, module_name + ".py")
+        if not os.path.exists(file_path):
+            raise TVFileError(f"Function '{module_name}' not found")
+        file_path_ = os.path.join(
+            db_dir, table_name, instance_id, constants.CODE_FOLDER, module_name + ".py"
+        )
+        if not os.path.exists(file_path):
+            return False
+        return filecmp.cmp(file_path, file_path_, shallow=False)
+    else:
+        origin_func, _ = load_code_function(
+            python_function, module_name, db_dir, instance_id, table_name
+        )
+        base_func = load_code_function(python_function, module_name, db_dir)
+        return origin_func.__code__ == base_func.__code__

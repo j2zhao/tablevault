@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, Any
 from tablevault.col_builders.utils.table_string import TableReference
 from typing import Union
+from tablevault.helper.file_operations import load_code_function, move_code_to_instance
 
 
 class CodeBuilder(TVBuilder):
@@ -35,8 +36,9 @@ class CodeBuilder(TVBuilder):
                 self.code_module, self.python_function
             )
         else:
-            funct, _ = utils.load_function_from_file(
-                self.code_module, self.python_function, db_dir
+            move_code_to_instance(self.code_module, instance_id, table_name, db_dir)
+            funct, _ = load_code_function(
+                self.python_function, self.code_module, db_dir, instance_id, table_name
             )
         # raise ValueError()
         if self.is_udf:

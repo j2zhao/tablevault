@@ -10,6 +10,7 @@ Cache = dict[str | tuple[str, str], pd.DataFrame]
 InternalDeps = dict[str, list[str]]
 ExternalDeps = dict[str, list[tuple[str, str, str, float, bool]]]
 BuilderDeps = dict[str, list[str]]
+CodeDeps = dict[str, Optional[str]]
 
 
 @dataclass_json

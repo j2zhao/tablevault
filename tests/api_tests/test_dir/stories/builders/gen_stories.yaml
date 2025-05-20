@@ -1,4 +1,4 @@
-ptype: GeneratorPrompt
+builder_type: GeneratorBuilder
 changed_columns: [paper_name, artifact_name, original_path]
 python_function: create_paper_table_from_folder
 code_module: table_generation

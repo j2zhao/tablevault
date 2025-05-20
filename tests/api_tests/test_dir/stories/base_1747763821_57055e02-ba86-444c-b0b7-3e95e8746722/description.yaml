@@ -1,9 +1,9 @@
+builder_dependencies:
+  gen_stories: []
 dependencies: []
 external_edit: false
 origin:
 - ''
 - ''
-prompt_dependencies:
-  gen_stories: []
 success: true
 summary: ''
