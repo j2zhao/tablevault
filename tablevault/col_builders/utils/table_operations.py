@@ -211,8 +211,9 @@ def check_table(
         return
     for _, row in df_custom.iterrows():
         for _, val in row.items():
-            if not os.path.exists(val):
-                raise TVTableError(f"Artifact {val} not found")
+            if val != "":
+                if not os.path.exists(val):
+                    raise TVTableError(f"Artifact {val} not found")
 
 
 def check_changed_columns(

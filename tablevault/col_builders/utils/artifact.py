@@ -13,8 +13,10 @@ from typing import Any
 
 
 def join_path(artifact: str, path_dir: str) -> str:
-    return os.path.join(path_dir, artifact)
-
+    if artifact != "":
+        return os.path.join(path_dir, artifact)
+    else:
+        return artifact
 
 def df_artifact_to_path(df: pd.DataFrame, path_dir: str) -> pd.DataFrame:
     for col in df.columns:

@@ -35,3 +35,8 @@ def create_paper_table_from_folder(folder_dir, copies, artifact_folder):
 
 def create_data_table_from_table(df: pd.DataFrame):
     return df.copy()
+
+
+def create_data_table_from_csv(csv_file_path:str):
+    df = pd.read_csv(csv_file_path, )
+    return df.copy()
