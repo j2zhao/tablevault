@@ -36,6 +36,7 @@ class GeneratorBuilder(TVBuilder):
             )
 
         results = funct(**self.arguments)
+        results.columns = self.changed_columns
         merged_df, diff_flag = table_operations.merge_columns(
             self.changed_columns, results, cache[constants.OUTPUT_SELF]
         )

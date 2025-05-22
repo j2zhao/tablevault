@@ -3,7 +3,7 @@ from tablevault.helper.metadata_store import ActiveProcessDict
 from tablevault.helper.utils import gen_tv_id
 from tablevault.defintions import constants
 import pandas as pd
-
+from typing import Optional
 
 class TableVault:
     """A TableVault object that interfaces with a TableVault directory.
@@ -151,9 +151,10 @@ class TableVault:
         version: str = constants.BASE_TABLE_VERSION,
         active_only: bool = True,
         safe_locking: bool = True,
+        rows: Optional[int] = None
     ) -> pd.DataFrame:
         return _vault_operations.get_table(
-            instance_id, table_name, version, self.db_dir, active_only, safe_locking
+            instance_id, table_name, version, self.db_dir, active_only, safe_locking, rows
         )
 
     def copy_files(

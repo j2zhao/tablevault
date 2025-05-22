@@ -33,7 +33,9 @@ def create_paper_table_from_folder(folder_dir, copies, artifact_folder):
     return df
 
 
-def create_data_table_from_table(df: pd.DataFrame):
+def create_data_table_from_table(df: pd.DataFrame, nrows=None):
+    if nrows is not None:
+        return df.head(nrows).copy()
     return df.copy()
 
 

@@ -57,6 +57,7 @@ def get_table(
     db_dir: str,
     active_only: bool,
     safe_locking: bool,
+    rows: Optional[int],
 ):
 
     db_metadata = MetadataStore(db_dir)
@@ -69,7 +70,7 @@ def get_table(
     if safe_locking:
         db_lock.acquire_shared_lock(table_name, instance_id)
     try:
-        df = table_operations.get_table(instance_id, table_name, db_dir)
+        df = table_operations.get_table(instance_id, table_name, db_dir, rows)
     finally:
         if safe_locking:
             db_lock.release_all_locks()
