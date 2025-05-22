@@ -90,30 +90,25 @@ def _release_all_lock(
 ) -> None:
     if not os.path.exists(lock_path):
         return
+    locks_to_remove = []
     for dirpath, _, filenames in os.walk(lock_path, topdown=False):
-        # empty = True
+
         for filename in filenames:
             if filename.endswith(".exlock") or filename.endswith(".shlock"):
 
                 lock_name = filename.split(".")[0]
                 lock_name = lock_name.split("__")[0]
-                # print("HELLO5")
-                # print(filename)
-                # print(process_id)
-                # print(lock_name)
-                if lock_name.startswith(process_id):
-                    # print('HELLO4')
-                    # print(lock_name)
-                    os.remove(os.path.join(dirpath, filename))
-                # else:
-                #     empty = False
-        # if empty:
-        #     empty = any(
-        #         os.path.isdir(os.path.join(dirpath, entry))
-        #         for entry in os.listdir(dirpath)
-        #     )
-        #     if empty:
-        #         shutil.rmtree(dirpath)
+
+                if lock_name == process_id:
+                    lock_ = os.path.join(dirpath, filename)
+                    locks_to_remove.append(lock_)
+                elif lock_name.startswith(process_id):
+                    raise TVLockError(
+                        """Cannot remove all parent locks
+                                      when children locks exist."""
+                    )
+    for lock_ in locks_to_remove:
+        os.remove(lock_)
 
 
 def _make_lock_path(lock_path: str) -> None:

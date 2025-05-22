@@ -44,8 +44,13 @@ class TVBuilder(BaseModel):
         return values
 
     def execute(
-        self, cache: types.Cache, instance_id: str, table_name: str, db_dir: str
-    ):
+        self,
+        cache: types.Cache,
+        instance_id: str,
+        table_name: str,
+        db_dir: str,
+        process_id: str,
+    ) -> Optional[bool]:
         raise tv_errors.TVImplementationError("Not Implemented")
 
     def transform_table_string(

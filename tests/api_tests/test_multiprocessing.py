@@ -6,10 +6,12 @@ import threading
 from tablevault.defintions import tv_errors
 from helper import clean_up_open_ai
 # todo add materialize
+import sys
 
 def fake_execution():
     print("successfully faked")
     time.sleep(100)
+    sys.exit()
 
 def test_multiprocessing_execute():
     with patch('tablevault._vault_operations._execute_instance',fake_execution):

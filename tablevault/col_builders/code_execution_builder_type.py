@@ -28,7 +28,12 @@ class CodeBuilder(TVBuilder):
     )
 
     def execute(
-        self, cache: Cache, instance_id: str, table_name: str, db_dir: str
+        self,
+        cache: Cache,
+        instance_id: str,
+        table_name: str,
+        db_dir: str,
+        process_id: str,
     ) -> None:
         self.transform_table_string(cache, instance_id, table_name, db_dir, index=None)
         if not self.is_custom:

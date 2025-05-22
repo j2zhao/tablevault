@@ -68,12 +68,9 @@ def execute_instance(
             table_name,
             db_metadata,
         )
-        # print(cache[constants.OUTPUT_SELF])
-        # print(cache[constants.OUTPUT_SELF].dtypes)
-        # raise ValueError()
         if i == 0:
             update_rows = builders[builder_name].execute(
-                cache, instance_id, table_name, db_metadata.db_dir
+                cache, instance_id, table_name, db_metadata.db_dir, process_id
             )
             db_metadata.update_process_data(process_id, {"update_rows": update_rows})
         elif not update_rows and len(changed_columns) == 0:
@@ -84,6 +81,6 @@ def execute_instance(
                 changed_columns
             ):
                 builders[builder_name].execute(
-                    cache, instance_id, table_name, db_metadata.db_dir
+                    cache, instance_id, table_name, db_metadata.db_dir, process_id
                 )
         db_metadata.update_process_step(process_id, builder_name)

@@ -23,6 +23,7 @@ class GeneratorBuilder(TVBuilder):
         instance_id: str,
         table_name: str,
         db_dir: str,
+        process_id: str,
     ) -> bool:
         self.transform_table_string(cache, instance_id, table_name, db_dir)
         if not self.is_custom:

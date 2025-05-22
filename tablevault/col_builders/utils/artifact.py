@@ -18,6 +18,7 @@ def join_path(artifact: str, path_dir: str) -> str:
     else:
         return artifact
 
+
 def df_artifact_to_path(df: pd.DataFrame, path_dir: str) -> pd.DataFrame:
     for col in df.columns:
         if df[col].dtype == "artifact_string":
