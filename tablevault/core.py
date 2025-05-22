@@ -4,6 +4,8 @@ from tablevault.helper.utils import gen_tv_id
 from tablevault.defintions import constants
 import pandas as pd
 from typing import Optional
+import os
+import tarfile
 
 class TableVault:
     """A TableVault object that interfaces with a TableVault directory.
@@ -418,3 +420,29 @@ class TableVault:
 
         """
         return gen_tv_id()
+
+
+
+
+def compress_vault(db_dir: str, preset: int = 6) -> None:
+    # Ensure folder exists
+    if not os.path.isdir(db_dir):
+        raise FileNotFoundError(f"No such directory: {db_dir}")
+
+    # Build output name in cwd
+    base = os.path.basename(os.path.normpath(db_dir))
+    output_tar_xz = f"{base}.tar.xz"
+
+    with tarfile.open(output_tar_xz, mode="w:xz", preset=preset) as tar:
+        tar.add(db_dir, arcname=base)
+    print(f"Compressed {db_dir!r} → {output_tar_xz!r}")
+
+
+def decompress_vault(db_dir: str) -> None:
+    db_dir_compressed = db_dir + ".tar.xz"
+    if not os.path.isfile(db_dir_compressed):
+        raise FileNotFoundError(f"No such file: {db_dir_compressed}")
+
+    # Derive folder name by stripping “.tar.xz”
+    base = os.path.basename(db_dir_compressed)[:-7]
+    extract_to = base

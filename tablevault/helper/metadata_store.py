@@ -473,28 +473,29 @@ class MetadataStore:
             if logs[process_id].operation == constants.STOP_PROCESS_OP:
                 raise TVArgumentError("Cannot stop another stop_process operation")
             old_pid = logs[process_id].pid
-            try:
-                proc = psutil.Process(old_pid)
-                if not force:
-                    raise TVProcessError(
-                        """Process {process_id} Currently Running.
-                        Cannot be stopped unless forced."""
-                    )
-                if force and pid != old_pid:
-                    try:
-                        proc.terminate()
-                        proc.wait(timeout=5)
-                    except psutil.TimeoutExpired:
-                        proc.kill()
-                        proc.wait(timeout=5)
-            except psutil.NoSuchProcess:
-                pass
-            logs[process_id].pid = pid
-            relevant_logs = []
-            for process_id_ in logs:
-                if process_id_.startswith(process_id):
-                    logs[process_id_].pid = pid
-                    relevant_logs.append(process_id_)
-            relevant_logs.sort(reverse=True)
-            self._save_active_logs(logs)
+            if old_pid != pid:
+                try:
+                    proc = psutil.Process(old_pid)
+                    if not force:
+                        raise TVProcessError(
+                            """Process {process_id} Currently Running.
+                            Cannot be stopped unless forced."""
+                        )
+                    if force and pid != old_pid:
+                        try:
+                            proc.terminate()
+                            proc.wait(timeout=5)
+                        except psutil.TimeoutExpired:
+                            proc.kill()
+                            proc.wait(timeout=5)
+                except psutil.NoSuchProcess:
+                    pass
+                logs[process_id].pid = pid
+                relevant_logs = []
+                for process_id_ in logs:
+                    if process_id_.startswith(process_id):
+                        logs[process_id_].pid = pid
+                        relevant_logs.append(process_id_)
+                relevant_logs.sort(reverse=True)
+                self._save_active_logs(logs)
             return (logs, relevant_logs)
