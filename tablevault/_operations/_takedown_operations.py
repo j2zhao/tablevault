@@ -149,7 +149,7 @@ def takedown_setup_temp_instance_innner(
         db_locks.release_all_locks()
         return
     if log.execution_success is False:
-        file_operations.delete_table_folder(
+        file_operations.delete_table_folder_2(
             log.data["table_name"], db_metadata.db_dir, log.data["instance_id"]
         )
     if log.start_success is False or log.execution_success is False:
@@ -184,7 +184,7 @@ def takedown_setup_table_inner(
         return
     if log.execution_success is False:
         try:
-            file_operations.delete_table_folder(
+            file_operations.delete_table_folder_2(
                 log.data["table_name"], db_metadata.db_dir
             )
         except FileNotFoundError:

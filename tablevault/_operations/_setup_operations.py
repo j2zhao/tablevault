@@ -811,7 +811,6 @@ def _parse_dependencies(
 
         for dep in builders[builder_name].dependencies:
             if dep.table == constants.TABLE_SELF:
-                internal_deps[builder_name].union(dep.columns)
                 for bn in builders:
                     for col in dep.columns:
                         if col in builders[bn].changed_columns:

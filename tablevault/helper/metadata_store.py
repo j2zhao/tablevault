@@ -498,4 +498,10 @@ class MetadataStore:
                         relevant_logs.append(process_id_)
                 relevant_logs.sort(reverse=True)
                 self._save_active_logs(logs)
+            else:
+                relevant_logs = []
+                for process_id_ in logs:
+                    if process_id_.startswith(process_id):
+                        relevant_logs.append(process_id_)
+                relevant_logs.sort(reverse=True)
             return (logs, relevant_logs)

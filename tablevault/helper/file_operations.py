@@ -26,7 +26,9 @@ def setup_database_folder(db_dir: str, description: str, replace: bool = False) 
     os.makedirs(os.path.join(db_dir, constants.CODE_FOLDER))
     os.makedirs(os.path.join(db_dir, constants.TEMP_FOLDER))
     meta_dir = os.path.join(db_dir, constants.METADATA_FOLDER)
+    deletion_dir = os.path.join(meta_dir, constants.DELETION_FOLDER)
     os.makedirs(meta_dir)
+    os.makedirs(deletion_dir)
     lock_dir = os.path.join(db_dir, constants.LOCK_FOLDER)
     os.makedirs(lock_dir)
 
@@ -213,6 +215,14 @@ def rename_table_instance(
     os.rename(temp_dir, new_dir)
 
 
+def delete_table_folder_2(table_name: str, db_dir: str, instance_id: str = "") -> None:
+    instance_dir = os.path.join(db_dir, table_name)
+    if instance_id != "":
+        instance_dir = os.path.join(instance_dir, str(instance_id))
+    if os.path.exists(instance_dir):
+        shutil.rmtree(instance_dir)
+
+
 def delete_table_folder(table_name: str, db_dir: str, instance_id: str = "") -> None:
     table_dir = os.path.join(db_dir, table_name)
     if instance_id != "":
@@ -227,6 +237,16 @@ def delete_table_folder(table_name: str, db_dir: str, instance_id: str = "") -> 
                 df_dir = os.path.join(instance_dir, constants.TABLE_FILE)
                 if os.path.exists(df_dir):
                     os.remove(df_dir)
+        instance_dir = table_dir
+    dest_dir = os.path.join(db_dir, constants.METADATA_FOLDER, constants.DELETION_FOLDER, table_name)
+    if instance_id != "":
+        dest_dir = os.path.join(dest_dir, instance_id)
+    dest_dir_ = dest_dir
+    i = 1
+    while os.path.exists(dest_dir_):
+        dest_dir_ = dest_dir  + "_" + str(i)
+        i +=1
+    shutil.move(instance_dir, dest_dir_)
 
 
 def get_yaml_builders(
