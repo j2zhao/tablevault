@@ -250,7 +250,7 @@ class TableVault:
             self.db_dir,
         )
 
-    def write_table(
+    def write_instance(
         self,
         table_df: pd.DataFrame,
         table_name: str,
@@ -306,7 +306,7 @@ class TableVault:
             background=background,
         )
 
-    def setup_temp_instance(
+    def create_instance(
         self,
         table_name: str,
         version: str = "",
@@ -314,7 +314,7 @@ class TableVault:
         origin_table: str = "",
         external_edit: bool = False,
         copy_version: bool = False,
-        builder_names: list[str] = [],
+        builders: list[str] = [],
         execute: bool = False,
         process_id: str = "",
         background_execute: bool = False,
@@ -358,14 +358,14 @@ class TableVault:
             origin_table=origin_table,
             external_edit=external_edit,
             copy_version=copy_version,
-            builder_names=builder_names,
+            builder_names=builders,
             execute=execute,
             process_id=process_id,
             db_dir=self.db_dir,
             background_execute=background_execute,
         )
 
-    def setup_table(
+    def create_table(
         self,
         table_name: str,
         create_temp: bool = False,

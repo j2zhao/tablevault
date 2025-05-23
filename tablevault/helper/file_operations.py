@@ -78,7 +78,8 @@ def setup_table_instance_folder(
     builder_dir = os.path.join(instance_dir, constants.BUILDER_FOLDER)
     artifact_dir = os.path.join(instance_dir, constants.ARTIFACT_FOLDER)
     current_table_path = os.path.join(instance_dir, constants.TABLE_FILE)
-    code_dir = os.path.join(instance_dir, constants.CODE_FOLDER)
+    archive_dir = os.path.join(instance_dir, constants.ARCHIVE_FOLDER)
+    os.makedirs(archive_dir)
     description_path = os.path.join(
         table_dir, instance_id, constants.META_DESCRIPTION_FILE
     )
@@ -97,10 +98,10 @@ def setup_table_instance_folder(
                 os.makedirs(artifact_dir)
 
             prev_code_dir = os.path.join(prev_dir, constants.CODE_FOLDER)
-            if os.path.isdir(prev_code_dir):
-                shutil.copytree(prev_code_dir, code_dir, copy_function=shutil.copy2)
-            else:
-                os.makedirs(code_dir)
+            # if os.path.isdir(prev_code_dir):
+            #     shutil.copytree(prev_code_dir, code_dir, copy_function=shutil.copy2)
+            # else:
+            #     os.makedirs(code_dir)
         elif len(builders) != 0:
             os.makedirs(builder_dir)
             builder_dir_ = os.path.join(table_dir, constants.BUILDER_FOLDER)
@@ -109,11 +110,11 @@ def setup_table_instance_folder(
                 builder_path = os.path.join(builder_dir, builder_name + ".yaml")
                 shutil.copy2(builder_path_, builder_path)
             os.makedirs(artifact_dir)
-            os.makedirs(code_dir)
+            # os.makedirs(code_dir)
         else:
             os.makedirs(builder_dir)
             os.makedirs(artifact_dir)
-            os.makedirs(code_dir)
+            # os.makedirs(code_dir)
         df = pd.DataFrame()
         df.to_csv(current_table_path, index=False)
         type_path = os.path.join(instance_dir, constants.DTYPE_FILE)
@@ -495,7 +496,7 @@ def load_code_function(
     if instance_id != "":
         file_path_ = os.path.join(file_path_, instance_id)
 
-    file_path_ = os.path.join(file_path_, constants.CODE_FOLDER, module_name + ".py")
+    file_path_ = os.path.join(file_path_, constants.ARCHIVE_FOLDER, module_name + ".py")
     try:
         namespace = {}
         with open(file_path_, "r") as file:
@@ -519,8 +520,8 @@ def move_code_to_instance(
     if not os.path.exists(file_path):
         raise TVFileError(f"Function '{module_name}' not found")
     file_path_ = os.path.join(
-        db_dir, table_name, instance_id, constants.CODE_FOLDER, module_name + ".py"
-    )
+        db_dir, table_name, instance_id, constants.ARCHIVE_FOLDER, module_name + ".py"
+    ) #TODO: edit
     shutil.copy2(file_path, file_path_)
 
 

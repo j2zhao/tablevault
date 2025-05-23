@@ -10,6 +10,7 @@ BUILDER_TYPE = "builder_type"
 
 RESTART_LOCK = "restart"
 CODE_FOLDER = "code_functions"
+ARCHIVE_FOLDER = "EXECUTION_ARCHIVE"
 BUILDER_FOLDER = "builders"
 METADATA_FOLDER = "metadata"
 LOCK_FOLDER = "locks"
