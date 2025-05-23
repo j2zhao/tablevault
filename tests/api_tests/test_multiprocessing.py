@@ -16,15 +16,15 @@ def fake_execution():
 def test_multiprocessing_execute():
     with patch('tablevault._vault_operations._execute_instance',fake_execution):
         tablevault = TableVault('test_dir', 'jinjin', create=True)
-        tablevault.setup_table('stories', allow_multiple_artifacts = False)
+        tablevault.create_table('stories', allow_multiple_artifacts = False)
         tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-        tablevault.setup_temp_instance("stories", builder_names=["gen_stories"])
+        tablevault.create_instance("stories", builders=["gen_stories"])
         tablevault.execute_instance("stories")
         
 def test_multiprocessing_other_table():
     tablevault = TableVault('test_dir', 'jinjin2')
     instances = tablevault.get_instances(table_name= "stories")
-    tablevault.setup_table('llm_storage', has_side_effects=True)
+    tablevault.create_table('llm_storage', has_side_effects=True)
 
 def test_multiprocessing_other_execute():
     tablevault = TableVault('test_dir', 'jinjin2')
@@ -32,7 +32,7 @@ def test_multiprocessing_other_execute():
 
 def test_multiprocessing_other_instance():
     tablevault = TableVault('test_dir', 'jinjin2')
-    tablevault.setup_temp_instance("stories", builder_names=["gen_stories"])
+    tablevault.create_instance("stories", builders=["gen_stories"])
 
 def test_multiprocessing():
     t = threading.Thread(target=test_multiprocessing_execute)

@@ -32,7 +32,7 @@ def test_restart_copy_file():
             exception_raised = False
             try:
                 tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.setup_table('stories', allow_multiple_artifacts = False)
+                tablevault.create_table('stories', allow_multiple_artifacts = False)
                 copy_test_dir()
                 process_id = tablevault.generate_process_id()
                 tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories", process_id=process_id)
@@ -50,7 +50,7 @@ def test_restart_delete_table():
             exception_raised = False
             try:
                 tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.setup_table('stories', allow_multiple_artifacts = False)
+                tablevault.create_table('stories', allow_multiple_artifacts = False)
                 copy_test_dir
                 process_id = tablevault.generate_process_id()
                 tablevault.delete_table("stories", process_id)
@@ -68,9 +68,9 @@ def test_restart_delete_instance():
             exception_raised = False
             try:
                 tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.setup_table('stories', allow_multiple_artifacts = False)
+                tablevault.create_table('stories', allow_multiple_artifacts = False)
                 tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-                tablevault.setup_temp_instance("stories", builder_names=["gen_stories"])
+                tablevault.create_instance("stories", builders=["gen_stories"])
                 tablevault.execute_instance("stories")
                 instances = tablevault.get_instances("stories")
                 copy_test_dir()
@@ -101,9 +101,9 @@ def test_restart_materialize_instance():
             exception_raised = False
             try:
                 tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.setup_table('stories', allow_multiple_artifacts = False)
+                tablevault.create_table('stories', allow_multiple_artifacts = False)
                 tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-                tablevault.setup_temp_instance("stories", external_edit=True)
+                tablevault.create_instance("stories", external_edit=True)
                 copy_test_dir()
                 process_id = tablevault.generate_process_id()
                 update_table()
@@ -122,9 +122,9 @@ def test_restart_write_table():
             exception_raised = False
             try:
                 tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.setup_table('stories', allow_multiple_artifacts = False)
+                tablevault.create_table('stories', allow_multiple_artifacts = False)
                 tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-                tablevault.setup_temp_instance("stories", external_edit=True)
+                tablevault.create_instance("stories", external_edit=True)
                 copy_test_dir()
                 process_id = tablevault.generate_process_id()
                 df = pd.DataFrame({
@@ -132,7 +132,7 @@ def test_restart_write_table():
                                     'name':  ['Alice', 'Bob', 'Charlie'],
                                     'score': [85.5, 92.0, 78.0]
                                     }) 
-                tablevault.write_table(df, "stories", process_id=process_id)
+                tablevault.write_instance(df, "stories", process_id=process_id)
             except Exception as e:
                 exception_raised = True
         return process_id, exception_raised
@@ -147,9 +147,9 @@ def test_restart_execute_instance():
             exception_raised = False
             try:
                 tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.setup_table('stories', allow_multiple_artifacts = False)
+                tablevault.create_table('stories', allow_multiple_artifacts = False)
                 tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-                tablevault.setup_temp_instance("stories", builder_names=["gen_stories"])
+                tablevault.create_instance("stories", builders=["gen_stories"])
                 copy_test_dir()
                 process_id = tablevault.generate_process_id()
                 tablevault.execute_instance("stories", process_id=process_id)
@@ -167,11 +167,11 @@ def test_restart_setup_temp_instance():
             exception_raised = False
             try:
                 tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.setup_table('stories', allow_multiple_artifacts = False)
+                tablevault.create_table('stories', allow_multiple_artifacts = False)
                 tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
                 copy_test_dir()
                 process_id = tablevault.generate_process_id()
-                tablevault.setup_temp_instance("stories", builder_names=["gen_stories"], process_id=process_id)
+                tablevault.create_instance("stories", builders=["gen_stories"], process_id=process_id)
             except Exception as e:
                 exception_raised = True
         return process_id, exception_raised
@@ -188,7 +188,7 @@ def test_restart_setup_table():
                 tablevault = TableVault('test_dir', 'jinjin', create=True)
                 copy_test_dir()
                 process_id = tablevault.generate_process_id()
-                tablevault.setup_table('stories', allow_multiple_artifacts = False, process_id=process_id)
+                tablevault.create_table('stories', allow_multiple_artifacts = False, process_id=process_id)
             except Exception as e:
                 #raise e 
                 exception_raised = True

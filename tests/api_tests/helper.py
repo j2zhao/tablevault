@@ -72,13 +72,15 @@ def evaluate_full_tables(tables = ["stories", "llm_storage","llm_questions" ], n
 
 
 def evaluate_deletion():
-    temp_dir = 'test_dir/llm_storage'
+    temp_dir = 'test_dir/metadata/ARCHIVED_TRASH/llm_storage'
+    assert os.path.exists(temp_dir)
     entries = os.listdir(temp_dir)
     assert 'table.csv' not in entries
     tablevault = TableVault('test_dir', 'jinjin')
     instances = tablevault.get_instances('stories')
     assert len(instances) == 0
-    temp_dir = 'test_dir/stories'
+    temp_dir = 'test_dir/metadata/ARCHIVED_TRASH/stories'
+    assert os.path.exists(temp_dir)
     entries = os.listdir(temp_dir)
     assert 'table.csv' not in entries
 

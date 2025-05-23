@@ -1,1 +1,51 @@
-{}
+{
+    "288fc4cd-0dd9-4449-9380-ff7d68d03808": {
+        "process_id": "288fc4cd-0dd9-4449-9380-ff7d68d03808",
+        "author": "jinjin",
+        "start_time": 1748032966.849149,
+        "log_time": 1748032966.854375,
+        "operation": "execute_instance",
+        "complete_steps": [],
+        "step_times": [],
+        "data": {
+            "perm_instance_id": "base_1748032966_29966625-d36c-424b-b620-e1eb911d7b35",
+            "instance_id": "TEMP_base",
+            "table_name": "stories",
+            "version": "base",
+            "top_builder_names": [
+                "gen_stories"
+            ],
+            "changed_columns": [
+                "paper_name",
+                "artifact_name",
+                "original_path"
+            ],
+            "all_columns": [
+                "paper_name",
+                "artifact_name",
+                "original_path"
+            ],
+            "external_deps": {
+                "gen_stories": []
+            },
+            "origin_id": "",
+            "origin_table": "stories",
+            "update_rows": true,
+            "internal_builder_deps": {
+                "gen_stories": []
+            },
+            "code_dependencies": {},
+            "step_ids": [
+                "288fc4cd-0dd9-4449-9380-ff7d68d03808_1c86fed8-ca34-48d3-be59-d9333138d86d",
+                "288fc4cd-0dd9-4449-9380-ff7d68d03808_f8758958-dd35-417a-9404-58bce6969d89"
+            ]
+        },
+        "execution_success": null,
+        "start_success": true,
+        "error": [
+            "",
+            ""
+        ],
+        "pid": 13477
+    }
+}

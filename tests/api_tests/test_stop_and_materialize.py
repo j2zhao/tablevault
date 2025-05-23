@@ -35,9 +35,9 @@ def test_restart_materialize_instance():
             exception_raised = False
             try:
                 tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.setup_table('stories', allow_multiple_artifacts = False)
+                tablevault.create_table('stories', allow_multiple_artifacts = False)
                 tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-                tablevault.setup_temp_instance("stories", external_edit=True)
+                tablevault.create_instance("stories", external_edit=True)
                 copy_test_dir()
                 process_id = tablevault.generate_process_id()
                 update_table()
@@ -54,9 +54,9 @@ def test_restart_write_table():
             exception_raised = False
             try:
                 tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.setup_table('stories', allow_multiple_artifacts = False)
+                tablevault.create_table('stories', allow_multiple_artifacts = False)
                 tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-                tablevault.setup_temp_instance("stories", external_edit=True)
+                tablevault.create_instance("stories", external_edit=True)
                 copy_test_dir()
                 process_id = tablevault.generate_process_id()
                 df = pd.DataFrame({
@@ -64,7 +64,7 @@ def test_restart_write_table():
                                     'name':  ['Alice', 'Bob', 'Charlie'],
                                     'score': [85.5, 92.0, 78.0]
                                     }) 
-                tablevault.write_table(df, "stories", process_id=process_id)
+                tablevault.write_instance(df, "stories", process_id=process_id)
             except Exception as e:
                 exception_raised = True
         return process_id, exception_raised
@@ -77,9 +77,9 @@ def test_restart_execute_instance():
             exception_raised = False
             try:
                 tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.setup_table('stories', allow_multiple_artifacts = False)
+                tablevault.create_table('stories', allow_multiple_artifacts = False)
                 tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-                tablevault.setup_temp_instance("stories", builder_names=["gen_stories"])
+                tablevault.create_instance("stories", builders=["gen_stories"])
                 copy_test_dir()
                 process_id = tablevault.generate_process_id()
                 tablevault.execute_instance("stories", process_id=process_id)

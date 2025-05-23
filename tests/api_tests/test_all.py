@@ -1,9 +1,9 @@
 import runpy
 
 scripts = [
-    "test_basic_api.py",
-    "test_versioning.py",
-    "test_multiprocessing.py",
+   "test_basic_api.py",
+   "test_versioning.py",
+   "test_multiprocessing.py",
     "test_external_edit.py",
     "test_exceptions.py",
     "test_restart_and_stops.py",
