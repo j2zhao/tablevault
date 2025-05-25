@@ -147,7 +147,7 @@ class TableVault:
             process_id=process_id,
         )
 
-    def get_table(
+    def get_dataframe(
         self,
         table_name: str,
         instance_id: str = "",

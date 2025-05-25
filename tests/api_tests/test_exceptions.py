@@ -20,7 +20,7 @@ def test_setup_exception(funct_name, exception_func):
             copy_test_dir()
             tablevault.execute_instance("stories")
             copy_test_dir()
-            table = tablevault.get_table("stories")
+            table = tablevault.get_dataframe("stories")
             tablevault.create_instance("stories", external_edit=True, copy_version=True)
             copy_test_dir()
             tablevault.write_instance(table, "stories")
