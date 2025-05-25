@@ -58,7 +58,7 @@ def execute_instance(
         )
 
         db_metadata.update_process_step(process_id, constants.EX_CLEAR_TABLE)
-
+    cache = {}
     for i, builder_name in enumerate(top_builder_names):
         if builder_name in prev_completed_steps:
             continue
@@ -67,6 +67,7 @@ def execute_instance(
             instance_id,
             table_name,
             db_metadata,
+            cache,
         )
         if i == 0:
             update_rows = builders[builder_name].execute(

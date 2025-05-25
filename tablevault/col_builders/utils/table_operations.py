@@ -9,6 +9,7 @@ from tablevault.defintions.tv_errors import TVTableError
 from tablevault.defintions import constants
 from tablevault.helper.metadata_store import MetadataStore
 from tablevault.col_builders.utils import artifact
+import shutil
 
 
 def update_dtypes(
@@ -61,6 +62,7 @@ def get_table(
         else:
             dtypes = json.loads(content)
     try:
+        df = pd.read_csv(table_path)
         df = pd.read_csv(table_path, nrows=rows, dtype=dtypes)
     except pd.errors.EmptyDataError:
         return pd.DataFrame()
@@ -79,19 +81,19 @@ def fetch_table_cache(
     instance_id: str,
     table_name: str,
     db_metadata: MetadataStore,
+    cache: Cache,
 ) -> Cache:
-    cache = {}
     temp = get_table(instance_id, table_name, db_metadata.db_dir, artifact_dir=False)
     cache[constants.OUTPUT_SELF] = temp.copy(deep=True)
     a_dir = artifact.get_artifact_folder(instance_id, table_name, db_metadata.db_dir)
-
     cache[constants.TABLE_SELF] = artifact.df_artifact_to_path(temp, a_dir)
 
     for dep in external_dependencies:
         table, _, instance, _, version = dep
-        cache[(table, version)] = get_table(
-            instance, table, db_metadata.db_dir, artifact_dir=True
-        )
+        if (table, version) not in cache:
+            cache[(table, version)] = get_table(
+                instance, table, db_metadata.db_dir, artifact_dir=True
+            )
     return cache
 
 
@@ -201,19 +203,63 @@ def _convert_to_dtype(value: Any, dtype: Any) -> Any:
         raise TVTableError(f"Could not convert value {value!r} to dtype {dtype!r}: {e}")
 
 
-def check_table(
-    instance_id: str, table_name: str, db_dir: str, rows: Optional[int] = None
-) -> None:
-    df = get_table(instance_id, table_name, db_dir, rows, artifact_dir=True)
-    cols = [col for col, dt in df.dtypes.items() if dt.name == "artifact_string"]
+def is_hidden(file_path: str) -> bool:
+    system_patterns = (
+        ".DS_Store",  # macOS
+        "Thumbs.db",  # Windows
+        ".localized",  # macOS
+        "$RECYCLE.BIN",  # Windows
+        "System Volume Information",  # Windows
+        ".Spotlight-V100",  # macOS
+        ".Trashes",  # macOS
+        "desktop.ini",  # Windows
+    )
+    if file_path.startswith("."):
+        return True
+    if file_path in system_patterns:
+        return True
+    if os.name == "nt":
+        try:
+            attrs = os.stat(file_path).st_file_attributes
+            if attrs & 2:
+                return True
+        except OSError:
+            return False
+
+    return True
+
+
+def check_table(instance_id: str, table_name: str, db_dir: str) -> None:
+    df = get_table(instance_id, table_name, db_dir, artifact_dir=False)
+    cols = [col for col, dt in df.dtypes.items() if dt.name == constants.ARTIFACT_DTYPE]
     df_custom = df[cols]
     if df_custom.shape[1] == 0:
         return
+    artifact_paths = []
+    artifact_temp_dir = artifact.get_artifact_folder(instance_id, table_name, db_dir)
+    artifact_main_dir = artifact.get_artifact_folder(
+        instance_id, table_name, db_dir, respect_temp=False
+    )
+
     for _, row in df_custom.iterrows():
         for _, val in row.items():
-            if val != "":
-                if not os.path.exists(val):
-                    raise TVTableError(f"Artifact {val} not found")
+            if not pd.isna(val) and val != "":
+                artifact_temp_path = os.path.join(artifact_temp_dir, val)
+                artifact_main_path = os.path.join(artifact_main_dir, val)
+
+                if not os.path.exists(artifact_temp_path):
+                    if os.path.exists(artifact_main_path):
+                        shutil.copy2(artifact_main_path, artifact_temp_path)
+                    else:
+                        raise TVTableError(f"Artifact {val} not found")
+                artifact_paths.append(artifact_temp_path)
+
+    for root, _, files in os.walk(artifact_temp_dir):
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            if not is_hidden(file_path):
+                if file_path not in artifact_paths:
+                    raise TVTableError(f"Artifact {file_name} not indexed")
 
 
 def check_changed_columns(
@@ -229,7 +275,6 @@ def check_changed_columns(
 
     new_cols = set(y.columns) - set(x.columns)
     common = set(y.columns).intersection(x.columns)
-    print(common)
     changed = {col for col in common if not x[col].equals(y[col])}
 
     return list(new_cols | changed)

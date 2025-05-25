@@ -13,25 +13,27 @@ from typing import Any
 
 
 def join_path(artifact: str, path_dir: str) -> str:
-    if artifact != "":
+    if not pd.isna(artifact) and artifact != "":
         return os.path.join(path_dir, artifact)
     else:
-        return artifact
+        return ""
 
 
 def df_artifact_to_path(df: pd.DataFrame, path_dir: str) -> pd.DataFrame:
     for col in df.columns:
-        if df[col].dtype == "artifact_string":
+        if df[col].dtype == constants.ARTIFACT_DTYPE:
             df[col] = df[col].apply(lambda x: join_path(x, path_dir))
-            df[col] = df[col].astype("artifact_string")
+            df[col] = df[col].astype(constants.ARTIFACT_DTYPE)
     return df
 
 
-def get_artifact_folder(instance_id: str, table_name: str, db_dir: str) -> str:
+def get_artifact_folder(
+    instance_id: str, table_name: str, db_dir: str, respect_temp=True
+) -> str:
     instance_folder = os.path.join(
         db_dir, table_name, instance_id, constants.ARTIFACT_FOLDER
     )
-    if instance_id.startswith(constants.TEMP_INSTANCE):
+    if instance_id.startswith(constants.TEMP_INSTANCE) and respect_temp:
         return instance_folder
     table_data = get_description("", table_name, db_dir)
     if table_data[constants.TABLE_ALLOW_MARTIFACT]:
@@ -97,14 +99,26 @@ class ArtifactStringArray(ExtensionArray):
 
     @classmethod
     def _from_sequence_of_strings(cls, strings, dtype=None, copy=False):
-        # Optionally copy the sequence to avoid mutating the original data.
-        if copy:
-            strings = list(strings)
-        # Optionally, validate that each element is a string.
-        for s in strings:
-            if not isinstance(s, str):
-                raise ValueError("All elements must be strings")
-        return cls(strings)
+        materialized_values = []
+        for s_val in strings:
+            if isinstance(s_val, str):
+                materialized_values.append(s_val)
+            elif s_val is pd.NA:  # Already the desired NA type
+                materialized_values.append(pd.NA)
+            elif (
+                s_val is None
+                or (isinstance(s_val, float) and np.isnan(s_val))
+                or (isinstance(s_val, np.datetime64) and np.isnat(s_val))
+                or (isinstance(s_val, np.timedelta64) and np.isnat(s_val))
+            ):  # Common NA types
+                materialized_values.append(pd.NA)  # Canonicalize to pd.NA
+            else:
+                # If it's not a string or NA, it's an error for this method.
+                raise ValueError(
+                    f"Elements must be strings or NA-like (None, np.nan, pd.NA). "
+                    f"Got value {s_val!r} of type {type(s_val)}"
+                )
+        return cls(materialized_values)
 
     def __getitem__(self, item):
         # When item is a slice or an array of indices, return a new ArtifactStringArray

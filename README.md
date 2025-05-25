@@ -14,5 +14,4 @@ t.b.d.
 
 
 TODOS
-- rewrite prompts -> names
-- make failed executions more obvious (!) -> first just write it on the discription
+- allow lists/dictionary of artifacts?

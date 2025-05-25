@@ -416,6 +416,8 @@ class MetadataStore:
     def get_table_instances(self, table_name: str, version: str) -> None | list[str]:
         with self.lock:
             table_history = self._get_table_history()
+            if table_name not in table_history:
+                return None
             instances = list(table_history[table_name].keys())
             instances.sort(key=lambda x: table_history[table_name][x][1])
             if version != "":

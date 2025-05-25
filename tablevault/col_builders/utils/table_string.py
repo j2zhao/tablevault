@@ -41,7 +41,7 @@ class TableValue:
         main_pattern = (
             r"^([-A-Za-z0-9_]+)"  # group 1: object name
             r"(\([-A-Za-z0-9_]*\))?"  # group 2: optional paren-args
-            r"\.([-A-Za-z0-9_\{\},\s]+)?"  # group 3: dot + fields
+            r"(?:\.([-A-Za-z0-9_\{\},\s]+))?"  # group 3: dot + fields
             r"(\[(.*)\])?$"  # group 4: optional […]
         )
         m = re.match(main_pattern, s)
@@ -49,13 +49,15 @@ class TableValue:
             raise TVBuilderError(f"Invalid TableValue string: {s}")
         main_table = m.group(1)
         main_version = m.group(2)
+        main_col = m.group(3)
         if main_version is None:
             main_version = constants.BASE_TABLE_VERSION
-        main_col = m.group(3).strip()
-        if main_col.startswith("{") and main_col.endswith("}"):
-            main_col = _split_top_level_list(main_col[1:-1])
-        else:
-            main_col = [main_col]
+        if main_col is not None:
+            main_col = main_col.strip()
+            if main_col.startswith("{") and main_col.endswith("}"):
+                main_col = _split_top_level_list(main_col[1:-1])
+            else:
+                main_col = [main_col]
         inner_content = m.group(5)
         if not inner_content:
             return cls(
@@ -248,6 +250,8 @@ def _read_table_reference(ref: TableValue, index: Optional[int], cache: Cache) -
         df = cache[ref.table]
     if len(ref.conditions) == 0:
         if ref.columns != "":
+            if ref.columns is None:
+                return df
             if isinstance(ref.columns, str):
                 cols = [ref.columns]
             else:

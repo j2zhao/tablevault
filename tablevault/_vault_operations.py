@@ -149,31 +149,28 @@ def _materialize_instance(
     artifact_dtypes = {}
     for col in artifact_columns:
         artifact_dtypes[col] = constants.ARTIFACT_DTYPE
-
+    table_data = file_operations.get_description("", table_name, db_metadata.db_dir)
     if len(artifact_dtypes) > 0:
         table_operations.update_dtypes(
             artifact_dtypes, instance_id, table_name, db_metadata.db_dir
         )
 
     if success:
-        table_operations.check_table(
-            instance_id, table_name, db_metadata.db_dir, rows=constants.ARTIFACT_ROWS
+
+        table_operations.check_table(instance_id, table_name, db_metadata.db_dir)
+
+    if not table_data[constants.TABLE_ALLOW_MARTIFACT] and success:
+        file_operations.move_artifacts_to_table(
+            db_metadata.db_dir, table_name, instance_id
         )
 
     file_operations.rename_table_instance(
         perm_instance_id, instance_id, table_name, db_metadata.db_dir
     )
-    table_data = file_operations.get_description("", table_name, db_metadata.db_dir)
-
-    if not table_data[constants.TABLE_ALLOW_MARTIFACT] and success:
-        file_operations.move_artifacts_to_table(
-            db_metadata.db_dir, table_name, perm_instance_id
-        )
 
     instance_descript = file_operations.get_description(
         perm_instance_id, table_name, db_metadata.db_dir
     )
-
     instance_descript[constants.DESCRIPTION_DEPENDENCIES] = dependencies
     instance_descript[constants.DESCRIPTION_SUCCESS] = success
     file_operations.write_description(
@@ -545,11 +542,39 @@ def execute_instance(
     author: str,
     table_name: str,
     version: str,
+    force_restart: bool,
     force_execute: bool,
     process_id: str,
     db_dir: str,
     background: bool,
 ):
+
+    if force_restart and process_id == "":
+        instance_id = constants.TEMP_INSTANCE + version
+        db_metadata = MetadataStore(db_dir)
+        active_procceses = db_metadata.get_active_processes()
+        for id in active_procceses:
+            if (
+                id != process_id
+                and active_procceses[id].operation == constants.EXECUTE_OP
+            ):  
+                if (
+                    "table_name" in active_procceses[id].data
+                    and "instance_id" in active_procceses[id].data
+                ):  
+                    if (
+                        active_procceses[id].data["table_name"] == table_name
+                        and active_procceses[id].data["instance_id"] == instance_id
+                    ):
+                        stop_process(
+                            author,
+                            id,
+                            force=False,
+                            materialize=False,
+                            process_id="",
+                            db_dir=db_dir,
+                        )
+
     setup_kwargs = {
         "table_name": table_name,
         "version": version,
@@ -662,6 +687,7 @@ def _setup_temp_instance(
             table_name=table_name,
             version=version,
             author=process_id,
+            force_restart=False,
             force_execute=False,
             process_id=step_ids[1],
             db_dir=db_metadata.db_dir,
@@ -988,6 +1014,7 @@ def _restart_database(
                 author=process_id,
                 table_name="",
                 version="",
+                force_restart=False,
                 force_execute=False,
                 process_id=prid,
                 db_dir=db_metadata.db_dir,

@@ -7,6 +7,7 @@ from typing import Optional
 import os
 import tarfile
 
+
 class TableVault:
     """A TableVault object that interfaces with a TableVault directory.
 
@@ -153,10 +154,16 @@ class TableVault:
         version: str = constants.BASE_TABLE_VERSION,
         active_only: bool = True,
         safe_locking: bool = True,
-        rows: Optional[int] = None
+        rows: Optional[int] = None,
     ) -> pd.DataFrame:
         return _vault_operations.get_table(
-            instance_id, table_name, version, self.db_dir, active_only, safe_locking, rows
+            instance_id,
+            table_name,
+            version,
+            self.db_dir,
+            active_only,
+            safe_locking,
+            rows,
         )
 
     def copy_files(
@@ -273,7 +280,8 @@ class TableVault:
     def execute_instance(
         self,
         table_name: str,
-        version: str = "",
+        version: str = constants.BASE_TABLE_VERSION,
+        force_restart: bool = True,
         force_execute: bool = False,
         process_id: str = "",
         background: bool = False,
@@ -300,6 +308,7 @@ class TableVault:
             author=self.author,
             table_name=table_name,
             version=version,
+            force_restart=force_restart,
             force_execute=force_execute,
             process_id=process_id,
             db_dir=self.db_dir,
@@ -422,8 +431,6 @@ class TableVault:
         return gen_tv_id()
 
 
-
-
 def compress_vault(db_dir: str, preset: int = 6) -> None:
     # Ensure folder exists
     if not os.path.isdir(db_dir):
@@ -443,6 +450,11 @@ def decompress_vault(db_dir: str) -> None:
     if not os.path.isfile(db_dir_compressed):
         raise FileNotFoundError(f"No such file: {db_dir_compressed}")
 
-    # Derive folder name by stripping “.tar.xz”
     base = os.path.basename(db_dir_compressed)[:-7]
     extract_to = base
+
+    if not os.path.isdir(extract_to):
+        os.makedirs(extract_to)
+
+    with tarfile.open(db_dir_compressed, mode="r:xz") as tar:
+        tar.extractall(path=extract_to)

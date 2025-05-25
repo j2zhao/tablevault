@@ -5,6 +5,7 @@ from tablevault.col_builders.utils import utils, table_operations
 from tablevault.defintions import constants
 from typing import Any, Union
 from tablevault.col_builders.utils.table_string import TableReference
+from tablevault.helper.file_operations import load_code_function, move_code_to_instance
 
 
 class GeneratorBuilder(TVBuilder):
@@ -31,11 +32,14 @@ class GeneratorBuilder(TVBuilder):
                 self.code_module, self.python_function
             )
         else:
-            funct, _ = utils.load_function_from_file(
-                self.code_module, self.python_function, db_dir
+            move_code_to_instance(self.code_module, instance_id, table_name, db_dir)
+            funct, _ = load_code_function(
+                self.python_function, self.code_module, db_dir
             )
 
         results = funct(**self.arguments)
+        if constants.TABLE_INDEX in results.columns:
+            results.drop(columns=[constants.TABLE_INDEX], inplace=True)
         results.columns = self.changed_columns
         merged_df, diff_flag = table_operations.merge_columns(
             self.changed_columns, results, cache[constants.OUTPUT_SELF]

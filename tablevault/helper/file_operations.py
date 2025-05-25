@@ -98,12 +98,6 @@ def setup_table_instance_folder(
                 )
             else:
                 os.makedirs(artifact_dir)
-
-            prev_code_dir = os.path.join(prev_dir, constants.CODE_FOLDER)
-            # if os.path.isdir(prev_code_dir):
-            #     shutil.copytree(prev_code_dir, code_dir, copy_function=shutil.copy2)
-            # else:
-            #     os.makedirs(code_dir)
         elif len(builders) != 0:
             os.makedirs(builder_dir)
             builder_dir_ = os.path.join(table_dir, constants.BUILDER_FOLDER)
@@ -238,14 +232,16 @@ def delete_table_folder(table_name: str, db_dir: str, instance_id: str = "") -> 
                 if os.path.exists(df_dir):
                     os.remove(df_dir)
         instance_dir = table_dir
-    dest_dir = os.path.join(db_dir, constants.METADATA_FOLDER, constants.DELETION_FOLDER, table_name)
+    dest_dir = os.path.join(
+        db_dir, constants.METADATA_FOLDER, constants.DELETION_FOLDER, table_name
+    )
     if instance_id != "":
         dest_dir = os.path.join(dest_dir, instance_id)
     dest_dir_ = dest_dir
     i = 1
     while os.path.exists(dest_dir_):
-        dest_dir_ = dest_dir  + "_" + str(i)
-        i +=1
+        dest_dir_ = dest_dir + "_" + str(i)
+        i += 1
     shutil.move(instance_dir, dest_dir_)
 
 
@@ -401,7 +397,10 @@ def move_artifacts_to_table(db_dir: str, table_name: str = "", instance_id: str 
     new_artifact_dir = os.path.join(db_dir, table_name, constants.ARTIFACT_FOLDER)
     if os.path.exists(new_artifact_dir):
         shutil.rmtree(new_artifact_dir)
-    shutil.move(old_artifact_dir, new_artifact_dir)
+    shutil.move(
+        old_artifact_dir,
+        new_artifact_dir,
+    )
 
 
 def upload_artifact(
@@ -511,12 +510,16 @@ def load_code_function(
     instance_id: str = "",
     table_name: str = "",
 ):
-    if table_name != "":
-        file_path_ = os.path.join(db_dir, table_name)
     if instance_id != "":
-        file_path_ = os.path.join(file_path_, instance_id)
-
-    file_path_ = os.path.join(file_path_, constants.ARCHIVE_FOLDER, module_name + ".py")
+        file_path_ = os.path.join(
+            db_dir,
+            table_name,
+            instance_id,
+            constants.ARCHIVE_FOLDER,
+            module_name + ".py",
+        )
+    else:
+        file_path_ = os.path.join(db_dir, constants.CODE_FOLDER, module_name + ".py")
     try:
         namespace = {}
         with open(file_path_, "r") as file:
@@ -541,7 +544,7 @@ def move_code_to_instance(
         raise TVFileError(f"Function '{module_name}' not found")
     file_path_ = os.path.join(
         db_dir, table_name, instance_id, constants.ARCHIVE_FOLDER, module_name + ".py"
-    ) #TODO: edit
+    )  # TODO: edit
     shutil.copy2(file_path, file_path_)
 
 
@@ -566,5 +569,14 @@ def check_code_function_equality(
         origin_func, _ = load_code_function(
             python_function, module_name, db_dir, instance_id, table_name
         )
-        base_func = load_code_function(python_function, module_name, db_dir)
+        base_func, _ = load_code_function(python_function, module_name, db_dir)
         return origin_func.__code__ == base_func.__code__
+
+
+def check_folder_existance(instance_id: str, table_name: str, db_dir: str):
+    file_path = db_dir
+    if table_name != "":
+        file_path = os.path.join(file_path, table_name)
+    if instance_id != "":
+        file_path = os.path.join(file_path, instance_id)
+    return os.path.isdir(file_path)

@@ -1,14 +1,14 @@
 {
-    "288fc4cd-0dd9-4449-9380-ff7d68d03808": {
-        "process_id": "288fc4cd-0dd9-4449-9380-ff7d68d03808",
+    "b14b28ef-2c8f-4f2f-9c30-4884d57ee206": {
+        "process_id": "b14b28ef-2c8f-4f2f-9c30-4884d57ee206",
         "author": "jinjin",
-        "start_time": 1748032966.849149,
-        "log_time": 1748032966.854375,
+        "start_time": 1748113481.834233,
+        "log_time": 1748113481.840251,
         "operation": "execute_instance",
         "complete_steps": [],
         "step_times": [],
         "data": {
-            "perm_instance_id": "base_1748032966_29966625-d36c-424b-b620-e1eb911d7b35",
+            "perm_instance_id": "base_1748113481_49497e5e-2e56-4b29-8eda-f7b6d1483ede",
             "instance_id": "TEMP_base",
             "table_name": "stories",
             "version": "base",
@@ -36,8 +36,8 @@
             },
             "code_dependencies": {},
             "step_ids": [
-                "288fc4cd-0dd9-4449-9380-ff7d68d03808_1c86fed8-ca34-48d3-be59-d9333138d86d",
-                "288fc4cd-0dd9-4449-9380-ff7d68d03808_f8758958-dd35-417a-9404-58bce6969d89"
+                "b14b28ef-2c8f-4f2f-9c30-4884d57ee206_eb52e74e-7dc1-44ce-be95-7cb51dceff90",
+                "b14b28ef-2c8f-4f2f-9c30-4884d57ee206_98517ea3-311c-4a74-b95b-d1082ce8ce34"
             ]
         },
         "execution_success": null,
@@ -46,6 +46,6 @@
             "",
             ""
         ],
-        "pid": 13477
+        "pid": 30053
     }
 }

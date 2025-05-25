@@ -51,6 +51,9 @@ def setup_delete_table(
 ) -> SETUP_OUTPUT:
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
+    existance = db_metadata.get_table_instances(table_name, "")
+    if existance is None:
+        raise tv_errors.TVArgumentError("table_name doesn't exist")
     db_locks.acquire_exclusive_lock(table_name)
     file_operations.copy_folder_to_temp(
         process_id, db_metadata.db_dir, table_name=table_name
@@ -69,6 +72,14 @@ def setup_delete_instance(
 ) -> SETUP_OUTPUT:
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
+    existance = db_metadata.get_table_instances(table_name, "")
+    if existance is None:
+        raise tv_errors.TVArgumentError("table_name doesn't exist")
+    existance = file_operations.check_folder_existance(
+        instance_id, table_name, db_metadata.db_dir
+    )
+    if existance is None:
+        raise tv_errors.TVArgumentError("temporary instance doesn't exist")
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     file_operations.copy_folder_to_temp(
         process_id, db_metadata.db_dir, instance_id=instance_id, table_name=table_name
@@ -103,7 +114,14 @@ def setup_materialize_instance(
             start_time = db_metadata.get_active_processes()[process_id].start_time
             perm_instance_id = "_" + str(int(start_time)) + "_" + gen_tv_id()
             perm_instance_id = version + perm_instance_id
-
+    existance = db_metadata.get_table_instances(table_name, "")
+    if existance is None:
+        raise tv_errors.TVArgumentError("table_name doesn't exist")
+    existance = file_operations.check_folder_existance(
+        instance_id, table_name, db_metadata.db_dir
+    )
+    if existance is None:
+        raise tv_errors.TVArgumentError("temporary instance doesn't exist")
     # db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     db_locks.make_lock_path(table_name, perm_instance_id)
@@ -330,6 +348,14 @@ def setup_write_table(
     if version == "":
         version = constants.BASE_TABLE_VERSION
     instance_id = constants.TEMP_INSTANCE + version
+    existance = db_metadata.get_table_instances(table_name, "")
+    if existance is None:
+        raise tv_errors.TVArgumentError("table_name doesn't exist")
+    existance = file_operations.check_folder_existance(
+        instance_id, table_name, db_metadata.db_dir
+    )
+    if existance is None:
+        raise tv_errors.TVArgumentError("temporary instance doesn't exist")
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     instance_data = file_operations.get_description(
         instance_id, table_name, db_metadata.db_dir
@@ -443,6 +469,14 @@ def setup_execute_instance(
     perm_instance_id = "_" + str(int(start_time)) + "_" + gen_tv_id()
     perm_instance_id = version + perm_instance_id
     instance_id = constants.TEMP_INSTANCE + version
+    existance = db_metadata.get_table_instances(table_name, "")
+    if existance is None:
+        raise tv_errors.TVArgumentError("table_name doesn't exist")
+    existance = file_operations.check_folder_existance(
+        instance_id, table_name, db_metadata.db_dir
+    )
+    if existance is None:
+        raise tv_errors.TVArgumentError("temporary instance doesn't exist")
     instance_data = file_operations.get_description(
         instance_id, table_name, db_metadata.db_dir
     )
@@ -575,7 +609,12 @@ def setup_setup_temp_instance(
         )
     if version == "":
         version = constants.BASE_TABLE_VERSION
+    elif "_" in version:
+        raise tv_errors.TVArgumentError("version cannot contain '_' char")
     instance_id = constants.TEMP_INSTANCE + version
+    existance = db_metadata.get_table_instances(table_name, "")
+    if existance is None:
+        raise tv_errors.TVArgumentError("table_name doesn't exist")
     start_time = db_metadata.get_active_processes()[process_id].start_time
     if copy_version:
         _, _, origin_id = db_metadata.get_last_table_update(
@@ -812,14 +851,24 @@ def _parse_dependencies(
         for dep in builders[builder_name].dependencies:
             if dep.table == constants.TABLE_SELF:
                 for bn in builders:
-                    for col in dep.columns:
-                        if col in builders[bn].changed_columns:
-                            internal_builder_deps[builder_name].add(bn)
+                    if dep.columns is not None:
+                        for col in dep.columns:
+                            if col in builders[bn].changed_columns:
+                                internal_builder_deps[builder_name].add(bn)
                 continue
             if dep.table == table_name:
                 active_only = False
             else:
                 active_only = True
+            if "_" in dep.version:
+                (
+                    mat_time,
+                    _,
+                    _,
+                ) = db_metadata.get_table_times(dep.version, dep.table)
+                external_deps[builder_name].add(
+                    (dep.table, dep.columns, dep.version, mat_time, dep.version)
+                )
             if dep.columns is not None:
                 for col in dep.columns:
                     if col != constants.TABLE_INDEX:
