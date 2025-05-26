@@ -17,3 +17,6 @@ TODOS
 - allow lists/dictionary of artifacts
 - need to completely redo dataframe management (later)
 - need to implement map-reduce for llm-answer saves
+- copy dataframe?
+- NEED TO DO FILE LOCK! 
+- NEED TO DO RENAMING
