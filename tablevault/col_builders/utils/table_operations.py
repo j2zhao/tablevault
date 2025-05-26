@@ -139,6 +139,19 @@ def merge_columns(
 
     return merged_df, diff_flag
 
+def append_rows(columns: list[str], new_df:pd.DataFrame, old_df:pd.DataFrame):
+    all_columns = list(old_df.columns)
+    
+    merged_df = (new_df.set_index(columns)
+              .combine_first(old_df.set_index(columns))
+              .reset_index()
+    )
+    for col in all_columns:
+        if col in new_df.columns:
+            new_df[col] = new_df[col].astype(old_df[col].dtype)
+    merged_df = merged_df[all_columns]
+    diff_flag = not merged_df[columns].equals(old_df[columns])
+    return merged_df, diff_flag
 
 def update_column(colunm: Any, df: pd.DataFrame, col_name: str) -> pd.DataFrame:
     colunm = _convert_series_to_dtype(colunm, df[col_name].dtype)

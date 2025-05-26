@@ -70,7 +70,7 @@ def get_table(
     if safe_locking:
         db_lock.acquire_shared_lock(table_name, instance_id)
     try:
-        df = table_operations.get_table(instance_id, table_name, db_dir, rows)
+        df = table_operations.get_table(instance_id, table_name, db_dir, rows, artifact_dir=True)
     finally:
         if safe_locking:
             db_lock.release_all_locks()

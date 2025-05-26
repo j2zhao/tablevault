@@ -46,7 +46,7 @@ class CodeBuilder(TVBuilder):
                 self.python_function, self.code_module, db_dir, instance_id, table_name
             )
         # raise ValueError()
-        if self.is_udf:
+        if self.is_udf and self.n_threads != 1:
             indices = list(range(len(cache[constants.TABLE_SELF])))
             with ThreadPoolExecutor(max_workers=self.n_threads) as executor:
                 results = list(
@@ -65,6 +65,22 @@ class CodeBuilder(TVBuilder):
                     table_operations.write_table(
                         cache[constants.OUTPUT_SELF], instance_id, table_name, db_dir
                     )
+        elif self.is_udf and self.n_threads == 1:
+            results = []
+            for i in list(range(len(cache[constants.TABLE_SELF]))):
+                row = _execute_code_from_builder(
+                                i, self, funct, cache, instance_id, table_name, db_dir
+                            )
+                if not self.save_by_row:
+                    results.append(row)
+            if not self.save_by_row:
+                for col, values in zip(self.changed_columns, zip(*results)):
+                    table_operations.update_column(
+                        values, cache[constants.OUTPUT_SELF], col
+                    )
+                table_operations.write_table(
+                    cache[constants.OUTPUT_SELF], instance_id, table_name, db_dir
+                )
         else:
             results = _execute_code_from_builder(
                 -1, self, funct, cache, instance_id, table_name, db_dir

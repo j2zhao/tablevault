@@ -1,5 +1,6 @@
 from tablevault.col_builders.code_execution_builder_type import CodeBuilder
-from tablevault.col_builders.gen_code_builder_type import GeneratorBuilder
+from tablevault.col_builders.generator_builder_type import GeneratorBuilder
+from tablevault.col_builders.append_builder_type import GeneratorAppendBuilder
 from tablevault.col_builders.open_ai_threads_builder_type import OAIThreadBuilder
 from tablevault.col_builders.base_builder_type import TVBuilder
 from tablevault.defintions.tv_errors import TVBuilderError
@@ -9,6 +10,7 @@ BUILDER_TYPE_MAPPING = {
     "CodeBuilder": CodeBuilder,
     "GeneratorBuilder": GeneratorBuilder,
     "OAIThreadBuilder": OAIThreadBuilder,
+    "GeneratorAppendBuilder": GeneratorAppendBuilder
 }
 
 

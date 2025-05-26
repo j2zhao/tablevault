@@ -172,3 +172,13 @@ class ArtifactStringArray(ExtensionArray):
             return False
         # compare underlying numpy arrays for exact match (including None)
         return bool(np.array_equal(self._data, other._data))
+    
+    @classmethod
+    def _from_factorized(cls, values, original):
+        """
+        Reconstruct this array after pd.factorize.
+        `values` is the factorized values array, and `original` is
+        the original array instance (in case you need its dtype or metadata).
+        """
+        # Option A: just wrap values (they should already be object-dtype strings/NA)
+        return cls(values)
