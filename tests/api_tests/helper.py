@@ -1,12 +1,14 @@
 import os
 from tablevault.core import TableVault
 import shutil
+from tablevault.helper import user_lock
 
-def copy_test_dir():
-    if os.path.isdir('test_dir_copy'):
-        shutil.rmtree('test_dir_copy')
-    shutil.copytree('test_dir', 'test_dir_copy', dirs_exist_ok=True)
-
+def copy_test_dir(new_dir_name = 'test_dir_copy', old_dir_name = 'test_dir'): 
+    user_lock.set_writable(new_dir_name)
+    if os.path.isdir(new_dir_name):
+        shutil.rmtree(new_dir_name)
+    shutil.copytree(old_dir_name, new_dir_name, dirs_exist_ok=True)
+    
 
 def clean_up_open_ai(key_file = "../test_data/open_ai_key/key.txt"):
     import openai

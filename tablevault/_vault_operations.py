@@ -3,12 +3,12 @@ from tablevault.helper.metadata_store import MetadataStore, ActiveProcessDict
 from tablevault._operations._meta_operations import tablevault_operation
 from tablevault._operations import _table_execution
 from tablevault.defintions.types import ExternalDeps
-from tablevault.col_builders.utils import table_operations
+from tablevault.dataframe_helper import table_operations
 from tablevault.defintions import constants
 from tablevault.defintions import tv_errors
 from tablevault.helper.database_lock import DatabaseLock
 from tablevault._operations._takedown_operations import TAKEDOWN_MAP
-from tablevault.col_builders.utils import artifact
+from tablevault.dataframe_helper import artifact
 import os
 import pandas as pd
 from typing import Optional, Any
@@ -29,26 +29,17 @@ def get_artifact_folder(
 def setup_database(db_dir: str, description: str, replace: bool = False) -> None:
     file_operations.setup_database_folder(db_dir, description, replace)
 
-
-def print_active_processes(db_dir: str, print_all: bool) -> None:
-    db_metadata = MetadataStore(db_dir)
-    return db_metadata.print_active_processes(print_all)
-
-
 def active_processes(db_dir: str) -> ActiveProcessDict:
     db_metadata = MetadataStore(db_dir)
     return db_metadata.get_active_processes()
-
 
 def complete_process(process_id: str, db_dir: str) -> bool:
     db_metadata = MetadataStore(db_dir)
     return db_metadata.check_written(process_id)
 
-
-def list_instances(table_name: str, db_dir: str, version: str) -> list[str] | None:
+def get_instances(table_name: str, db_dir: str, version: str) -> list[str] | None:
     db_metadata = MetadataStore(db_dir)
     return db_metadata.get_table_instances(table_name, version)
-
 
 def get_table(
     instance_id: str,
@@ -70,39 +61,126 @@ def get_table(
     if safe_locking:
         db_lock.acquire_shared_lock(table_name, instance_id)
     try:
-        df = table_operations.get_table(instance_id, table_name, db_dir, rows, artifact_dir=True)
+        df = table_operations.get_table(instance_id, table_name, db_dir, rows, artifact_dir=True, get_index=False)
     finally:
         if safe_locking:
             db_lock.release_all_locks()
     return df
 
+def _create_code_module(module_name:str,
+                  copy_dir:str,
+                  db_metadata: MetadataStore):
+    file_operations.create_copy_code_file(db_metadata.db_dir, module_name, copy_dir)
 
-def _copy_files(file_dir: str, table_name: str, db_metadata: MetadataStore):
-    if table_name == "":
-        sub_folder = constants.CODE_FOLDER
-    else:
-        sub_folder = constants.BUILDER_FOLDER
-    file_operations.copy_files(file_dir, sub_folder, "", table_name, db_metadata.db_dir)
-
-
-def copy_files(
-    author: str, table_name: str, file_dir: str, process_id: str, db_dir: str
-):
-    setup_kwargs = {"file_dir": file_dir, "table_name": table_name}
+def create_code_module(author: str,
+                 module_name:str,
+                 copy_dir:str,
+                 process_id: str,
+                 db_dir: str):
+    setup_kwargs = {"module_name": module_name, "copy_dir": copy_dir}
     return tablevault_operation(
         author,
-        constants.COPY_FILE_OP,
-        _copy_files,
+        constants.CREATE_CODE_MODULE_OP,
+        _create_code_module,
+        db_dir,
+        process_id,
+        setup_kwargs,
+    )
+
+def _delete_code_module(module_name:str,
+                  db_metadata: MetadataStore):
+    file_operations.delete_code_file(module_name, db_metadata.db_dir)
+
+def delete_code_module(author: str,
+                 module_name:str,
+                 process_id: str,
+                 db_dir: str):
+    setup_kwargs = {"module_name": module_name }
+    return tablevault_operation(
+        author,
+        constants.DELTE_CODE_MODULE_OP,
+        _delete_code_module,
+        db_dir,
+        process_id,
+        setup_kwargs,
+    )
+
+def _create_builder_file(builder_name:str,
+                         instance_id:str,
+                         table_name:str,
+                         copy_dir:str,
+                         builder_type:str,
+                           db_metadata: MetadataStore
+                           ):
+    file_operations.create_copy_builder_file(instance_id, table_name, db_metadata.db_dir, 
+                                             builder_name, copy_dir, builder_type)
+def create_builder_file(author: str,
+                 builder_name:str,
+                 table_name:str,
+                 version: str,
+                 copy_dir:str,
+                 builder_type:str,
+                 process_id: str,
+                 db_dir: str):
+    setup_kwargs = {"builder_name": builder_name, "table_name": table_name,
+                     "version":version, "copy_dir": copy_dir,
+                     "builder_type": builder_type}
+    return tablevault_operation(
+        author,
+        constants.CREATE_BUILDER_FILE_OP,
+        _create_builder_file,
         db_dir,
         process_id,
         setup_kwargs,
     )
 
 
-# tablevault_operation
+def _delete_builder_file(builder_name:str,
+                         instance_id:str,
+                         table_name:str,
+                  db_metadata: MetadataStore):
+    file_operations.delete_builder_file(builder_name, instance_id, table_name, db_metadata.db_dir)
+
+def delete_builder_file(author: str,
+                 builder_name:str,
+                 table_name:str, 
+                 version: str,
+                 process_id: str,
+                 db_dir: str):
+    setup_kwargs = {"builder_name": builder_name, "table_name": table_name,
+                     "version":version}
+    return tablevault_operation(
+        author,
+        constants.DELETE_BUILDER_FILE_OP,
+        _delete_builder_file,
+        db_dir,
+        process_id,
+        setup_kwargs,
+    )
+
+def _rename_table(new_table_name:str,
+                  table_name:str,
+                  db_metadata: MetadataStore):
+    file_operations.rename_table(new_table_name, table_name,db_metadata.db_dir)
+
+def rename_table(author: str,
+                 new_table_name:str,
+                 table_name:str,
+                 process_id: str,
+                 db_dir: str):
+    setup_kwargs = {"new_table_name": new_table_name, "table_name": table_name, }
+    return tablevault_operation(
+        author,
+        constants.RENAME_TABLE_OP,
+        _rename_table,
+        db_dir,
+        process_id,
+        setup_kwargs,
+    )
+
+
 def _delete_table(table_name: str, db_metadata: MetadataStore):
     file_operations.delete_table_folder(table_name, db_metadata.db_dir)
-
 
 def delete_table(author: str, table_name: str, process_id: str, db_dir: str):
     setup_kwargs = {"table_name": table_name}
@@ -116,10 +194,9 @@ def delete_table(author: str, table_name: str, process_id: str, db_dir: str):
     )
 
 
-# tablevault_operation
+
 def _delete_instance(instance_id: str, table_name: str, db_metadata: MetadataStore):
     file_operations.delete_table_folder(table_name, db_metadata.db_dir, instance_id)
-
 
 def delete_instance(
     author: str, table_name: str, instance_id: str, process_id: str, db_dir: str
@@ -141,18 +218,14 @@ def _materialize_instance(
     perm_instance_id: str,
     origin_id: str,
     origin_table: str,
-    artifact_columns: list[str],
+    dtypes: dict[str, str],
     success: bool,
     dependencies: list[tuple[str, str]],
     db_metadata: MetadataStore,
-):
-    artifact_dtypes = {}
-    for col in artifact_columns:
-        artifact_dtypes[col] = constants.ARTIFACT_DTYPE
+):  
     table_data = file_operations.get_description("", table_name, db_metadata.db_dir)
-    if len(artifact_dtypes) > 0:
-        table_operations.update_dtypes(
-            artifact_dtypes, instance_id, table_name, db_metadata.db_dir
+    table_operations.update_dtypes(
+            dtypes, instance_id, table_name, db_metadata.db_dir
         )
 
     if success:
@@ -213,7 +286,6 @@ def _materialize_instance(
                 parent_descript, dep_instance, dep_table, db_metadata.db_dir
             )
 
-
 def materialize_instance(
     author: str,
     instance_id: str,
@@ -222,7 +294,7 @@ def materialize_instance(
     perm_instance_id: str,
     origin_id: str,
     origin_table: str,
-    artifact_columns: list[str],
+    dtypes: dict[str, str],
     changed_columns: list[str],
     all_columns: list[str],
     dependencies: list[tuple[str, str]],
@@ -237,7 +309,7 @@ def materialize_instance(
         "perm_instance_id": perm_instance_id,
         "origin_id": origin_id,
         "origin_table": origin_table,
-        "artifact_columns": artifact_columns,
+        "dtypes": dtypes,
         "changed_columns": changed_columns,
         "all_columns": all_columns,
         "dependencies": dependencies,
@@ -251,7 +323,6 @@ def materialize_instance(
         process_id,
         setup_kwargs,
     )
-
 
 def _stop_process(
     process_ids: list[str],
@@ -287,7 +358,7 @@ def _stop_process(
                 materialize_args["perm_instance_id"],
                 materialize_args["origin_id"],
                 materialize_args["origin_table"],
-                materialize_args["artifact_columns"],
+                materialize_args["dtypes"],
                 materialize_args["changed_columns"],
                 materialize_args["all_columns"],
                 materialize_args["dependencies"],
@@ -296,7 +367,6 @@ def _stop_process(
             )
         finally:
             db_metadata.update_process_step(process_id, step_ids[1])
-
 
 def stop_process(
     author: str,
@@ -334,7 +404,6 @@ def _write_table_inner(
         table_df.dtypes, instance_id, table_name, db_metadata.db_dir
     )
 
-
 def write_table_inner(
     author: str,
     table_df: Optional[pd.DataFrame],
@@ -363,7 +432,7 @@ def _write_table(
     instance_id: str,
     table_name: str,
     perm_instance_id: str,
-    artifact_columns: list[str],
+    dtypes: dict[str, str],
     all_columns: list[str],
     changed_columns: list[str],
     dependencies: list[tuple[str, str]],
@@ -392,7 +461,7 @@ def _write_table(
             perm_instance_id,
             "",
             "",
-            artifact_columns,
+            dtypes,
             all_columns,
             changed_columns,
             dependencies,
@@ -401,13 +470,12 @@ def _write_table(
         )
         db_metadata.update_process_step(process_id, step_ids[1])
 
-
 def write_table(
     author: str,
     table_df: Optional[pd.DataFrame],
     table_name: str,
     version: str,
-    artifact_columns: list[str],
+    dtypes: dict[str, str],
     dependencies: list[tuple[str, str]],
     process_id: str,
     db_dir: str,
@@ -416,7 +484,7 @@ def write_table(
         "table_df": table_df,
         "table_name": table_name,
         "version": version,
-        "artifact_columns": artifact_columns,
+        "dtypes": dtypes,
         "dependencies": dependencies,
     }
     return tablevault_operation(
@@ -449,7 +517,6 @@ def _execute_instance_inner(
         db_metadata,
     )
     #
-
 
 def execute_instance_inner(
     author: str,
@@ -537,7 +604,6 @@ def _execute_instance(
         )
         db_metadata.update_process_step(process_id, step_ids[1])
 
-
 def execute_instance(
     author: str,
     table_name: str,
@@ -591,13 +657,13 @@ def execute_instance(
     )
 
 
-def _setup_temp_instance_inner(
+def _create_instance(
     instance_id: str,
     table_name: str,
     origin_id: str,
     origin_table: str,
     external_edit: bool,
-    builder_names: list[str],
+    builder_names: dict[str, str],
     description: str,
     db_metadata: MetadataStore,
 ):
@@ -608,9 +674,14 @@ def _setup_temp_instance_inner(
         external_edit,
         origin_id,
         origin_table,
-        builder_names,
     )
-
+    for bn, bt in builder_names.items():
+        if bt.endswith(".yaml"):
+            file_operations.create_copy_builder_file(instance_id, table_name, db_metadata.db_dir,
+                                                     builder_name=bn, copy_dir=bt)
+        else:
+            file_operations.create_copy_builder_file(instance_id, table_name, db_metadata.db_dir,
+                                                     builder_name=bn, builder_type=bt)
     descript_yaml = {
         constants.DESCRIPTION_SUMMARY: description,
         constants.DESCRIPTION_ORIGIN: [origin_id, origin_table],
@@ -621,82 +692,7 @@ def _setup_temp_instance_inner(
     )
 
 
-def setup_temp_instance_inner(
-    author: str,
-    table_name: str,
-    instance_id: str,
-    origin_id: str,
-    origin_table: str,
-    builder_names: list[str],
-    external_edit: bool,
-    process_id: str,
-    db_dir: str,
-    description: str,
-):
-    setup_kwargs = {
-        "table_name": table_name,
-        "instance_id": instance_id,
-        "origin_id": origin_id,
-        "origin_table": origin_table,
-        "builder_names": builder_names,
-        "description": description,
-        "external_edit": external_edit,
-    }
-    return tablevault_operation(
-        author=author,
-        op_name=constants.SETUP_TEMP_INNER_OP,
-        op_funct=_setup_temp_instance_inner,
-        db_dir=db_dir,
-        process_id=process_id,
-        setup_kwargs=setup_kwargs,
-    )
-
-
-def _setup_temp_instance(
-    instance_id: str,
-    table_name: str,
-    version: str,
-    description: str,
-    origin_id: str,
-    origin_table: str,
-    external_edit: bool,
-    builder_names: list[str],
-    execute: bool,
-    background_execute: bool,
-    step_ids: list[str],
-    process_id: str,
-    db_metadata: MetadataStore,
-):
-    complete_steps = db_metadata.get_active_processes()[process_id].complete_steps
-    if step_ids[0] not in complete_steps:
-        setup_temp_instance_inner(
-            author=process_id,
-            instance_id=instance_id,
-            table_name=table_name,
-            origin_id=origin_id,
-            origin_table=origin_table,
-            external_edit=external_edit,
-            builder_names=builder_names,
-            process_id=step_ids[0],
-            db_dir=db_metadata.db_dir,
-            description=description,
-        )
-        db_metadata.update_process_step(process_id, step_ids[0])
-    if execute and step_ids[1] not in complete_steps:
-        execute_instance(
-            table_name=table_name,
-            version=version,
-            author=process_id,
-            force_restart=False,
-            force_execute=False,
-            process_id=step_ids[1],
-            db_dir=db_metadata.db_dir,
-            background=background_execute,
-        )
-        db_metadata.update_process_step(process_id, step_ids[1])
-
-
-def setup_temp_instance(
+def create_instance(
     author: str,
     table_name: str,
     version: str,
@@ -704,12 +700,10 @@ def setup_temp_instance(
     origin_id: str,
     origin_table: str,
     external_edit: bool,
-    copy_version: bool,
-    builder_names: list[str] | bool,
-    execute: bool,
+    copy: bool,
+    builder_names: list[str] | dict[str, str],
     process_id: str,
     db_dir: str,
-    background_execute: bool,
 ):
     setup_kwargs = {
         "table_name": table_name,
@@ -718,22 +712,20 @@ def setup_temp_instance(
         "origin_id": origin_id,
         "origin_table": origin_table,
         "external_edit": external_edit,
-        "copy_version": copy_version,
+        "copy": copy,
         "builder_names": builder_names,
-        "execute": execute,
-        "background_execute": background_execute,
     }
     return tablevault_operation(
         author,
-        constants.SETUP_TEMP_OP,
-        _setup_temp_instance,
+        constants.CREATE_INSTANCE_OP,
+        _create_instance,
         db_dir,
         process_id,
         setup_kwargs,
     )
 
 
-def _setup_table_inner(
+def _create_table(
     table_name: str,
     description: str,
     allow_multiple_artifacts: bool,
@@ -754,91 +746,9 @@ def _setup_table_inner(
         db_dir=db_metadata.db_dir,
     )
 
-
-def setup_table_inner(
+def create_table(
     author: str,
     table_name: str,
-    allow_multiple_artifacts: bool,
-    has_side_effects: bool,
-    process_id: str,
-    db_dir: str,
-    description: str,
-):
-    setup_kwargs = {
-        "table_name": table_name,
-        "allow_multiple_artifacts": allow_multiple_artifacts,
-        "has_side_effects": has_side_effects,
-        "description": description,
-    }
-    return tablevault_operation(
-        author,
-        constants.SETUP_TABLE_INNER_OP,
-        _setup_table_inner,
-        db_dir,
-        process_id,
-        setup_kwargs,
-    )
-
-
-def _setup_table(
-    table_name: str,
-    yaml_dir: str,
-    create_temp: bool,
-    execute: bool,
-    background_execute: bool,
-    allow_multiple_artifacts: bool,
-    has_side_effects: bool,
-    description: str,
-    step_ids: list[str],
-    process_id: str,
-    db_metadata: MetadataStore,
-):
-    complete_steps = db_metadata.get_active_processes()[process_id].complete_steps
-    if step_ids[0] not in complete_steps:
-        setup_table_inner(
-            author=process_id,
-            table_name=table_name,
-            allow_multiple_artifacts=allow_multiple_artifacts,
-            has_side_effects=has_side_effects,
-            process_id=step_ids[0],
-            db_dir=db_metadata.db_dir,
-            description=description,
-        )
-        db_metadata.update_process_step(process_id, step_ids[0])
-    if yaml_dir != "" and step_ids[1] not in complete_steps:
-        copy_files(
-            author=process_id,
-            table_name=table_name,
-            file_dir=yaml_dir,
-            process_id=step_ids[1],
-            db_dir=db_metadata.db_dir,
-        )
-        db_metadata.update_process_step(process_id, step_ids[1])
-    if yaml_dir and create_temp and step_ids[2] not in complete_steps:
-        setup_temp_instance(
-            author=process_id,
-            table_name=table_name,
-            version="",
-            description="",
-            origin_id="",
-            origin_table="",
-            external_edit=False,
-            copy_version=False,
-            builder_names=True,
-            execute=execute,
-            process_id=step_ids[2],
-            db_dir=db_metadata.db_dir,
-            background_execute=background_execute,
-        )
-        db_metadata.update_process_step(process_id, step_ids[2])
-
-
-def setup_table(
-    author: str,
-    table_name: str,
-    create_temp: bool,
-    execute: bool,
-    background_execute: bool,
     allow_multiple_artifacts: bool,
     has_side_effects: bool,
     description: str,
@@ -848,90 +758,13 @@ def setup_table(
 ):
     setup_kwargs = {
         "table_name": table_name,
-        "create_temp": create_temp,
-        "execute": execute,
-        "background_execute": background_execute,
         "allow_multiple_artifacts": allow_multiple_artifacts,
         "has_side_effects": has_side_effects,
         "yaml_dir": yaml_dir,
         "description": description,
     }
     return tablevault_operation(
-        author, constants.SETUP_TABLE_OP, _setup_table, db_dir, process_id, setup_kwargs
-    )
-
-
-def _copy_database_files(
-    yaml_dir: str,
-    table_names: list[str],
-    code_dir: str,
-    execute: bool,
-    allow_multiple_artifacts: list[str],
-    has_side_effects: list[str],
-    step_ids: list[str],
-    background_execute: bool,
-    process_id: str,
-    db_metadata: MetadataStore,
-):
-    complete_steps = db_metadata.get_active_processes()[process_id].complete_steps
-    index = 0
-    if code_dir != "" and step_ids[index] not in complete_steps:
-        copy_files(
-            author=process_id,
-            table_name="",
-            file_dir=code_dir,
-            process_id=step_ids[1],
-            db_dir=db_metadata.db_dir,
-        )
-        db_metadata.update_process_step(process_id, step_ids[index])
-        index += 1
-    for tname in table_names:
-        allow_m_artifacts = tname in allow_multiple_artifacts
-        has_s_effects = tname in has_side_effects
-        pdir = os.path.join(yaml_dir, tname)
-        setup_table(
-            author=process_id,
-            table_name=tname,
-            create_temp=execute,
-            execute=execute,
-            background_execute=background_execute,
-            allow_multiple_artifacts=allow_m_artifacts,
-            has_side_effects=has_s_effects,
-            description="",
-            yaml_dir=pdir,
-            process_id=step_ids[index],
-            db_dir=db_metadata.db_dir,
-        )
-        db_metadata.update_process_step(process_id, step_ids[index])
-        index += 1
-
-
-def copy_database_files(
-    author: str,
-    yaml_dir: str,
-    code_dir: str,
-    execute: bool,
-    allow_multiple_artifacts: list[str],
-    has_side_effects: list[str],
-    process_id: str,
-    db_dir: str,
-    background_execute: bool,
-):
-    setup_kwargs = {
-        "yaml_dir": yaml_dir,
-        "code_dir": code_dir,
-        "execute": execute,
-        "background_execute": background_execute,
-        "allow_multiple_artifacts": allow_multiple_artifacts,
-        "has_side_effects": has_side_effects,
-    }
-    return tablevault_operation(
-        author,
-        constants.COPY_DB_OP,
-        _copy_database_files,
-        db_dir,
-        process_id,
-        setup_kwargs,
+        author, constants.CREATE_TABLE_OP, _create_table, db_dir, process_id, setup_kwargs
     )
 
 
@@ -959,11 +792,46 @@ def _restart_database(
     for prid in active_processes:
         if "_" in prid:
             continue
-        if active_processes[prid].operation == constants.COPY_FILE_OP:
-            copy_files(
+        if active_processes[prid].operation == constants.CREATE_CODE_MODULE_OP:
+            create_code_module(
                 author=process_id,
+                module_name="",
+                copy_dir="",
+                process_id=prid,
+                db_dir=db_metadata.db_dir,
+            )
+        if active_processes[prid].operation == constants.DELTE_CODE_MODULE_OP:
+            delete_code_module(
+                author=process_id,
+                module_name="",
+                process_id=prid,
+                db_dir=db_metadata.db_dir,
+            )
+        if active_processes[prid].operation == constants.CREATE_BUILDER_FILE_OP:
+            create_builder_file(
+                author=process_id,
+                builder_name="",
                 table_name="",
-                file_dir="",
+                version="",
+                copy_dir="",
+                builder_type="",
+                process_id=prid,
+                db_dir=db_metadata.db_dir,
+            )
+        if active_processes[prid].operation == constants.DELETE_BUILDER_FILE_OP:
+            delete_builder_file(
+                author=process_id,
+                builder_name="",
+                table_name="",
+                version="",
+                process_id=prid,
+                db_dir=db_metadata.db_dir,
+            )
+        elif active_processes[prid].operation == constants.RENAME_TABLE_OP:
+            delete_table(
+                author=process_id,
+                new_table_name="",
+                table_name="",
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
             )
@@ -991,7 +859,7 @@ def _restart_database(
                 perm_instance_id="",
                 origin_id="",
                 origin_table="",
-                artifact_columns=[],
+                dtypes={},
                 changed_columns=[],
                 all_columns=[],
                 dependencies=[],
@@ -1004,7 +872,7 @@ def _restart_database(
                 table_df=None,
                 table_name="",
                 version="",
-                artifact_columns=[],
+                dtypes={},
                 dependencies=[],
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
@@ -1020,8 +888,8 @@ def _restart_database(
                 db_dir=db_metadata.db_dir,
                 background=False,
             )
-        elif active_processes[prid].operation == constants.SETUP_TEMP_OP:
-            setup_temp_instance(
+        elif active_processes[prid].operation == constants.CREATE_INSTANCE_OP:
+            create_instance(
                 author=process_id,
                 table_name="",
                 version="",
@@ -1029,20 +897,15 @@ def _restart_database(
                 origin_id="",
                 origin_table="",
                 external_edit=False,
-                copy_version=False,
+                copy=False,
                 builder_names=[],
-                execute=False,
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
-                background_execute=False,
             )
-        elif active_processes[prid].operation == constants.SETUP_TABLE_OP:
-            setup_table(
+        elif active_processes[prid].operation == constants.CREATE_TABLE_OP:
+            create_table(
                 author=process_id,
                 table_name="",
-                create_temp=False,
-                execute=False,
-                background_execute=False,
                 allow_multiple_artifacts=False,
                 has_side_effects=False,
                 description="",
@@ -1050,21 +913,8 @@ def _restart_database(
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
             )
-        elif active_processes[prid].operation == constants.COPY_DB_OP:
-            copy_database_files(
-                author=process_id,
-                yaml_dir="",
-                code_dir="",
-                execute=False,
-                allow_multiple_artifacts=[],
-                has_side_effects=[],
-                process_id=prid,
-                db_dir=db_metadata.db_dir,
-                background_execute=False,
-            )
 
         db_metadata.update_process_step(process_id, step=prid)
-
 
 def restart_database(
     author: str,

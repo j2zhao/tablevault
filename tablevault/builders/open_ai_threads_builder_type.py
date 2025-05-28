@@ -1,13 +1,13 @@
 from pydantic import Field, BaseModel
-from tablevault.col_builders.base_builder_type import TVBuilder
+from tablevault.builders.base_builder_type import TVBuilder
 from tablevault.defintions.types import Cache
 from tablevault._llm_functions.open_ai_thread import Open_AI_Thread, add_open_ai_secret
 import openai
 from tablevault.defintions import constants
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from tablevault.col_builders.utils import table_operations
-from tablevault.col_builders.utils.table_string import TableString
+from tablevault.dataframe_helper import table_operations
+from tablevault.builders.utils.table_string import TableString
 from tablevault.helper.utils import gen_tv_id
 import re
 from typing import Any
@@ -63,38 +63,40 @@ class OAIThreadBuilder(TVBuilder):
         db_dir: str,
         process_id: str,
     ) -> None:
-        self.transform_table_string(cache, instance_id, table_name, db_dir)
-        with open(self.key_file, "r") as f:
-            secret = f.read()
-            add_open_ai_secret(secret)
-        client = openai.OpenAI()
-        indices = list(range(len(cache[constants.TABLE_SELF])))
-        lock = threading.Lock()
-        with ThreadPoolExecutor(max_workers=self.n_threads) as executor:
-            futures = [
-                executor.submit(
-                    _execute_llm,
-                    i,
-                    self,
-                    client,
-                    lock,
-                    cache,
-                    instance_id,
-                    table_name,
-                    db_dir,
-                )
-                for i in indices
-            ]
-            # Iterate over futures to force evaluation and raise any exceptions
-            for future in futures:
-                future.result()
-
+        try:
+            self.transform_table_string(cache, instance_id, table_name, db_dir)
+            with open(self.key_file, "r") as f:
+                secret = f.read()
+                add_open_ai_secret(secret)
+            client = openai.OpenAI()
+            indices = list(range(len(cache[constants.TABLE_SELF])))
+            # lock = threading.Lock()
+            with ThreadPoolExecutor(max_workers=self.n_threads) as executor:
+                futures = [
+                    executor.submit(
+                        _execute_llm,
+                        i,
+                        self,
+                        client,
+                        # lock,
+                        cache,
+                        instance_id,
+                        table_name,
+                        db_dir,
+                    )
+                    for i in indices
+                ]
+                # Iterate over futures to force evaluation and raise any exceptions
+                for future in futures:
+                    future.result()
+        finally:
+            table_operations.make_df(instance_id,table_name,db_dir) 
 
 def _execute_llm(
     index: int,
     builder: OAIThreadBuilder,
     client: openai.OpenAI,
-    lock: threading.Lock,
+    # lock: threading.Lock,
     cache: Cache,
     instance_id: str,
     table_name: str,
@@ -150,11 +152,5 @@ def _execute_llm(
             break
         results.append(result)
 
-    with lock:
-        for i, column in enumerate(builder.changed_columns):
-            table_operations.update_entry(
-                results[i], index, column, cache[constants.OUTPUT_SELF]
-            )
-        table_operations.write_table(
-            cache[constants.OUTPUT_SELF], instance_id, table_name, db_dir
-        )
+    for i, column in enumerate(builder.changed_columns):
+        table_operations.write_df_entry(results[i], index, column, instance_id,table_name,db_dir)

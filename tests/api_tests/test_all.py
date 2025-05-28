@@ -1,4 +1,5 @@
 import runpy
+from helper import clean_up_open_ai
 
 scripts = [
     "test_basic_api.py",
@@ -13,3 +14,4 @@ scripts = [
 for path in scripts:
     print(f"▶️ Running {path}")
     runpy.run_path(path, run_name="__main__")
+clean_up_open_ai()

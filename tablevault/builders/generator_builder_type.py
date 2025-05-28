@@ -1,10 +1,11 @@
 from pydantic import Field
-from tablevault.col_builders.base_builder_type import TVBuilder
+from tablevault.builders.base_builder_type import TVBuilder
+from tablevault.dataframe_helper import table_operations
 from tablevault.defintions.types import Cache
-from tablevault.col_builders.utils import utils, table_operations
+from tablevault.builders.utils import utils
 from tablevault.defintions import constants
 from typing import Any, Union
-from tablevault.col_builders.utils.table_string import TableReference
+from tablevault.builders.utils.table_string import TableReference
 from tablevault.helper.file_operations import load_code_function, move_code_to_instance
 
 
@@ -41,11 +42,7 @@ class GeneratorBuilder(TVBuilder):
         if constants.TABLE_INDEX in results.columns:
             results.drop(columns=[constants.TABLE_INDEX], inplace=True)
         results.columns = self.changed_columns
-        merged_df, diff_flag = table_operations.merge_columns(
-            self.changed_columns, results, cache[constants.OUTPUT_SELF]
-        )
-        if diff_flag:
-            table_operations.write_table(merged_df, instance_id, table_name, db_dir)
-            return True
-        else:
-            return False
+        # careful here !
+        diff_flag = table_operations.merge_columns(self.changed_columns, results, instance_id, table_name, db_dir)
+        
+        return diff_flag

@@ -17,7 +17,6 @@ from typing import Optional
 import time
 from filelock import FileLock
 
-import pprint
 import mmap
 
 from dataclasses import asdict
@@ -103,7 +102,7 @@ class MetadataStore:
         meta_lock = os.path.join(meta_dir, "LOG.lock")
         self.lock = FileLock(meta_lock)
 
-    def _setup_table_operation(self, log: ProcessLog) -> None:
+    def _create_table_operation(self, log: ProcessLog) -> None:
         table_name = log.data["table_name"]
         columns_history = self._get_column_history()
         columns_history[table_name] = {}
@@ -135,7 +134,19 @@ class MetadataStore:
         self._save_table_history(table_history)
         self._save_column_history(column_history)
 
-    def _setup_instance_operation(self, log: ProcessLog) -> None:
+    def _rename_table_operation(self, log: ProcessLog) -> None:
+        table_history = self._get_table_history()
+        column_history = self._get_column_history()
+        table_name = log.data["table_name"]
+        new_table_name = log.data["new_table_name"]
+        if table_name in table_history:
+            table_history[new_table_name] = table_history.pop(table_name)
+        if table_name in column_history:
+            column_history[new_table_name] = column_history.pop(table_name)
+        self._save_table_history(table_history)
+        self._save_column_history(column_history)
+
+    def _create_instance_operation(self, log: ProcessLog) -> None:
         pass
 
     def _materialize_operation(self, log: ProcessLog) -> None:
@@ -194,16 +205,18 @@ class MetadataStore:
         if log.operation not in constants.VALID_OPS:
             raise TVProcessError("Operation {log.operation} not supported")
         if log.execution_success:
-            if log.operation == constants.SETUP_TABLE_INNER_OP:
-                self._setup_table_operation(log)
-            if log.operation == constants.SETUP_TEMP_INNER_OP:
-                self._setup_instance_operation(log)
+            if log.operation == constants.CREATE_TABLE_OP:
+                self._create_table_operation(log)
+            if log.operation == constants.CREATE_INSTANCE_OP:
+                self._create_instance_operation(log)
             elif log.operation == constants.DELETE_TABLE_OP:
                 self._delete_table_operation(log)
             elif log.operation == constants.DELETE_INSTANCE_OP:
                 self._delete_instance_operation(log)
             elif log.operation == constants.MAT_OP:
                 self._materialize_operation(log)
+            elif log.operation == constants.RENAME_TABLE_OP:
+                self._rename_table_operation(log)
         self._write_to_history(log)
         self._write_to_completed(process_id)
         del logs[process_id]
@@ -399,14 +412,6 @@ class MetadataStore:
             columns_history = self._get_column_history()
             max_mat_time = columns_history[table_name][max_id][column]
             return max_mat_time, max_start_time, max_id
-
-    def print_active_processes(self, print_all: bool) -> None:
-        with self.lock:
-            active_logs = self._get_active_logs()
-            if print_all:
-                pprint.pprint(active_logs)
-            elif print:
-                print(active_logs)
 
     def get_active_processes(self) -> ActiveProcessDict:
         with self.lock:

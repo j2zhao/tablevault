@@ -7,6 +7,17 @@ ARTIFACT_DTYPE = "artifact_string"
 BUILDER_DEPENDENCIES = "dependencies"
 BUILDER_NAME = "name"
 BUILDER_TYPE = "builder_type"
+GEN_BUILDER_PREFIX = "gen_"
+
+META_LOG_FILE = "logs.txt"
+META_CLOG_FILE = "completed_logs.txt"
+META_ALOG_FILE = "active_logs.json"
+META_CHIST_FILE = "columns_history.json"
+META_THIST_FILE = "tables_history.json"
+META_TABLE_FILE = "tables_metadata.json"
+META_INSTANCE_FILE = "table_instances_metadata.json"
+META_DESCRIPTION_FILE = "description.yaml"
+
 
 RESTART_LOCK = "restart"
 CODE_FOLDER = "code_functions"
@@ -26,22 +37,19 @@ ILLEGAL_TABLE_NAMES = [
     TEMP_FOLDER,
     RESTART_LOCK,
     ARTIFACT_FOLDER,
+    META_DESCRIPTION_FILE,
 ]
 
 TABLE_FILE = "table.csv"
 DTYPE_FILE = "dtypes.json"
 
-META_LOG_FILE = "logs.txt"
-META_CLOG_FILE = "completed_logs.txt"
-META_ALOG_FILE = "active_logs.json"
-META_CHIST_FILE = "columns_history.json"
-META_THIST_FILE = "tables_history.json"
-META_TABLE_FILE = "tables_metadata.json"
-META_INSTANCE_FILE = "table_instances_metadata.json"
-META_DESCRIPTION_FILE = "description.yaml"
 
 STOP_PROCESS_OP = "stop_process"
-COPY_FILE_OP = "copy_files"
+CREATE_BUILDER_FILE_OP = "create_builder"
+CREATE_CODE_MODULE_OP = "create_code_module"
+DELETE_BUILDER_FILE_OP = "delete_builder"
+DELTE_CODE_MODULE_OP = "delete_code_module"
+RENAME_TABLE_OP = "rename_table"
 DELETE_TABLE_OP = "delete_table"
 DELETE_INSTANCE_OP = "delete_instance"
 MAT_OP = "materialize_instance"
@@ -49,26 +57,22 @@ WRITE_TABLE_OP = "write_table"
 WRITE_TABLE_INNER_OP = "write_table_inner"
 EXECUTE_OP = "execute_instance"
 EXECUTE_INNER_OP = "execute_instance_inner"
-SETUP_TEMP_OP = "setup_temp_instance"
-SETUP_TEMP_INNER_OP = "setup_temp_instance_inner"
-SETUP_TABLE_OP = "setup_table"
-SETUP_TABLE_INNER_OP = "setup_table_inner"
-COPY_DB_OP = "copy_database_files"
+CREATE_INSTANCE_OP = "setup_temp_instance"
+CREATE_TABLE_OP = "create_table"
 RESTART_OP = "restart_database"
-ROLLBACK_OP = "rollback"
 VALID_OPS = [
     STOP_PROCESS_OP,
-    COPY_FILE_OP,
+    CREATE_BUILDER_FILE_OP,
+    DELETE_BUILDER_FILE_OP,
+    CREATE_CODE_MODULE_OP,
+    DELTE_CODE_MODULE_OP,
+    RENAME_TABLE_OP,
     DELETE_TABLE_OP,
     DELETE_INSTANCE_OP,
     EXECUTE_OP,
-    SETUP_TEMP_OP,
-    SETUP_TABLE_OP,
-    COPY_DB_OP,
+    CREATE_INSTANCE_OP,
+    CREATE_TABLE_OP,
     RESTART_OP,
-    ROLLBACK_OP,
-    SETUP_TABLE_INNER_OP,
-    SETUP_TEMP_INNER_OP,
     MAT_OP,
     WRITE_TABLE_OP,
     WRITE_TABLE_INNER_OP,
@@ -76,7 +80,7 @@ VALID_OPS = [
 ]
 
 TABLE_SELF = "self"
-OUTPUT_SELF = "self"
+#OUTPUT_SELF = "self"
 TABLE_INDEX = "index"
 
 

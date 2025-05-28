@@ -1,24 +1,23 @@
 from tablevault.core import TableVault
 from unittest.mock import patch
-from helper import evaluate_operation_logging, compare_folders, clean_up_open_ai, copy_test_dir
+from helper import evaluate_operation_logging, compare_folders, copy_test_dir
 import shutil
-from tablevault.col_builders.utils import table_operations
+from tablevault.dataframe_helper import table_operations
 import pandas as pd
-# todo add materialize
-def raise_except():
+
+def raise_except(**args):
+    print("Exception Raised")
     raise ValueError()
 
-def evaluate_restart(process_id:str, exception_raised:bool):
+def evaluate_restart(process_id:str):
     tablevault = TableVault('test_dir', 'jinjin')
-    assert exception_raised
     processes = tablevault.get_active_processes()
     assert process_id in processes
     tablevault = TableVault('test_dir', 'jinjin', restart=True)
     evaluate_operation_logging([process_id])
 
-def evaluate_stops(process_id:str, exception_raised:bool):
+def evaluate_stops(process_id:str):
     tablevault = TableVault('test_dir', 'jinjin')
-    assert exception_raised
     processes = tablevault.get_active_processes()
     assert process_id in processes
     tablevault = TableVault('test_dir', 'jinjin')
@@ -26,184 +25,73 @@ def evaluate_stops(process_id:str, exception_raised:bool):
     evaluate_operation_logging([process_id, process_id_])
     assert compare_folders('test_dir', 'test_dir_copy')
 
-def test_restart_copy_file():
-    def _restart_copy_file():
-        with patch("tablevault._vault_operations._copy_files", raise_except):
-            exception_raised = False
-            try:
-                tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.create_table('stories', allow_multiple_artifacts = False)
-                copy_test_dir()
-                process_id = tablevault.generate_process_id()
-                tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories", process_id=process_id)
-            except:
-                exception_raised = True
-            return process_id, exception_raised
-    process_id, exception_raised =  _restart_copy_file()
-    evaluate_restart(process_id, exception_raised)
-    process_id, exception_raised =  _restart_copy_file()
-    evaluate_stops(process_id, exception_raised)
 
-def test_restart_delete_table():
-    def _restart_delete_table():
-        with patch("tablevault._vault_operations._delete_table", raise_except):
-            exception_raised = False
-            try:
-                tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.create_table('stories', allow_multiple_artifacts = False)
-                copy_test_dir
-                process_id = tablevault.generate_process_id()
-                tablevault.delete_table("stories", process_id)
-            except:
-                exception_raised = True
-        return process_id, exception_raised
-    process_id, exception_raised =  _restart_delete_table()
-    evaluate_restart(process_id, exception_raised)
-    process_id, exception_raised =  _restart_delete_table()
-    evaluate_stops(process_id, exception_raised)
+def test_exception(module_path, funct_name, exception_func):
+    try:
+        with patch(module_path + funct_name, exception_func):
+            tablevault = TableVault('test_dir', 'jinjin', create=True)
+            copy_test_dir()
+            last_process_id = tablevault.generate_process_id()
+            tablevault.create_table('stories_TEST', allow_multiple_artifacts = False, process_id=last_process_id)
+            copy_test_dir()
+            last_process_id = tablevault.generate_process_id()
+            tablevault.rename_table('stories', 'stories_TEST', process_id=last_process_id)
+            copy_test_dir()
+            last_process_id = tablevault.generate_process_id()
+            tablevault.create_code_module("test", process_id=last_process_id)
+            copy_test_dir()
+            last_process_id = tablevault.generate_process_id()
+            tablevault.delete_code_module("test")
+            copy_test_dir()
+            last_process_id = tablevault.generate_process_id()
+            tablevault.create_instance("stories", process_id=last_process_id)
+            copy_test_dir()
+            last_process_id = tablevault.generate_process_id()
+            tablevault.create_builder_file("test_buider", table_name="stories", process_id=last_process_id)
+            copy_test_dir()
+            last_process_id = tablevault.generate_process_id()
+            tablevault.delete_builder_file("test_buider", table_name="stories", process_id=last_process_id)
+            tablevault.create_builder_file("../test_data/test_data_db/stories/gen_stories.yaml", table_name="stories")
+            copy_test_dir()
+            last_process_id = tablevault.generate_process_id()
+            tablevault.execute_instance("stories", last_process_id)
+            copy_test_dir()
+            table = tablevault.get_dataframe("stories")
+            tablevault.create_instance("stories", external_edit=True, copy_version=True)
+            copy_test_dir()
+            last_process_id = tablevault.generate_process_id()
+            tablevault.write_instance(table, "stories", process_id=last_process_id)
+            instances = tablevault.get_instances(table_name= "stories")
+            copy_test_dir()
+            last_process_id = tablevault.generate_process_id()
+            tablevault.delete_instance(instance_id=instances[0], table_name="stories")
+            copy_test_dir()
+            last_process_id = tablevault.generate_process_id()
+            tablevault.delete_table("stories")
+            assert False
+            
+    except ValueError as e:
+        evaluate_restart(last_process_id)
+        evaluate_stops(last_process_id)
 
-def test_restart_delete_instance():
-    def _restart_delete_instance():
-        with patch("tablevault._vault_operations._delete_instance", raise_except):
-            exception_raised = False
-            try:
-                tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.create_table('stories', allow_multiple_artifacts = False)
-                tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-                tablevault.create_instance("stories", builders=["gen_stories"])
-                tablevault.execute_instance("stories")
-                instances = tablevault.get_instances("stories")
-                copy_test_dir()
-                process_id = tablevault.generate_process_id()
-                tablevault.delete_instance(instances[0], "stories", process_id=process_id)
-            except Exception as e:
-                exception_raised = True
-        return process_id, exception_raised
-    process_id, exception_raised =  _restart_delete_instance()
-    evaluate_restart(process_id, exception_raised)
-    process_id, exception_raised =  _restart_delete_instance()
-    evaluate_stops(process_id, exception_raised)
+execute_functions = [
+                   "_create_code_module", 
+                   "_delete_code_module", 
+                   "_create_builder_file",
+                   "_delete_builder_file",
+                   "_rename_table",
+                   "_delete_table",
+                   "_delete_instance",
+                   "_write_table",
+                   "_write_table_inner",
+                   "_create_instance", 
+                   "_setup_table",
+                   "_create_table"]
 
-
-def update_table():
-    df = pd.DataFrame({
-    'id':    [1, 2, 3],
-    'name':  ['Alice', 'Bob', 'Charlie'],
-    'score': [85.5, 92.0, 78.0]
-    })    
-    table_operations.write_dtype(dict(df.dtypes), "TEMP_base", "stories", "test_dir")
-    table_operations.write_table(df, "TEMP_base", "stories", "test_dir")
-
-
-def test_restart_materialize_instance():
-    def _restart_materialize_instance():
-        with patch("tablevault._vault_operations._materialize_instance", raise_except):
-            exception_raised = False
-            try:
-                tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.create_table('stories', allow_multiple_artifacts = False)
-                tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-                tablevault.create_instance("stories", external_edit=True)
-                copy_test_dir()
-                process_id = tablevault.generate_process_id()
-                update_table()
-                tablevault.materialize_instance("stories", process_id=process_id)
-            except Exception as e:
-                exception_raised = True
-        return process_id, exception_raised
-    process_id, exception_raised =  _restart_materialize_instance()
-    evaluate_restart(process_id, exception_raised)
-    process_id, exception_raised =  _restart_materialize_instance()
-    evaluate_stops(process_id, exception_raised)
-
-def test_restart_write_table():
-    def _restart_write_table():
-        with patch("tablevault._vault_operations._write_table", raise_except):
-            exception_raised = False
-            try:
-                tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.create_table('stories', allow_multiple_artifacts = False)
-                tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-                tablevault.create_instance("stories", external_edit=True)
-                copy_test_dir()
-                process_id = tablevault.generate_process_id()
-                df = pd.DataFrame({
-                                    'id':    [1, 2, 3],
-                                    'name':  ['Alice', 'Bob', 'Charlie'],
-                                    'score': [85.5, 92.0, 78.0]
-                                    }) 
-                tablevault.write_instance(df, "stories", process_id=process_id)
-            except Exception as e:
-                exception_raised = True
-        return process_id, exception_raised
-    # process_id, exception_raised =  _restart_write_table()
-    # evaluate_restart(process_id, exception_raised)
-    process_id, exception_raised =  _restart_write_table()
-    evaluate_stops(process_id, exception_raised)
-
-def test_restart_execute_instance():
-    def _restart_execute_instance():
-        with patch("tablevault._vault_operations._execute_instance", raise_except):
-            exception_raised = False
-            try:
-                tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.create_table('stories', allow_multiple_artifacts = False)
-                tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-                tablevault.create_instance("stories", builders=["gen_stories"])
-                copy_test_dir()
-                process_id = tablevault.generate_process_id()
-                tablevault.execute_instance("stories", process_id=process_id)
-            except Exception as e:
-                exception_raised = True
-        return process_id, exception_raised
-    process_id, exception_raised =  _restart_execute_instance()
-    evaluate_restart(process_id, exception_raised)
-    process_id, exception_raised =  _restart_execute_instance()
-    evaluate_stops(process_id, exception_raised)
-
-def test_restart_setup_temp_instance():
-    def _restart_setup_temp_instance():
-        with patch("tablevault._vault_operations._setup_temp_instance_inner", raise_except):
-            exception_raised = False
-            try:
-                tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.create_table('stories', allow_multiple_artifacts = False)
-                tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-                copy_test_dir()
-                process_id = tablevault.generate_process_id()
-                tablevault.create_instance("stories", builders=["gen_stories"], process_id=process_id)
-            except Exception as e:
-                exception_raised = True
-        return process_id, exception_raised
-    process_id, exception_raised =  _restart_setup_temp_instance()
-    evaluate_restart(process_id, exception_raised)
-    process_id, exception_raised =  _restart_setup_temp_instance()
-    evaluate_stops(process_id, exception_raised)
-
-def test_restart_setup_table():
-    def _restart_setup_table():
-        with patch("tablevault._vault_operations._setup_table_inner", raise_except):
-            exception_raised = False
-            try:
-                tablevault = TableVault('test_dir', 'jinjin', create=True)
-                copy_test_dir()
-                process_id = tablevault.generate_process_id()
-                tablevault.create_table('stories', allow_multiple_artifacts = False, process_id=process_id)
-            except Exception as e:
-                #raise e 
-                exception_raised = True
-        return process_id, exception_raised
-    process_id, exception_raised =  _restart_setup_table()
-    evaluate_restart(process_id, exception_raised)
-    process_id, exception_raised =  _restart_setup_table()
-    evaluate_stops(process_id, exception_raised)
+execute_module = 'tablevault._vault_operations.'
 
 if __name__ == "__main__":
-    test_restart_copy_file()
-    test_restart_delete_table()
-    test_restart_delete_instance()
-    test_restart_execute_instance()
-    test_restart_setup_temp_instance()
-    test_restart_setup_table()
-    test_restart_write_table()
-    test_restart_materialize_instance()
+
+    for func in execute_functions: 
+        print(f'FUNCTION {func}')
+        test_exception(execute_module, func, raise_except)

@@ -14,9 +14,15 @@ t.b.d.
 
 
 TODOS
-- allow lists/dictionary of artifacts
+- need to implement map-reduce for row saves (URGENT)
+- need to implement file writing locks (URGENT)
+- allow lists/dictionary of artifacts (SEMI-URGENT)
 - need to completely redo dataframe management (later)
+<<<<<<< HEAD
 - need to implement map-reduce for llm-answer saves
 - copy dataframe?
 - NEED TO DO FILE LOCK! 
 - NEED TO DO RENAMING
+=======
+- UPDATE TESTS
+>>>>>>> v0.02-filelock

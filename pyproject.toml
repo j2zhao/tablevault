@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61.0.0", "wheel", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -24,7 +24,6 @@ dependencies = [
     "click"
 ]
 
-
 # [project.scripts]
 # tablevault = "tablevault.cli:main"
 
@@ -38,6 +37,7 @@ docs = [
     "sphinx-rtd-theme"
 ]
 
+
 [tool.flake8]
 max-line-length = 88
 extend-ignore = ["E203", "W503"]
@@ -45,3 +45,5 @@ exclude =[
     ".ipynb_checkpoints",
     "*/.ipynb_checkpoints/*"]
 
+[tool.setuptools.package-data]
+tablevault = ["col_builders/examples/*.yaml", "helper/examples/example.py"]

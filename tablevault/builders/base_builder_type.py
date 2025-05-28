@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, model_validator
 from typing import Union, Optional
-from tablevault.col_builders.utils import utils
-from tablevault.col_builders.utils.table_string import (
+from tablevault.builders.utils import utils
+from tablevault.builders.utils.table_string import (
     TableValue,
     TableReference,
     parse_table_string,
@@ -9,7 +9,7 @@ from tablevault.col_builders.utils.table_string import (
 )
 from tablevault.defintions import constants, tv_errors, types
 from tablevault.defintions.types import Cache
-from tablevault.col_builders.utils.artifact import apply_artifact_path
+from tablevault.dataframe_helper.artifact import apply_artifact_path
 
 
 class TVBuilder(BaseModel):
@@ -28,7 +28,7 @@ class TVBuilder(BaseModel):
     )
     builder_type: Union[str, TableReference] = Field(
         description="""Type of builder. See
-        tablevault.col_builders.builder_type_mapping for supported Builders."""
+        tablevault.builders.builder_type_mapping for supported Builders."""
     )
 
     @model_validator(mode="before")
@@ -79,16 +79,16 @@ def _get_table_dependencies(
     return list(dependencies)
 
 
-def order_tables_by_builders(all_builders: dict[str, dict[str, TVBuilder]]):
-    all_dependencies = {}
-    for table_name in all_builders:
-        all_dependencies[table_name] = _get_table_dependencies(
-            table_name, all_builders[table_name]
-        )
-    table_names = utils.topological_sort(
-        list(all_dependencies.keys()), all_dependencies
-    )
-    return table_names
+# def order_tables_by_builders(all_builders: dict[str, dict[str, TVBuilder]]):
+#     all_dependencies = {}
+#     for table_name in all_builders:
+#         all_dependencies[table_name] = _get_table_dependencies(
+#             table_name, all_builders[table_name]
+#         )
+#     table_names = utils.topological_sort(
+#         list(all_dependencies.keys()), all_dependencies
+#     )
+#     return table_names
 
 
 def _get_builder_dependencies(values):

@@ -1,10 +1,10 @@
 import os
 import yaml
 from tablevault.defintions import constants
-from tablevault.col_builders.load_builder import load_builder
-from tablevault.col_builders.code_execution_builder_type import CodeBuilder
+from tablevault.builders.load_builder import load_builder
+from tablevault.builders.code_builder_type import CodeBuilder
 import pandas as pd
-from tablevault.col_builders.utils import table_string
+from tablevault.builders.utils import table_string
 
 def load_yaml(file_name:str):
     name = os.path.basename(file_name)

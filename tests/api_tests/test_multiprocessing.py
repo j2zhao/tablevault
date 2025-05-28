@@ -17,8 +17,8 @@ def test_multiprocessing_execute():
     with patch('tablevault._vault_operations._execute_instance',fake_execution):
         tablevault = TableVault('test_dir', 'jinjin', create=True)
         tablevault.create_table('stories', allow_multiple_artifacts = False)
-        tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-        tablevault.create_instance("stories", builders=["gen_stories"])
+        tablevault.create_instance("stories")
+        tablevault.create_builder_file(copy_dir="../test_data/test_data_db_selected/stories", table_name="stories")
         tablevault.execute_instance("stories")
         
 def test_multiprocessing_other_table():
@@ -32,7 +32,7 @@ def test_multiprocessing_other_execute():
 
 def test_multiprocessing_other_instance():
     tablevault = TableVault('test_dir', 'jinjin2')
-    tablevault.create_instance("stories", builders=["gen_stories"])
+    tablevault.create_instance("stories")
 
 def test_multiprocessing():
     t = threading.Thread(target=test_multiprocessing_execute)
@@ -62,4 +62,4 @@ def test_multiprocessing():
 
 if __name__ == "__main__":
     test_multiprocessing()
-    clean_up_open_ai()
+    #clean_up_open_ai()
