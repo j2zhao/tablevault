@@ -4,6 +4,9 @@ examples/open_ai_key/key.txt
 test_database/
 sample_database/
 tests/test_data/
+tests/api_tests/test_dir/*
+tests/api_tests/basic_function/*
+tests/api_tests/test_dir_copy/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
