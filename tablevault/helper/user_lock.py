@@ -4,7 +4,7 @@ from tablevault.defintions import constants
 from typing import Optional
 from tablevault.defintions import tv_errors
 
-def set_not_writable(path:str, set_childen:bool = True, set_children_files=True, skip_children=[], set_self=True):
+def set_not_writable(path:str, set_children:bool = True, set_children_files=True, skip_children=[], set_self=True):
     """
     If `path` is a file, set *just* that file to read+execute (no write).
     If `path` is a directory, set it (and everything underneath) to read+execute.
@@ -20,17 +20,17 @@ def set_not_writable(path:str, set_childen:bool = True, set_children_files=True,
         os.chmod(path, mode)
     
     # Only recurse if it's a directory
-    if os.path.isdir(path) and (set_childen or set_children_files):
+    if os.path.isdir(path) and (set_children or set_children_files):
         for entry in os.listdir(path):
             full_path = os.path.join(path, entry)
-            if os.path.isdir(full_path) and set_childen:
+            if os.path.isdir(full_path) and set_children:
                 if entry not in skip_children:
-                    set_writable(full_path, set_childen, set_children_files, skip_children)
+                    set_writable(full_path, set_children, set_children_files, skip_children)
             else:
                 if entry not in skip_children and set_children_files:
                     os.chmod(full_path, mode)
 
-def set_writable(path:str, set_childen:bool = True, set_children_files=True, skip_children=[], set_self=True):
+def set_writable(path:str, set_children:bool = True, set_children_files=True, skip_children=[], set_self=True):
     """
     If `path` is a file or directory, set it to read+write+execute for
     owner, group, and others. If it's a directory, recurse into children.
@@ -47,12 +47,12 @@ def set_writable(path:str, set_childen:bool = True, set_children_files=True, ski
         os.chmod(path, mode)
     
     # Only recurse if it's a directory
-    if os.path.isdir(path) and (set_childen or set_children_files):
+    if os.path.isdir(path) and (set_children or set_children_files):
         for entry in os.listdir(path):
             full_path = os.path.join(path, entry)
-            if os.path.isdir(full_path) and set_childen:
+            if os.path.isdir(full_path) and set_children:
                 if entry not in skip_children:
-                    set_writable(full_path, set_childen, set_children_files, skip_children)
+                    set_writable(full_path, set_children, set_children_files, skip_children)
             else:
                 if entry not in skip_children and set_children_files:
                     os.chmod(full_path, mode)
@@ -71,17 +71,19 @@ def set_tv_lock_instance(instance_id:str, table_name:str, db_dir:str):
     table_full_path = os.path.join(db_dir, table_name)
     if instance_id == constants.ARTIFACT_FOLDER:
         skip_children = []
+        set_children = False
     else:
-        skip_children = [constants.BUILDER_FOLDER, constants.META_DESCRIPTION_FILE]
+        skip_children = [constants.BUILDER_FOLDER, constants.META_DESCRIPTION_FILE, constants.ARTIFACT_FOLDER]
+        set_children= True
     instance_lock_path = os.path.join(table_lock_path, instance_id)
     instance_full_path = os.path.join(table_full_path, instance_id)
     check_ex = _check_ex_lock(instance_lock_path)
     if check_ex is None:
         return
     elif not check_ex:
-        set_not_writable(instance_full_path, skip_children=skip_children)
+        set_not_writable(instance_full_path, set_children= set_children, skip_children=skip_children)
     else:
-        set_writable(instance_full_path, skip_children=skip_children)
+        set_writable(instance_full_path, set_childen= set_children, skip_children=skip_children)
 
 def set_tv_lock_table(table_name, db_dir):
     lock_dir = os.path.join(db_dir, constants.LOCK_FOLDER)
