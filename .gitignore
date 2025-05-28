@@ -5,13 +5,8 @@ test_database/
 sample_database/
 tests/test_data/
 tests/api_tests/test_dir/*
-<<<<<<< HEAD
 tests/api_tests/basic_function/*
 tests/api_tests/test_dir_copy/*
-=======
-tests/api_tests/test_dir_copy/*
-tests/api_tests/basic_function/*
->>>>>>> v0.02-filelock
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

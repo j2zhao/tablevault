@@ -129,7 +129,22 @@ def takedown_write_table_inner(
 
 def takedown_write_table(
     process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
-):
+):  
+    logs = db_metadata.get_active_processes()
+    if process_id in logs:
+        log = db_metadata.get_active_processes()[process_id]
+    else:
+        db_locks.release_all_locks()
+        return
+    if log.start_success is False or log.execution_success is False:
+        if (
+            "table_name" in log.data and "perm_instance_id" in log.data
+        ):  
+            db_locks.delete_lock_path(
+                log.data["table_name"], log.data["perm_instance_id"]
+            )
+    if log.execution_success is True:
+        db_locks.delete_lock_path(log.data["table_name"], log.data["instance_id"])
     db_locks.release_all_locks()
 
 
@@ -142,6 +157,21 @@ def takedown_execute_instance_inner(
 def takedown_execute_instance(
     process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
 ):
+    logs = db_metadata.get_active_processes()
+    if process_id in logs:
+        log = db_metadata.get_active_processes()[process_id]
+    else:
+        db_locks.release_all_locks()
+        return
+    if log.start_success is False or log.execution_success is False:
+        if (
+            "table_name" in log.data and "perm_instance_id" in log.data
+        ): 
+            db_locks.delete_lock_path(
+                log.data["table_name"], log.data["perm_instance_id"]
+            )
+    if log.execution_success is True:
+        db_locks.delete_lock_path(log.data["table_name"], log.data["instance_id"])
     db_locks.release_all_locks()
 
 
