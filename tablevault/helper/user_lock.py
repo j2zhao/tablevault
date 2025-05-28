@@ -96,7 +96,7 @@ def set_tv_lock_table(table_name, db_dir):
         if check_ex is None:
             raise tv_errors.TVFileError("Lock files not found") 
         if not check_ex:
-            set_not_writable(table_full_path, set_childen_files = False)
+            set_not_writable(table_full_path, set_children_files = False)
         else:
             set_writable(table_full_path, set_children_files = False)
     else:
