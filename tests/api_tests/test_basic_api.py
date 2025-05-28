@@ -42,6 +42,7 @@ def basic_function(copy=True)-> list[str]:
 
 def test_deletion():
     ids = []
+    helper.copy_test_dir("test_dir", "basic_function")
     tablevault = TableVault('test_dir', 'jinjin')
     id = tablevault.delete_code_module("test")
     ids.append(id)
@@ -67,4 +68,5 @@ def evaluate_tests():
     #helper.clean_up_open_ai()
 
 if __name__ == "__main__":
-    evaluate_tests()
+    #evaluate_tests()
+    test_deletion()
