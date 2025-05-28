@@ -1,0 +1,16 @@
+type: llm
+dependencies: [llm_storage.openai_id, llm_storage.paper_name, self.paper_name]
+changed_columns: [q1]
+n_threads: 1 
+retry: 5
+
+context_files:
+  - <<llm_storage.openai_id[paper_name:self.paper_name]>>
+context_msgs:
+  - "Use this story to answer questions"
+questions:
+  - "How does Clara's curiosity shape her journey and development throughout the story?"
+open_ai_key: ./open_ai_key/key.txt
+output_type: freeform
+model: 'gpt-4o-mini'
+temperature: 0.2
