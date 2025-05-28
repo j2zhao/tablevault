@@ -83,7 +83,7 @@ def set_tv_lock_instance(instance_id:str, table_name:str, db_dir:str):
     elif not check_ex:
         set_not_writable(instance_full_path, set_children= set_children, skip_children=skip_children)
     else:
-        set_writable(instance_full_path, set_childen= set_children, skip_children=skip_children)
+        set_writable(instance_full_path, set_children= set_children, skip_children=skip_children)
 
 def set_tv_lock_table(table_name, db_dir):
     lock_dir = os.path.join(db_dir, constants.LOCK_FOLDER)
