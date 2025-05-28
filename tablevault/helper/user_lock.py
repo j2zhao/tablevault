@@ -26,10 +26,8 @@ def set_not_writable(path:str, set_childen:bool = True, set_children_files=True,
             if os.path.isdir(full_path) and set_childen:
                 if entry not in skip_children:
                     set_writable(full_path, set_childen, set_children_files, skip_children)
-                else:
-                    os.chmod(full_path, mode)
             else:
-                if entry not in skip_children:
+                if entry not in skip_children and set_children_files:
                     os.chmod(full_path, mode)
 
 def set_writable(path:str, set_childen:bool = True, set_children_files=True, skip_children=[], set_self=True):
@@ -55,10 +53,8 @@ def set_writable(path:str, set_childen:bool = True, set_children_files=True, ski
             if os.path.isdir(full_path) and set_childen:
                 if entry not in skip_children:
                     set_writable(full_path, set_childen, set_children_files, skip_children)
-                else:
-                    os.chmod(full_path, mode)
             else:
-                if entry not in skip_children:
+                if entry not in skip_children and set_children_files:
                     os.chmod(full_path, mode)
 
 def _check_ex_lock(path:str) -> Optional[bool]:
@@ -93,6 +89,7 @@ def set_tv_lock_table(table_name, db_dir):
     table_full_path = os.path.join(db_dir, table_name)
     check_ex = _check_ex_lock(table_lock_path)
     if table_name == constants.CODE_FOLDER:
+        print("HELLO")
         if check_ex is None:
             raise tv_errors.TVFileError("Lock files not found") 
         if not check_ex:
