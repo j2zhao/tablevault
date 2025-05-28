@@ -1,0 +1,21 @@
+type: llm
+dependencies: [llm_storage.openai_id, llm_storage.paper_name, self.paper_name]
+changed_columns: [q3]
+retry: 5
+n_threads: 1 
+context_files:
+  - <<llm_storage.openai_id[paper_name:self.paper_name]>>
+context_msgs:
+  -  "Use this story to answer questions" 
+questions:
+  - "Would you best classify Clara as a: CATEGORIES?"
+open_ai_key: ./open_ai_key/key.txt
+output_type: category
+entity_name: motivations
+category_names:
+  - Protagonist seeking knowledge
+  - Reckless adventurer
+  - Reluctant hero forced into action
+  - Naive child learning responsibility
+model: 'gpt-4o-mini'
+temperature: 0.2
