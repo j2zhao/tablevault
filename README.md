@@ -14,6 +14,8 @@ t.b.d.
 
 
 TODOS
-- allow lists/dictionary of artifacts
+- need to implement map-reduce for row saves (URGENT)
+- need to implement file writing locks (URGENT)
+- allow lists/dictionary of artifacts (SEMI-URGENT)
 - need to completely redo dataframe management (later)
-- need to implement map-reduce for llm-answer saves
+- UPDATE TESTS

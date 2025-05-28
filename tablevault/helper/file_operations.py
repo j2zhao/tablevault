@@ -8,9 +8,12 @@ from tablevault.helper.database_lock import DatabaseLock
 from tablevault.defintions import constants
 from typing import Any, Optional
 import filecmp
-
+from importlib import resources
+from tablevault.builders.examples.mapping import BUILDER_EXAMPLE_MAPPING
+from tablevault.helper import user_lock
 
 def delete_database_folder(db_dir) -> None:
+    #.set_writable(db_dir)
     shutil.rmtree(db_dir)
 
 
@@ -18,8 +21,10 @@ def setup_database_folder(db_dir: str, description: str, replace: bool = False) 
     if not replace and os.path.exists(db_dir):
         raise TVFileError(f"database path {db_dir} already taken")
     elif replace and os.path.isdir(db_dir):
+        user_lock.set_writable(db_dir)
         shutil.rmtree(db_dir)
     elif replace and os.path.isfile(db_dir):
+        user_lock.set_writable(db_dir)
         os.remove(db_dir)
 
     os.makedirs(db_dir)
@@ -60,6 +65,7 @@ def setup_database_folder(db_dir: str, description: str, replace: bool = False) 
     with open(meta_file, "w") as f:
         descript_yaml = {constants.DESCRIPTION_SUMMARY: description}
         yaml.safe_dump(descript_yaml, f)
+    user_lock.set_tv_lock("", "", db_dir)
 
 
 def setup_table_instance_folder(
@@ -69,7 +75,6 @@ def setup_table_instance_folder(
     external_edit: bool,
     origin_id: str = "",
     origin_table: str = "",
-    builders: list[str] = [],
 ) -> None:
     table_dir = os.path.join(db_dir, table_name)
     instance_dir = os.path.join(table_dir, instance_id)
@@ -98,19 +103,9 @@ def setup_table_instance_folder(
                 )
             else:
                 os.makedirs(artifact_dir)
-        elif len(builders) != 0:
-            os.makedirs(builder_dir)
-            builder_dir_ = os.path.join(table_dir, constants.BUILDER_FOLDER)
-            for builder_name in builders:
-                builder_path_ = os.path.join(builder_dir_, builder_name + ".yaml")
-                builder_path = os.path.join(builder_dir, builder_name + ".yaml")
-                shutil.copy2(builder_path_, builder_path)
-            os.makedirs(artifact_dir)
-            # os.makedirs(code_dir)
         else:
             os.makedirs(builder_dir)
             os.makedirs(artifact_dir)
-            # os.makedirs(code_dir)
         df = pd.DataFrame()
         df.to_csv(current_table_path, index=False)
         type_path = os.path.join(instance_dir, constants.DTYPE_FILE)
@@ -147,6 +142,7 @@ def setup_table_instance_folder(
             os.makedirs(artifact_dir)
         with open(description_path, "w") as f:
             pass
+    user_lock.set_tv_lock(instance_id, table_name, db_dir)
 
 
 def get_description(instance_id: str, table_name: str, db_dir: str) -> Any:
@@ -187,8 +183,6 @@ def setup_table_folder(
     if os.path.isfile(table_dir):
         raise TVFileError("table folder already exists as file.")
     os.makedirs(table_dir)
-    builder_dir_ = os.path.join(table_dir, constants.BUILDER_FOLDER)
-    os.makedirs(builder_dir_)
     if make_artifacts:
         os.makedirs(os.path.join(table_dir, constants.ARTIFACT_FOLDER))
     description_dir = os.path.join(table_dir, constants.META_DESCRIPTION_FILE)
@@ -208,6 +202,12 @@ def rename_table_instance(
         raise TVFileError("Could Not Rename Instance")
     os.rename(temp_dir, new_dir)
 
+def rename_table(new_table_name:str, table_name:str, db_dir:str) -> None:
+    new_dir = os.path.join(db_dir, new_table_name)
+    old_dir = os.path.join(db_dir, table_name)
+    if os.path.exists(new_dir) or not os.path.exists(old_dir):
+        raise TVFileError("Could Not Rename Table")
+    os.rename(old_dir, new_dir)
 
 def delete_table_folder_2(table_name: str, db_dir: str, instance_id: str = "") -> None:
     instance_dir = os.path.join(db_dir, table_name)
@@ -354,37 +354,89 @@ def check_builder_equality(
             del builder2[constants.BUILDER_NAME]
     return builder1 == builder2
 
-
-def copy_files(
-    file_dir: str,
-    sub_folder: str,
-    instance_id: str,
-    table_name: str,
-    db_dir: str,
-) -> None:
-    if sub_folder not in [constants.CODE_FOLDER, constants.BUILDER_FOLDER]:
-        raise TVFileError(f"subfolder {sub_folder} not supported.")
-    try:
-        new_dir = db_dir
-        if table_name != "":
-            new_dir = os.path.join(db_dir, table_name)
-        if instance_id != "":
-            new_dir = os.path.join(new_dir, instance_id)
-        new_dir = os.path.join(new_dir, sub_folder)
-        if file_dir.endswith(".yaml") and sub_folder == constants.BUILDER_FOLDER:
-            shutil.copy2(file_dir, new_dir)
-        elif file_dir.endswith(".py") and sub_folder == constants.BUILDER_FOLDER:
-            shutil.copy2(file_dir, new_dir)
+def create_copy_code_file(db_dir:str, module_name:str = "", copy_dir:str= ""):
+    code_dir = os.path.join(db_dir, constants.CODE_FOLDER)
+    if copy_dir != "":
+        if os.path.isdir(copy_dir):
+            for f in os.listdir(copy_dir):
+                if f.endswith(".py"):
+                    file_path = os.path.join(copy_dir, f)
+                    try:
+                        shutil.copy2(file_path, code_dir)
+                    except Exception as e:
+                        raise TVFileError(str(e))
+        elif os.path.exists(copy_dir) and copy_dir.endswith('.py'):
+            if module_name != "":
+                code_dir = os.path.join(code_dir, f"{module_name}.py")
+            try:
+                shutil.copy2(copy_dir, code_dir)
+            except Exception as e:
+                raise TVFileError(str(e))
         else:
-            for f in os.listdir(file_dir):
-                if f.endswith(".yaml") and sub_folder == constants.BUILDER_FOLDER:
-                    p_path = os.path.join(file_dir, f)
-                    shutil.copy2(p_path, new_dir)
-                if f.endswith(".py") and sub_folder == constants.CODE_FOLDER:
-                    p_path = os.path.join(file_dir, f)
-                    shutil.copy2(p_path, new_dir)
-    except Exception as e:
-        raise TVFileError(f"Error copying from {file_dir}: {e}")
+            raise TVFileError("could not copy file path")
+    else:
+        data = resources.read_binary("tablevault.helper.examples", "example.py")
+        code_path = os.path.join(code_dir, f"{module_name}.py")
+        try:
+            with open(code_path, "wb") as f:
+                f.write(data)
+        except:
+            raise TVFileError("could not create code file")
+
+def delete_code_file(module_name:str, db_dir:str):
+    file_path = os.path.join(db_dir, constants.CODE_FOLDER, f"{module_name}.py")
+    if not os.path.exists(file_path):
+        raise TVFileError("code file doesn't exist")
+    else:
+        os.remove(file_path)
+
+def delete_builder_file(builder_name:str, instance_id:str, table_name:str, db_dir:str):
+    file_path = os.path.join(db_dir, table_name, instance_id, constants.BUILDER_FOLDER, f"{builder_name}.yaml")
+    if not os.path.exists(file_path):
+        raise TVFileError("code file doesn't exist")
+    else:
+        os.remove(file_path)
+
+def create_copy_builder_file(instance_id:str, table_name:str, db_dir:str, 
+                             builder_name:str = "", copy_dir:str= "", builder_type="BaseBuilder"):
+    builder_dir = os.path.join(db_dir, table_name, instance_id, constants.BUILDER_FOLDER)
+    if copy_dir != "":
+        if os.path.isdir(copy_dir):
+            for file_name in os.listdir(copy_dir):
+                if file_name.endswith(".yaml"):
+                    file_path = os.path.join(copy_dir, file_name)
+                    try:
+                        builder_path = os.path.join(builder_dir, file_name)
+                        if os.path.exists(builder_path):
+                            os.remove(builder_path)
+                        shutil.copy2(file_path, builder_path)
+                    except Exception as e:
+                        raise TVFileError(str(e))
+        elif os.path.exists(copy_dir) and copy_dir.endswith('.yaml'):
+            if builder_name != "":
+                builder_path = os.path.join(builder_dir, f"{builder_name}.yaml")
+            else:
+                builder_name = os.path.basename(copy_dir)
+                builder_path = os.path.join(builder_dir, builder_name)
+            if os.path.exists(builder_path):
+                os.remove(builder_path)
+            try:
+                shutil.copy2(copy_dir, builder_path)
+            except Exception as e:
+                raise TVFileError(str(e))
+        else:
+            raise TVFileError("could not copy builder path")
+    else:
+        if builder_type not in BUILDER_EXAMPLE_MAPPING:
+            raise TVFileError("Invalid Builder Name")
+        example_builder = BUILDER_EXAMPLE_MAPPING[builder_type]
+        data = resources.read_binary(example_builder[0], example_builder[1])
+        builder_path = os.path.join(builder_dir, f"{builder_name}.yaml")
+        try:
+            with open(builder_path, "wb") as f:
+                f.write(data)
+        except:
+            raise TVFileError("could not create builder file")
 
 
 def move_artifacts_to_table(db_dir: str, table_name: str = "", instance_id: str = ""):
@@ -483,7 +535,7 @@ def cleanup_temp(active_ids: list[str], db_dir: str):
         if os.path.isdir(sub_dir) and sub_folder not in active_ids:
             shutil.rmtree(sub_dir)
 
-
+# TODO: CHANGE LOCKS
 def copy_table(
     temp_id: str,
     table_name: str,
@@ -501,6 +553,7 @@ def copy_table(
     )
     current_dtype_path = os.path.join(db_dir, table_name, temp_id, constants.DTYPE_FILE)
     shutil.copy2(prev_dtype_path, current_dtype_path)
+    user_lock.set_tv_lock(temp_id, table_name, db_dir)
 
 
 def load_code_function(

@@ -3,6 +3,10 @@ class TableVaultError(Exception):
 
     pass
 
+class TVArtifactError(TableVaultError):
+    "Error Related to Artifact Datatype"
+    pass
+
 
 class TVArgumentError(TableVaultError):
     "Data not correctly specified (either YAML or call Arguments)"

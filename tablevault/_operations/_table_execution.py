@@ -1,10 +1,10 @@
 from tablevault.helper.metadata_store import MetadataStore
 from tablevault.helper import file_operations
 from tablevault.defintions.types import ExternalDeps
-from tablevault.col_builders.utils import table_operations
+from tablevault.dataframe_helper import table_operations
 from tablevault.defintions import constants
-from tablevault.col_builders.load_builder import load_builder
-
+from tablevault.builders.load_builder import load_builder
+#from tablevault.helper import user_lock 
 
 def execute_instance(
     table_name: str,
@@ -18,7 +18,8 @@ def execute_instance(
     process_id: str,
     db_metadata: MetadataStore,
 ):
-
+    #user_lock.set_tv_lock(db_metadata.db_dir)
+    #user_lock.set_instance_free(instance_id, table_name, db_metadata.db_dir)
     # db_metadata.start_execute_operation(table_name)
     log = db_metadata.get_active_processes()[process_id]
     prev_completed_steps = log.complete_steps
@@ -85,3 +86,4 @@ def execute_instance(
                     cache, instance_id, table_name, db_metadata.db_dir, process_id
                 )
         db_metadata.update_process_step(process_id, builder_name)
+    #user_lock.set_tv_free(db_metadata.db_dir)

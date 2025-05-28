@@ -2,8 +2,8 @@
 import pandas as pd
 from unittest.mock import patch
 from tablevault.core import TableVault
-from helper import evaluate_operation_logging, compare_folders, clean_up_open_ai, copy_test_dir
-from tablevault.col_builders.utils import table_operations
+from helper import evaluate_operation_logging, copy_test_dir
+from tablevault.dataframe_helper import table_operations
 
 def raise_except():
     raise ValueError()
@@ -29,25 +29,6 @@ def update_table():
     table_operations.write_table(df, "TEMP_base", "stories", "test_dir")
 
 
-def test_restart_materialize_instance():
-    def _restart_materialize_instance():
-        with patch("tablevault._vault_operations._materialize_instance", raise_except):
-            exception_raised = False
-            try:
-                tablevault = TableVault('test_dir', 'jinjin', create=True)
-                tablevault.create_table('stories', allow_multiple_artifacts = False)
-                tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-                tablevault.create_instance("stories", external_edit=True)
-                copy_test_dir()
-                process_id = tablevault.generate_process_id()
-                update_table()
-                tablevault.materialize_instance("stories", process_id=process_id)
-            except Exception as e:
-                exception_raised = True
-        return process_id, exception_raised
-    process_id, exception_raised =  _restart_materialize_instance()
-    evaluate_stop_materialize(process_id, exception_raised)
-
 def test_restart_write_table():
     def _restart_write_table():
         with patch("tablevault._vault_operations._materialize_instance", raise_except):
@@ -55,7 +36,7 @@ def test_restart_write_table():
             try:
                 tablevault = TableVault('test_dir', 'jinjin', create=True)
                 tablevault.create_table('stories', allow_multiple_artifacts = False)
-                tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
+                #tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
                 tablevault.create_instance("stories", external_edit=True)
                 copy_test_dir()
                 process_id = tablevault.generate_process_id()
@@ -78,8 +59,8 @@ def test_restart_execute_instance():
             try:
                 tablevault = TableVault('test_dir', 'jinjin', create=True)
                 tablevault.create_table('stories', allow_multiple_artifacts = False)
-                tablevault.copy_files("../test_data/test_data_db/stories", table_name="stories")
-                tablevault.create_instance("stories", builders=["gen_stories"])
+                tablevault.create_instance("stories")
+                tablevault.create_builder_file(copy_dir="../test_data/test_data_db_selected/stories", table_name="stories")
                 copy_test_dir()
                 process_id = tablevault.generate_process_id()
                 tablevault.execute_instance("stories", process_id=process_id)
@@ -90,6 +71,5 @@ def test_restart_execute_instance():
     evaluate_stop_materialize(process_id, exception_raised)
 
 if __name__ == "__main__":
-    test_restart_materialize_instance()
     test_restart_write_table()
     test_restart_execute_instance()

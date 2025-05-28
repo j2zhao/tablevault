@@ -1,0 +1,34 @@
+builder_dependencies:
+  gen_llm_storage:
+  - - stories
+    - paper_name
+    - base_1748397944_f812c6d8-597f-44f8-b952-5cd74d225bab
+    - 1748397944.7645051
+    - base
+  upload_openai:
+  - - stories
+    - paper_name
+    - base_1748397944_f812c6d8-597f-44f8-b952-5cd74d225bab
+    - 1748397944.7645051
+    - base
+  - - stories
+    - artifact_name
+    - base_1748397944_f812c6d8-597f-44f8-b952-5cd74d225bab
+    - 1748397944.7645051
+    - base
+children:
+- - base_1748397945_b6c26177-d931-428d-a867-488fcecec34e
+  - llm_questions
+dependencies:
+- - stories
+  - base_1748397944_f812c6d8-597f-44f8-b952-5cd74d225bab
+- - stories
+  - base_1748397944_f812c6d8-597f-44f8-b952-5cd74d225bab
+- - stories
+  - base_1748397944_f812c6d8-597f-44f8-b952-5cd74d225bab
+external_edit: false
+origin:
+- ''
+- ''
+success: true
+summary: ''

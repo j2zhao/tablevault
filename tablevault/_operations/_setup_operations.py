@@ -5,19 +5,99 @@ from tablevault.helper import file_operations
 from tablevault.helper.utils import gen_tv_id
 from tablevault.defintions import constants, types
 from tablevault.defintions.types import SETUP_OUTPUT, ExternalDeps
-from tablevault.col_builders.base_builder_type import (
-    TVBuilder,
-    order_tables_by_builders,
-)
-from tablevault.col_builders.load_builder import load_builder
-from tablevault.col_builders.utils.utils import topological_sort
-from tablevault.col_builders.utils import table_operations
+from tablevault.builders.base_builder_type import TVBuilder
+from tablevault.builders.load_builder import load_builder
+from tablevault.builders.utils.utils import topological_sort
+from tablevault.dataframe_helper import table_operations
 import pandas as pd
 from typing import Optional
+from tablevault.builders import builder_constants
 
+def setup_create_code_module(module_name:str,
+                                copy_dir:str,
+                                process_id: str,
+                                db_metadata: MetadataStore,
+                                db_locks: DatabaseLock)-> SETUP_OUTPUT:
+    if module_name == "" and copy_dir == "":
+        raise tv_errors.TVArgumentError("One of module_name and copy_dir needs to be filled")
+    funct_kwargs = {"module_name": module_name, "copy_dir": copy_dir}
+    db_locks.acquire_exclusive_lock(constants.CODE_FOLDER)
+    file_operations.copy_folder_to_temp(
+            process_id, db_metadata.db_dir, subfolder=constants.CODE_FOLDER
+        )
+    db_metadata.update_process_data(process_id, funct_kwargs)
+    return funct_kwargs
 
-def setup_copy_files(
-    file_dir: str,
+def setup_delete_code_module(module_name:str,
+                                process_id: str,
+                                db_metadata: MetadataStore,
+                                db_locks: DatabaseLock)-> SETUP_OUTPUT:
+    funct_kwargs = {"module_name": module_name}
+    db_locks.acquire_exclusive_lock(constants.CODE_FOLDER)
+    file_operations.copy_folder_to_temp(
+            process_id, db_metadata.db_dir, subfolder=constants.CODE_FOLDER
+        )
+    db_metadata.update_process_data(process_id, funct_kwargs)
+    return funct_kwargs
+
+def setup_create_builder_file(builder_name:str,
+                              table_name:str,
+                              version: str,
+                              copy_dir:str,
+                              builder_type:str,
+                              process_id: str,
+                              db_metadata: MetadataStore,
+                              db_locks: DatabaseLock) -> SETUP_OUTPUT:
+    if builder_name == "" and copy_dir == "":
+        raise tv_errors.TVArgumentError("One of builder_name and copy_dir needs to be filled")
+    instance_id = constants.TEMP_INSTANCE + version
+    existance = file_operations.check_folder_existance(
+        instance_id, table_name, db_metadata.db_dir
+    )
+    if existance is None:
+        raise tv_errors.TVArgumentError("temporary instance doesn't exist")
+    db_locks.acquire_exclusive_lock(table_name, instance_id)
+    file_operations.copy_folder_to_temp(
+            process_id,
+            db_metadata.db_dir,
+            table_name=table_name,
+            instance_id=instance_id,
+            subfolder=constants.BUILDER_FOLDER,
+        )
+    funct_kwargs = {"builder_name": builder_name, "instance_id":instance_id,
+                    "table_name": table_name, "copy_dir":copy_dir, "builder_type":builder_type}
+
+    db_metadata.update_process_data(process_id, funct_kwargs)
+    return funct_kwargs
+
+def setup_delete_builder_file(builder_name:str,
+                              table_name:str,
+                              version: str,
+                              process_id: str,
+                              db_metadata: MetadataStore,
+                              db_locks: DatabaseLock)-> SETUP_OUTPUT:
+    instance_id = constants.TEMP_INSTANCE + version
+    existance = file_operations.check_folder_existance(
+        instance_id, table_name, db_metadata.db_dir
+    )
+    if existance is None:
+        raise tv_errors.TVArgumentError("temporary instance doesn't exist")
+    db_locks.acquire_exclusive_lock(table_name, instance_id)
+    file_operations.copy_folder_to_temp(
+            process_id,
+            db_metadata.db_dir,
+            table_name=table_name,
+            instance_id=instance_id,
+            subfolder=constants.BUILDER_FOLDER,
+        )
+    funct_kwargs = {"builder_name": builder_name, "instance_id":instance_id,
+                    "table_name": table_name}
+
+    db_metadata.update_process_data(process_id, funct_kwargs)
+    return funct_kwargs
+
+def setup_rename_table(
+        new_table_name:str,
     table_name: str,
     process_id: str,
     db_metadata: MetadataStore,
@@ -25,24 +105,25 @@ def setup_copy_files(
 ) -> SETUP_OUTPUT:
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
-    if table_name == "":
-        db_locks.acquire_exclusive_lock(constants.CODE_FOLDER)
-        file_operations.copy_folder_to_temp(
-            process_id, db_metadata.db_dir, subfolder=constants.CODE_FOLDER
-        )
-    else:
-        db_locks.acquire_exclusive_lock(table_name, constants.BUILDER_FOLDER)
-        file_operations.copy_folder_to_temp(
-            process_id,
-            db_metadata.db_dir,
-            table_name=table_name,
-            subfolder=constants.BUILDER_FOLDER,
-        )
-    funct_kwargs = {"file_dir": file_dir, "table_name": table_name}
+    if new_table_name in constants.ILLEGAL_TABLE_NAMES:
+        raise tv_errors.TVArgumentError("Forbidden Table Name: {new_table_name}")
+    existance = db_metadata.get_table_instances(table_name, "")
+    if existance is None:
+        raise tv_errors.TVArgumentError("table_name doesn't exist")
+    existance = db_metadata.get_table_instances(new_table_name, "")
+    if existance is not None:
+        raise tv_errors.TVArgumentError("new_table_name exist")
+    db_locks.acquire_exclusive_lock(table_name)
+    db_locks.make_lock_path(new_table_name)
+    db_locks.make_lock_path(new_table_name, constants.ARTIFACT_FOLDER)
+    instance_ids = db_metadata.get_table_instances(table_name, "")
+    for id in instance_ids:
+        db_locks.make_lock_path(new_table_name, id)
+    db_locks.acquire_exclusive_lock(new_table_name)
+    funct_kwargs = {"new_table_name":new_table_name, "table_name": table_name}
     db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
-
-
+    
 def setup_delete_table(
     table_name: str,
     process_id: str,
@@ -98,7 +179,7 @@ def setup_materialize_instance(
     origin_table: str,
     changed_columns: list[str],
     all_columns: list[str],
-    artifact_columns: list[str],
+    dtypes: list[str],
     dependencies: list[tuple[str, str]],
     success: bool,
     process_id: str,
@@ -172,7 +253,7 @@ def setup_materialize_instance(
         "perm_instance_id": perm_instance_id,
         "origin_id": origin_id,
         "origin_table": origin_table,
-        "artifact_columns": artifact_columns,
+        "dtypes": dtypes,
         "all_columns": all_columns,
         "changed_columns": changed_columns,
         "dependencies": dependencies,
@@ -182,7 +263,6 @@ def setup_materialize_instance(
     db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
 
-# TODO: figure out why materialize didn't work?
 def setup_stop_process(
     to_stop_process_id: str,
     force: bool,
@@ -228,7 +308,7 @@ def setup_stop_process(
                 materialize_ops["origin_table"] = logs[to_stop_process_id].data[
                     "origin_table"
                 ]
-                materialize_ops["artifact_columns"] = []
+                materialize_ops["dtypes"] = []
                 materialize_ops["all_columns"] = logs[to_stop_process_id].data[
                     "all_columns"
                 ]
@@ -258,8 +338,8 @@ def setup_stop_process(
                 materialize_ops["origin_table"] = logs[to_stop_process_id].data[
                     "origin_table"
                 ]
-                materialize_ops["artifact_columns"] = logs[to_stop_process_id].data[
-                    "artifact_columns"
+                materialize_ops["dtypes"] = logs[to_stop_process_id].data[
+                    "dtypes"
                 ]
                 materialize_ops["all_columns"] = logs[to_stop_process_id].data[
                     "all_columns"
@@ -287,8 +367,8 @@ def setup_stop_process(
                 materialize_ops["origin_table"] = logs[to_stop_process_id].data[
                     "origin_table"
                 ]
-                materialize_ops["artifact_columns"] = logs[to_stop_process_id].data[
-                    "artifact_columns"
+                materialize_ops["dtypes"] = logs[to_stop_process_id].data[
+                    "dtypes"
                 ]
                 materialize_ops["all_columns"] = logs[to_stop_process_id].data[
                     "all_columns"
@@ -580,33 +660,22 @@ def setup_execute_instance(
     db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
 
-
-def setup_setup_temp_instance(
+# TODO: THIS NEEDS WORK
+def setup_create_instance(
     table_name: str,
     version: str,
     description: str,
     origin_id: str,
     origin_table: str,
     external_edit: bool,
-    copy_version: bool,
-    builder_names: list[str] | bool,
-    execute: bool,
-    background_execute: bool,
+    copy: bool,
+    builder_names: list[str] | dict[str, str],
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
 ) -> SETUP_OUTPUT:
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
-    if external_edit:
-        if builder_names or execute or background_execute:
-            raise tv_errors.TVArgumentError(
-                "Non-Executable Table does not have builders, origin, or execute."
-            )
-    if background_execute and not execute:
-        raise tv_errors.TVArgumentError(
-            "background_execute cannot be True when execute is False."
-        )
     if version == "":
         version = constants.BASE_TABLE_VERSION
     elif "_" in version:
@@ -616,9 +685,9 @@ def setup_setup_temp_instance(
     if existance is None:
         raise tv_errors.TVArgumentError("table_name doesn't exist")
     start_time = db_metadata.get_active_processes()[process_id].start_time
-    if copy_version:
+    if copy:
         _, _, origin_id = db_metadata.get_last_table_update(
-            table_name, version, before_time=start_time
+            table_name, "", before_time=start_time
         )
         origin_table = table_name
         db_locks.acquire_shared_lock(table_name, origin_id)
@@ -626,12 +695,18 @@ def setup_setup_temp_instance(
         if origin_table == "":
             origin_table = table_name
         db_locks.acquire_shared_lock(origin_table, origin_id)
-    elif builder_names:
-        db_locks.acquire_shared_lock(table_name, constants.BUILDER_FOLDER)
-        if isinstance(builder_names, bool):
-            builder_names = file_operations.get_builder_names(
-                "", table_name, db_metadata.db_dir
-            )
+    if isinstance(builder_names, list):
+        builder_names_ = {}
+        for bn in builder_names:
+            builder_names_[bn] = builder_constants.BASE_BUILDER
+        builder_names = builder_names_
+    elif isinstance(builder_names, dict):
+        for bn, bt in builder_names.items():
+            if bt not in builder_constants.ALL_BUILDERS and not bt.endswith(".yaml"):
+                raise tv_errors.TVArgumentError(f"builder type not recognized for: {bn}")
+    gen_builder = constants.GEN_BUILDER_PREFIX + table_name
+    if origin_id == "" and gen_builder not in builder_names:
+        builder_names[gen_builder] = builder_constants.BASE_BUILDER
     funct_kwargs = {
         "version": version,
         "instance_id": instance_id,
@@ -641,24 +716,15 @@ def setup_setup_temp_instance(
         "origin_table": origin_table,
         "external_edit": external_edit,
         "builder_names": builder_names,
-        "execute": execute,
-        "background_execute": background_execute,
     }
-    funct_kwargs["step_ids"] = [process_id + "_" + gen_tv_id()]
-    if execute:
-        funct_kwargs["step_ids"].append(process_id + "_" + gen_tv_id())
-        db_locks.acquire_shared_lock(constants.CODE_FOLDER)
     db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.make_lock_path(table_name, instance_id)
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     return funct_kwargs
 
 
-def setup_setup_table(
+def setup_create_table(
     table_name: str,
-    create_temp: bool,
-    execute: bool,
-    background_execute: bool,
     allow_multiple_artifacts: bool,
     has_side_effects: bool,
     yaml_dir: str,
@@ -667,79 +733,19 @@ def setup_setup_table(
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
 ) -> SETUP_OUTPUT:
-    if table_name in constants.ILLEGAL_TABLE_NAMES:
+    if table_name in constants.ILLEGAL_TABLE_NAMES or table_name.startswith("."):
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
-    if execute and yaml_dir == "":
-        raise tv_errors.TVArgumentError(
-            f"Cannot Execute {table_name} without Builders Directory"
-        )
     funct_kwargs = {
         "table_name": table_name,
         "yaml_dir": yaml_dir,
-        "create_temp": create_temp,
-        "execute": execute,
-        "background_execute": background_execute,
         "allow_multiple_artifacts": allow_multiple_artifacts,
         "has_side_effects": has_side_effects,
         "description": description,
     }
-    funct_kwargs["step_ids"] = [process_id + "_" + gen_tv_id()]
-    if yaml_dir != "":
-        funct_kwargs["step_ids"].append(process_id + "_" + gen_tv_id())
-    if execute:
-        funct_kwargs["step_ids"].append(process_id + "_" + gen_tv_id())
-        db_locks.acquire_shared_lock(constants.CODE_FOLDER)
     db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.make_lock_path(table_name)
-    db_locks.make_lock_path(table_name, constants.BUILDER_FOLDER)
     db_locks.make_lock_path(table_name, constants.ARTIFACT_FOLDER)
     db_locks.acquire_exclusive_lock(table_name)
-    return funct_kwargs
-
-
-def setup_copy_database_files(
-    yaml_dir: str,
-    code_dir: str,
-    execute: bool,
-    background_execute: bool,
-    allow_multiple_artifacts: list[str],
-    has_side_effects: list[str],
-    process_id: str,
-    db_metadata: MetadataStore,
-    db_locks: DatabaseLock,
-) -> SETUP_OUTPUT:
-    step_ids = []
-    if code_dir != "":
-        db_locks.acquire_exclusive_lock(constants.CODE_FOLDER)
-        step_ids.append(process_id + "_" + gen_tv_id())
-    table_names = []
-    if yaml_dir != "":
-        try:
-            yaml_builders = file_operations.get_external_yaml_builders(yaml_dir)
-            for table_name in yaml_builders:
-                builders = {
-                    builder_name: load_builder(ybuilder)
-                    for builder_name, ybuilder in yaml_builders[table_name].items()
-                }
-                yaml_builders[table_name] = builders
-            table_names = order_tables_by_builders(yaml_builders)
-        except Exception as e:
-            raise tv_errors.TVFileError(f"Error ordering {yaml_dir}: {e}")
-        for table_name in table_names:
-            db_locks.make_lock_path(table_name)
-            db_locks.acquire_exclusive_lock(table_name)
-            step_ids.append(process_id + "_" + gen_tv_id())
-    funct_kwargs = {
-        "yaml_dir": yaml_dir,
-        "table_names": table_names,
-        "code_dir": code_dir,
-        "execute": execute,
-        "allow_multiple_artifacts": allow_multiple_artifacts,
-        "has_side_effects": has_side_effects,
-        "step_ids": step_ids,
-        "background_execute": background_execute,
-    }
-    db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
 
 
@@ -748,58 +754,13 @@ def setup_restart_database(db_locks: DatabaseLock) -> SETUP_OUTPUT:
     return {}
 
 
-def setup_setup_temp_instance_innner(
-    table_name: str,
-    instance_id: str,
-    origin_id: str,
-    origin_table: str,
-    external_edit: bool,
-    builder_names: list[str],
-    description: str,
-    process_id: str,
-    db_metadata: MetadataStore,
-    db_locks: DatabaseLock,
-) -> SETUP_OUTPUT:
-    funct_kwargs = {
-        "table_name": table_name,
-        "instance_id": instance_id,
-        "origin_id": origin_id,
-        "origin_table": origin_table,
-        "external_edit": external_edit,
-        "builder_names": builder_names,
-        "description": description,
-    }
-    db_metadata.update_process_data(process_id, funct_kwargs)
-    db_locks.acquire_exclusive_lock(table_name, instance_id)
-    if origin_id != "":
-        db_locks.acquire_shared_lock(table_name, origin_id)
-    if len(builder_names) > 0:
-        db_locks.acquire_shared_lock(table_name, constants.BUILDER_FOLDER)
-    return funct_kwargs
-
-
-def setup_setup_table_inner(
-    table_name: str,
-    allow_multiple_artifacts: bool,
-    has_side_effects: bool,
-    description: str,
-    process_id: str,
-    db_metadata: MetadataStore,
-    db_locks: DatabaseLock,
-) -> SETUP_OUTPUT:
-    funct_kwargs = {
-        "table_name": table_name,
-        "description": description,
-        "allow_multiple_artifacts": allow_multiple_artifacts,
-        "has_side_effects": has_side_effects,
-    }
-    db_metadata.update_process_data(process_id, funct_kwargs)
-    db_locks.acquire_exclusive_lock(table_name)
-    return funct_kwargs
-
-
+#TODO
 SETUP_MAP = {
-    constants.COPY_FILE_OP: setup_copy_files,
+    constants.CREATE_CODE_MODULE_OP: setup_create_code_module,
+    constants.DELTE_CODE_MODULE_OP: setup_delete_code_module,
+    constants.CREATE_BUILDER_FILE_OP: setup_create_builder_file,
+    constants.DELETE_BUILDER_FILE_OP: setup_delete_builder_file,
+    constants.RENAME_TABLE_OP: setup_rename_table,
     constants.DELETE_TABLE_OP: setup_delete_table,
     constants.DELETE_INSTANCE_OP: setup_delete_instance,
     constants.MAT_OP: setup_materialize_instance,
@@ -808,12 +769,9 @@ SETUP_MAP = {
     constants.WRITE_TABLE_INNER_OP: setup_write_table_inner,
     constants.EXECUTE_INNER_OP: setup_execute_instance_inner,
     constants.EXECUTE_OP: setup_execute_instance,
-    constants.SETUP_TEMP_OP: setup_setup_temp_instance,
-    constants.SETUP_TABLE_OP: setup_setup_table,
-    constants.COPY_DB_OP: setup_copy_database_files,
+    constants.CREATE_INSTANCE_OP: setup_create_instance,
+    constants.CREATE_TABLE_OP: setup_create_table,
     constants.RESTART_OP: setup_restart_database,
-    constants.SETUP_TEMP_INNER_OP: setup_setup_temp_instance_innner,
-    constants.SETUP_TABLE_INNER_OP: setup_setup_table_inner,
 }
 
 

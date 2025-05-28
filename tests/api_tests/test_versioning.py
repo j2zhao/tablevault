@@ -2,8 +2,8 @@
 
 from tablevault.core import TableVault
 import os
-from test_basic_api import basic_function, test_multi_execution_table
-from helper import evaluate_operation_logging, compare_folders, evaluate_full_tables, clean_up_open_ai, copy_test_dir
+from test_basic_api import basic_function
+from helper import evaluate_operation_logging, evaluate_full_tables, clean_up_open_ai, copy_test_dir
 import shutil
 
 def copy_story(base_dir= '../test_data/stories', story_name = 'The_Clockmakers_Secret.pdf'):
@@ -18,12 +18,13 @@ def delete_story(base_dir= '../test_data/stories', story_name = 'The_Clockmakers
         os.remove(story_path)
 
 def test_copy_instance_no_change():
-    basic_function()
+    #basic_function()
+    copy_test_dir("test_dir", "basic_function")
     ids = []
     tablevault = TableVault('test_dir', 'jinjin2')
-    id = tablevault.create_instance("llm_storage", copy_version=True)
+    id = tablevault.create_instance("llm_storage", copy=True)
     ids.append(id)
-    id = tablevault.create_instance("llm_questions", copy_version=True)
+    id = tablevault.create_instance("llm_questions", copy=True)
     ids.append(id)
     copy_test_dir()
     id = tablevault.execute_instance("llm_questions")
@@ -43,10 +44,15 @@ def test_copy_instance_no_change():
     evaluate_operation_logging(ids)
 
 def test_copy_instance_builder_change():
-    basic_function()
+    #basic_function()
+    copy_test_dir("test_dir", "basic_function")
     ids = []
     tablevault = TableVault('test_dir', 'jinjin2')
-    id = tablevault.create_instance("llm_questions", builders=["gen_llm_questions", "question_1a","question_2", "question_3"])
+    id = tablevault.create_instance("llm_questions")
+    builders=["gen_llm_questions", "question_1a","question_2", "question_3"]
+    for bn in builders:
+        id = tablevault.create_builder_file(copy_dir=f"../test_data/test_data_db/llm_questions/{bn}.yaml", table_name="llm_questions")
+ 
     ids.append(id)
     id = tablevault.execute_instance("llm_questions")
     ids.append(id)
@@ -61,12 +67,13 @@ def test_copy_instance_builder_change():
     assert not df2['q1'].isna().any()
 
 def test_copy_dep_change():
-    basic_function()
+    #basic_function()
+    copy_test_dir("test_dir", "basic_function")
     ids = []
     tablevault = TableVault('test_dir', 'jinjin2')
-    id = tablevault.create_instance("llm_storage", copy_version=True)
+    id = tablevault.create_instance("llm_storage", copy=True)
     ids.append(id)
-    id = tablevault.create_instance("llm_questions", copy_version=True)
+    id = tablevault.create_instance("llm_questions", copy=True)
     ids.append(id)
     id = tablevault.execute_instance("llm_storage", force_execute=True)
     ids.append(id)
@@ -76,7 +83,7 @@ def test_copy_dep_change():
     instances = tablevault.get_instances("llm_questions")
     assert len(instances) == 2
     df1 = tablevault.get_dataframe("llm_questions", instances[0])
-    df2 = tablevault.g("llm_questions", instances[1])
+    df2 = tablevault.get_dataframe("llm_questions", instances[1])
     cols_to_compare = ['q1', 'q2a', 'q2', 'q3a', 'q3']
     assert len(df2) == 1
     for col in cols_to_compare:
@@ -86,15 +93,14 @@ def test_copy_dep_change():
 def test_new_row_change():
     ids = []
     delete_story()
-    basic_function()
-    #test_multi_execution_table()
+    copy_test_dir("test_dir", "basic_function")
     copy_story()
     tablevault = TableVault('test_dir', 'jinjin2')
-    id = tablevault.create_instance("stories", copy_version=True)
+    id = tablevault.create_instance("stories", copy=True)
     ids.append(id)
-    id = tablevault.create_instance("llm_storage", copy_version=True)
+    id = tablevault.create_instance("llm_storage", copy=True)
     ids.append(id)
-    id = tablevault.create_instance("llm_questions", copy_version=True)
+    id = tablevault.create_instance("llm_questions", copy=True)
     ids.append(id)
     id = tablevault.execute_instance("stories")
     ids.append(id)
@@ -110,4 +116,4 @@ if __name__ == "__main__":
     test_copy_instance_builder_change()
     test_copy_dep_change()
     test_new_row_change()
-    clean_up_open_ai()
+    #clean_up_open_ai()

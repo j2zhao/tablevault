@@ -6,7 +6,7 @@ from filelock import FileLock
 from tablevault.defintions import constants
 from tablevault.defintions.tv_errors import TVLockError
 from tablevault.helper.utils import gen_tv_id
-
+from tablevault.helper.user_lock import set_tv_lock
 
 def _check_locks(process_id: str, lock_path: str, exclusive: bool) -> bool:
     for _, _, filenames in os.walk(lock_path):
@@ -188,7 +188,9 @@ class DatabaseLock:
                 timeout=timeout,
                 check_interval=check_interval,
             )
+            set_tv_lock(instance_id, table_name, self.db_dir)
             return (table_name, instance_id, lid)
+        
 
     def release_lock(self, lock_id: tuple[str, str, str]) -> None:
         table_name, instance_id, lid = lock_id
@@ -198,9 +200,11 @@ class DatabaseLock:
             lock_path = os.path.join(lock_path, instance_id)
         with self.meta_lock:
             _release_lock(lock_path, lid)
+            set_tv_lock(instance_id, table_name, self.db_dir)
 
     def release_all_locks(self) -> None:
         _release_all_lock(self.process_id, self.lock_path)
+        set_tv_lock("", "", self.db_dir)
 
     def make_lock_path(self, table_name: str = "", instance_id: str = ""):
         lock_path = os.path.join(self.db_dir, constants.LOCK_FOLDER)
