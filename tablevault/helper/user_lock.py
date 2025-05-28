@@ -89,7 +89,6 @@ def set_tv_lock_table(table_name, db_dir):
     table_full_path = os.path.join(db_dir, table_name)
     check_ex = _check_ex_lock(table_lock_path)
     if table_name == constants.CODE_FOLDER:
-        print("HELLO")
         if check_ex is None:
             raise tv_errors.TVFileError("Lock files not found") 
         if not check_ex:
