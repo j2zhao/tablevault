@@ -268,23 +268,23 @@ def _materialize_instance(
                 parent_descript, origin_id, origin_table, db_metadata.db_dir
             )
 
-    for dep_table, dep_instance in dependencies:
-        parent_descript = file_operations.get_description(
-            dep_instance, dep_table, db_metadata.db_dir
-        )
-        if constants.DESCRIPTION_CHILDREN not in parent_descript:
-            parent_descript[constants.DESCRIPTION_CHILDREN] = []
-        recorded = False
-        for id, name in parent_descript[constants.DESCRIPTION_CHILDREN]:
-            if id == perm_instance_id or name == table_name:
-                recorded = True
-        if not recorded:
-            parent_descript[constants.DESCRIPTION_CHILDREN].append(
-                [perm_instance_id, table_name]
-            )
-            file_operations.write_description(
-                parent_descript, dep_instance, dep_table, db_metadata.db_dir
-            )
+    # for dep_table, dep_instance in dependencies:
+    #     parent_descript = file_operations.get_description(
+    #         dep_instance, dep_table, db_metadata.db_dir
+    #     )
+    #     if constants.DESCRIPTION_CHILDREN not in parent_descript:
+    #         parent_descript[constants.DESCRIPTION_CHILDREN] = []
+    #     recorded = False
+    #     for id, name in parent_descript[constants.DESCRIPTION_CHILDREN]:
+    #         if id == perm_instance_id or name == table_name:
+    #             recorded = True
+    #     if not recorded:
+    #         parent_descript[constants.DESCRIPTION_CHILDREN].append(
+    #             [perm_instance_id, table_name]
+    #         )
+    #         file_operations.write_description(
+    #             parent_descript, dep_instance, dep_table, db_metadata.db_dir
+    #         )
 
 def materialize_instance(
     author: str,

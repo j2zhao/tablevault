@@ -412,7 +412,7 @@ def setup_write_table(
     table_df: Optional[pd.DataFrame],
     table_name: str,
     version: str,
-    artifact_columns: list[str],
+    dtypes: dict[str, str],
     dependencies: list[tuple[str, str]],
     process_id: str,
     db_metadata: MetadataStore,
@@ -452,7 +452,7 @@ def setup_write_table(
     perm_instance_id = version + perm_instance_id
     db_locks.make_lock_path(table_name, perm_instance_id)
     db_locks.acquire_exclusive_lock(table_name, perm_instance_id)
-    if not table_data[constants.TABLE_ALLOW_MARTIFACT] and len(artifact_columns) > 0:
+    if not table_data[constants.TABLE_ALLOW_MARTIFACT]:
         db_locks.acquire_exclusive_lock(table_name, constants.ARTIFACT_FOLDER)
     step_ids.append(process_id + "_" + gen_tv_id())
 
@@ -471,11 +471,18 @@ def setup_write_table(
         except tv_errors.TVLockError:
             pass
 
+    dependencies_ = []
+    for id, tname in dependencies:
+        if id == None or id == "":
+            _, _, id = db_metadata.get_last_table_update(table_name)
+        dependencies_.append([tname, id])
+
+
     funct_kwargs = {
         "instance_id": instance_id,
         "table_name": table_name,
-        "artifact_columns": artifact_columns,
-        "dependencies": dependencies,
+        "dtypes": dtypes,
+        "dependencies": dependencies_,
         "perm_instance_id": perm_instance_id,
         "step_ids": step_ids,
         "table_df": None,
@@ -485,9 +492,9 @@ def setup_write_table(
         "changed_columns": changed_columns,
     }
     db_metadata.update_process_data(process_id, funct_kwargs)
-    for col in artifact_columns:
+    for col, dtype in dtypes.items():
         if col in table_df.columns:
-            table_df[col] = table_df[col].astype(constants.ARTIFACT_DTYPE)
+            table_df[col] = table_df[col].astype(dtype)
         else:
             raise tv_errors.TVArgumentError("Artifact column not in Dataframe")
     funct_kwargs["table_df"] = table_df
