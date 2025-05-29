@@ -705,7 +705,7 @@ def setup_create_instance(
             if bt not in builder_constants.ALL_BUILDERS and not bt.endswith(".yaml"):
                 raise tv_errors.TVArgumentError(f"builder type not recognized for: {bn}")
     gen_builder = constants.GEN_BUILDER_PREFIX + table_name
-    if origin_id == "" and gen_builder not in builder_names:
+    if origin_id == "" and gen_builder not in builder_names and not external_edit:
         builder_names[gen_builder] = builder_constants.BASE_BUILDER
     funct_kwargs = {
         "version": version,
