@@ -6,7 +6,6 @@ t.b.d.
 
 - download from github
 - pip install .
-- Add open_ai key to examples/open_ai_key (to test)
 
 # Example
 
@@ -14,12 +13,6 @@ t.b.d.
 
 
 TODOS
-- need to implement map-reduce for row saves (URGENT)
-- need to implement file writing locks (URGENT)
-- allow lists/dictionary of artifacts (SEMI-URGENT)
-- need to completely redo dataframe management (later)
-- need to implement map-reduce for llm-answer saves
-- copy dataframe?
-- NEED TO DO FILE LOCK! 
-- NEED TO DO RENAMING
-- UPDATE TESTS
+- Migration to duckdb for backend
+- Add customizable backend options
+- Add SQL df access support
