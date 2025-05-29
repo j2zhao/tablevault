@@ -125,9 +125,8 @@ class ArtifactStringArray(ExtensionArray):
                 cleaned.append(v)
             else:
                 raise ValueError("ArtifactStringArray elements must be str or NA.")
-        self._data = (
-            np.asarray(cleaned, dtype=object).copy() if copy else np.asarray(cleaned, dtype=object)
-        )
+        arr = np.asarray(cleaned, dtype=object)
+        self._data = arr.copy() if copy else arr
 
     # ---- core EA API ----
     @property
@@ -139,11 +138,31 @@ class ArtifactStringArray(ExtensionArray):
 
     def __getitem__(self, item):
         res = self._data[item]
-        return (
-            ArtifactStringArray(res)
-            if isinstance(item, (slice, list, np.ndarray, pd.Index))
-            else res
-        )
+        if isinstance(item, (slice, list, np.ndarray, pd.Index)):
+            return ArtifactStringArray(res)
+        else:
+            return res
+
+    def __setitem__(self, key, value):
+        # determine positions to assign
+        if pd.api.types.is_scalar(key):
+            idxs = [key]
+        else:
+            # slice, boolean mask, integer list, etc.
+            idxs = np.arange(len(self._data))[key]
+        # build list of values to assign
+        if pd.api.types.is_scalar(value):
+            vals = [value] * len(idxs)
+        else:
+            vals = list(value)
+            if len(vals) != len(idxs):
+                raise ValueError(f"Length of values ({len(vals)}) doesn't match indexer ({len(idxs)}).")
+        # validate and assign
+        for i, v in zip(idxs, vals):
+            if isinstance(v, str) or _safe_isna(v):
+                self._data[i] = v
+            else:
+                raise ValueError("ArtifactStringArray elements must be str or NA.")
 
     def isna(self):
         return np.fromiter((pd.isna(x) for x in self._data), dtype=bool)
@@ -214,4 +233,3 @@ class ArtifactStringArray(ExtensionArray):
 
     def __repr__(self):
         return f"ArtifactStringArray({self._data.tolist()})"
-
