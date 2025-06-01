@@ -1,9 +1,10 @@
-from tablevault.helper.metadata_store import MetadataStore
-from tablevault.helper import file_operations
-from tablevault.defintions.types import ExternalDeps
-from tablevault.dataframe_helper import table_operations
-from tablevault.defintions import constants
-from tablevault.builders.load_builder import load_builder
+from tablevault._helper.metadata_store import MetadataStore
+from tablevault._helper import file_operations
+from tablevault._defintions.types import ExternalDeps, InternalDeps
+from tablevault._dataframe_helper import table_operations
+from tablevault._defintions import constants
+from tablevault._builders.load_builder import load_builder
+
 
 def execute_instance(
     table_name: str,
@@ -11,6 +12,7 @@ def execute_instance(
     top_builder_names: list[str],
     changed_columns: list[str],
     all_columns: list[str],
+    internal_deps: InternalDeps,
     external_deps: ExternalDeps,
     origin_id: str,
     origin_table: str,
@@ -28,14 +30,6 @@ def execute_instance(
         for builder_name, ybuilder in yaml_builders.items()
     }
     column_dtypes = {}
-
-    yaml_descript = file_operations.get_description(
-        instance_id, table_name, db_metadata.db_dir
-    )
-    yaml_descript[constants.DESCRIPTION_BUILDER_DEPENDENCIES] = external_deps
-    file_operations.write_description(
-        yaml_descript, instance_id, table_name, db_metadata.db_dir
-    )
 
     for builder_name in top_builder_names:
         column_dtypes.update(builders[builder_name].dtypes)
@@ -61,6 +55,7 @@ def execute_instance(
             continue
         cache = table_operations.fetch_table_cache(
             external_deps[builder_name],
+            internal_deps,
             instance_id,
             table_name,
             db_metadata,

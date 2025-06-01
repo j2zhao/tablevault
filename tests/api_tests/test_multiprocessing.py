@@ -3,9 +3,7 @@ from unittest.mock import patch
 from tablevault.core import TableVault
 import time
 import threading
-from tablevault.defintions import tv_errors
-from helper import clean_up_open_ai
-# todo add materialize
+from tablevault._defintions import tv_errors
 import sys
 
 def fake_execution():

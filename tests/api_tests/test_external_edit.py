@@ -4,7 +4,6 @@ Test materialization and write table
 """
 import helper
 import pandas as pd
-from tablevault.dataframe_helper import table_operations
 
 
 def test_write_table_basic():

@@ -3,7 +3,6 @@ import pandas as pd
 from unittest.mock import patch
 from tablevault.core import TableVault
 from helper import evaluate_operation_logging, copy_test_dir
-from tablevault.dataframe_helper import table_operations
 
 def raise_except():
     raise ValueError()
@@ -18,16 +17,6 @@ def evaluate_stop_materialize(process_id:str, exception_raised:bool):
     evaluate_operation_logging([process_id, process_id_])
     instances = tablevault.get_instances("stories")
     assert len(instances) == 1
-
-def update_table():
-    df = pd.DataFrame({
-    'id':    [1, 2, 3],
-    'name':  ['Alice', 'Bob', 'Charlie'],
-    'score': [85.5, 92.0, 78.0]
-    })    
-    table_operations.write_dtype(dict(df.dtypes), "TEMP_base", "stories", "test_dir")
-    table_operations.write_table(df, "TEMP_base", "stories", "test_dir")
-
 
 def test_restart_write_table():
     def _restart_write_table():

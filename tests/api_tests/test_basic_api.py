@@ -1,9 +1,6 @@
 from tablevault.core import TableVault
 import helper 
 
-
-    
-
 def basic_function(copy=True)-> list[str]:
     ids = []
     tablevault = TableVault('test_dir', 'jinjin', create=True,)
@@ -19,11 +16,11 @@ def basic_function(copy=True)-> list[str]:
     ids.append(id)
     id = tablevault.create_instance("stories")
     ids.append(id)
-    id = tablevault.create_instance("llm_storage", builders=["gen_llm_storage", "upload_openai"])
+    id = tablevault.create_instance("llm_storage", builders=["upload_openai"])
     ids.append(id)
-    id = tablevault.create_instance("llm_questions", builders=["gen_llm_questions", "question_1","question_2", "question_3"])
+    id = tablevault.create_instance("llm_questions", builders=["question_1","question_2", "question_3"])
 
-    id = tablevault.create_builder_file(copy_dir="../test_data/test_data_db/stories/gen_stories.yaml", table_name="stories")
+    id = tablevault.create_builder_file(copy_dir="../test_data/test_data_db/stories/stories_index.yaml", table_name="stories")
     ids.append(id)
     
     id = tablevault.create_builder_file(copy_dir="../test_data/test_data_db_selected/llm_storage", table_name="llm_storage")

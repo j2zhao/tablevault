@@ -1,9 +1,6 @@
 from tablevault.core import TableVault
 from unittest.mock import patch
 from helper import evaluate_operation_logging, compare_folders, copy_test_dir
-import shutil
-from tablevault.dataframe_helper import table_operations
-import pandas as pd
 
 def raise_except(**args):
     print("Exception Raised")

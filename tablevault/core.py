@@ -1,15 +1,14 @@
-from tablevault import _vault_operations
-from tablevault.helper.metadata_store import ActiveProcessDict
-from tablevault.helper.utils import gen_tv_id
-from tablevault.defintions import constants
+from tablevault._operations import _vault_operations
+from tablevault._helper.metadata_store import ActiveProcessDict
+from tablevault._helper.utils import gen_tv_id
+from tablevault._defintions import constants
 import pandas as pd
 from typing import Optional
 import os
 import tarfile
-from tablevault.defintions import tv_errors
-from tablevault.dataframe_helper.table_operations import make_all_df
-import os
-from tablevault.helper.user_lock import set_tv_lock
+from tablevault._defintions import tv_errors
+from tablevault._helper.user_lock import set_tv_lock
+
 
 def can_program_modify_permissions(filepath):
     current_euid = os.geteuid()
@@ -21,7 +20,7 @@ def can_program_modify_permissions(filepath):
         return True
     else:
         return False
-    
+
 
 class TableVault:
     """A TableVault object that interfaces with a TableVault directory.
@@ -70,20 +69,21 @@ class TableVault:
         else:
             if os.path.isdir(db_dir):
                 if not can_program_modify_permissions(db_dir):
-                    raise tv_errors.TVArgumentError(f"Need Ownership Permission for {db_dir}")
+                    raise tv_errors.TVArgumentError(
+                        f"Need Ownership Permission for {db_dir}"
+                    )
             else:
                 raise tv_errors.TVArgumentError(f"No Folder Found at {db_dir}")
         if restart:
             _vault_operations.restart_database(
                 author=self.author, db_dir=self.db_dir, process_id=""
             )
-        make_all_df(db_dir)
         set_tv_lock("", "", db_dir)
 
     def get_process_completion(self, process_id: str) -> bool:
         return _vault_operations.complete_process(
-            process_id=process_id, 
-            db_dir=self.db_dir)
+            process_id=process_id, db_dir=self.db_dir
+        )
 
     def get_artifact_folder(
         self,
@@ -93,11 +93,11 @@ class TableVault:
         is_temp: bool = True,
     ) -> str:
         return _vault_operations.get_artifact_folder(
-            instance_id=instance_id, 
-            table_name=table_name, 
-            version=version, 
-            db_dir=self.db_dir, 
-            is_temp=is_temp
+            instance_id=instance_id,
+            table_name=table_name,
+            version=version,
+            db_dir=self.db_dir,
+            is_temp=is_temp,
         )
 
     def get_active_processes(self) -> ActiveProcessDict:
@@ -162,7 +162,7 @@ class TableVault:
         active_only: bool = True,
         safe_locking: bool = True,
         rows: Optional[int] = None,
-    ) -> pd.DataFrame:
+    ) -> tuple[pd.DataFrame, str]:
         return _vault_operations.get_table(
             instance_id=instance_id,
             table_name=table_name,
@@ -173,11 +173,9 @@ class TableVault:
             rows=rows,
         )
 
-    def create_code_module(self, 
-                           module_name:str = "",
-                           copy_dir: str = "", 
-                           process_id: str = ""
-                           ) -> None:
+    def create_code_module(
+        self, module_name: str = "", copy_dir: str = "", process_id: str = ""
+    ) -> None:
         """
         Copy builder files into a table.
 
@@ -200,11 +198,8 @@ class TableVault:
             process_id=process_id,
             db_dir=self.db_dir,
         )
-    
-    def delete_code_module(self, 
-                           module_name:str,
-                           process_id: str = ""
-                           ) -> None:
+
+    def delete_code_module(self, module_name: str, process_id: str = "") -> None:
         """
         Copy builder files into a table.
 
@@ -226,39 +221,46 @@ class TableVault:
             process_id=process_id,
             db_dir=self.db_dir,
         )
-    
-    def create_builder_file(self, 
-                            table_name:str, 
-                            builder_name:str="",
-                            version:str=constants.BASE_TABLE_VERSION,
-                            copy_dir: str = "", 
-                            builder_type:str="",
-                            process_id:str=""):
-        return _vault_operations.create_builder_file(self.author,
-                 builder_name=builder_name,
-                 table_name=table_name,
-                 version=version,
-                 copy_dir=copy_dir,
-                 builder_type=builder_type,
-                 process_id=process_id,
-                 db_dir=self.db_dir)
 
-    def delete_builder_file(self, 
-                            builder_name:str,
-                            table_name:str, 
-                            version:str=constants.BASE_TABLE_VERSION, 
-                            process_id:str=""):
-        return _vault_operations.delete_builder_file(self.author,
-                 builder_name=builder_name,
-                 table_name=table_name,
-                 version=version,
-                 process_id=process_id,
-                 db_dir=self.db_dir)
-    
-    def rename_table(self, 
-                     new_table_name:str, 
-                     table_name:str, 
-                     process_id:str=""): # TODO
+    def create_builder_file(
+        self,
+        table_name: str,
+        builder_name: str = "",
+        version: str = constants.BASE_TABLE_VERSION,
+        copy_dir: str = "",
+        builder_type: str = "",
+        process_id: str = "",
+    ):
+        return _vault_operations.create_builder_file(
+            self.author,
+            builder_name=builder_name,
+            table_name=table_name,
+            version=version,
+            copy_dir=copy_dir,
+            builder_type=builder_type,
+            process_id=process_id,
+            db_dir=self.db_dir,
+        )
+
+    def delete_builder_file(
+        self,
+        builder_name: str,
+        table_name: str,
+        version: str = constants.BASE_TABLE_VERSION,
+        process_id: str = "",
+    ):
+        return _vault_operations.delete_builder_file(
+            self.author,
+            builder_name=builder_name,
+            table_name=table_name,
+            version=version,
+            process_id=process_id,
+            db_dir=self.db_dir,
+        )
+
+    def rename_table(
+        self, new_table_name: str, table_name: str, process_id: str = ""
+    ):  # TODO
         return _vault_operations.rename_table(
             author=self.author,
             new_table_name=new_table_name,
@@ -266,7 +268,6 @@ class TableVault:
             process_id=process_id,
             db_dir=self.db_dir,
         )
-    
 
     def delete_table(self, table_name: str, process_id: str = "") -> None:
         """
@@ -309,36 +310,12 @@ class TableVault:
             db_dir=self.db_dir,
         )
 
-    # def materialize_instance(
-    #     self,
-    #     table_name: str,
-    #     version: str = constants.BASE_TABLE_VERSION,
-    #     dependencies: list[tuple[str, str]] = [],
-    #     artifact_columns: list[str] = [],
-    #     process_id: str = "",
-    # ):
-    #     return _vault_operations.materialize_instance(
-    #         self.author,
-    #         "",
-    #         table_name,
-    #         version,
-    #         "",
-    #         "",
-    #         "",
-    #         artifact_columns,
-    #         [],
-    #         [],
-    #         dependencies,
-    #         process_id,
-    #         self.db_dir,
-    #     )
-
     def write_instance(
         self,
         table_df: pd.DataFrame,
         table_name: str,
         version: str = constants.BASE_TABLE_VERSION,
-        dependencies: Optional[list[tuple[str, str]]]= None,
+        dependencies: Optional[list[tuple[str, str]]] = None,
         dtypes: Optional[dict[str, str]] = None,
         process_id: str = "",
     ):
@@ -361,7 +338,6 @@ class TableVault:
         self,
         table_name: str,
         version: str = constants.BASE_TABLE_VERSION,
-        force_restart: bool = True,
         force_execute: bool = False,
         process_id: str = "",
         background: bool = False,
@@ -388,7 +364,6 @@ class TableVault:
             author=self.author,
             table_name=table_name,
             version=version,
-            force_restart=force_restart,
             force_execute=force_execute,
             process_id=process_id,
             db_dir=self.db_dir,
@@ -402,8 +377,8 @@ class TableVault:
         origin_id: str = "",
         origin_table: str = "",
         external_edit: bool = False,
-        copy: bool = False,
-        builders: Optional[dict[str, str] | list[str]] = None, 
+        copy: bool = True,
+        builders: Optional[dict[str, str] | list[str]] = None,
         process_id: str = "",
         description: str = "",
     ) -> None:
@@ -436,7 +411,7 @@ class TableVault:
 
 
         """
-        if builders == None:
+        if builders is None:
             builders = []
         return _vault_operations.create_instance(
             author=self.author,

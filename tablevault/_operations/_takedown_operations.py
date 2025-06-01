@@ -1,7 +1,7 @@
-from tablevault.defintions import constants, tv_errors
-from tablevault.helper.database_lock import DatabaseLock
-from tablevault.helper.metadata_store import MetadataStore
-from tablevault.helper import file_operations
+from tablevault._defintions import constants, tv_errors
+from tablevault._helper.database_lock import DatabaseLock
+from tablevault._helper.metadata_store import MetadataStore
+from tablevault._helper import file_operations
 
 
 def takedown_copy_files(
@@ -18,6 +18,7 @@ def takedown_copy_files(
     file_operations.delete_from_temp(process_id, db_metadata.db_dir)
     db_locks.release_all_locks()
 
+
 def takedown_rename_table(
     process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
 ):
@@ -28,10 +29,10 @@ def takedown_rename_table(
         db_locks.release_all_locks()
         return
     if log.execution_success is False:
-        try: 
-            file_operations.rename_table(log.data["table_name"], 
-                                         log.data["new_table_name"],
-                                         db_metadata.db_dir)
+        try:
+            file_operations.rename_table(
+                log.data["table_name"], log.data["new_table_name"], db_metadata.db_dir
+            )
         except tv_errors.TVFileError:
             pass
     if log.execution_success is True:
@@ -39,6 +40,7 @@ def takedown_rename_table(
     else:
         db_locks.delete_lock_path(log.data["new_table_name"])
     db_locks.release_all_locks()
+
 
 def takedown_delete_table(
     process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
@@ -129,7 +131,7 @@ def takedown_write_table_inner(
 
 def takedown_write_table(
     process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
-):  
+):
     logs = db_metadata.get_active_processes()
     if process_id in logs:
         log = db_metadata.get_active_processes()[process_id]
@@ -137,9 +139,7 @@ def takedown_write_table(
         db_locks.release_all_locks()
         return
     if log.start_success is False or log.execution_success is False:
-        if (
-            "table_name" in log.data and "perm_instance_id" in log.data
-        ):  
+        if "table_name" in log.data and "perm_instance_id" in log.data:
             db_locks.delete_lock_path(
                 log.data["table_name"], log.data["perm_instance_id"]
             )
@@ -164,9 +164,7 @@ def takedown_execute_instance(
         db_locks.release_all_locks()
         return
     if log.start_success is False or log.execution_success is False:
-        if (
-            "table_name" in log.data and "perm_instance_id" in log.data
-        ): 
+        if "table_name" in log.data and "perm_instance_id" in log.data:
             db_locks.delete_lock_path(
                 log.data["table_name"], log.data["perm_instance_id"]
             )

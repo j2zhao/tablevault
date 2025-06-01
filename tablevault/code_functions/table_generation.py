@@ -45,5 +45,6 @@ def create_data_table_from_csv(csv_file_path: str):
     )
     return df.copy()
 
-def create_data_table_from_list(l: list):
-    return pd.DataFrame({"temp_name": l})
+
+def create_data_table_from_list(vals: list):
+    return pd.DataFrame({"temp_name": vals})

@@ -1,6 +1,6 @@
 from unittest.mock import patch
-from tablevault.defintions import tv_errors
-from helper import compare_folders, evaluate_operation_logging, clean_up_open_ai, copy_test_dir
+from tablevault._defintions import tv_errors
+from helper import compare_folders, evaluate_operation_logging, copy_test_dir
 from tablevault.core import TableVault
 
 def raise_tv_except(**args):
@@ -26,7 +26,7 @@ def test_setup_exception(funct_name, exception_func):
             copy_test_dir()
             tablevault.delete_builder_file("test_buider", table_name="stories")
             copy_test_dir()
-            tablevault.create_builder_file("../test_data/test_data_db/stories/gen_stories.yaml", table_name="stories")
+            tablevault.create_builder_file("../test_data/test_data_db/stories/stories_index.yaml", table_name="stories")
             tablevault.execute_instance("stories")
             copy_test_dir()
             table = tablevault.get_dataframe("stories")
@@ -63,7 +63,7 @@ def test_exception(module_path, funct_name, exception_func):
             copy_test_dir()
             tablevault.delete_builder_file("test_buider", table_name="stories")
             copy_test_dir()
-            tablevault.create_builder_file("../test_data/test_data_db/stories/gen_stories.yaml", table_name="stories")
+            tablevault.create_builder_file("../test_data/test_data_db/stories/stories_index.yaml", table_name="stories")
             tablevault.execute_instance("stories")
             copy_test_dir()
             table = tablevault.get_dataframe("stories")

@@ -1,7 +1,7 @@
 import os
 from tablevault.core import TableVault
 import shutil
-from tablevault.helper import user_lock
+from tablevault._helper import user_lock
 
 def copy_test_dir(new_dir_name = 'test_dir_copy', old_dir_name = 'test_dir'): 
     user_lock.set_writable(new_dir_name)
@@ -10,40 +10,6 @@ def copy_test_dir(new_dir_name = 'test_dir_copy', old_dir_name = 'test_dir'):
     shutil.copytree(old_dir_name, new_dir_name, dirs_exist_ok=True)
     
 
-def clean_up_open_ai(key_file = "../test_data/open_ai_key/key.txt"):
-    import openai
-    from tqdm import tqdm
-    with open(key_file, 'r') as f:
-        secret = f.read()
-        os.environ["OPENAI_API_KEY"] = secret
-    client = openai.OpenAI()
-    files = list(client.files.list())
-    vector_stores = list(client.beta.vector_stores.list())
-    my_assistants = list(client.beta.assistants.list())
-    for store in tqdm(vector_stores):
-        try:
-          client.beta.vector_stores.delete(
-            vector_store_id=store.id
-          )
-        except:
-            pass
-    for f in tqdm(files):
-        try:
-          client.files.delete(
-            file_id=f.id
-          )
-        except:
-          pass
-    
-    for assistant in tqdm(my_assistants):
-        try:
-            client.beta.assistants.delete(assistant.id)
-        except:
-            pass
-    
-    print(client.beta.vector_stores.list())
-    print(client.files.list())
-    print(client.beta.assistants.list())
 
 def evaluate_operation_logging(ids):
     # check all ids are logged

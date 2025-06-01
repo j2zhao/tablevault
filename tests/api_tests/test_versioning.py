@@ -2,8 +2,7 @@
 
 from tablevault.core import TableVault
 import os
-from test_basic_api import basic_function
-from helper import evaluate_operation_logging, evaluate_full_tables, clean_up_open_ai, copy_test_dir
+from helper import evaluate_operation_logging, evaluate_full_tables, copy_test_dir
 import shutil
 
 def copy_story(base_dir= '../test_data/stories', story_name = 'The_Clockmakers_Secret.pdf'):
@@ -18,7 +17,6 @@ def delete_story(base_dir= '../test_data/stories', story_name = 'The_Clockmakers
         os.remove(story_path)
 
 def test_copy_instance_no_change():
-    #basic_function()
     copy_test_dir("test_dir", "basic_function")
     ids = []
     tablevault = TableVault('test_dir', 'jinjin2')
@@ -44,12 +42,11 @@ def test_copy_instance_no_change():
     evaluate_operation_logging(ids)
 
 def test_copy_instance_builder_change():
-    #basic_function()
     copy_test_dir("test_dir", "basic_function")
     ids = []
     tablevault = TableVault('test_dir', 'jinjin2')
     id = tablevault.create_instance("llm_questions")
-    builders=["gen_llm_questions", "question_1a","question_2", "question_3"]
+    builders=["llm_questions_index", "question_1a","question_2", "question_3"]
     for bn in builders:
         id = tablevault.create_builder_file(copy_dir=f"../test_data/test_data_db/llm_questions/{bn}.yaml", table_name="llm_questions")
  
@@ -67,7 +64,6 @@ def test_copy_instance_builder_change():
     assert not df2['q1'].isna().any()
 
 def test_copy_dep_change():
-    #basic_function()
     copy_test_dir("test_dir", "basic_function")
     ids = []
     tablevault = TableVault('test_dir', 'jinjin2')
@@ -87,7 +83,6 @@ def test_copy_dep_change():
     cols_to_compare = ['q1', 'q2a', 'q2', 'q3a', 'q3']
     assert len(df2) == 1
     for col in cols_to_compare:
-        #assert not df1[col].equals(df2[col])
         assert not df2[col].isna().any()
 
 def test_new_row_change():
@@ -116,4 +111,3 @@ if __name__ == "__main__":
     test_copy_instance_builder_change()
     test_copy_dep_change()
     test_new_row_change()
-    #clean_up_open_ai()
