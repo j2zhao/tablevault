@@ -12,6 +12,7 @@ def basic_function(copy=True)-> list[str]:
     ids.append(id)
     id = tablevault.create_table('llm_storage', has_side_effects=True)
     ids.append(id)
+    
     id = tablevault.create_table('llm_questions')
     ids.append(id)
     id = tablevault.create_instance("stories")
@@ -19,7 +20,7 @@ def basic_function(copy=True)-> list[str]:
     id = tablevault.create_instance("llm_storage", builders=["upload_openai"])
     ids.append(id)
     id = tablevault.create_instance("llm_questions", builders=["question_1","question_2", "question_3"])
-
+    
     id = tablevault.create_builder_file(copy_dir="../test_data/test_data_db/stories/stories_index.yaml", table_name="stories")
     ids.append(id)
     
@@ -27,6 +28,7 @@ def basic_function(copy=True)-> list[str]:
     ids.append(id)
     id = tablevault.create_builder_file(copy_dir="../test_data/test_data_db_selected/llm_questions", table_name="llm_questions")
     ids.append(id)
+    
     id = tablevault.execute_instance("stories")
     ids.append(id)
     id = tablevault.execute_instance("llm_storage")
@@ -62,8 +64,6 @@ def evaluate_tests():
     ids = test_deletion()
     helper.evaluate_operation_logging(ids)
     helper.evaluate_deletion()
-    #helper.clean_up_open_ai()
 
 if __name__ == "__main__":
-    #evaluate_tests()
-    test_deletion()
+    evaluate_tests()

@@ -8,11 +8,11 @@ import sys
 
 def fake_execution():
     print("successfully faked")
-    time.sleep(100)
+    time.sleep(50)
     sys.exit()
 
 def test_multiprocessing_execute():
-    with patch('tablevault._vault_operations._execute_instance',fake_execution):
+    with patch('tablevault._operations._vault_operations._execute_instance', fake_execution):
         tablevault = TableVault('test_dir', 'jinjin', create=True)
         tablevault.create_table('stories', allow_multiple_artifacts = False)
         tablevault.create_instance("stories")
@@ -33,7 +33,7 @@ def test_multiprocessing_other_instance():
     tablevault.create_instance("stories")
 
 def test_multiprocessing():
-    t = threading.Thread(target=test_multiprocessing_execute)
+    t = threading.Thread(target=test_multiprocessing_execute, daemon=True)
     t.start()
     time.sleep(5)
     failed_execution = False
@@ -42,14 +42,12 @@ def test_multiprocessing():
     except tv_errors.TableVaultError:
         failed_execution = True
     assert not failed_execution
-    
     failed_execution = False
     try:
         test_multiprocessing_other_execute()
     except tv_errors.TableVaultError:
         failed_execution = True
     assert failed_execution
-
     failed_execution = False
     try:
         test_multiprocessing_other_instance()

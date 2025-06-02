@@ -83,7 +83,6 @@ def _execute_code_from_builder(
     builder = builder.model_copy(deep=True)
     builder.transform_table_string(cache, instance_id, table_name, db_dir, index)
     results = funct(**builder.arguments)
-
     if index is not None:
         for i, result in enumerate(results):
             table_operations.write_df_entry(

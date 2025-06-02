@@ -54,7 +54,6 @@ def setup_create_builder_file(
     table_name: str,
     version: str,
     copy_dir: str,
-    builder_type: str,
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
@@ -77,6 +76,12 @@ def setup_create_builder_file(
         instance_id=instance_id,
         subfolder=constants.BUILDER_FOLDER,
     )
+    if builder_name == "":
+        builder_type = builder_constants.BASE_BUILDER
+    elif builder_name.endswith(constants.INDEX_BUILDER_SUFFIX):
+        builder_type = builder_constants.INDEX_BUILDER
+    else:
+        builder_type = builder_constants.COLUMN_BUILDER
     funct_kwargs = {
         "builder_name": builder_name,
         "instance_id": instance_id,
@@ -348,7 +353,7 @@ def setup_stop_process(
                     for tname, _, id, _, _ in external_deps[builder_name]:
                         dependencies.append([id, tname])
                 materialize_ops["dependencies"] = dependencies
-            elif logs[to_stop_process_id].operation == constants.WRITE_TABLE_OP:
+            elif logs[to_stop_process_id].operation == constants.WRITE_INSTANCE_OP:
                 step_ids.append(process_id + "_" + gen_tv_id())
                 materialize_ops["instance_id"] = logs[to_stop_process_id].data[
                     "instance_id"
@@ -412,7 +417,7 @@ def setup_stop_process(
     return funct_kwargs
 
 
-def setup_write_table_inner(
+def setup_write_instance_inner(
     table_df: Optional[pd.DataFrame],
     instance_id: str,
     table_name: str,
@@ -431,7 +436,7 @@ def setup_write_table_inner(
     return funct_kwargs
 
 
-def setup_write_table(
+def setup_write_instance(
     table_df: Optional[pd.DataFrame],
     table_name: str,
     version: str,
@@ -593,27 +598,17 @@ def setup_execute_instance(
     )
     if instance_data[constants.DESCRIPTION_EDIT]:
         raise tv_errors.TVArgumentError("External edit table cannot be executed.")
-
-    db_metadata.update_process_data(
-        process_id,
-        {
-            "perm_instance_id": perm_instance_id,
-            "instance_id": instance_id,
-            "table_name": table_name,
-            "version": version,
-        },
-    )
-    db_locks.make_lock_path(table_name, perm_instance_id)
-
     table_data = file_operations.get_description("", table_name, db_metadata.db_dir)
+    db_locks.make_lock_path(table_name, perm_instance_id)
     if not table_data[constants.TABLE_SIDE_EFFECTS]:
         db_locks.acquire_exclusive_lock(table_name, instance_id)
         db_locks.acquire_exclusive_lock(table_name, perm_instance_id)
         if not table_data[constants.TABLE_ALLOW_MARTIFACT]:
+            db_locks.make_lock_path(table_name, perm_instance_id)
             db_locks.acquire_exclusive_lock(table_name, constants.ARTIFACT_FOLDER)
     else:
         db_locks.acquire_exclusive_lock(table_name)
-
+    
     yaml_builders = file_operations.get_yaml_builders(
         instance_id, table_name, db_metadata.db_dir
     )
@@ -692,7 +687,6 @@ def setup_execute_instance(
     return funct_kwargs
 
 
-# TODO: THIS NEEDS WORK
 def setup_create_instance(
     table_name: str,
     version: str,
@@ -803,8 +797,8 @@ SETUP_MAP = {
     constants.DELETE_INSTANCE_OP: setup_delete_instance,
     constants.MAT_OP: setup_materialize_instance,
     constants.STOP_PROCESS_OP: setup_stop_process,
-    constants.WRITE_TABLE_OP: setup_write_table,
-    constants.WRITE_TABLE_INNER_OP: setup_write_table_inner,
+    constants.WRITE_INSTANCE_OP: setup_write_instance,
+    constants.WRITE_INSTANCE_INNER_OP: setup_write_instance_inner,
     constants.EXECUTE_INNER_OP: setup_execute_instance_inner,
     constants.EXECUTE_OP: setup_execute_instance,
     constants.CREATE_INSTANCE_OP: setup_create_instance,
@@ -822,12 +816,12 @@ def _parse_dependencies(
     table_generator = ""
     for builder_name in builders:
         if (
-            builder_name == ("{table_name}" + constants.INDEX_BUILDER_SUFFIX)
+            builder_name == (f"{table_name}{constants.INDEX_BUILDER_SUFFIX}")
             and table_generator == ""
         ):
             table_generator = builder_name
         elif (
-            builder_name == ("{table_name}" + constants.INDEX_BUILDER_SUFFIX)
+            builder_name == (f"{table_name}{constants.INDEX_BUILDER_SUFFIX}")
             and table_generator != ""
         ):
             raise tv_errors.TVBuilderError(
@@ -846,10 +840,10 @@ def _parse_dependencies(
         external_deps[builder_name] = set()
         if builder_name != table_generator:
             internal_builder_deps[builder_name] = {table_generator}
+            internal_deps[builder_name] = set()
         else:
             internal_deps[builder_name] = set()
             internal_builder_deps[builder_name] = set()
-
         for dep in builders[builder_name].dependencies:
             if dep.table == constants.TABLE_SELF:
                 for bn in builders:
@@ -862,7 +856,7 @@ def _parse_dependencies(
                 active_only = False
             else:
                 active_only = True
-            if "_" in dep.version:
+            if dep.version is not None and "_" in dep.version:
                 (
                     mat_time,
                     _,

@@ -34,7 +34,7 @@ def evaluate_operation_logging(ids):
 def evaluate_full_tables(tables = ["stories", "llm_storage","llm_questions" ], num_entries:int = 1):
     tablevault = TableVault('test_dir', 'jinjin')
     for table_name in tables:
-        df = tablevault.get_dataframe(table_name)
+        df, _ = tablevault.get_dataframe(table_name)
         assert not df.isnull().values.any()
         assert len(df) == num_entries
 

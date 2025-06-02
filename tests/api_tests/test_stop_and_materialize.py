@@ -5,6 +5,7 @@ from tablevault.core import TableVault
 from helper import evaluate_operation_logging, copy_test_dir
 
 def raise_except():
+    print("EXCEPTION RAISED")
     raise ValueError()
 
 def evaluate_stop_materialize(process_id:str, exception_raised:bool):
@@ -20,7 +21,7 @@ def evaluate_stop_materialize(process_id:str, exception_raised:bool):
 
 def test_restart_write_table():
     def _restart_write_table():
-        with patch("tablevault._vault_operations._materialize_instance", raise_except):
+        with patch("tablevault._operations._vault_operations._materialize_instance", raise_except):
             exception_raised = False
             try:
                 tablevault = TableVault('test_dir', 'jinjin', create=True)
@@ -43,7 +44,7 @@ def test_restart_write_table():
 
 def test_restart_execute_instance():
     def _restart_execute_instance():
-        with patch("tablevault._vault_operations._materialize_instance", raise_except):
+        with patch("tablevault._operations._vault_operations._materialize_instance", raise_except):
             exception_raised = False
             try:
                 tablevault = TableVault('test_dir', 'jinjin', create=True)

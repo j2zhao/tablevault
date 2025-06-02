@@ -61,6 +61,7 @@ def execute_instance(
             db_metadata,
             cache,
         )
+
         if i == 0:
             update_rows = builders[builder_name].execute(
                 cache, instance_id, table_name, db_metadata.db_dir, process_id

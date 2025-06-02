@@ -23,4 +23,4 @@ def random_row_string(colunm_names, **kwargs):
     for col in colunm_names:
         val = "".join(random.choices(characters, k=20))
         row.append(val)
-    return tuple(val)
+    return tuple(row)

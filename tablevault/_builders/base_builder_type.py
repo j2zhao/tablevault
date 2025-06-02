@@ -54,7 +54,10 @@ class TVBuilder(BaseModel):
                 values[field_name] = table_reference_from_string(
                     expected_type, values[field_name]
                 )
-        if values[constants.BUILDER_DEPENDENCIES] is None:
+        if (
+            constants.BUILDER_DEPENDENCIES not in values
+            or values[constants.BUILDER_DEPENDENCIES] is None
+        ):
             deps = _get_builder_dependencies(values)
             if deps is None:
                 raise tv_errors.TVBuilderError(
@@ -83,16 +86,15 @@ class TVBuilder(BaseModel):
     ) -> None:
 
         for attr, val in vars(self).items():
-            val_ = get_table_result(val, cache, index)
-            val_ = apply_artifact_path(val_, instance_id, table_name, db_dir)
-            setattr(self, attr, val_)
+            if attr != constants.BUILDER_DEPENDENCIES:
+                val_ = get_table_result(val, cache, index)
+                val_ = apply_artifact_path(val_, instance_id, table_name, db_dir)
+                setattr(self, attr, val_)
 
 
 def _get_builder_dependencies(values) -> Optional[list[TableValue]]:
     tables = []
-    if isinstance(values, TableValue):
-        return values.get_data_tables()
-    elif isinstance(values, TableReference):
+    if isinstance(values, TableReference):
         return values.get_data_tables()
     elif isinstance(values, list):
         for value in values:

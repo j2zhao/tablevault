@@ -52,6 +52,7 @@ def get_table(
     active_only: bool,
     safe_locking: bool,
     rows: Optional[int],
+    artifact_path: bool,
 ):
 
     db_metadata = MetadataStore(db_dir)
@@ -65,7 +66,7 @@ def get_table(
         db_lock.acquire_shared_lock(table_name, instance_id)
     try:
         df = table_operations.get_table(
-            instance_id, table_name, db_dir, rows, artifact_dir=True, get_index=False
+            instance_id, table_name, db_dir, rows, artifact_dir=artifact_path, get_index=False
         )
     finally:
         if safe_locking:
@@ -131,7 +132,6 @@ def create_builder_file(
     table_name: str,
     version: str,
     copy_dir: str,
-    builder_type: str,
     process_id: str,
     db_dir: str,
 ):
@@ -140,7 +140,6 @@ def create_builder_file(
         "table_name": table_name,
         "version": version,
         "copy_dir": copy_dir,
-        "builder_type": builder_type,
     }
     return tablevault_operation(
         author,
@@ -380,7 +379,7 @@ def stop_process(
     )
 
 
-def _write_table_inner(
+def _write_instance_inner(
     table_df: Optional[pd.DataFrame],
     instance_id: str,
     table_name: str,
@@ -394,7 +393,7 @@ def _write_table_inner(
     )
 
 
-def write_table_inner(
+def write_instance_inner(
     author: str,
     table_df: Optional[pd.DataFrame],
     instance_id: str,
@@ -409,15 +408,15 @@ def write_table_inner(
     }
     return tablevault_operation(
         author,
-        constants.WRITE_TABLE_INNER_OP,
-        _write_table_inner,
+        constants.WRITE_INSTANCE_INNER_OP,
+        _write_instance_inner,
         db_dir,
         process_id,
         setup_kwargs,
     )
 
 
-def _write_table(
+def _write_instance(
     table_df: Optional[pd.DataFrame],
     instance_id: str,
     table_name: str,
@@ -432,7 +431,7 @@ def _write_table(
 ):
     complete_steps = db_metadata.get_active_processes()[process_id].complete_steps
     if step_ids[0] not in complete_steps:
-        write_table_inner(
+        write_instance_inner(
             process_id,
             table_df,
             instance_id,
@@ -461,7 +460,7 @@ def _write_table(
         db_metadata.update_process_step(process_id, step_ids[1])
 
 
-def write_table(
+def write_instance(
     author: str,
     table_df: Optional[pd.DataFrame],
     table_name: str,
@@ -479,7 +478,7 @@ def write_table(
         "dependencies": dependencies,
     }
     return tablevault_operation(
-        author, constants.WRITE_TABLE_OP, _write_table, db_dir, process_id, setup_kwargs
+        author, constants.WRITE_INSTANCE_OP, _write_instance, db_dir, process_id, setup_kwargs
     )
 
 
@@ -495,7 +494,7 @@ def _execute_instance_inner(
     origin_table: str,
     process_id: str,
     db_metadata: MetadataStore,
-):
+):  
     _table_execution.execute_instance(
         table_name,
         instance_id,
@@ -612,33 +611,6 @@ def execute_instance(
     db_dir: str,
     background: bool,
 ):
-
-    # if force_restart and process_id == "":
-    #     instance_id = constants.TEMP_INSTANCE + version
-    #     db_metadata = MetadataStore(db_dir)
-    #     active_procceses = db_metadata.get_active_processes()
-    #     for id in active_procceses:
-    #         if (
-    #             id != process_id
-    #             and active_procceses[id].operation == constants.EXECUTE_OP
-    #         ):
-    #             if (
-    #                 "table_name" in active_procceses[id].data
-    #                 and "instance_id" in active_procceses[id].data
-    #             ):
-    #                 if (
-    #                     active_procceses[id].data["table_name"] == table_name
-    #                     and active_procceses[id].data["instance_id"] == instance_id
-    #                 ):
-    #                     stop_process(
-    #                         author,
-    #                         id,
-    #                         force=False,
-    #                         materialize=False,
-    #                         process_id="",
-    #                         db_dir=db_dir,
-    #                     )
-
     setup_kwargs = {
         "table_name": table_name,
         "version": version,
@@ -785,7 +757,7 @@ def create_table(
 def _restart_database(
     process_id: str,
     db_metadata: MetadataStore,
-):
+):  
     active_processes = db_metadata.get_active_processes()
     for prid in active_processes:
         if active_processes[prid].operation == constants.STOP_PROCESS_OP:
@@ -828,7 +800,6 @@ def _restart_database(
                 table_name="",
                 version="",
                 copy_dir="",
-                builder_type="",
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
             )
@@ -842,7 +813,7 @@ def _restart_database(
                 db_dir=db_metadata.db_dir,
             )
         elif active_processes[prid].operation == constants.RENAME_TABLE_OP:
-            delete_table(
+            rename_table(
                 author=process_id,
                 new_table_name="",
                 table_name="",
@@ -864,24 +835,8 @@ def _restart_database(
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
             )
-        elif active_processes[prid].operation == constants.MAT_OP:
-            materialize_instance(
-                author=process_id,
-                instance_id="",
-                table_name="",
-                version="",
-                perm_instance_id="",
-                origin_id="",
-                origin_table="",
-                dtypes={},
-                changed_columns=[],
-                all_columns=[],
-                dependencies=[],
-                process_id=prid,
-                db_dir=db_metadata.db_dir,
-            )
-        elif active_processes[prid].operation == constants.WRITE_TABLE_OP:
-            write_table(
+        elif active_processes[prid].operation == constants.WRITE_INSTANCE_OP:
+            write_instance(
                 author=process_id,
                 table_df=None,
                 table_name="",
@@ -896,7 +851,6 @@ def _restart_database(
                 author=process_id,
                 table_name="",
                 version="",
-                force_restart=False,
                 force_execute=False,
                 process_id=prid,
                 db_dir=db_metadata.db_dir,

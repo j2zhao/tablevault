@@ -27,7 +27,8 @@ class IndexBuilder(TVBuilder):
         table_name: str,
         db_dir: str,
         process_id: str,
-    ) -> None:
+    ) -> bool:
+        diff_flag = None
         try:
             self.transform_table_string(
                 cache, instance_id, table_name, db_dir, index=None
@@ -66,17 +67,21 @@ class IndexBuilder(TVBuilder):
                         i, self, funct, cache, instance_id, table_name, db_dir
                     )
             else:
-                _execute_code_from_builder(
+                diff_flag = _execute_code_from_builder(
                     None, self, funct, cache, instance_id, table_name, db_dir
                 )
         finally:
-            table_operations.make_df(
+            output = table_operations.make_df(
                 instance_id,
                 table_name,
                 db_dir,
                 primary_key=self.primary_key,
                 keep_old=self.keep_old,
             )
+            if diff_flag is None:
+                diff_flag = output
+            return diff_flag
+        
 
 
 def _execute_code_from_builder(
@@ -102,8 +107,9 @@ def _execute_code_from_builder(
                 table_name,
                 db_dir,
             )
+        return None
     else:
-        table_operations.save_new_columns(
+        diff_flag = table_operations.save_new_columns(
             results,
             builder.changed_columns,
             instance_id,
@@ -112,3 +118,4 @@ def _execute_code_from_builder(
             primary_key=builder.primary_key,
             keep_old=builder.keep_old,
         )
+        return diff_flag

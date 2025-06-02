@@ -162,6 +162,7 @@ class TableVault:
         active_only: bool = True,
         safe_locking: bool = True,
         rows: Optional[int] = None,
+        artifact_path = True,
     ) -> tuple[pd.DataFrame, str]:
         return _vault_operations.get_table(
             instance_id=instance_id,
@@ -171,6 +172,7 @@ class TableVault:
             active_only=active_only,
             safe_locking=safe_locking,
             rows=rows,
+            artifact_path=artifact_path
         )
 
     def create_code_module(
@@ -228,7 +230,6 @@ class TableVault:
         builder_name: str = "",
         version: str = constants.BASE_TABLE_VERSION,
         copy_dir: str = "",
-        builder_type: str = "",
         process_id: str = "",
     ):
         return _vault_operations.create_builder_file(
@@ -237,7 +238,6 @@ class TableVault:
             table_name=table_name,
             version=version,
             copy_dir=copy_dir,
-            builder_type=builder_type,
             process_id=process_id,
             db_dir=self.db_dir,
         )
@@ -323,7 +323,7 @@ class TableVault:
             dependencies = []
         if dtypes is None:
             dtypes = {}
-        return _vault_operations.write_table(
+        return _vault_operations.write_instance(
             author=self.author,
             table_df=table_df,
             table_name=table_name,

@@ -17,12 +17,12 @@ def load_builder(yaml_builder: dict) -> TVBuilder:
             f"""Builder {yaml_builder[constants.BUILDER_NAME]}
               doesn't contain attribute {constants.BUILDER_TYPE}."""
         )
-    try:
-        builder = BUILDER_TYPE_MAPPING[yaml_builder[constants.BUILDER_TYPE]](
-            **yaml_builder
-        )
-        return builder
-    except Exception as e:
-        raise TVBuilderError(
-            f"Error {e} when generating builder {yaml_builder[constants.BUILDER_NAME]}"
-        )
+    # try:
+    builder = BUILDER_TYPE_MAPPING[yaml_builder[constants.BUILDER_TYPE]](
+        **yaml_builder
+    )
+    return builder
+    # except Exception as e:
+    #     raise TVBuilderError(
+    #         f"Error {e} when generating builder {yaml_builder[constants.BUILDER_NAME]}"
+    #     )

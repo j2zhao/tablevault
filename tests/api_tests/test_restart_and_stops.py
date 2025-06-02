@@ -23,7 +23,7 @@ def evaluate_stops(process_id:str):
     assert compare_folders('test_dir', 'test_dir_copy')
 
 
-def test_exception(module_path, funct_name, exception_func):
+def test_exception(module_path, funct_name, exception_func, eval_restart=True):
     try:
         with patch(module_path + funct_name, exception_func):
             tablevault = TableVault('test_dir', 'jinjin', create=True)
@@ -38,38 +38,40 @@ def test_exception(module_path, funct_name, exception_func):
             tablevault.create_code_module("test", process_id=last_process_id)
             copy_test_dir()
             last_process_id = tablevault.generate_process_id()
-            tablevault.delete_code_module("test")
+            tablevault.delete_code_module("test", process_id=last_process_id)
             copy_test_dir()
             last_process_id = tablevault.generate_process_id()
             tablevault.create_instance("stories", process_id=last_process_id)
             copy_test_dir()
             last_process_id = tablevault.generate_process_id()
-            tablevault.create_builder_file("test_buider", table_name="stories", process_id=last_process_id)
+            tablevault.create_builder_file(builder_name="test_buider", table_name="stories", process_id=last_process_id)
             copy_test_dir()
             last_process_id = tablevault.generate_process_id()
-            tablevault.delete_builder_file("test_buider", table_name="stories", process_id=last_process_id)
-            tablevault.create_builder_file("../test_data/test_data_db/stories/gen_stories.yaml", table_name="stories")
+            tablevault.delete_builder_file(builder_name="test_buider", table_name="stories", process_id=last_process_id)
+            tablevault.create_builder_file(copy_dir="../test_data/test_data_db/stories/stories_index.yaml", table_name="stories")
             copy_test_dir()
             last_process_id = tablevault.generate_process_id()
-            tablevault.execute_instance("stories", last_process_id)
+            tablevault.execute_instance("stories", process_id=last_process_id)
             copy_test_dir()
-            table = tablevault.get_dataframe("stories")
-            tablevault.create_instance("stories", external_edit=True, copy_version=True)
+            table, _ = tablevault.get_dataframe("stories", artifact_path=False)
+            tablevault.create_instance("stories", external_edit=True, copy=True)
             copy_test_dir()
             last_process_id = tablevault.generate_process_id()
             tablevault.write_instance(table, "stories", process_id=last_process_id)
             instances = tablevault.get_instances(table_name= "stories")
             copy_test_dir()
             last_process_id = tablevault.generate_process_id()
-            tablevault.delete_instance(instance_id=instances[0], table_name="stories")
+            tablevault.delete_instance(instance_id=instances[0], table_name="stories", process_id=last_process_id)
             copy_test_dir()
             last_process_id = tablevault.generate_process_id()
-            tablevault.delete_table("stories")
+            tablevault.delete_table("stories", process_id=last_process_id)
             assert False
             
     except ValueError as e:
-        evaluate_restart(last_process_id)
-        evaluate_stops(last_process_id)
+        if eval_restart:
+            evaluate_restart(last_process_id)
+        else:
+            evaluate_stops(last_process_id)
 
 execute_functions = [
                    "_create_code_module", 
@@ -79,16 +81,18 @@ execute_functions = [
                    "_rename_table",
                    "_delete_table",
                    "_delete_instance",
-                   "_write_table",
-                   "_write_table_inner",
+                   "_write_instance",
+                   "_write_instance_inner",
+                   "_execute_instance",
+                   "_execute_instance_inner",
                    "_create_instance", 
-                   "_setup_table",
                    "_create_table"]
 
-execute_module = 'tablevault._vault_operations.'
+execute_module = 'tablevault._operations._vault_operations.'
 
 if __name__ == "__main__":
-
     for func in execute_functions: 
         print(f'FUNCTION {func}')
-        test_exception(execute_module, func, raise_except)
+        if func != "_write_instance" and func != "_write_instance_inner":
+            test_exception(execute_module, func, raise_except, eval_restart=True)
+        test_exception(execute_module, func, raise_except, eval_restart=False)

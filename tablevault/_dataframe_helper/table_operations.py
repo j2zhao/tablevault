@@ -125,19 +125,17 @@ def get_table(
             dtypes = {}
         else:
             dtypes = json.loads(content)
-    df = None
     if try_make_df:
-        df = make_df(instance_id, table_name, db_dir)
-    if df is None:
-        try:
-            df = pd.read_csv(table_path)
-            df = pd.read_csv(table_path, nrows=rows, dtype=dtypes)
-        except pd.errors.EmptyDataError:
-            return pd.DataFrame()
-        except Exception as e:
-            raise tv_errors.TVTableError(
-                f"Error Reading Table (likely datatype mismatch): {e}"
-            )
+        make_df(instance_id, table_name, db_dir)
+    try:
+        df = pd.read_csv(table_path)
+        df = pd.read_csv(table_path, nrows=rows, dtype=dtypes)
+    except pd.errors.EmptyDataError:
+        return pd.DataFrame()
+    except Exception as e:
+        raise tv_errors.TVTableError(
+            f"Error Reading Table (likely datatype mismatch): {e}"
+        )
     if get_index:
         df.index.name = constants.TABLE_INDEX
         df = df.reset_index()
@@ -215,7 +213,7 @@ def save_new_columns(
     primary_key: Optional[list[str]] = None,
     keep_old: bool = False,
 ) -> bool:
-    df = get_table(instance_id, table_name, db_dir, get_index=False)
+    df = get_table(instance_id, table_name, db_dir, get_index=False, try_make_df=False)
     new_df.columns = col_names
     for col in col_names:
         new_df[col] = new_df[col].astype(df[col].dtype)
@@ -225,10 +223,6 @@ def save_new_columns(
             df.loc[:, col_names] = new_df
     elif len(primary_key) == 0:
         df_combined = new_df.combine_first(df)
-        if sorted(df.columns) != sorted(df_combined.columns):
-            print(df.columns)
-            print(df_combined.columns)
-            raise ValueError()
         df_combined = df_combined[df.columns]
         if not keep_old:
             df_combined = df_combined.loc[new_df.index]
@@ -243,12 +237,14 @@ def save_new_columns(
         if not keep_old:
             new_df.index.name = constants.TABLE_INDEX
             new_df = new_df.reset_index()
+            df_ = df.copy()
         else:
             df.index.name = constants.TABLE_INDEX
-            df = df.reset_index()
-        df = df.set_index(primary_key)
+            df_ = df.reset_index()
+        df_ = df_.set_index(primary_key)
         new_df = new_df.set_index(primary_key)
-        df_combined = new_df.combine_first(df)
+        df_combined = new_df.combine_first(df_)
+        df_combined = df_combined.reset_index()
         df_combined = df_combined.set_index([constants.TABLE_INDEX])
 
         if not keep_old:
@@ -257,9 +253,10 @@ def save_new_columns(
         else:
             df_combined = df_combined.sort_index(ignore_index=True)
         df_combined = df_combined[df.columns]
+        diff_flag = df.equals(df_combined)
         df = df_combined
     write_table(df, instance_id, table_name, db_dir)
-    return diff_flag
+    return not diff_flag
 
 
 def check_entry(
@@ -374,11 +371,11 @@ def make_df(
     db_dir: str,
     primary_key: Optional[list[str]] = None,
     keep_old: bool = False,
-) -> None:
+) -> bool:
     file_dir = os.path.join(db_dir, table_name, instance_id)
     pkl_files = [f for f in os.listdir(file_dir) if f.endswith(".df.pkl")]
     if not pkl_files:
-        return
+        return False
 
     df = pd.DataFrame()
     records = []
@@ -391,7 +388,7 @@ def make_df(
             )
     df = pd.DataFrame.from_records(records)
     df = df.pivot(index="index", columns="col", values="val")
-    save_new_columns(
+    diff_flag = save_new_columns(
         df,
         col_names=df.columns,
         instance_id=instance_id,
@@ -404,3 +401,4 @@ def make_df(
     for file_name in pkl_files:
         file_path = os.path.join(file_dir, file_name)
         os.remove(file_path)
+    return diff_flag

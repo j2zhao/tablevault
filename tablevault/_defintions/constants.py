@@ -7,7 +7,7 @@ ARTIFACT_DTYPE = "artifact_string"
 BUILDER_NAME = "name"
 BUILDER_TYPE = "builder_type"
 INDEX_BUILDER_SUFFIX = "_index"
-BUILDER_DEPENDENCIES = "builder_dependencies"
+BUILDER_DEPENDENCIES = "dependencies"
 
 META_LOG_FILE = "logs.txt"
 META_CLOG_FILE = "completed_logs.txt"
@@ -45,19 +45,19 @@ DTYPE_FILE = "dtypes.json"
 
 
 STOP_PROCESS_OP = "stop_process"
-CREATE_BUILDER_FILE_OP = "create_builder"
+CREATE_BUILDER_FILE_OP = "create_builder_file"
 CREATE_CODE_MODULE_OP = "create_code_module"
-DELETE_BUILDER_FILE_OP = "delete_builder"
+DELETE_BUILDER_FILE_OP = "delete_builder_file"
 DELTE_CODE_MODULE_OP = "delete_code_module"
 RENAME_TABLE_OP = "rename_table"
 DELETE_TABLE_OP = "delete_table"
 DELETE_INSTANCE_OP = "delete_instance"
 MAT_OP = "materialize_instance"
-WRITE_TABLE_OP = "write_table"
-WRITE_TABLE_INNER_OP = "write_table_inner"
+WRITE_INSTANCE_OP = "write_instance"
+WRITE_INSTANCE_INNER_OP = "write_instance_inner"
 EXECUTE_OP = "execute_instance"
 EXECUTE_INNER_OP = "execute_instance_inner"
-CREATE_INSTANCE_OP = "setup_temp_instance"
+CREATE_INSTANCE_OP = "create_instance"
 CREATE_TABLE_OP = "create_table"
 RESTART_OP = "restart_database"
 VALID_OPS = [
@@ -74,8 +74,8 @@ VALID_OPS = [
     CREATE_TABLE_OP,
     RESTART_OP,
     MAT_OP,
-    WRITE_TABLE_OP,
-    WRITE_TABLE_INNER_OP,
+    WRITE_INSTANCE_OP,
+    WRITE_INSTANCE_INNER_OP,
     EXECUTE_INNER_OP,
 ]
 

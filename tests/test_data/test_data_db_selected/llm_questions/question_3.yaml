@@ -1,4 +1,4 @@
-builder_type: OAIThreadBuilder
+builder_type: ColumnBuilder
 changed_columns: [q3a, q3]
 python_function: random_row_string
 code_module: random_string
@@ -7,7 +7,7 @@ is_udf: true
 arguments:
   colunm_names: [q3a, q3]
   upload_files:
-    - <<llm_storage.openai_id[paper_name::self.paper_name[index]]>>
+    - <<llm_storage.openai_id[paper_name::<<self.paper_name[index]>>]>>
   file_msgs:
     -  "Use this story to answer questions" 
   questions:

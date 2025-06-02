@@ -448,6 +448,7 @@ def create_copy_builder_file(
             except Exception as e:
                 raise TVFileError(str(e))
         else:
+            print(copy_dir)
             raise TVFileError("could not copy builder path")
     else:
         if builder_type not in BUILDER_EXAMPLE_MAPPING:

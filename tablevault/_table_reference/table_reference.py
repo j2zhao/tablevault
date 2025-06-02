@@ -64,11 +64,13 @@ class TableValue:
     columns: Optional[list[Condition]] = None
     version: Optional[Condition] = None
     conditions: Optional[
-        dict[Condition, list[Union[Condition, tuple[Condition, Condition]]]]
+        dict[Condition, Union[tuple[Condition], tuple[Condition, Condition], None]]
     ] = None
 
     def get_data_tables(self) -> Optional[list["TableValue"]]:
-        tables = []
+        tables: list[TableValue] = []
+
+        # If any of table/columns/version is a TableReference, bail out
         if isinstance(self.table, TableReference):
             return None
         if self.columns is not None:
@@ -77,47 +79,67 @@ class TableValue:
                     return None
         if isinstance(self.version, TableReference):
             return None
-        ttable = TableValue(self.table, self.columns, self.version, {})
 
-        for key, vals in self.conditions.items():
-            if isinstance(key, str):
-                if ttable.columns is not None:
-                    ttable.columns.append(key)
-            else:
-                ttable.columns = None
-            for val in vals:
-                if isinstance(val, TableReference):
-                    tables_ = val.get_data_tables()
-                    if tables_ is None:
-                        return None
-                    tables.append(tables_)
+        # Make a (shallow) copy of columns so we never modify self.columns
+        new_columns = list(self.columns) if self.columns is not None else None
+
+        # Start with an empty dict for conditions in the copy
+        new_conditions_dict: dict[
+            Condition, 
+            Union[tuple[Condition], tuple[Condition, Condition], None]
+        ] = {}
+
+        # Build a fresh TableValue; nothing here points back to self.columns/self.conditions
+        ttable = TableValue(self.table, new_columns, self.version, new_conditions_dict)
+
+        if self.conditions is not None:
+            for key, vals in self.conditions.items():
+                if isinstance(key, str):
+                    if ttable.columns is not None:
+                        ttable.columns.append(key)
+                else:
+                    # If the key isn’t a string, drop columns entirely
+                    ttable.columns = None
+
+                if vals is not None:
+                    for val in vals:
+                        if isinstance(val, TableReference):
+                            tables_ = val.get_data_tables()
+                            if tables_ is None:
+                                return None
+                            tables += tables_
+
         tables.append(ttable)
         return tables
 
+
     def parse(self, cache: Cache, index: Optional[int] = None):
-        return _read_table_reference(self, index, cache)
+        return _read_table_reference(self, cache, index)
 
     # ---------------------------- factory ----------------------------
-
     @classmethod
     def from_string(cls, arg: str) -> "TableValue":
         """
-        Parse one DSL fragment such as:
+        Parse one DSL fragment such as
             table(ver).{c1, c2}[c1::0:5]
             table.COL
-            table
+            table[col]                <-- NEW: bare-key condition (= None)
+            table[c1::idx]            <-- NEW: 1-tuple condition
+            table[c1::a:b]            <-- 2-tuple condition
         Nesting via << … >> is supported in every token position.
         """
         arg = arg.strip()
 
-        # Decide between raw identifier and nested <<…>> reference
+        # ─────────────────────────── helpers ────────────────────────────
         def _cond(token: str) -> Condition:
             token = token.strip()
-            if token.startswith("<<") and token.endswith(">>"):
-                return TableReference.from_string(token)
-            return token
+            return (
+                TableReference.from_string(token)
+                if token.startswith("<<") and token.endswith(">>")
+                else token
+            )
 
-        # 1) table name ------------------------------------------------
+        # 1) table name --------------------------------------------------
         cursor = 0
         m = re.match(r"[A-Za-z0-9_-]+", arg)
         if not m:
@@ -125,23 +147,23 @@ class TableValue:
         table = _cond(m.group(0))
         cursor = m.end()
 
-        # 2) (version) -------------------------------------------------
+        # 2) (version) ---------------------------------------------------
         version = None
         if cursor < len(arg) and arg[cursor] == "(":
             start = cursor
             cursor = _find_matching(arg, cursor, "(", ")")
             version = _cond(arg[start + 1 : cursor - 1])
 
-        # 3) .{c1,c2}  or  .COL  --------------------------------------
+        # 3) .{c1,c2}  or  .COL  ----------------------------------------
         columns = None
         if cursor < len(arg) and arg[cursor] == ".":
             cursor += 1
-            if arg[cursor] == "{":  # brace-list
+            if arg[cursor] == "{":                       # brace-list
                 end = _find_matching(arg, cursor, "{", "}")
                 cols_txt = arg[cursor + 1 : end - 1]
                 columns = [_cond(t) for t in cols_txt.split(",") if t.strip()]
                 cursor = end
-            else:  # single-column
+            else:                                       # single column
                 if arg.startswith("<<", cursor):
                     end = _find_matching(arg, cursor, "<<", ">>")
                     token = arg[cursor:end]
@@ -156,39 +178,51 @@ class TableValue:
                     cursor += len(token)
                 columns = [_cond(token)]
 
-        # 4) [col::idx] / [col::a:b] ----------------------------------
-        conds = None
+        # 4) [ … ]  (optional conditions) -------------------------------
+        conds: Optional[
+            dict[
+                Condition,
+                Union[tuple[Condition], tuple[Condition, Condition], None],
+            ]
+        ] = None
+
         if cursor < len(arg) and arg[cursor] == "[":
             start = cursor
             cursor = _find_matching(arg, cursor, "[", "]")
             raw = arg[start + 1 : cursor - 1]
             conds = {}
             for part in filter(None, map(str.strip, raw.split(","))):
-                if "::" not in part:
-                    raise tv_errors.TableReferenceError(
-                        f"Missing '::' in condition '{part}'"
-                    )
-                key_tok, idx_tok = map(str.strip, part.split("::", 1))
-                key = _cond(key_tok)
-                # idx  vs  start:end
-                if ":" in idx_tok:
-                    a, b = map(str.strip, idx_tok.split(":", 1))
-                    val: Union[Condition, tuple[Condition, Condition]] = (
-                        _cond(a),
-                        _cond(b),
-                    )
+                # <key>           -> value = None
+                # <key>::idx      -> value = (idx,)
+                # <key>::a:b      -> value = (a, b)
+                if "::" in part:
+                    key_tok, idx_tok = map(str.strip, part.split("::", 1))
                 else:
-                    val = _cond(idx_tok)
-                conds.setdefault(key, []).append(val)
+                    key_tok, idx_tok = part, ""          # no value
 
-        # 5) any leftover means malformed string ----------------------
+                key = _cond(key_tok)
+
+                if idx_tok == "":
+                    value = None                                         # bare key
+                elif ":" in idx_tok:
+                    a, b = map(str.strip, idx_tok.split(":", 1))
+                    value = (_cond(a), _cond(b))                         # 2-tuple
+                else:
+                    value = (_cond(idx_tok),)                            # 1-tuple
+
+                if key in conds:
+                    raise tv_errors.TableReferenceError(
+                        f"Duplicate condition key '{key_tok}' in '{arg}'"
+                    )
+                conds[key] = value
+
+        # 5) any leftover means malformed string ------------------------
         if arg[cursor:].strip():
             raise tv_errors.TableReferenceError(
                 f"Unparsed tail in '{arg}': '{arg[cursor:]}'"
             )
 
         return cls(table=table, version=version, columns=columns, conditions=conds)
-
 
 @dataclass
 class TableReference:
@@ -201,24 +235,51 @@ class TableReference:
             table = ref.get_data_tables()
             if table is None:
                 return None
-            tables += tables
+            tables += table
         return tables
 
     def parse(
-        self, cache: Cache, index: Optional[int] = None
-    ) -> Union[str, "TableReference"]:
-        if len(self.references) == 0:
-            return self.text
-        try:
-            if self.text == "<<>>" and len(self.references) == 1:
-                return self.references[0].parse(cache, index)
-            tstring = self.text
-            for ref in self.references:
-                ref_ = ref.parse(cache, index)
-                tstring = tstring.replace("<<>>", str(ref_), 1)
-            return tstring
-        except tv_errors.TableReferenceError:
-            return self
+        self, cache: Cache, index: Optional[int] = None, raise_error=False
+        ) -> Union[str, "TableReference"]:
+            # no embedded references → nothing to do
+            if not self.references:
+                return self.text
+            try:
+                # fast-path: the whole thing is exactly one << … >> pair
+                if (
+                    self.text.startswith("<<")
+                    and self.text.endswith(">>")
+                    and self.text.count("<<") == 1
+                    and len(self.references) == 1
+                ):
+                    return self.references[0].parse(cache, index)
+
+                pieces: list[str] = []
+                i = 0          # cursor in self.text
+                r = 0          # index in self.references
+
+                while i < len(self.text):
+                    # hit the start of a top-level << … >> block
+                    if self.text.startswith("<<", i):
+                        end = _find_matching(self.text, i, "<<", ">>")  # index AFTER ">>"
+                        # substitute the parsed value
+                        replacement = self.references[r].parse(cache, index)
+                        pieces.append(str(replacement))
+                        r += 1
+                        i = end                                        # jump past the block
+                    else:
+                        pieces.append(self.text[i])
+                        i += 1
+
+                return "".join(pieces)
+
+            except tv_errors.TableReferenceError:
+                if raise_error:
+                    raise tv_errors.TableReferenceError()
+                else:
+                # propagate “can’t resolve yet” by returning the reference object itself
+                    return self
+
 
     # ---------------------------- factory ----------------------------
     @classmethod
@@ -245,7 +306,8 @@ class TableReference:
                 i = end
             else:
                 i += 1
-        return cls(text=arg, references=refs)
+        tr = cls(text=arg, references=refs)
+        return tr
 
 
 # ---------------------------- functions ----------------------------
@@ -315,82 +377,72 @@ def table_reference_from_string(annotation, arg):
     return arg
 
 
-def _read_table_reference(ref: TableValue, index: Optional[int], cache: Cache) -> Any:
-    # recursive parsing
+def _read_table_reference(ref: TableValue, cache: Cache, index: Optional[int]) -> Any:
     if isinstance(ref.table, TableReference):
-        ref.table = _read_table_reference(ref.table, index, cache)
+        table_name = ref.table.parse(cache, index, raise_error = True)
+    else:
+        table_name = ref.table
+    table_columns = []
     if ref.columns is not None:
-        columns = []
         for col in ref.columns:
             if isinstance(col, TableReference):
-                columns.append(_read_table_reference(col, index, cache))
+                table_columns.append(col.parse(cache, index, raise_error = True))
             else:
-                columns.append(col)
-        ref.columns = columns
+                table_columns.append(col)
     if isinstance(ref.version, TableReference):
-        ref.version = _read_table_reference(ref.version, index, cache)
-
+        table_version = ref.version.parse(cache, index,  raise_error = True)
+    else:
+        table_version = ref.version
+    table_conditions = {}
     if ref.conditions is not None:
-        conditions = {}
         for key, vals in ref.conditions.items():
             if isinstance(key, TableReference):
-                key = _read_table_reference(key, index, cache)
+                key = key.parse(cache, index, raise_error = True)
             vals_ = []
-            for val in vals:
-                if isinstance(val, tuple):
-                    if isinstance(val[0], TableReference):
-                        val_0 = _read_table_reference(val[0], index, cache)
-                    else:
-                        val_0 = val[0]
-                    if isinstance(val[1], TableReference):
-                        val_1 = _read_table_reference(val[1], index, cache)
-                    else:
-                        val_1 = val[1]
-                    vals_.append((val_0, val_1))
-                else:
+            if vals is not None:
+                for val in vals:
                     if isinstance(val, TableReference):
-                        vals_.append(_read_table_reference(val, index, cache))
+                        vals_.append(val.parse(cache, index,  raise_error = True))
                     else:
                         vals_.append(val)
-            conditions[key] = vals_
-        ref.conditions = conditions
-
-    # get query params
+                vals_ = tuple(vals_)
+            else:
+                vals_ = None
+            table_conditions[key] = vals_
     if (
-        ref.table == constants.TABLE_SELF
-        and ref.columns == [constants.TABLE_INDEX]
-        and len(ref.conditions) == 0
+        table_name == constants.TABLE_SELF
+        and table_columns == [constants.TABLE_INDEX]
+        and len(table_conditions) == 0
     ):
         if index is None:
             raise tv_errors.TableReferenceError()
         return index
-    if ref.table != constants.TABLE_SELF:
-        df = cache[(ref.table, ref.version)]
+    if table_name != constants.TABLE_SELF:
+        df = cache[(table_name, table_version)]
     else:
-        df = cache[ref.table]
+        df = cache[table_name]
 
-    if len(ref.conditions) == 0:
-        if len(ref.columns) != 0:
-            return df[ref.columns]
+    if len(table_conditions) == 0:
+        if len(table_columns) != 0:
+            return df[table_columns]
         else:
             return df
     conditions = {}
     range_conditions = {}
-    for key, value in ref.conditions.items():
-        if len(value) == 0:
+    for key, value in table_conditions.items():
+        if value is None:
             if index is None:
                 raise tv_errors.TableReferenceError()
             else:
                 conditions[key] = index
-        elif not isinstance(value, tuple):
-            value = _format_query_value(value, df[key].dtype)
+        elif len(value) == 1:
+            value = _format_query_value(value[0], df[key].dtype)
             conditions[key] = value
         elif len(value) == 2:
             start_val, end_val = value
             start_val = _format_query_value(start_val, df[key].dtype)
             end_val = _format_query_value(end_val, df[key].dtype)
             range_conditions[key] = (start_val, end_val)
-
     # format query
     query_str = " & ".join([f"{k} == {v}" for k, v in conditions.items()])
     query_str_range = " & ".join(
@@ -402,7 +454,9 @@ def _read_table_reference(ref: TableValue, index: Optional[int], cache: Cache) -
         else:
             query_str = query_str_range
     rows = df.query(query_str)
-    if len(ref.columns) != 0:
-        cols = ref.columns
-        rows = rows[cols]
+    if len(table_columns) != 0:
+        rows = rows[table_columns]
     return _simplify_df(rows)
+
+if __name__ == "__main__":
+    tv = TableReference.from_string("<<stories.artifact_name[paper_name::<<self.paper_name[index]>>]>>")

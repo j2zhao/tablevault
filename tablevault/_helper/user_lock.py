@@ -36,10 +36,12 @@ def set_not_writable(
             full_path = os.path.join(path, entry)
             if os.path.isdir(full_path) and set_children:
                 if entry not in skip_children:
-                    set_writable(
+                    set_not_writable(
                         full_path, set_children, set_children_files, skip_children
                     )
-            else:
+                else:
+                    os.chmod(full_path, mode)
+            elif not os.path.isdir(full_path):
                 if entry not in skip_children and set_children_files:
                     os.chmod(full_path, mode)
 
@@ -81,7 +83,9 @@ def set_writable(
                     set_writable(
                         full_path, set_children, set_children_files, skip_children
                     )
-            else:
+                else:
+                    os.chmod(full_path, mode)
+            elif not os.path.isdir(full_path):
                 if entry not in skip_children and set_children_files:
                     os.chmod(full_path, mode)
 
@@ -163,6 +167,8 @@ def set_tv_lock_db(db_dir: str):
 
 
 def set_tv_lock(instance_id: str, table_name: str, db_dir: str):
+    if os.name == "nt":
+        return
     if instance_id != "":
         set_tv_lock_instance(instance_id, table_name, db_dir)
     elif table_name != "":

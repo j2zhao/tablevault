@@ -38,7 +38,8 @@ def takedown_rename_table(
     if log.execution_success is True:
         db_locks.delete_lock_path(log.data["table_name"])
     else:
-        db_locks.delete_lock_path(log.data["new_table_name"])
+        if "new_table_name" in log.data:
+            db_locks.delete_lock_path(log.data["new_table_name"])
     db_locks.release_all_locks()
 
 
@@ -114,7 +115,7 @@ def takedown_materialize_instance(
     db_locks.release_all_locks()
 
 
-def takedown_write_table_inner(
+def takedown_write_instance_inner(
     process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
 ):
     logs = db_metadata.get_active_processes()
@@ -129,7 +130,7 @@ def takedown_write_table_inner(
     db_locks.release_all_locks()
 
 
-def takedown_write_table(
+def takedown_write_instance(
     process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
 ):
     logs = db_metadata.get_active_processes()
@@ -150,7 +151,7 @@ def takedown_write_table(
 
 def takedown_execute_instance_inner(
     process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
-):
+):  
     db_locks.release_all_locks()
 
 
@@ -235,8 +236,8 @@ TAKEDOWN_MAP = {
     constants.DELETE_TABLE_OP: takedown_delete_table,
     constants.DELETE_INSTANCE_OP: takedown_delete_instance,
     constants.MAT_OP: takedown_materialize_instance,
-    constants.WRITE_TABLE_OP: takedown_write_table,
-    constants.WRITE_TABLE_INNER_OP: takedown_write_table_inner,
+    constants.WRITE_INSTANCE_OP: takedown_write_instance,
+    constants.WRITE_INSTANCE_INNER_OP: takedown_write_instance_inner,
     constants.EXECUTE_INNER_OP: takedown_execute_instance_inner,
     constants.EXECUTE_OP: takedown_execute_instance,
     constants.CREATE_INSTANCE_OP: takedown_create_instance,

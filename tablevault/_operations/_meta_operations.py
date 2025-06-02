@@ -11,7 +11,7 @@ from tablevault._operations._setup_operations import SETUP_MAP
 from tablevault._operations._table_execution import execute_instance
 import inspect
 from tablevault._helper.utils import gen_tv_id
-from typing import Callable, Any
+from typing import Callable, Any, Optional
 import os
 import logging
 import multiprocessing
@@ -69,14 +69,20 @@ def tablevault_operation(
     background: bool = False,
 ) -> str:
     db_metadata = MetadataStore(db_dir)
-    if process_id != "":
-        process_id = process_id
-        force_takedown = False
-    else:
-        process_id = gen_tv_id()
-        force_takedown = True
-    db_locks = DatabaseLock(process_id, db_metadata.db_dir)
     logs = db_metadata.get_active_processes()
+    if "_" not in process_id:
+        if process_id in logs:
+            force_takedown = logs[process_id].force_takedown
+        elif process_id != "":
+            process_id = process_id
+            force_takedown = False
+        else:
+            process_id = gen_tv_id()
+            force_takedown = True
+    else:
+        parent_id = process_id.split("_")[0]
+        force_takedown = logs[parent_id].force_takedown
+    db_locks = DatabaseLock(process_id, db_metadata.db_dir)
     funct_kwargs = None
     if process_id in logs:
         log = logs[process_id]
@@ -105,7 +111,7 @@ def tablevault_operation(
             start_time = log.start_time
     else:
         start_time = db_metadata.start_new_process(
-            process_id, author, op_name, os.getpid()
+            process_id, author, op_name, os.getpid(), force_takedown
         )
     if background:
         db_metadata.update_process_data(process_id, {"background": background})

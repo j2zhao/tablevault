@@ -28,6 +28,7 @@ class ProcessLog:
     start_success: Optional[bool]
     error: Optional[tuple[str, str]]
     pid: Optional[int]
+    force_takedown: bool
 
     def __str__(self) -> str:
         obj_dict = self.to_dict()
