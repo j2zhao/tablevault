@@ -11,7 +11,7 @@ from tablevault._operations._setup_operations import SETUP_MAP
 from tablevault._operations._table_execution import execute_instance
 import inspect
 from tablevault._helper.utils import gen_tv_id
-from typing import Callable, Any, Optional
+from typing import Callable, Any
 import os
 import logging
 import multiprocessing

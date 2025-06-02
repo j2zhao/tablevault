@@ -66,7 +66,12 @@ def get_table(
         db_lock.acquire_shared_lock(table_name, instance_id)
     try:
         df = table_operations.get_table(
-            instance_id, table_name, db_dir, rows, artifact_dir=artifact_path, get_index=False
+            instance_id,
+            table_name,
+            db_dir,
+            rows,
+            artifact_dir=artifact_path,
+            get_index=False,
         )
     finally:
         if safe_locking:
@@ -478,7 +483,12 @@ def write_instance(
         "dependencies": dependencies,
     }
     return tablevault_operation(
-        author, constants.WRITE_INSTANCE_OP, _write_instance, db_dir, process_id, setup_kwargs
+        author,
+        constants.WRITE_INSTANCE_OP,
+        _write_instance,
+        db_dir,
+        process_id,
+        setup_kwargs,
     )
 
 
@@ -494,7 +504,7 @@ def _execute_instance_inner(
     origin_table: str,
     process_id: str,
     db_metadata: MetadataStore,
-):  
+):
     _table_execution.execute_instance(
         table_name,
         instance_id,
@@ -757,7 +767,7 @@ def create_table(
 def _restart_database(
     process_id: str,
     db_metadata: MetadataStore,
-):  
+):
     active_processes = db_metadata.get_active_processes()
     for prid in active_processes:
         if active_processes[prid].operation == constants.STOP_PROCESS_OP:

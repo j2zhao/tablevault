@@ -85,11 +85,9 @@ class TableValue:
 
         # Start with an empty dict for conditions in the copy
         new_conditions_dict: dict[
-            Condition, 
-            Union[tuple[Condition], tuple[Condition, Condition], None]
+            Condition, Union[tuple[Condition], tuple[Condition, Condition], None]
         ] = {}
 
-        # Build a fresh TableValue; nothing here points back to self.columns/self.conditions
         ttable = TableValue(self.table, new_columns, self.version, new_conditions_dict)
 
         if self.conditions is not None:
@@ -111,7 +109,6 @@ class TableValue:
 
         tables.append(ttable)
         return tables
-
 
     def parse(self, cache: Cache, index: Optional[int] = None):
         return _read_table_reference(self, cache, index)
@@ -158,12 +155,12 @@ class TableValue:
         columns = None
         if cursor < len(arg) and arg[cursor] == ".":
             cursor += 1
-            if arg[cursor] == "{":                       # brace-list
+            if arg[cursor] == "{":  # brace-list
                 end = _find_matching(arg, cursor, "{", "}")
                 cols_txt = arg[cursor + 1 : end - 1]
                 columns = [_cond(t) for t in cols_txt.split(",") if t.strip()]
                 cursor = end
-            else:                                       # single column
+            else:  # single column
                 if arg.startswith("<<", cursor):
                     end = _find_matching(arg, cursor, "<<", ">>")
                     token = arg[cursor:end]
@@ -198,17 +195,17 @@ class TableValue:
                 if "::" in part:
                     key_tok, idx_tok = map(str.strip, part.split("::", 1))
                 else:
-                    key_tok, idx_tok = part, ""          # no value
+                    key_tok, idx_tok = part, ""  # no value
 
                 key = _cond(key_tok)
 
                 if idx_tok == "":
-                    value = None                                         # bare key
+                    value = None  # bare key
                 elif ":" in idx_tok:
                     a, b = map(str.strip, idx_tok.split(":", 1))
-                    value = (_cond(a), _cond(b))                         # 2-tuple
+                    value = (_cond(a), _cond(b))  # 2-tuple
                 else:
-                    value = (_cond(idx_tok),)                            # 1-tuple
+                    value = (_cond(idx_tok),)  # 1-tuple
 
                 if key in conds:
                     raise tv_errors.TableReferenceError(
@@ -223,6 +220,7 @@ class TableValue:
             )
 
         return cls(table=table, version=version, columns=columns, conditions=conds)
+
 
 @dataclass
 class TableReference:
@@ -240,46 +238,45 @@ class TableReference:
 
     def parse(
         self, cache: Cache, index: Optional[int] = None, raise_error=False
-        ) -> Union[str, "TableReference"]:
-            # no embedded references → nothing to do
-            if not self.references:
-                return self.text
-            try:
-                # fast-path: the whole thing is exactly one << … >> pair
-                if (
-                    self.text.startswith("<<")
-                    and self.text.endswith(">>")
-                    and self.text.count("<<") == 1
-                    and len(self.references) == 1
-                ):
-                    return self.references[0].parse(cache, index)
+    ) -> Union[str, "TableReference"]:
+        # no embedded references → nothing to do
+        if not self.references:
+            return self.text
+        try:
+            # fast-path: the whole thing is exactly one << … >> pair
+            if (
+                self.text.startswith("<<")
+                and self.text.endswith(">>")
+                and self.text.count("<<") == 1
+                and len(self.references) == 1
+            ):
+                return self.references[0].parse(cache, index)
 
-                pieces: list[str] = []
-                i = 0          # cursor in self.text
-                r = 0          # index in self.references
+            pieces: list[str] = []
+            i = 0  # cursor in self.text
+            r = 0  # index in self.references
 
-                while i < len(self.text):
-                    # hit the start of a top-level << … >> block
-                    if self.text.startswith("<<", i):
-                        end = _find_matching(self.text, i, "<<", ">>")  # index AFTER ">>"
-                        # substitute the parsed value
-                        replacement = self.references[r].parse(cache, index)
-                        pieces.append(str(replacement))
-                        r += 1
-                        i = end                                        # jump past the block
-                    else:
-                        pieces.append(self.text[i])
-                        i += 1
-
-                return "".join(pieces)
-
-            except tv_errors.TableReferenceError:
-                if raise_error:
-                    raise tv_errors.TableReferenceError()
+            while i < len(self.text):
+                # hit the start of a top-level << … >> block
+                if self.text.startswith("<<", i):
+                    end = _find_matching(self.text, i, "<<", ">>")  # index AFTER ">>"
+                    # substitute the parsed value
+                    replacement = self.references[r].parse(cache, index)
+                    pieces.append(str(replacement))
+                    r += 1
+                    i = end  # jump past the block
                 else:
-                # propagate “can’t resolve yet” by returning the reference object itself
-                    return self
+                    pieces.append(self.text[i])
+                    i += 1
 
+            return "".join(pieces)
+
+        except tv_errors.TableReferenceError:
+            if raise_error:
+                raise tv_errors.TableReferenceError()
+            else:
+                # propagate “can’t resolve yet” by returning the reference object itself
+                return self
 
     # ---------------------------- factory ----------------------------
     @classmethod
@@ -379,30 +376,30 @@ def table_reference_from_string(annotation, arg):
 
 def _read_table_reference(ref: TableValue, cache: Cache, index: Optional[int]) -> Any:
     if isinstance(ref.table, TableReference):
-        table_name = ref.table.parse(cache, index, raise_error = True)
+        table_name = ref.table.parse(cache, index, raise_error=True)
     else:
         table_name = ref.table
     table_columns = []
     if ref.columns is not None:
         for col in ref.columns:
             if isinstance(col, TableReference):
-                table_columns.append(col.parse(cache, index, raise_error = True))
+                table_columns.append(col.parse(cache, index, raise_error=True))
             else:
                 table_columns.append(col)
     if isinstance(ref.version, TableReference):
-        table_version = ref.version.parse(cache, index,  raise_error = True)
+        table_version = ref.version.parse(cache, index, raise_error=True)
     else:
         table_version = ref.version
     table_conditions = {}
     if ref.conditions is not None:
         for key, vals in ref.conditions.items():
             if isinstance(key, TableReference):
-                key = key.parse(cache, index, raise_error = True)
+                key = key.parse(cache, index, raise_error=True)
             vals_ = []
             if vals is not None:
                 for val in vals:
                     if isinstance(val, TableReference):
-                        vals_.append(val.parse(cache, index,  raise_error = True))
+                        vals_.append(val.parse(cache, index, raise_error=True))
                     else:
                         vals_.append(val)
                 vals_ = tuple(vals_)
@@ -458,5 +455,8 @@ def _read_table_reference(ref: TableValue, cache: Cache, index: Optional[int]) -
         rows = rows[table_columns]
     return _simplify_df(rows)
 
+
 if __name__ == "__main__":
-    tv = TableReference.from_string("<<stories.artifact_name[paper_name::<<self.paper_name[index]>>]>>")
+    tv = TableReference.from_string(
+        "<<stories.artifact_name[paper_name::<<self.paper_name[index]>>]>>"
+    )

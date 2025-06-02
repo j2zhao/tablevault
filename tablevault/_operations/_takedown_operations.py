@@ -151,7 +151,7 @@ def takedown_write_instance(
 
 def takedown_execute_instance_inner(
     process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
-):  
+):
     db_locks.release_all_locks()
 
 

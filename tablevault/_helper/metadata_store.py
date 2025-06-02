@@ -232,7 +232,12 @@ class MetadataStore:
             return _is_string_in_file(self.completed_file, process_id)
 
     def start_new_process(
-        self, process_id: str, author: str, operation: str, pid: int, force_takedonwn:bool
+        self,
+        process_id: str,
+        author: str,
+        operation: str,
+        pid: int,
+        force_takedonwn: bool,
     ) -> str:
         with self.lock:
             logs = self._get_active_logs()
@@ -366,7 +371,11 @@ class MetadataStore:
         for instance_id, (changed_time, start_time, end_time) in table_history[
             table_name
         ].items():
-            if version is not None and version != "" and not instance_id.startswith(version):
+            if (
+                version is not None
+                and version != ""
+                and not instance_id.startswith(version)
+            ):
                 continue
             if active_only and not allow_multiple_artifacts and end_time is not None:
                 continue

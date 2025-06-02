@@ -608,7 +608,7 @@ def setup_execute_instance(
             db_locks.acquire_exclusive_lock(table_name, constants.ARTIFACT_FOLDER)
     else:
         db_locks.acquire_exclusive_lock(table_name)
-    
+
     yaml_builders = file_operations.get_yaml_builders(
         instance_id, table_name, db_metadata.db_dir
     )
