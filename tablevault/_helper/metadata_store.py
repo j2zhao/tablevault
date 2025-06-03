@@ -363,7 +363,7 @@ class MetadataStore:
         print("START TABLE HISTORY")
         print(version)
         print(table_name)
-        print(start_time)
+        print(before_time)
         print(active_only)
         print(table_history)
         max_changed_time = 0
