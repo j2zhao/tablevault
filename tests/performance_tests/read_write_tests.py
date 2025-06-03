@@ -96,7 +96,7 @@ def write_and_read_csv_csvmodule(data_list, filename="test.csv"):
     with open(filename, "r", newline="") as f:
         start = time.time()
         reader = csv.DictReader(f)
-        rows = list(reader)
+        list(reader)
         read_time = time.time() - start
     remove_file(filename)
     return write_time, read_time, file_size

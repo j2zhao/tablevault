@@ -456,7 +456,7 @@ def create_copy_builder_file(
             example_builder = BUILDER_EXAMPLE_MAPPING[builder_constants.INDEX_BUILDER]
         elif builder_name.endswith(constants.INDEX_BUILDER_SUFFIX):
             raise TVFileError(
-               f"Only index builder name {index_name} allowed with index suffix. Instead of {builder_name}"
+                f"Only index builder name {index_name} allowed with index suffix. Instead of {builder_name}"
             )
         else:
             example_builder = BUILDER_EXAMPLE_MAPPING[builder_constants.COLUMN_BUILDER]

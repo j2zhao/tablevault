@@ -1,34 +1,45 @@
-
 from tablevault.core import TableVault
 from .helper import copy_example_tv
 
-def basic_function(tv:TableVault):
+
+def basic_function(tv: TableVault):
     ids = []
     id = tv.create_code_module("test")
     ids.append(id)
-    id = tv.create_table('stories_TEST', allow_multiple_artifacts = False)
+    id = tv.create_table("stories_TEST", allow_multiple_artifacts=False)
     ids.append(id)
-    id = tv.rename_table('stories', 'stories_TEST')
+    id = tv.rename_table("stories", "stories_TEST")
     ids.append(id)
-    id = tv.create_table('llm_storage', has_side_effects=True)
+    id = tv.create_table("llm_storage", has_side_effects=True)
     ids.append(id)
-    
-    id = tv.create_table('llm_questions')
+
+    id = tv.create_table("llm_questions")
     ids.append(id)
     id = tv.create_instance("stories")
     ids.append(id)
     id = tv.create_instance("llm_storage", builders=["upload_openai"])
     ids.append(id)
-    id = tv.create_instance("llm_questions", builders=["question_1","question_2", "question_3"])
-    
-    id = tv.create_builder_file(copy_dir="./tests/test_data/test_data_db/stories/stories_index.yaml", table_name="stories")
+    id = tv.create_instance(
+        "llm_questions", builders=["question_1", "question_2", "question_3"]
+    )
+
+    id = tv.create_builder_file(
+        copy_dir="./tests/test_data/test_data_db/stories/stories_index.yaml",
+        table_name="stories",
+    )
     ids.append(id)
-    
-    id = tv.create_builder_file(copy_dir="./tests/test_data/test_data_db_selected/llm_storage", table_name="llm_storage")
+
+    id = tv.create_builder_file(
+        copy_dir="./tests/test_data/test_data_db_selected/llm_storage",
+        table_name="llm_storage",
+    )
     ids.append(id)
-    id = tv.create_builder_file(copy_dir="./tests/test_data/test_data_db_selected/llm_questions", table_name="llm_questions")
+    id = tv.create_builder_file(
+        copy_dir="./tests/test_data/test_data_db_selected/llm_questions",
+        table_name="llm_questions",
+    )
     ids.append(id)
-    
+
     id = tv.execute_instance("stories")
     ids.append(id)
     id = tv.execute_instance("llm_storage")
@@ -37,15 +48,18 @@ def basic_function(tv:TableVault):
     ids.append(id)
     return ids
 
-def base_exception_function(tablevault:TableVault, process_ids:list):
+
+def base_exception_function(tablevault: TableVault, process_ids: list):
     copy_example_tv()
     last_process_id = tablevault.generate_process_id()
     process_ids.append(last_process_id)
-    tablevault.create_table('stories_TEST', allow_multiple_artifacts = False, process_id=last_process_id)
+    tablevault.create_table(
+        "stories_TEST", allow_multiple_artifacts=False, process_id=last_process_id
+    )
     copy_example_tv()
     last_process_id = tablevault.generate_process_id()
     process_ids.append(last_process_id)
-    tablevault.rename_table('stories', 'stories_TEST', process_id=last_process_id)
+    tablevault.rename_table("stories", "stories_TEST", process_id=last_process_id)
     copy_example_tv()
     last_process_id = tablevault.generate_process_id()
     process_ids.append(last_process_id)
@@ -61,12 +75,19 @@ def base_exception_function(tablevault:TableVault, process_ids:list):
     copy_example_tv()
     last_process_id = tablevault.generate_process_id()
     process_ids.append(last_process_id)
-    tablevault.create_builder_file(builder_name="test_buider", table_name="stories", process_id=last_process_id)
+    tablevault.create_builder_file(
+        builder_name="test_buider", table_name="stories", process_id=last_process_id
+    )
     copy_example_tv()
     last_process_id = tablevault.generate_process_id()
     process_ids.append(last_process_id)
-    tablevault.delete_builder_file(builder_name="test_buider", table_name="stories", process_id=last_process_id)
-    tablevault.create_builder_file(copy_dir="./tests/test_data/test_data_db/stories/stories_index.yaml", table_name="stories")
+    tablevault.delete_builder_file(
+        builder_name="test_buider", table_name="stories", process_id=last_process_id
+    )
+    tablevault.create_builder_file(
+        copy_dir="./tests/test_data/test_data_db/stories/stories_index.yaml",
+        table_name="stories",
+    )
     copy_example_tv()
     last_process_id = tablevault.generate_process_id()
     process_ids.append(last_process_id)
@@ -78,11 +99,13 @@ def base_exception_function(tablevault:TableVault, process_ids:list):
     last_process_id = tablevault.generate_process_id()
     process_ids.append(last_process_id)
     tablevault.write_instance(table, "stories", process_id=last_process_id)
-    instances = tablevault.get_instances(table_name= "stories")
+    instances = tablevault.get_instances(table_name="stories")
     copy_example_tv()
     last_process_id = tablevault.generate_process_id()
     process_ids.append(last_process_id)
-    tablevault.delete_instance(instance_id=instances[0], table_name="stories", process_id=last_process_id)
+    tablevault.delete_instance(
+        instance_id=instances[0], table_name="stories", process_id=last_process_id
+    )
     copy_example_tv()
     last_process_id = tablevault.generate_process_id()
     process_ids.append(last_process_id)

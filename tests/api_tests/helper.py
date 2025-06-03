@@ -3,34 +3,38 @@ from tablevault.core import TableVault
 import shutil
 from tablevault._helper import user_lock
 
-def copy_example_tv(new_dir_name = 'example_tv_copy', old_dir_name = 'example_tv'): 
+
+def copy_example_tv(new_dir_name="example_tv_copy", old_dir_name="example_tv"):
     user_lock.set_writable(new_dir_name)
     if os.path.isdir(new_dir_name):
         shutil.rmtree(new_dir_name)
     shutil.copytree(old_dir_name, new_dir_name, dirs_exist_ok=True)
 
+
 def evaluate_operation_logging(ids):
     # check all ids are logged
-    tablevault = TableVault('example_tv', 'jinjin')
+    tablevault = TableVault("example_tv", "jinjin")
     for id in ids:
         assert tablevault.get_process_completion(id)
     # check no processes
     processes = tablevault.get_active_processes()
     assert len(processes) == 0
     # checked no locks
-    lock_dir = 'example_tv/locks'
+    lock_dir = "example_tv/locks"
     for root, dirs, files in os.walk(lock_dir):
         for file in files:
-            assert not file.endswith('.shlock')
-            assert not file.endswith('.exlock')
+            assert not file.endswith(".shlock")
+            assert not file.endswith(".exlock")
     # check no temp files
-    temp_dir = 'example_tv/_temp'
+    temp_dir = "example_tv/_temp"
     for entry in os.listdir(temp_dir):
-        assert entry.startswith('.')
+        assert entry.startswith(".")
 
 
-def evaluate_full_tables(tables = ["stories", "llm_storage","llm_questions" ], num_entries:int = 1):
-    tablevault = TableVault('example_tv', 'jinjin')
+def evaluate_full_tables(
+    tables=["stories", "llm_storage", "llm_questions"], num_entries: int = 1
+):
+    tablevault = TableVault("example_tv", "jinjin")
     for table_name in tables:
         df, _ = tablevault.get_dataframe(table_name)
         assert not df.isnull().values.any()
@@ -38,17 +42,18 @@ def evaluate_full_tables(tables = ["stories", "llm_storage","llm_questions" ], n
 
 
 def evaluate_deletion():
-    temp_dir = 'example_tv/metadata/ARCHIVED_TRASH/llm_storage'
+    temp_dir = "example_tv/metadata/ARCHIVED_TRASH/llm_storage"
     assert os.path.exists(temp_dir)
     entries = os.listdir(temp_dir)
-    assert 'table.csv' not in entries
-    tablevault = TableVault('example_tv', 'jinjin')
-    instances = tablevault.get_instances('stories')
+    assert "table.csv" not in entries
+    tablevault = TableVault("example_tv", "jinjin")
+    instances = tablevault.get_instances("stories")
     assert len(instances) == 0
-    temp_dir = 'example_tv/metadata/ARCHIVED_TRASH/stories'
+    temp_dir = "example_tv/metadata/ARCHIVED_TRASH/stories"
     assert os.path.exists(temp_dir)
     entries = os.listdir(temp_dir)
-    assert 'table.csv' not in entries
+    assert "table.csv" not in entries
+
 
 def get_all_file_paths(folder):
     file_paths = set()
@@ -58,6 +63,7 @@ def get_all_file_paths(folder):
             rel_path = os.path.relpath(full_path, folder)
             file_paths.add(rel_path)
     return file_paths
+
 
 def compare_folders(folder1, folder2):
     folder1_files = get_all_file_paths(folder1)
@@ -69,7 +75,7 @@ def compare_folders(folder1, folder2):
     if not missing_in_folder2 and not missing_in_folder1:
         print("✅ Both folders have the same file paths.")
         return True
-    
+
     else:
         print("❌ Folders are different.\n")
         if missing_in_folder2:

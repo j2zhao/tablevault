@@ -11,9 +11,10 @@ from tablevault._helper.user_lock import set_tv_lock, set_writable
 import logging
 import shutil
 
+
 def _can_program_modify_permissions(filepath: str) -> bool:
     if os.name == "nt":
-        return True 
+        return True
     current_euid = os.geteuid()
     if current_euid == 0:
         return True
@@ -51,7 +52,7 @@ class TableVault:
         description: str = "",
         create: bool = False,
         restart: bool = False,
-        verbose: bool = True
+        verbose: bool = True,
     ) -> None:
         self.db_dir = db_dir
         self.author = author
@@ -589,10 +590,11 @@ def decompress_vault(db_dir: str) -> None:
     with tarfile.open(db_dir_compressed, mode="r:xz") as tar:
         tar.extractall(path=extract_to)
 
-def delete_vault(db_dir:str):
+
+def delete_vault(db_dir: str):
     """Delete a TableVault directory
 
-        :param str db_dir: Base directory.
+    :param str db_dir: Base directory.
     """
     set_writable(db_dir)
     shutil.rmtree(db_dir)

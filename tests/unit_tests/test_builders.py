@@ -1,9 +1,9 @@
 import os
 import yaml
 from tablevault._builders.load_builder import load_builder
-import pandas as pd
 
-def load_yaml(file_name:str):
+
+def load_yaml(file_name: str):
     name = os.path.basename(file_name)
     name = name.split(".")[0]
     with open(file_name, "r") as file:
@@ -18,9 +18,9 @@ def test_load_builder(file_name):
     print(builder.arguments)
 
 
-if __name__ == '__main__':
-    #test_table_string()
-    #test_table_reference()
-    file_name = '../test_data/test_data_db/llm_storage/upload_openai.yaml'
+if __name__ == "__main__":
+    # test_table_string()
+    # test_table_reference()
+    file_name = "../test_data/test_data_db/llm_storage/upload_openai.yaml"
     test_load_builder(file_name)
-    #test_table_values()
+    # test_table_values()

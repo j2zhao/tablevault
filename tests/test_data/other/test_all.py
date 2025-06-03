@@ -7,7 +7,7 @@ scripts = [
     "test_external_edit.py",
     "test_exceptions.py",
     "test_restart_and_stops.py",
-    "test_stop_and_materialize.py"
+    "test_stop_and_materialize.py",
 ]
 
 for path in scripts:

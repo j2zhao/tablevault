@@ -37,29 +37,30 @@
 import pandas as pd
 import numpy as np
 
+
 def convert_list_to_dtype(values, dtype):
     """
     Convert a list of Python values to a Pandas Series with a specified dtype.
-    
+
     Parameters:
         values (list): A list of Python values.
         dtype: The target data type. This can be a string (e.g., "int64", "float64", "category"),
                a NumPy dtype (e.g., np.int64), or a pandas dtype (e.g., a categorical dtype).
-               
+
     Returns:
         pd.Series: A Pandas Series with the values converted to the target dtype.
-    
+
     Note:
         - For categorical dtypes, values not in the defined categories will be converted to NaN.
         - If a value is NaN, it is returned unchanged.
     """
     # Convert the list into a Pandas Series.
     s = pd.Series(values)
-    
+
     # Handle categorical dtype: use astype to ensure that categories are respected.
     if pd.api.types.is_categorical_dtype(dtype):
         return s.astype(dtype)
-    
+
     # For non-categorical dtypes, attempt to convert the entire Series using astype.
     try:
         return s.astype(dtype)
@@ -70,13 +71,17 @@ def convert_list_to_dtype(values, dtype):
                 return x
             try:
                 # If dtype has a 'type' attribute (common for NumPy dtypes), use it.
-                if hasattr(dtype, 'type'):
+                if hasattr(dtype, "type"):
                     return dtype.type(x)
                 # Otherwise, convert using np.dtype.
                 return np.dtype(dtype).type(x)
             except Exception as inner_e:
-                raise ValueError(f"Could not convert {x!r} to dtype {dtype!r}: {inner_e}")
+                raise ValueError(
+                    f"Could not convert {x!r} to dtype {dtype!r}: {inner_e}"
+                )
+
         return s.apply(convert_element)
+
 
 # Example usage:
 

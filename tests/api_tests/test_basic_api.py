@@ -4,16 +4,16 @@ from tablevault.core import TableVault
 from .base_execution_helper import basic_function
 
 
-
 def test_basic_function(tablevault):
     ids = basic_function(tablevault)
     helper.evaluate_operation_logging(ids)
     helper.evaluate_full_tables()
 
+
 def test_deletion(tablevault):
     ids = []
     basic_function(tablevault)
-    tablevault = TableVault('example_tv', 'jinjin')
+    tablevault = TableVault("example_tv", "jinjin")
     id = tablevault.delete_code_module("test")
     ids.append(id)
     id = tablevault.create_instance("stories", builders=["test_builder"])

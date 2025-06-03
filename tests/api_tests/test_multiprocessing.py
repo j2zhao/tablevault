@@ -5,33 +5,44 @@ import threading
 from tablevault._defintions import tv_errors
 from multiprocessing import Event
 
-started_evt = Event() 
-finish_evt  = Event()
+started_evt = Event()
+finish_evt = Event()
+
 
 def fake_execution():
     started_evt.set()
-    finish_evt.wait() 
+    finish_evt.wait()
     return 0
 
-def multiprocessing_execute(tablevault:TableVault):
-    with patch('tablevault._operations._vault_operations._execute_instance', fake_execution):
-        tablevault.create_table('stories', allow_multiple_artifacts = False)
+
+def multiprocessing_execute(tablevault: TableVault):
+    with patch(
+        "tablevault._operations._vault_operations._execute_instance", fake_execution
+    ):
+        tablevault.create_table("stories", allow_multiple_artifacts=False)
         tablevault.create_instance("stories")
-        tablevault.create_builder_file(copy_dir="./tests/test_data/test_data_db_selected/stories", table_name="stories")
+        tablevault.create_builder_file(
+            copy_dir="./tests/test_data/test_data_db_selected/stories",
+            table_name="stories",
+        )
         tablevault.execute_instance("stories")
-        
+
+
 def multiprocessing_other_table():
-    tablevault = TableVault('example_tv', 'jinjin2')
-    instances = tablevault.get_instances(table_name= "stories")
-    tablevault.create_table('llm_storage', has_side_effects=True)
+    tablevault = TableVault("example_tv", "jinjin2")
+    tablevault.get_instances(table_name="stories")
+    tablevault.create_table("llm_storage", has_side_effects=True)
+
 
 def multiprocessing_other_execute():
-    tablevault = TableVault('example_tv', 'jinjin2')
+    tablevault = TableVault("example_tv", "jinjin2")
     tablevault.execute_instance("stories")
 
+
 def multiprocessing_other_instance():
-    tablevault = TableVault('example_tv', 'jinjin2')
+    tablevault = TableVault("example_tv", "jinjin2")
     tablevault.create_instance("stories")
+
 
 def test_multiprocessing(tablevault):
     t = threading.Thread(target=multiprocessing_execute, args=[tablevault], daemon=True)
@@ -59,6 +70,7 @@ def test_multiprocessing(tablevault):
 
     finish_evt.set()
     t.join()
+
 
 # if __name__ == "__main__":
 #     test_multiprocessing()
