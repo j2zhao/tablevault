@@ -16,6 +16,6 @@ arguments:
             (with square brackets, separated by commons, text in quotations).
             If there is no motivations, return an empty list."
       regex: ["\\[\\s*\"(?:[^\"\\\\]|\\\\.)*\"(?:\\s*,\\s*\"(?:[^\"\\\\]|\\\\.)*\")*\\s*\\]"]
-  key_file: ../test_data/open_ai_key/key.txt
+  key_file: ./tests/test_data/open_ai_key/key.txt # fake
   model: 'gpt-4o-mini'
   temperature: 0.2

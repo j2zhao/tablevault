@@ -11,6 +11,7 @@ import filecmp
 from importlib import resources
 from tablevault._builders.examples.mapping import BUILDER_EXAMPLE_MAPPING
 from tablevault._helper import user_lock
+from tablevault._builders import builder_constants
 
 
 def delete_database_folder(db_dir) -> None:
@@ -418,7 +419,6 @@ def create_copy_builder_file(
     db_dir: str,
     builder_name: str = "",
     copy_dir: str = "",
-    builder_type="BaseBuilder",
 ):
     builder_dir = os.path.join(
         db_dir, table_name, instance_id, constants.BUILDER_FOLDER
@@ -451,9 +451,15 @@ def create_copy_builder_file(
             print(copy_dir)
             raise TVFileError("could not copy builder path")
     else:
-        if builder_type not in BUILDER_EXAMPLE_MAPPING:
-            raise TVFileError("Invalid Builder Name")
-        example_builder = BUILDER_EXAMPLE_MAPPING[builder_type]
+        index_name = table_name + constants.INDEX_BUILDER_SUFFIX
+        if builder_name == index_name:
+            example_builder = BUILDER_EXAMPLE_MAPPING[builder_constants.INDEX_BUILDER]
+        elif builder_name.endswith(constants.INDEX_BUILDER_SUFFIX):
+            raise TVFileError(
+               f"Only index builder name {index_name} allowed with index suffix. Instead of {builder_name}"
+            )
+        else:
+            example_builder = BUILDER_EXAMPLE_MAPPING[builder_constants.COLUMN_BUILDER]
         data = resources.read_binary(example_builder[0], example_builder[1])
         builder_path = os.path.join(builder_dir, f"{builder_name}.yaml")
         try:

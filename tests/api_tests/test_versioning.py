@@ -1,30 +1,19 @@
 # follow previous versioning tests
 
 from tablevault.core import TableVault
-import os
-from helper import evaluate_operation_logging, evaluate_full_tables, copy_test_dir
-import shutil
+from .helper import evaluate_operation_logging, evaluate_full_tables, copy_example_tv
+from .base_execution_helper import basic_function
 
-def copy_story(base_dir= '../test_data/stories', story_name = 'The_Clockmakers_Secret.pdf'):
-    org_path = os.path.join(base_dir, story_name)
-    new_name = story_name.split(".")[0] + '_copy.pdf'
-    new_path = os.path.join(base_dir, new_name)
-    shutil.copy2(org_path, new_path)
 
-def delete_story(base_dir= '../test_data/stories', story_name = 'The_Clockmakers_Secret_copy.pdf'):
-    story_path  = os.path.join(base_dir, story_name)
-    if os.path.isfile(story_path):
-        os.remove(story_path)
-
-def test_copy_instance_no_change():
-    copy_test_dir("test_dir", "basic_function")
+def test_copy_instance_no_change(tablevault:TableVault):
+    basic_function(tablevault)
     ids = []
-    tablevault = TableVault('test_dir', 'jinjin2')
+    tablevault = TableVault('example_tv', 'jinjin2')
     id = tablevault.create_instance("llm_storage", copy=True)
     ids.append(id)
     id = tablevault.create_instance("llm_questions", copy=True)
     ids.append(id)
-    copy_test_dir()
+    copy_example_tv()
     id = tablevault.execute_instance("llm_questions")
     ids.append(id)
     id = tablevault.execute_instance("llm_storage")
@@ -41,14 +30,15 @@ def test_copy_instance_no_change():
     assert df1.equals(df2)
     evaluate_operation_logging(ids)
 
-def test_copy_instance_builder_change():
-    copy_test_dir("test_dir", "basic_function")
+def test_copy_instance_builder_change(tablevault:TableVault, add_story):
+    basic_function(tablevault)
+    add_story
     ids = []
-    tablevault = TableVault('test_dir', 'jinjin2')
+    tablevault = TableVault('example_tv', 'jinjin2')
     id = tablevault.create_instance("llm_questions")
     builders=["llm_questions_index", "question_1a","question_2", "question_3"]
     for bn in builders:
-        id = tablevault.create_builder_file(copy_dir=f"../test_data/test_data_db/llm_questions/{bn}.yaml", table_name="llm_questions")
+        id = tablevault.create_builder_file(copy_dir=f"./tests/test_data/test_data_db/llm_questions/{bn}.yaml", table_name="llm_questions")
  
     ids.append(id)
     id = tablevault.execute_instance("llm_questions")
@@ -63,10 +53,10 @@ def test_copy_instance_builder_change():
     assert not df2['q1'].equals(df1['q1'])
     assert not df2['q1'].isna().any()
 
-def test_copy_dep_change():
-    copy_test_dir("test_dir", "basic_function")
+def test_copy_dep_change(tablevault:TableVault):
+    basic_function(tablevault)
     ids = []
-    tablevault = TableVault('test_dir', 'jinjin2')
+    tablevault = TableVault('example_tv', 'jinjin2')
     id = tablevault.create_instance("llm_storage", copy=True)
     ids.append(id)
     id = tablevault.create_instance("llm_questions", copy=True)
@@ -85,12 +75,10 @@ def test_copy_dep_change():
     for col in cols_to_compare:
         assert not df2[col].isna().any()
 
-def test_new_row_change():
+def test_new_row_change(tablevault:TableVault, add_story):
     ids = []
-    delete_story()
-    copy_test_dir("test_dir", "basic_function")
-    copy_story()
-    tablevault = TableVault('test_dir', 'jinjin2')
+    basic_function(tablevault)
+    tablevault = TableVault('example_tv', 'jinjin2')
     id = tablevault.create_instance("stories", copy=True)
     ids.append(id)
     id = tablevault.create_instance("llm_storage", copy=True)
@@ -102,12 +90,11 @@ def test_new_row_change():
     id = tablevault.execute_instance("llm_storage")
     ids.append(id)
     id = tablevault.execute_instance("llm_questions")
-    delete_story()
     evaluate_operation_logging(ids)
     evaluate_full_tables(num_entries=2)
 
-if __name__ == "__main__":
-    test_copy_instance_no_change()
-    test_copy_instance_builder_change()
-    test_copy_dep_change()
-    test_new_row_change()
+# if __name__ == "__main__":
+#     test_copy_instance_no_change()
+#     test_copy_instance_builder_change()
+#     test_copy_dep_change()
+#     test_new_row_change()

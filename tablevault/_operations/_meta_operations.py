@@ -1,7 +1,5 @@
-"""
-For each operation we want to be able to write the logs to db, and fetch locks
-
-"""
+"""For each operation we want to be able to write the logs to db, and
+fetch locks."""
 
 from tablevault._defintions import tv_errors, constants
 from tablevault._helper.database_lock import DatabaseLock
@@ -16,7 +14,7 @@ import os
 import logging
 import multiprocessing
 
-logging.basicConfig(level=logging.INFO)
+#logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 

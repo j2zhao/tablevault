@@ -10,7 +10,8 @@ from tablevault._defintions.types import Cache
 
 # ───────────────────────────────────────────── helpers ──
 def _find_matching(text: str, pos: int, open_sym: str, close_sym: str) -> int:
-    """Return index *after* the matching close_sym for the opener at *pos*."""
+    """Return index *after* the matching close_sym for the opener at
+    *pos*."""
     depth, i = 0, pos
     while i < len(text):
         if text.startswith(open_sym, i):
@@ -281,10 +282,10 @@ class TableReference:
     # ---------------------------- factory ----------------------------
     @classmethod
     def from_string(cls, arg: str) -> "TableReference":
-        """
-        Parse *any* string that can embed one or more << … >> blocks.
-        If the whole argument is exactly one << … >> pair, we still
-        wrap it in a TableReference for uniformity.
+        """Parse *any* string that can embed one or more << … >> blocks.
+
+        If the whole argument is exactly one << … >> pair, we still wrap it in a
+        TableReference for uniformity.
         """
         # special-case fully wrapped form
         if arg.startswith("<<") and arg.endswith(">>") and arg.count("<<") == 1:

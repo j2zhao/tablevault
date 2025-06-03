@@ -1,61 +1,65 @@
 # mock a table execution and then see if i can execute
 from unittest.mock import patch
 from tablevault.core import TableVault
-import time
 import threading
 from tablevault._defintions import tv_errors
-import sys
+from multiprocessing import Event
+
+started_evt = Event() 
+finish_evt  = Event()
 
 def fake_execution():
-    print("successfully faked")
-    time.sleep(50)
-    sys.exit()
+    started_evt.set()
+    finish_evt.wait() 
+    return 0
 
-def test_multiprocessing_execute():
+def multiprocessing_execute(tablevault:TableVault):
     with patch('tablevault._operations._vault_operations._execute_instance', fake_execution):
-        tablevault = TableVault('test_dir', 'jinjin', create=True)
         tablevault.create_table('stories', allow_multiple_artifacts = False)
         tablevault.create_instance("stories")
-        tablevault.create_builder_file(copy_dir="../test_data/test_data_db_selected/stories", table_name="stories")
+        tablevault.create_builder_file(copy_dir="./tests/test_data/test_data_db_selected/stories", table_name="stories")
         tablevault.execute_instance("stories")
         
-def test_multiprocessing_other_table():
-    tablevault = TableVault('test_dir', 'jinjin2')
+def multiprocessing_other_table():
+    tablevault = TableVault('example_tv', 'jinjin2')
     instances = tablevault.get_instances(table_name= "stories")
     tablevault.create_table('llm_storage', has_side_effects=True)
 
-def test_multiprocessing_other_execute():
-    tablevault = TableVault('test_dir', 'jinjin2')
+def multiprocessing_other_execute():
+    tablevault = TableVault('example_tv', 'jinjin2')
     tablevault.execute_instance("stories")
 
-def test_multiprocessing_other_instance():
-    tablevault = TableVault('test_dir', 'jinjin2')
+def multiprocessing_other_instance():
+    tablevault = TableVault('example_tv', 'jinjin2')
     tablevault.create_instance("stories")
 
-def test_multiprocessing():
-    t = threading.Thread(target=test_multiprocessing_execute, daemon=True)
+def test_multiprocessing(tablevault):
+    t = threading.Thread(target=multiprocessing_execute, args=[tablevault], daemon=True)
     t.start()
-    time.sleep(5)
+    assert started_evt.wait(timeout=5)
+
     failed_execution = False
     try:
-        test_multiprocessing_other_table()
+        multiprocessing_other_table()
     except tv_errors.TableVaultError:
         failed_execution = True
     assert not failed_execution
     failed_execution = False
     try:
-        test_multiprocessing_other_execute()
+        multiprocessing_other_execute()
     except tv_errors.TableVaultError:
         failed_execution = True
     assert failed_execution
     failed_execution = False
     try:
-        test_multiprocessing_other_instance()
+        multiprocessing_other_instance()
     except tv_errors.TableVaultError:
         failed_execution = True
     assert failed_execution
 
+    finish_evt.set()
+    t.join()
 
-if __name__ == "__main__":
-    test_multiprocessing()
-    #clean_up_open_ai()
+# if __name__ == "__main__":
+#     test_multiprocessing()
+#     #clean_up_open_ai()

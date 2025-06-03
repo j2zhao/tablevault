@@ -12,7 +12,7 @@ def clean_and_lowercase(text):
 
 
 def create_paper_table_from_folder(folder_dir, copies, artifact_folder):
-    """Custom"""
+    """Custom."""
     papers = []
     for file_name in os.listdir(folder_dir):
         if file_name.endswith(".pdf"):

@@ -11,7 +11,6 @@ from tablevault._helper.utils import topological_sort
 from tablevault._dataframe_helper import table_operations
 import pandas as pd
 from typing import Optional
-from tablevault._builders import builder_constants
 
 
 def setup_create_code_module(
@@ -76,18 +75,11 @@ def setup_create_builder_file(
         instance_id=instance_id,
         subfolder=constants.BUILDER_FOLDER,
     )
-    if builder_name == "":
-        builder_type = builder_constants.BASE_BUILDER
-    elif builder_name.endswith(constants.INDEX_BUILDER_SUFFIX):
-        builder_type = builder_constants.INDEX_BUILDER
-    else:
-        builder_type = builder_constants.COLUMN_BUILDER
     funct_kwargs = {
         "builder_name": builder_name,
         "instance_id": instance_id,
         "table_name": table_name,
         "copy_dir": copy_dir,
-        "builder_type": builder_type,
     }
 
     db_metadata.update_process_data(process_id, funct_kwargs)
@@ -725,20 +717,9 @@ def setup_create_instance(
         except tv_errors.TVArgumentError:
             origin_id = ""
             origin_table = ""
-    if isinstance(builder_names, list):
-        builder_names_ = {}
-        for bn in builder_names:
-            builder_names_[bn] = builder_constants.BASE_BUILDER
-        builder_names = builder_names_
-    elif isinstance(builder_names, dict):
-        for bn, bt in builder_names.items():
-            if bt not in builder_constants.ALL_BUILDERS and not bt.endswith(".yaml"):
-                raise tv_errors.TVArgumentError(
-                    f"builder type not recognized for: {bn}"
-                )
     index_builder = table_name + constants.INDEX_BUILDER_SUFFIX
     if origin_id == "" and index_builder not in builder_names and not external_edit:
-        builder_names[index_builder] = builder_constants.INDEX_BUILDER
+        builder_names.append(index_builder)
     funct_kwargs = {
         "version": version,
         "instance_id": instance_id,
@@ -759,7 +740,6 @@ def setup_create_table(
     table_name: str,
     allow_multiple_artifacts: bool,
     has_side_effects: bool,
-    yaml_dir: str,
     description: str,
     process_id: str,
     db_metadata: MetadataStore,
@@ -769,7 +749,6 @@ def setup_create_table(
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
     funct_kwargs = {
         "table_name": table_name,
-        "yaml_dir": yaml_dir,
         "allow_multiple_artifacts": allow_multiple_artifacts,
         "has_side_effects": has_side_effects,
         "description": description,

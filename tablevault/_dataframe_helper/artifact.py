@@ -178,8 +178,9 @@ class ArtifactStringArray(ExtensionArray):
     def copy(self):
         return ArtifactStringArray(self._data.copy())
 
-    def __array__(self, dtype=None):
-        return np.asarray(self._data, dtype=dtype)
+    def __array__(self, dtype: np.dtype | None = None, copy: bool | None = None):
+        src = self._data.copy() if copy else self._data
+        return np.asarray(src, dtype=dtype if dtype is not None else object, copy=False)
 
     @classmethod
     def _from_sequence(cls, scalars, dtype=None, copy=False):

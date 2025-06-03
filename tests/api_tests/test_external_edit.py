@@ -1,14 +1,10 @@
 from tablevault.core import TableVault
-"""
-Test materialization and write table
-"""
-import helper
+from . import helper
 import pandas as pd
 
 
-def test_write_table_basic():
+def test_write_table_basic(tablevault:TableVault):
     ids = []
-    tablevault = TableVault('test_dir', 'jinjin', create=True)
     id = tablevault.create_table('stories', allow_multiple_artifacts = False)
     ids.append(id)
     id = tablevault.create_instance('stories', external_edit=True)
@@ -27,9 +23,8 @@ def test_write_table_basic():
     assert df.equals(df2)
     helper.evaluate_operation_logging(ids)
 
-def test_write_table_copy():
+def test_write_table_copy(tablevault:TableVault):
     ids = []
-    tablevault = TableVault('test_dir', 'jinjin', create=True)
     id = tablevault.create_table('stories', allow_multiple_artifacts = False)
     ids.append(id)
     id = tablevault.create_instance('stories', external_edit=True)
@@ -51,6 +46,6 @@ def test_write_table_copy():
     assert df.equals(df2)
     helper.evaluate_operation_logging(ids)
     
-if __name__ == "__main__":
-    test_write_table_basic()
-    test_write_table_copy()
+# if __name__ == "__main__":
+#     test_write_table_basic()
+#     test_write_table_copy()

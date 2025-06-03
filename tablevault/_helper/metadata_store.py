@@ -410,8 +410,9 @@ class MetadataStore:
         version: str = "base",
         active_only: bool = True,
     ) -> tuple[float, float, str]:
-        """
-        Returns 0 when we didn't find any tables that meet conditions.
+        """Returns 0 when we didn't find any tables that meet
+        conditions.
+
         Return -1 when the table was last updated after before_times and it can only
         have one active version.
         """

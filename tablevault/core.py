@@ -8,48 +8,37 @@ import os
 import tarfile
 from tablevault._defintions import tv_errors
 from tablevault._helper.user_lock import set_tv_lock
+import logging
 
-
-def can_program_modify_permissions(filepath):
+def _can_program_modify_permissions(filepath: str) -> bool:
     current_euid = os.geteuid()
     if current_euid == 0:
         return True
+
     file_stat = os.stat(filepath)
     file_owner_uid = file_stat.st_uid
-    if current_euid == file_owner_uid:
-        return True
-    else:
-        return False
+    return current_euid == file_owner_uid
 
 
 class TableVault:
-    """A TableVault object that interfaces with a TableVault directory.
+    """Interface with a TableVault directory.
 
-    Initialization optionally creates the directory, copies information from
-    different folders and executes tables.
+    Initialisation can create a new vault directory and optionally restart any
+    active processes.  Subsequent methods allow interaction with tables,
+    instances, code modules, and builder files within that vault.
 
-    Args:
-        db_dir (str): The directory where the database files are stored.
-
-        author (str): The name of the user or system initiating the operation.
-
-        create (bool, optional): If True, a new database will be created at db_dir.
-        Defaults to False.
-
-        restart (bool, optional): If True, the current active processes will be
-        restarted. Defaults to False.
-
-        allow_multiple_tables (list[str], optional): A list of tables that are
-        allowed to have multiple valid versions. Defaults to an empty list.
-
-        yaml_dir (str, optional): The directory containing YAML configuration files
-        for different tables. Defaults to an empty string.
-
-        code_dir (str, optional): The directory containing code functions to execute.
-        Defaults to an empty string.
-
-        execute (bool, optional): If True, materializes the tables. Defaults to False.
-
+    :param str db_dir: Directory path where the TableVault is stored (or should
+        be created).
+    :param str author: Name or identifier of the user/system performing the
+        operations.
+    :param str description: Description for the vault creation (used only when
+        *create* is ``True``). *Optional*.
+    :param bool create: If ``True``, initialise a new vault at *db_dir*.
+        Defaults to ``False``. *Optional*.
+    :param bool restart: If ``True``, restart any processes previously active in
+        this vault.  Defaults to ``False``. *Optional*.
+    :param bool verbose: If ``True``, prints detailed logs of every operation.
+        Defaults to ``False``. *Optional*.
     """
 
     def __init__(
@@ -59,28 +48,39 @@ class TableVault:
         description: str = "",
         create: bool = False,
         restart: bool = False,
+        verbose: bool = True
     ) -> None:
         self.db_dir = db_dir
         self.author = author
+
         if create:
             _vault_operations.setup_database(
                 db_dir=db_dir, description=description, replace=True
             )
         else:
+            # Ensure the directory exists and is writable by this user
             if os.path.isdir(db_dir):
-                if not can_program_modify_permissions(db_dir):
+                if not _can_program_modify_permissions(db_dir):
                     raise tv_errors.TVArgumentError(
-                        f"Need Ownership Permission for {db_dir}"
+                        f"Need ownership permission for {db_dir}"
                     )
             else:
-                raise tv_errors.TVArgumentError(f"No Folder Found at {db_dir}")
+                raise tv_errors.TVArgumentError(f"No folder found at {db_dir}")
+
         if restart:
             _vault_operations.restart_database(
                 author=self.author, db_dir=self.db_dir, process_id=""
             )
-        set_tv_lock("", "", db_dir)
+        if verbose:
+            logging.basicConfig(level=logging.INFO)
+        set_tv_lock(table_name="", instance_id="", db_dir=db_dir)
 
     def get_process_completion(self, process_id: str) -> bool:
+        """Return the completion status of a specific process.
+
+        :param str process_id: Identifier of the process.
+        :returns bool: ``True`` if the process has completed, ``False`` otherwise.
+        """
         return _vault_operations.complete_process(
             process_id=process_id, db_dir=self.db_dir
         )
@@ -92,6 +92,21 @@ class TableVault:
         version: str = constants.BASE_TABLE_VERSION,
         is_temp: bool = True,
     ) -> str:
+        """Return the path to the artifact folder for a given table
+        instance.
+
+        If ``allow_multiple_artifacts`` is ``False`` for *table_name* and the instance
+        is materialised, the folder for the whole table is returned.
+
+        :param str table_name: Name of the table.
+        :param str instance_id: Table-instance ID. *Optional*.
+        :param str version: Latest (or temporary) instance ID for the version if
+            *instance_id* is not supplied.  Defaults to the base version. *Optional*.
+        :param bool is_temp: If ``True`` return the path to the temporary instance;
+            if ``False`` return the path to the last materialised instance.
+            *Optional*.
+        :returns str: Path to the requested artifact folder.
+        """
         return _vault_operations.get_artifact_folder(
             instance_id=instance_id,
             table_name=table_name,
@@ -101,8 +116,12 @@ class TableVault:
         )
 
     def get_active_processes(self) -> ActiveProcessDict:
-        """
-        Return a dictionary of currently active processes.
+        """Return a dictionary of currently active processes in this
+        vault.
+
+        Each key is a process ID and each value is metadata about that process.
+
+        :returns dict[str, Mapping[str, Any]]: Mapping of process IDs to metadata.
         """
         return _vault_operations.active_processes(db_dir=self.db_dir)
 
@@ -111,23 +130,25 @@ class TableVault:
         table_name: str,
         version: str = constants.BASE_TABLE_VERSION,
     ) -> list[str]:
-        """
-        Return a list of materialized instance names for a table.
+        """Return a list of materialised instance IDs for a specific
+        table and version.
 
-        Args:
-            table_name (str): Table name.
-
-            version (str): Specify a version of the table. Defaults
-            to empty string.
-
+        :param str table_name: Name of the table whose instances are requested.
+        :param str version: Version of the table.  Defaults to ``BASE_TABLE_VERSION``.
+            *Optional*.
+        :returns list[str]: Instance IDs that have been materialised for this
+            table/version.
         """
         return _vault_operations.get_instances(
             table_name=table_name, db_dir=self.db_dir, version=version
         )
 
     def get_descriptions():
-        "TODO: IMPLEMENT"
-        pass
+        """(Planned) Return descriptions or metadata for all tables.
+
+        .. note::  This routine is not yet implemented.
+        """
+        raise NotImplementedError("Currently not implemented.")
 
     def stop_process(
         self,
@@ -136,14 +157,17 @@ class TableVault:
         materialize: bool = False,
         process_id: str = "",
     ) -> str:
-        """
-        Stop a currently active process and release all of its locks.
+        """Stop an active process and optionally terminate it
+        forcefully.
 
-        Args:
-            process_id (str): Active process ID.
-            force (bool): If True, actively running process stopped. If False,
-            raises exception on actively running process. Defauts to False.
-
+        :param str to_stop_process_id: ID of the process to stop.
+        :param bool force: If ``True`` forcibly stop the running process; if ``False``
+            and the process is running, raise an exception.  Defaults to ``False``.
+        :param bool materialize: If ``True`` materialise partial instances if
+            relevant.  Defaults to ``False``.
+        :param str process_id: ID of the calling process (for audit/logging).
+            Defaults to ``""``. *Optional*.
+        :returns str: The process ID of the ``stop_process`` operation.
         """
         return _vault_operations.stop_process(
             author=self.author,
@@ -162,8 +186,26 @@ class TableVault:
         active_only: bool = True,
         safe_locking: bool = True,
         rows: Optional[int] = None,
-        artifact_path=True,
+        artifact_path: bool = True,
     ) -> tuple[pd.DataFrame, str]:
+        """Retrieve a pandas ``DataFrame`` for a table instance.
+
+        :param str table_name: Name of the table.
+        :param str instance_id: ID of a specific instance to fetch.  If empty, the
+            latest instance of *version* is used. *Optional*.
+        :param str version: Fetch the latest instance of *version* if *instance_id* is
+            not given.  Defaults to ``BASE_TABLE_VERSION``. *Optional*.
+        :param bool active_only: If ``True`` consider only active instances.
+            Defaults to ``True``. *Optional*.
+        :param bool safe_locking: If ``True`` acquire locks to prevent concurrent
+            writes.  Defaults to ``True``. *Optional*.
+        :param int | None rows: If given, limit the rows fetched to this number.
+            Defaults to ``None`` (no limit). *Optional*.
+        :param bool artifact_path: If ``True`` add the base folder path to all
+            ``"artifact_string"`` columns.  Defaults to ``True``. *Optional*.
+        :returns tuple[pandas.DataFrame, str]: The ``DataFrame`` and the instance ID
+            fetched.
+        """
         return _vault_operations.get_table(
             instance_id=instance_id,
             table_name=table_name,
@@ -177,21 +219,19 @@ class TableVault:
 
     def create_code_module(
         self, module_name: str = "", copy_dir: str = "", process_id: str = ""
-    ) -> None:
-        """
-        Copy builder files into a table.
+    ) -> str:
+        """Copy (or create) a code-module file or directory into the
+        vault.
 
-        Args:
-            prompt_dir (str): Directory of files or individual
-            file directory.
-
-            table_name (str): Optional, table name to copy into. If filled, copies
-            into prompt directory of table. Otherwise, copies Python files into
-            code directory. Defaults to empty string.
-
-            process_id (str): Optional, a identifier for the process (to re-execute).
-            Defaults to empty string.
-
+        :param str module_name: Name to assign to the new module.  If empty,
+            *copy_dir* must be supplied and the name is inferred from its contents.
+            If not empty, the generated file will be ``{module_name}.py``. *Optional*.
+        :param str copy_dir: Local directory containing Python files to copy **or**
+            a specific Python-file path.  If empty, a new Python file is created.
+            *Optional*.
+        :param str process_id: Identifier for the calling process (used for logging).
+            Defaults to ``""``. *Optional*.
+        :returns str: The process ID of the executed operation.
         """
         return _vault_operations.create_code_module(
             author=self.author,
@@ -201,21 +241,14 @@ class TableVault:
             db_dir=self.db_dir,
         )
 
-    def delete_code_module(self, module_name: str, process_id: str = "") -> None:
-        """
-        Copy builder files into a table.
+    def delete_code_module(self, module_name: str, process_id: str = "") -> str:
+        """Delete a code-module file from the vault.
 
-        Args:
-            prompt_dir (str): Directory of files or individual
-            file directory.
-
-            table_name (str): Optional, table name to copy into. If filled, copies
-            into prompt directory of table. Otherwise, copies Python files into
-            code directory. Defaults to empty string.
-
-            process_id (str): Optional, a identifier for the process (to re-execute).
-            Defaults to empty string.
-
+        :param str module_name: Name of the module to delete (file
+            ``{module_name}.py`` is searched for).
+        :param str process_id: Identifier for the calling process.  Defaults to
+            ``""``. *Optional*.
+        :returns str: The process ID of the executed operation.
         """
         return _vault_operations.delete_code_module(
             author=self.author,
@@ -231,7 +264,24 @@ class TableVault:
         version: str = constants.BASE_TABLE_VERSION,
         copy_dir: str = "",
         process_id: str = "",
-    ):
+    ) -> str:
+        """Add or update a builder (YAML) file for a temporary table
+        instance.
+
+        If the builder is new, its type is inferred from *builder_name*:
+        ``{table_name}_index`` ⇒ *IndexBuilder*; any other name ⇒ *ColumnBuilder*.
+
+        :param str table_name: Name of the table.
+        :param str builder_name: File name (without path) of the builder.  If empty,
+            inferred from *copy_dir*. *Optional*.
+        :param str version: Version of the table.  Defaults to
+            ``BASE_TABLE_VERSION``. *Optional*.
+        :param str copy_dir: Local directory containing the builder file(s) to copy.
+            *Optional*.
+        :param str process_id: Identifier for the calling process.  Defaults to
+            ``""``. *Optional*.
+        :returns str: The process ID of the executed operation.
+        """
         return _vault_operations.create_builder_file(
             self.author,
             builder_name=builder_name,
@@ -248,7 +298,17 @@ class TableVault:
         table_name: str,
         version: str = constants.BASE_TABLE_VERSION,
         process_id: str = "",
-    ):
+    ) -> str:
+        """Remove a builder file from a temporary table instance.
+
+        :param str builder_name: Name of the builder file to delete.
+        :param str table_name: Name of the table that owns the builder.
+        :param str version: Version of the table.  Defaults to
+            ``BASE_TABLE_VERSION``. *Optional*.
+        :param str process_id: Identifier for the calling process.  Defaults to
+            ``""``. *Optional*.
+        :returns str: The process ID of the executed operation.
+        """
         return _vault_operations.delete_builder_file(
             self.author,
             builder_name=builder_name,
@@ -260,7 +320,15 @@ class TableVault:
 
     def rename_table(
         self, new_table_name: str, table_name: str, process_id: str = ""
-    ):  # TODO
+    ) -> str:
+        """Rename an existing table within the vault.
+
+        :param str new_table_name: New name for the table.
+        :param str table_name: Current name of the table to rename.
+        :param str process_id: Identifier for the calling process.  Defaults to
+            ``""``. *Optional*.
+        :returns str: The process ID of the executed operation.
+        """
         return _vault_operations.rename_table(
             author=self.author,
             new_table_name=new_table_name,
@@ -269,16 +337,16 @@ class TableVault:
             db_dir=self.db_dir,
         )
 
-    def delete_table(self, table_name: str, process_id: str = "") -> None:
-        """
-        Delete a table.
+    def delete_table(self, table_name: str, process_id: str = "") -> str:
+        """Permanently delete a table and all its instances from the
+        vault.
 
-        Args:
-            table_name (str): Table name to delete.
+        Only the dataframes are removed; table metadata is retained.
 
-            process_id (str): Optional, a identifier for the process (to re-execute).
-            Defaults to empty string.
-
+        :param str table_name: Name of the table to delete.
+        :param str process_id: Identifier for the calling process.  Defaults to
+            ``""``. *Optional*.
+        :returns str: The process ID of the executed operation.
         """
         return _vault_operations.delete_table(
             author=self.author,
@@ -289,18 +357,16 @@ class TableVault:
 
     def delete_instance(
         self, instance_id: str, table_name: str, process_id: str = ""
-    ) -> None:
-        """
-        Delete a materialized table instance.
+    ) -> str:
+        """Delete a materialised table instance from the vault.
 
-        Args:
-            instance_id (str): Instance identifier.
+        Only the dataframe is removed; instance metadata is retained.
 
-            table_name (str): Table name.
-
-            process_id (str): Optional, a identifier for the process (to re-execute).
-            Defaults to empty string.
-
+        :param str instance_id: ID of the instance to delete.
+        :param str table_name: Name of the table that owns the instance.
+        :param str process_id: Identifier for the calling process.  Defaults to
+            ``""``. *Optional*.
+        :returns str: The process ID of the executed operation.
         """
         return _vault_operations.delete_instance(
             author=self.author,
@@ -318,7 +384,24 @@ class TableVault:
         dependencies: Optional[list[tuple[str, str]]] = None,
         dtypes: Optional[dict[str, str]] = None,
         process_id: str = "",
-    ):
+    ) -> str:
+        """Write *table_df* as a **materialized instance** of
+        *table_name* and *version*.
+
+        The table must already have a **temporary instance** of the same version that
+        is open for external edits (see :py:meth:`create_instance`).
+
+        :param pd.DataFrame table_df: Data to write.
+        :param str table_name: Target table.
+        :param str version: Target version.  Defaults to :pydataattr:`BASE_TABLE_VERSION`.
+        :param list[tuple[str, str]] dependencies:
+            ``[(table_name, instance_id), …]`` pairs that this instance depends on.
+            Pass *None* to record no dependencies.
+        :param dict[str, str] dtypes:
+            ``{column: pandas-dtype}``.  *None* ⇒ use nullable defaults.
+        :param str process_id: Identifier for the calling process.  Empty for default.
+        :returns str: The *process_id* that executed the write.
+        """
         if dependencies is None:
             dependencies = []
         if dtypes is None:
@@ -341,24 +424,20 @@ class TableVault:
         force_execute: bool = False,
         process_id: str = "",
         background: bool = False,
-    ) -> None:
-        """
-        Materialize a table instance from YAML prompts.
+    ) -> str:
+        """Materialise an existing temporary table instance.
 
-        Args:
-            table_name (str): Table name.
-
-            version (str): Version of the table. Defaults to empty string.
-            On default, if table has versions, defaults to "base".
-
-            force_execute (bool): If True, completely execute the whole table.
-            Otherwise, copies table from previous version.
-
-            process_id (str): Optional, a identifier for the process (to re-execute).
-            Defaults to empty string.
-
-            background (bool): Optional, whether to execute the operation in a
-            background process. Defaults to False.
+        :param str table_name: Name of the table to materialise.
+        :param str version: Version of the table.  Defaults to
+            ``BASE_TABLE_VERSION``. *Optional*.
+        :param bool force_execute: If ``True`` force a full rebuild; if ``False``
+            attempt to reuse an origin instance when possible.  Defaults to
+            ``False``. *Optional*.
+        :param str process_id: Identifier for the calling process.  Defaults to
+            ``""``. *Optional*.
+        :param bool background: If ``True`` run materialisation in a background
+            process.  Defaults to ``False``. *Optional*.
+        :returns str: The process ID of the executed operation.
         """
         return _vault_operations.execute_instance(
             author=self.author,
@@ -381,35 +460,30 @@ class TableVault:
         builders: Optional[dict[str, str] | list[str]] = None,
         process_id: str = "",
         description: str = "",
-    ) -> None:
-        """
-        Setup temporary instance to execute.
+    ) -> str:
+        """Create a new temporary instance of a table.
 
-        Note: Only at most one of prev_id, copy_previous, prompts
-        should be given.
+        At most one of *origin_id* or *builders* should be supplied.
 
-        Args:
-            table_name (str): Table name.
-
-            version (str): Version of the table. Defaults to empty string.
-            On default, if table has versions, defaults to "base".
-
-            prev_id (str): Optional, previous instance ID. If given, the
-            prompts are copied. Defaults to empty string.
-
-            copy_previous (bool): If true, copy prompts from latest materialized
-            table of same version. Defaults to false.
-
-            prompt_names (list[str]): If given, copies list of prompts from table
-            prompts. Defaults to empty list.
-
-            execute (bool): If True, executes instance after creation. Defaults to
-            False.
-
-            process_id (str): Optional, a identifier for the process (to re-execute).
-            Defaults to empty string.
-
-
+        :param str table_name: Name of the table.
+        :param str version: Version of the table.  Defaults to
+            ``BASE_TABLE_VERSION`` when empty. *Optional*.
+        :param str origin_id: If supplied, copy state from an existing instance.
+            *Optional*.
+        :param str origin_table: Table associated with *origin_id*.  If not given,
+            defaults to *table_name*. *Optional*.
+        :param bool external_edit: If ``True`` this instance will be edited
+            externally and no builder files are constructed.  Defaults to ``False``.
+            *Optional*.
+        :param bool copy: If ``True`` and *origin_id* is not provided, use the latest
+            materialised instance of (*table_name*, *version*) as the origin (if it
+            exists).  Defaults to ``True``. *Optional*.
+        :param list[str] builders: List of new builder names to generate. *Optional*.
+        :param str process_id: Identifier for the calling process.  Defaults to
+            ``""``. *Optional*.
+        :param str description: Description for this instance.  Defaults to
+            ``""``. *Optional*.
+        :returns str: The process ID of the executed operation.
         """
         if builders is None:
             builders = []
@@ -432,33 +506,28 @@ class TableVault:
         table_name: str,
         allow_multiple_artifacts: bool = False,
         has_side_effects: bool = False,
-        yaml_dir: str = "",
         process_id: str = "",
-        description="",
-    ) -> None:
-        """
-        Setup new table.
-        Args:
-             table_name (str): Table name.
+        description: str = "",
+    ) -> str:
+        """Create a new table definition in the vault.
 
-             execute (bool): If True, executes instance after creation.
-
-             create_temp (bool): If True, copies all prompts from table prompts
-             to create temporary instance.
-
-             allow_multiple (bool): If True, table is allowed multiple versions and
-             multiple valid instances.
-
-             prompt_dir (str): Optional, a directory of prompts to copy from.
-
-             process_id (str): Optional, a identifier for the process (to re-execute).
-             Defaults to empty string.
-
+        :param str table_name: Name of the new table.
+        :param bool allow_multiple_artifacts: If ``True`` each materialised instance
+            gets its own artifact folder; if ``False`` only one folder is allowed and
+            only one active instance at a time. *Optional*.
+        :param bool has_side_effects: If ``True`` builder files have side effects
+            (e.g. external API calls).  When a new temporary instance starts
+            executing, all other instances are marked inactive.  Defaults to
+            ``False``. *Optional*.
+        :param str process_id: Identifier for the calling process.  Defaults to
+            ``""``. *Optional*.
+        :param str description: Description for the table, stored in metadata.
+            Defaults to ``""``. *Optional*.
+        :returns str: The process ID of the executed operation.
         """
         return _vault_operations.create_table(
             author=self.author,
             table_name=table_name,
-            yaml_dir=yaml_dir,
             allow_multiple_artifacts=allow_multiple_artifacts,
             has_side_effects=has_side_effects,
             process_id=process_id,
@@ -467,36 +536,48 @@ class TableVault:
         )
 
     def generate_process_id(self) -> str:
-        """
-        Generates new valid process id.
+        """Generate and return a unique process ID.
 
-        Returns:
-             New process id (str)
+        If a process ID is supplied to an operation, that operation persists on errors
+        and can be restarted with the same ID.
 
+        :returns str: A new, unique process identifier.
         """
         return gen_tv_id()
 
 
 def compress_vault(db_dir: str, preset: int = 6) -> None:
-    # Ensure folder exists
+    """Compress a TableVault directory into a ``.tar.xz`` archive.
+
+    :param str db_dir: Path to the TableVault directory to compress.
+    :param int preset: LZMA compression level ``1``–``9`` (higher is slower but
+        smaller).  Defaults to ``6``. *Optional*.
+    :raises FileNotFoundError: If *db_dir* does not exist or is not a directory.
+    """
     if not os.path.isdir(db_dir):
         raise FileNotFoundError(f"No such directory: {db_dir}")
 
-    # Build output name in cwd
     base = os.path.basename(os.path.normpath(db_dir))
     output_tar_xz = f"{base}.tar.xz"
 
     with tarfile.open(output_tar_xz, mode="w:xz", preset=preset) as tar:
+        # Archive the entire vault directory under its base name
         tar.add(db_dir, arcname=base)
-    print(f"Compressed {db_dir!r} → {output_tar_xz!r}")
 
 
 def decompress_vault(db_dir: str) -> None:
+    """Decompress a ``.tar.xz`` archive created by
+    :pyfunc:`compress_vault`.
+
+    :param str db_dir: Path to the TableVault directory **without** the
+        ``.tar.xz`` extension.  The function looks for ``{db_dir}.tar.xz``.
+    :raises FileNotFoundError: If the expected archive file is missing.
+    """
     db_dir_compressed = db_dir + ".tar.xz"
     if not os.path.isfile(db_dir_compressed):
         raise FileNotFoundError(f"No such file: {db_dir_compressed}")
 
-    base = os.path.basename(db_dir_compressed)[:-7]
+    base = os.path.basename(db_dir_compressed)[:-7]  # strip ".tar.xz"
     extract_to = base
 
     if not os.path.isdir(extract_to):

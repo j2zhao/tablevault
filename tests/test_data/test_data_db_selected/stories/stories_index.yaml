@@ -7,7 +7,7 @@ code_module: table_generation
 is_custom: false
 
 arguments:
-  folder_dir: ../test_data/stories
+  folder_dir: ./tests/test_data/stories
   copies: 1
   artifact_folder: ~ARTIFACT_FOLDER~
 

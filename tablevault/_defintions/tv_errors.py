@@ -29,7 +29,7 @@ class TVOpenAIError(TableVaultError):
 
 
 class TVProcessError(TableVaultError):
-    """Re-execute Completed process"""
+    """Re-execute Completed process."""
 
     pass
 

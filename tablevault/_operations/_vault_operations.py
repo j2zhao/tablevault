@@ -118,7 +118,6 @@ def _create_builder_file(
     instance_id: str,
     table_name: str,
     copy_dir: str,
-    builder_type: str,
     db_metadata: MetadataStore,
 ):
     file_operations.create_copy_builder_file(
@@ -127,7 +126,6 @@ def _create_builder_file(
         db_metadata.db_dir,
         builder_name,
         copy_dir,
-        builder_type,
     )
 
 
@@ -592,7 +590,7 @@ def _execute_instance(
         dependencies = []
         for builder_name in external_deps:
             for tname, _, id, _, _ in external_deps[builder_name]:
-                dependencies.append([id, tname])
+                dependencies.append([tname, id])
 
         materialize_instance(
             process_id,
@@ -643,7 +641,7 @@ def _create_instance(
     origin_id: str,
     origin_table: str,
     external_edit: bool,
-    builder_names: dict[str, str],
+    builder_names: list[str],
     description: str,
     db_metadata: MetadataStore,
 ):
@@ -655,14 +653,13 @@ def _create_instance(
         origin_id,
         origin_table,
     )
-    for bn, bt in builder_names.items():
-        if bt.endswith(".yaml"):
+    for bn in builder_names:
+        if bn.endswith(".yaml"):
             file_operations.create_copy_builder_file(
                 instance_id,
                 table_name,
                 db_metadata.db_dir,
-                builder_name=bn,
-                copy_dir=bt,
+                copy_dir=bn,
             )
         else:
             file_operations.create_copy_builder_file(
@@ -670,7 +667,6 @@ def _create_instance(
                 table_name,
                 db_metadata.db_dir,
                 builder_name=bn,
-                builder_type=bt,
             )
     descript_yaml = {
         constants.DESCRIPTION_SUMMARY: description,
@@ -691,7 +687,7 @@ def create_instance(
     origin_table: str,
     external_edit: bool,
     copy: bool,
-    builder_names: list[str] | dict[str, str],
+    builder_names: list[str],
     process_id: str,
     db_dir: str,
 ):
@@ -743,7 +739,6 @@ def create_table(
     allow_multiple_artifacts: bool,
     has_side_effects: bool,
     description: str,
-    yaml_dir: str,
     process_id: str,
     db_dir: str,
 ):
@@ -751,7 +746,6 @@ def create_table(
         "table_name": table_name,
         "allow_multiple_artifacts": allow_multiple_artifacts,
         "has_side_effects": has_side_effects,
-        "yaml_dir": yaml_dir,
         "description": description,
     }
     return tablevault_operation(
@@ -887,7 +881,6 @@ def _restart_database(
                 allow_multiple_artifacts=False,
                 has_side_effects=False,
                 description="",
-                yaml_dir="",
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
             )

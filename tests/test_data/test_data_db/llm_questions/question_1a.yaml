@@ -12,6 +12,6 @@ arguments:
     - "Use this story to answer questions."
   questions:
     - text: "What do Clara's actions suggest about human nature and the pull of curiosity?"
-  key_file: ../test_data/open_ai_key/key.txt
+  key_file: ./tests/test_data/open_ai_key/key.txt # fake
   model: 'gpt-4o-mini'
   temperature: 0.2

@@ -1,69 +1,34 @@
+from . import helper
 from tablevault.core import TableVault
-import helper 
 
-def basic_function(copy=True)-> list[str]:
-    ids = []
-    tablevault = TableVault('test_dir', 'jinjin', create=True,)
-    id = tablevault.create_code_module("test")
-    ids.append(id)
-    id = tablevault.create_table('stories_TEST', allow_multiple_artifacts = False)
-    ids.append(id)
-    id = tablevault.rename_table('stories', 'stories_TEST')
-    ids.append(id)
-    id = tablevault.create_table('llm_storage', has_side_effects=True)
-    ids.append(id)
-    
-    id = tablevault.create_table('llm_questions')
-    ids.append(id)
-    id = tablevault.create_instance("stories")
-    ids.append(id)
-    id = tablevault.create_instance("llm_storage", builders=["upload_openai"])
-    ids.append(id)
-    id = tablevault.create_instance("llm_questions", builders=["question_1","question_2", "question_3"])
-    
-    id = tablevault.create_builder_file(copy_dir="../test_data/test_data_db/stories/stories_index.yaml", table_name="stories")
-    ids.append(id)
-    
-    id = tablevault.create_builder_file(copy_dir="../test_data/test_data_db_selected/llm_storage", table_name="llm_storage")
-    ids.append(id)
-    id = tablevault.create_builder_file(copy_dir="../test_data/test_data_db_selected/llm_questions", table_name="llm_questions")
-    ids.append(id)
-    
-    id = tablevault.execute_instance("stories")
-    ids.append(id)
-    id = tablevault.execute_instance("llm_storage")
-    ids.append(id)
-    id = tablevault.execute_instance("llm_questions")
-    ids.append(id)
-    if copy:
-        helper.copy_test_dir("basic_function")
-    return ids
+from .base_execution_helper import basic_function
 
-def test_deletion():
+
+
+def test_basic_function(tablevault):
+    ids = basic_function(tablevault)
+    helper.evaluate_operation_logging(ids)
+    helper.evaluate_full_tables()
+
+def test_deletion(tablevault):
     ids = []
-    helper.copy_test_dir("test_dir", "basic_function")
-    tablevault = TableVault('test_dir', 'jinjin')
+    basic_function(tablevault)
+    tablevault = TableVault('example_tv', 'jinjin')
     id = tablevault.delete_code_module("test")
     ids.append(id)
     id = tablevault.create_instance("stories", builders=["test_builder"])
+    ids.append(id)
     id = tablevault.delete_builder_file("test_builder", "stories")
+    ids.append(id)
     instances = tablevault.get_instances("stories")
     id = tablevault.delete_instance(instances[0], "stories")
     ids.append(id)
     id = tablevault.delete_table("llm_storage")
     ids.append(id)
-    return ids
-
-
-def evaluate_tests():
-    print('TEST BASIC')
-    ids = basic_function()
-    helper.evaluate_operation_logging(ids)
-    helper.evaluate_full_tables()
-    print('TEST DELETION')
-    ids = test_deletion()
     helper.evaluate_operation_logging(ids)
     helper.evaluate_deletion()
 
-if __name__ == "__main__":
-    evaluate_tests()
+
+# if __name__ == "__main__":
+#     test_basic_function()
+#     test_deletion()

@@ -12,8 +12,9 @@ def set_not_writable(
     skip_children=[],
     set_self=True,
 ):
-    """
-    If `path` is a file, set *just* that file to read+execute (no write).
+    """If `path` is a file, set *just* that file to read+execute (no
+    write).
+
     If `path` is a directory, set it (and everything underneath) to read+execute.
     """
     # First, chmod the path itself
@@ -53,9 +54,10 @@ def set_writable(
     skip_children=[],
     set_self=True,
 ):
-    """
-    If `path` is a file or directory, set it to read+write+execute for
-    owner, group, and others. If it's a directory, recurse into children.
+    """If `path` is a file or directory, set it to read+write+execute
+    for owner, group, and others.
+
+    If it's a directory, recurse into children.
     """
     # Always grant r, w, x to owner/group/others
     mode = (
