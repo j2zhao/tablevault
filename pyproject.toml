@@ -23,8 +23,8 @@ dependencies = [
     "pydantic"
 ]
 
-# [project.scripts]
-# tablevault = "tablevault.cli:main"
+[project.scripts]
+tablevault = "tablevault.cli:main"
 
 [project.optional-dependencies]
 dev = [
