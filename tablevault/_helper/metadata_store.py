@@ -360,6 +360,11 @@ class MetadataStore:
         active_only: bool = True,
     ) -> tuple[float, float, str]:
         table_history = self._get_table_history()
+        print("START TABLE HISTORY")
+        print(version)
+        print(table_name)
+        print(start_time)
+        print(active_only)
         print(table_history)
         max_changed_time = 0
         max_start_time = 0
@@ -388,10 +393,6 @@ class MetadataStore:
                 max_start_time = start_time
                 max_changed_time = changed_time
                 max_id = instance_id
-        if max_id == "":
-            raise TVArgumentError(
-                f"Cannot find instance for table_name: {table_name}, version: {version}"
-            )
         return max_changed_time, max_start_time, max_id
 
     def get_last_table_update(
