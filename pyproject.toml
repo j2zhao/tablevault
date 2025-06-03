@@ -19,7 +19,8 @@ dependencies = [
     "filelock",
     "pyyaml",
     "dataclasses_json",
-    "psutil"
+    "psutil",
+    "pydantic"
 ]
 
 # [project.scripts]
