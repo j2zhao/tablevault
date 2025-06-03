@@ -18,10 +18,8 @@ dependencies = [
     "pandas",
     "filelock",
     "pyyaml",
-    "portalocker", 
-    "openai", #maybe make optional in future
     "dataclasses_json",
-    "click"
+    "psutil"
 ]
 
 # [project.scripts]
