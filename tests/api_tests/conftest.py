@@ -1,5 +1,5 @@
 import pytest
-from tablevault.core import TableVault
+from tablevault.core import TableVault, delete_vault
 import shutil
 import os
 
@@ -8,9 +8,10 @@ def tablevault():
     tv = TableVault("example_tv", author="jinjin", create=True)
 
     yield tv
-
-    shutil.rmtree("example_tv", ignore_errors=True)
-    shutil.rmtree("example_tv_copy", ignore_errors=True)
+    if os.path.isdir("example_tv"):
+        delete_vault("example_tv")
+    if os.path.isdir("example_tv_copy"):
+        delete_vault("example_tv_copy")
 
 
 @pytest.fixture
