@@ -51,7 +51,6 @@ class TVTableError(TableVaultError):
 
 
 class TVImplementationError(TableVaultError):
-
     pass
 
 

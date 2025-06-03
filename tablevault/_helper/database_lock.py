@@ -93,10 +93,8 @@ def _release_all_lock(
         return
     locks_to_remove = []
     for dirpath, _, filenames in os.walk(lock_path, topdown=False):
-
         for filename in filenames:
             if filename.endswith(".exlock") or filename.endswith(".shlock"):
-
                 lock_name = filename.split(".")[0]
                 lock_name = lock_name.split("__")[0]
 

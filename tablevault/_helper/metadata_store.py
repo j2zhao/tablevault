@@ -48,7 +48,6 @@ def _is_string_in_file(filepath, search_string):
 
 
 class MetadataStore:
-
     def _save_active_logs(self, logs: ActiveProcessDict) -> None:
         logs = _serialize_active_logs(logs)
         with open(self.active_file, "w") as f:

@@ -357,7 +357,6 @@ def write_df_entry(
     table_name: str,
     db_dir: str,
 ):
-
     file_name = gen_tv_id() + ".df.pkl"
     file_name = os.path.join(db_dir, table_name, instance_id, file_name)
     pkf = {"value": value, "index": index, "col_name": col_name}

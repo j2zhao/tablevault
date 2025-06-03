@@ -54,7 +54,6 @@ def get_table(
     rows: Optional[int],
     artifact_path: bool,
 ):
-
     db_metadata = MetadataStore(db_dir)
     if instance_id == "":
         _, _, instance_id = db_metadata.get_last_table_update(

@@ -295,7 +295,6 @@ def setup_stop_process(
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
 ):
-
     if "_" in to_stop_process_id:
         raise tv_errors.TVArgumentError("Only can stop top-level processes.")
     logs, process_ids_ = db_metadata.stop_operation(to_stop_process_id, force)
@@ -535,7 +534,6 @@ def setup_execute_instance_inner(
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
 ) -> SETUP_OUTPUT:
-
     funct_kwargs = {
         "table_name": table_name,
         "instance_id": instance_id,

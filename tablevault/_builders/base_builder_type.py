@@ -84,7 +84,6 @@ class TVBuilder(BaseModel):
         db_dir: str,
         index: Optional[int] = None,
     ) -> None:
-
         for attr, val in vars(self).items():
             if attr != constants.BUILDER_DEPENDENCIES:
                 val_ = get_table_result(val, cache, index)

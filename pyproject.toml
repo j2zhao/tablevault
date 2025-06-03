@@ -29,10 +29,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black",
-    "flake8",
+    "ruff",
     "pytest",
-    "docformatter"
 ]
 
 docs = [
@@ -40,21 +38,9 @@ docs = [
     "sphinx-rtd-theme"
 ]
 
-
-[tool.flake8]
-max-line-length = 88
-extend-ignore = ["E203", "W503", "E501"]
-exclude =[
-    ".ipynb_checkpoints",
-    "*/.ipynb_checkpoints/*"]
-
 [tool.setuptools.package-data]
 tablevault = ["col_builders/examples/*.yaml", "helper/examples/example.py"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/api_tests"]
 python_files = ["test_*.py"]
-
-[tool.docformatter]
-wrap-summaries = 72
-wrap-descriptions = 88
