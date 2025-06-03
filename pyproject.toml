@@ -20,7 +20,8 @@ dependencies = [
     "pyyaml",
     "dataclasses_json",
     "psutil",
-    "pydantic"
+    "pydantic",
+    "click"
 ]
 
 [project.scripts]
