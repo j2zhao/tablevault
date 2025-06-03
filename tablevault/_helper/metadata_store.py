@@ -360,6 +360,7 @@ class MetadataStore:
         active_only: bool = True,
     ) -> tuple[float, float, str]:
         table_history = self._get_table_history()
+        print(table_history)
         max_changed_time = 0
         max_start_time = 0
         max_id = ""
@@ -420,6 +421,8 @@ class MetadataStore:
                 table_name, version, before_time, active_only
             )
             columns_history = self._get_column_history()
+            print(columns_history)
+            print(max_id)
             max_mat_time = columns_history[table_name][max_id][column]
             return max_mat_time, max_start_time, max_id
 
