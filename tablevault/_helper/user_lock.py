@@ -17,6 +17,8 @@ def set_not_writable(
 
     If `path` is a directory, set it (and everything underneath) to read+execute.
     """
+    if os.name == "nt":
+        return
     # First, chmod the path itself
     mode = (
         stat.S_IREAD
@@ -59,6 +61,8 @@ def set_writable(
 
     If it's a directory, recurse into children.
     """
+    if os.name == "nt":
+        return
     # Always grant r, w, x to owner/group/others
     mode = (
         stat.S_IREAD
@@ -102,6 +106,8 @@ def _check_ex_lock(path: str) -> Optional[bool]:
 
 
 def set_tv_lock_instance(instance_id: str, table_name: str, db_dir: str):
+    if os.name == "nt":
+        return
     lock_dir = os.path.join(db_dir, constants.LOCK_FOLDER)
     table_lock_path = os.path.join(lock_dir, table_name)
     table_full_path = os.path.join(db_dir, table_name)
@@ -131,6 +137,8 @@ def set_tv_lock_instance(instance_id: str, table_name: str, db_dir: str):
 
 
 def set_tv_lock_table(table_name, db_dir):
+    if os.name == "nt":
+        return
     lock_dir = os.path.join(db_dir, constants.LOCK_FOLDER)
     table_lock_path = os.path.join(lock_dir, table_name)
     table_full_path = os.path.join(db_dir, table_name)
@@ -156,6 +164,8 @@ def set_tv_lock_table(table_name, db_dir):
 
 
 def set_tv_lock_db(db_dir: str):
+    if os.name == "nt":
+        return
     lock_dir = os.path.join(db_dir, constants.LOCK_FOLDER)
     set_tv_lock_table(constants.CODE_FOLDER, db_dir)
     for table_name in os.listdir(lock_dir):

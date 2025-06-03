@@ -11,6 +11,8 @@ from tablevault._helper.user_lock import set_tv_lock
 import logging
 
 def _can_program_modify_permissions(filepath: str) -> bool:
+    if os.name == "nt":
+        return True 
     current_euid = os.geteuid()
     if current_euid == 0:
         return True
@@ -143,7 +145,7 @@ class TableVault:
             table_name=table_name, db_dir=self.db_dir, version=version
         )
 
-    def get_descriptions():
+    def get_descriptions(self):
         """(Planned) Return descriptions or metadata for all tables.
 
         .. note::  This routine is not yet implemented.
