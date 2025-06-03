@@ -360,19 +360,9 @@ class MetadataStore:
         active_only: bool = True,
     ) -> tuple[float, float, str]:
         table_history = self._get_table_history()
-        print("START TABLE HISTORY")
-        print(version)
-        print(table_name)
-        print(before_time)
-        print(active_only)
-        print(table_history)
         max_changed_time = 0
         max_start_time = 0
         max_id = ""
-        table_metadata = get_description(
-            instance_id="", table_name=table_name, db_dir=self.db_dir
-        )
-        allow_multiple_artifacts = table_metadata[constants.TABLE_ALLOW_MARTIFACT]
         for instance_id, (changed_time, start_time, end_time) in table_history[
             table_name
         ].items():
@@ -381,15 +371,12 @@ class MetadataStore:
                 and version != ""
                 and not instance_id.startswith(version)
             ):
-                print("HERE")
                 continue
-            if active_only and not allow_multiple_artifacts and end_time is not None:
-                print("HERE2")
+            if active_only and end_time is not None:
                 continue
             if start_time > max_start_time and (
                 before_time is None or start_time < before_time
             ):
-                print("HERE3")
                 max_start_time = start_time
                 max_changed_time = changed_time
                 max_id = instance_id
