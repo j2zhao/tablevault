@@ -25,6 +25,6 @@ jobs:
       - name: Lint
         run: |
           # Run Ruff in “check” mode (exit code != 0 if any issues are found)
-          ruff .
+          ruff check .
       - name: Tests
         run: pytest -q
