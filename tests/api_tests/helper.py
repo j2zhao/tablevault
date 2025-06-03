@@ -61,7 +61,8 @@ def get_all_file_paths(folder):
         for filename in filenames:
             full_path = os.path.join(dirpath, filename)
             rel_path = os.path.relpath(full_path, folder)
-            file_paths.add(rel_path)
+            if not str(rel_path).endswith(".lock"):
+                file_paths.add(rel_path)
     return file_paths
 
 
