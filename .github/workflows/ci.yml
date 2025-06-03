@@ -25,6 +25,6 @@ jobs:
       - name: Lint
         run: |
           # Run Ruff in “check” mode (exit code != 0 if any issues are found)
-          ruff check .
+          ruff check tablevault
       - name: Tests
         run: pytest -q
