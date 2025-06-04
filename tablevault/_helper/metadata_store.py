@@ -379,7 +379,7 @@ class MetadataStore:
                 print("HELLO2")
                 continue
             if start_time > max_start_time and (
-                before_time is None or start_time < before_time
+                before_time is None or start_time <= before_time
             ):
                 print("HELLO3")
                 max_start_time = start_time
