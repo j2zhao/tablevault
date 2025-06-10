@@ -367,6 +367,9 @@ def create_copy_code_file(db_dir: str, module_name: str = "", copy_dir: str = ""
         elif os.path.exists(copy_dir) and copy_dir.endswith(".py"):
             if module_name != "":
                 code_dir = os.path.join(code_dir, f"{module_name}.py")
+            else:
+                file_name = os.path.basename(copy_dir)
+                code_dir = os.path.join(code_dir, file_name)
             try:
                 if os.path.exists(code_dir):
                     filewriter.remove(code_dir)
