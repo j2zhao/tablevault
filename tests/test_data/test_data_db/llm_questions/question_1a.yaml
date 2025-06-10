@@ -3,7 +3,7 @@ changed_columns: [q1]
 python_function: random_row_string
 code_module: random_string
 is_custom: false
-is_udf: true
+row_wise: true
 arguments:
   colunm_names: [q1]
   upload_files:

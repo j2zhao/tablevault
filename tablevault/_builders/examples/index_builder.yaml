@@ -1,21 +1,23 @@
 builder_type: IndexBuilder
 
-changed_columns: [COLUMN_NAMES]
-primary_key: [COLUMN_NAMES]
-keep_old: false # Keep previous dataframe rows 
+changed_columns: [COLUMN_NAMES] # output columns
+
+primary_key: [COLUMN_NAMES] # Optional dataframe primary key (optional)
+
+keep_old: false # Keep origin rows (if exists)
 
 python_function: FUNCTION_NAME
 code_module: MODULE_NAME
 
 arguments:
-  ARG_NAME: ARG_VALUE
-  EXAMPLE_ARG: <<stories.artifact_name[paper_name::self.paper_name[index]]>>
+  ARGUMENT_NAME_1: ARG_VALUE
+  ARGUMENT_NAME_2: <<TABLE_NAME.COLUMN1[COLUMN2::self.COLUMN[index]]>>
 n_threads: 1
 
-is_custom: false # Optional
-is_udf: false # Optional
+is_custom: false # Optional: Default False
+row_wise: false # Optional: Default False
 
-dtypes: # Optional
+dtypes: # Optional datatype for columns
   COLUMN_NAME_1: Int64
   COLUMN_NAME_2: Float64
   COLUMN_NAME_3: artifact_string

@@ -1,0 +1,179 @@
+# Default Code Functions
+
+There are several simple code functions included with the `tablevault` library. You can execute them by specifying the right parameters in a YAML `Builder` file.
+
+---
+
+## Dataframe Creation
+
+These functions are loaded with `module_name: table_generation` and `is_custom: false`. They are meant to be used with an `IndexBuilder` YAML file.
+
+The **YAML Builder** tab has the **specified** arguments of the builder file for the specific functions. You may have to fill out additional arguments not shown.
+
+---
+
+### `create_paper_table_from_folder`
+
+=== "Python Code"
+
+    ```python
+    create_paper_table_from_folder(
+        folder_dir: str,
+        copies: int,
+        artifact_folder: str
+    ) -> pandas.DataFrame
+    ```
+
+=== "YAML Builder"
+
+    ```yaml
+    builder_type: IndexBuilder
+    changed_columns: ['paper_name', 'artifact_name', 'original_path']
+    primary_key: ['paper_name'] 
+    python_function: create_paper_table_from_folder
+    code_module: table_generation
+    arguments:    
+        folder_dir: str
+        copies: int
+        artifact_folder: str
+    is_custom: false
+    ```
+
+Scan a directory for **`.pdf` files**, copy each into an artifact directory, and return a table describing every copy.
+
+| Parameter         | Type  | Description                          |
+| ----------------- | ----- | ------------------------------------ |
+| `folder_dir`      | `str` | Folder containing the source PDFs    |
+| `copies`          | `int` | How many copies per PDF (≥1)         |
+| `artifact_folder` | `str` | Destination directory for the copies |
+
+The resulting `DataFrame` has three columns:
+
+1. **`paper_name`** – base filename (without extension)
+2. **`artifact_name`** – copied file’s name (includes suffixes when `copies > 1`)
+3. **`original_path`** – path to the original PDF
+
+---
+
+### `create_data_table_from_table`
+
+=== "Python Code"
+
+    ```python
+    create_data_table_from_table(
+        df: pandas.DataFrame,
+        nrows: int | None = None
+    ) -> pandas.DataFrame
+    ```
+=== "YAML Builder"
+
+    ```yaml
+    builder_type: IndexBuilder
+    python_function: create_data_table_from_table
+    code_module: table_generation
+    arguments:    
+        df: pandas.DataFrame
+        nrows: int # Optional
+    is_custom: false
+    ```
+
+
+Return a **copy** of `df`, optionally truncated to the first `nrows`.
+
+| Parameter | Type               | Description |                                       |
+| --------- | ------------------ | ----------- | ------------------------------------- |
+| `df`      | `pandas.DataFrame` | Source data |                                       |
+| `nrows`   | \`int              | None\`      | Row limit (leave `None` for all rows) |
+
+---
+
+### `create_data_table_from_csv`
+
+=== "Python Code"
+
+    ```python
+    create_data_table_from_csv(csv_file_path: str) -> pandas.DataFrame
+    ```
+
+=== "YAML Builder"
+
+    ```yaml
+    builder_type: IndexBuilder
+    python_function: create_data_table_from_csv
+    code_module: table_generation
+    arguments:    
+        csv_file_path: pandas.str
+    is_custom: false
+    ```
+
+    Load a CSV file into a new `DataFrame` and return a copy.
+
+    | Parameter       | Type  | Description             |
+    | --------------- | ----- | ----------------------- |
+    | `csv_file_path` | `str` | Path to the CSV on disk |
+
+---
+
+### `create_data_table_from_list`
+
+=== "Python Code"
+
+    ```python
+    create_data_table_from_list(vals: list) -> pandas.DataFrame
+    ```
+
+=== "YAML Builder"
+
+    ```yaml
+    builder_type: IndexBuilder
+    changed_columns: [str] # only single column
+    python_function: create_data_table_from_list
+    code_module: table_generation
+    arguments:    
+        vals: list
+    is_custom: false
+    ```
+
+Turn an in-memory Python list into a single-column table.
+
+| Parameter | Type   | Description                   |
+| --------- | ------ | ----------------------------- |
+| `vals`    | `list` | Values to place in the column |
+
+---
+
+## Random String Module
+
+---
+
+### `random_row_string`
+
+=== "Python Code"
+
+    ```python
+    random_row_string(colunm_names: list[str], **kwargs) -> tuple[str, ...]
+    ```
+
+=== "YAML Builder"
+
+    ```yaml
+    builder_type: ColumnBuilder
+    changed_columns: [str]
+    python_function: random_row_string
+    code_module: random_string
+    arguments:    
+        colunm_names: list[str] # same as changed_columns
+    is_custom: false
+    row_wise: true
+    ```
+
+Produce a single tuple of random strings—one per name in `colunm_names`.
+
+| Parameter      | Type        | Description                               |
+| -------------- | ----------- | ----------------------------------------- |
+| `colunm_names` | `list[str]` | Column labels that determine tuple length |
+| `**kwargs`     | *unused*    | Reserved for future options               |
+
+**Returns:** a length-`len(colunm_names)` tuple of 20-character strings.
+
+---

@@ -10,14 +10,13 @@ INDEX_BUILDER_SUFFIX = "_index"
 BUILDER_DEPENDENCIES = "dependencies"
 
 META_LOG_FILE = "logs.txt"
-META_CLOG_FILE = "completed_logs.txt"
+META_CLOG_FILE = "log_ids.txt"
 META_ALOG_FILE = "active_logs.json"
 META_CHIST_FILE = "columns_history.json"
 META_THIST_FILE = "tables_history.json"
-META_TABLE_FILE = "tables_metadata.json"
-META_INSTANCE_FILE = "table_instances_metadata.json"
 META_DESCRIPTION_FILE = "description.yaml"
-
+META_LOG_LOCK_FILE = "LOG.lock"
+META_FILE_LOCK_FILE = "FILE.lock"
 
 RESTART_LOCK = "restart"
 CODE_FOLDER = "code_functions"
@@ -29,6 +28,7 @@ LOCK_FOLDER = "locks"
 TEMP_FOLDER = "_temp"
 ARTIFACT_FOLDER = "artifacts"
 ARTIFACT_REFERENCE = "~ARTIFACT_FOLDER~"
+TABLEVAULT_IDENTIFIER = ".tablevault"
 ILLEGAL_TABLE_NAMES = [
     BUILDER_FOLDER,
     CODE_FOLDER,
@@ -38,6 +38,7 @@ ILLEGAL_TABLE_NAMES = [
     RESTART_LOCK,
     ARTIFACT_FOLDER,
     META_DESCRIPTION_FILE,
+    TABLEVAULT_IDENTIFIER,
 ]
 
 TABLE_FILE = "table.csv"

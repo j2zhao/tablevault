@@ -181,7 +181,7 @@ def get_dataframe_cmd(
         version=version,
         active_only=not include_inactive,
         rows=rows,
-        artifact_path=not no_artifact_path,
+        full_artifact_path=not no_artifact_path,
     )
     df.to_csv(output_csv, index=False)
     _echo({"instance_id": inst_id, "rows": len(df), "csv": str(output_csv)})

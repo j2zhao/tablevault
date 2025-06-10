@@ -1,19 +1,19 @@
 builder_type: ColumnBuilder
 
-changed_columns: [COLUMN_NAMES]
+changed_columns: [COLUMN_NAMES] # output columns
 
 python_function: FUNCTION_NAME
 code_module: MODULE_NAME
 
 arguments:
-  ARG_NAME: ARG_VALUE
-  EXAMPLE_ARG: <<stories.artifact_name[paper_name::self.paper_name[index]]>>
+  ARGUMENT_NAME_1: ARG_VALUE
+  ARGUMENT_NAME_2: <<TABLE_NAME.COLUMN1[COLUMN2::self.COLUMN[index]]>>
 n_threads: 1
 
 is_custom: false # Optional
-is_udf: false # Optional
+row_wise: false # Optional
 
-dtypes: # Optional
+dtypes: # Optional datatype for columns
   COLUMN_NAME_1: Int64
   COLUMN_NAME_2: Float64
   COLUMN_NAME_3: artifact_string

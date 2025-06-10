@@ -3,14 +3,14 @@ import os
 from typing import Optional
 from tablevault._defintions.types import Cache
 from typing import Any
-import json
 from tablevault._defintions import tv_errors
 from tablevault._defintions import constants
 from tablevault._helper.metadata_store import MetadataStore
 from tablevault._dataframe_helper import artifact
-import shutil
 import pickle
 from tablevault._helper.utils import gen_tv_id
+from tablevault._helper.copy_write_file import CopyOnWriteFile
+import json
 
 # Currently only support nullable datatypes
 nullable_map = {
@@ -62,8 +62,9 @@ valid_nullable_dtypes = [
 def update_dtypes(
     dtypes: dict[str, str], instance_id: str, table_name: str, db_dir: str
 ) -> None:
+    filewriter = CopyOnWriteFile(db_dir)
     type_path = os.path.join(db_dir, table_name, instance_id, constants.DTYPE_FILE)
-    with open(type_path, "r") as f:
+    with filewriter.open(type_path, "r") as f:
         dtypes_ = json.load(f)
     for col_name, dtype in dtypes:
         if dtype in nullable_map:
@@ -73,11 +74,12 @@ def update_dtypes(
                 "Currently only support select nullable data types"
             )
         dtypes_[col_name] = dtype
-    with open(type_path, "w") as f:
+    with filewriter.open(type_path, "w") as f:
         json.dump(dtypes_, f)
 
 
 def write_dtype(dtypes, instance_id, table_name, db_dir) -> None:
+    filewriter = CopyOnWriteFile(db_dir)
     table_dir = os.path.join(db_dir, table_name, instance_id)
     dtypes = {col: str(dtype) for col, dtype in dtypes.items()}
     for col_name, dtype in dtypes.items():
@@ -89,7 +91,7 @@ def write_dtype(dtypes, instance_id, table_name, db_dir) -> None:
             )
         dtypes[col_name] = dtype
     type_path = os.path.join(table_dir, constants.DTYPE_FILE)
-    with open(type_path, "w") as f:
+    with filewriter.open(type_path, "w") as f:
         json.dump(dtypes, f)
 
 
@@ -101,7 +103,8 @@ def write_table(
     table_dir = os.path.join(db_dir, table_name)
     table_dir = os.path.join(table_dir, instance_id)
     table_path = os.path.join(table_dir, constants.TABLE_FILE)
-    df.to_csv(table_path, index=False)
+    filewriter = CopyOnWriteFile(db_dir)
+    filewriter.write_csv(table_path, df)
 
 
 def get_table(
@@ -113,13 +116,15 @@ def get_table(
     get_index: bool = True,
     try_make_df: bool = True,
 ) -> pd.DataFrame:
+    file_writer = CopyOnWriteFile(db_dir=db_dir)
+
     table_dir = os.path.join(db_dir, table_name)
     table_dir = os.path.join(table_dir, instance_id)
     table_path = os.path.join(table_dir, constants.TABLE_FILE)
     type_path = os.path.join(table_dir, constants.DTYPE_FILE)
     if not os.path.exists(table_path):
         raise tv_errors.TVTableError("Table doesn't exist")
-    with open(type_path, "r") as f:
+    with file_writer.open(type_path, "r") as f:
         content = f.read().strip()
         if not content:
             dtypes = {}
@@ -128,8 +133,7 @@ def get_table(
     if try_make_df:
         make_df(instance_id, table_name, db_dir)
     try:
-        df = pd.read_csv(table_path)
-        df = pd.read_csv(table_path, nrows=rows, dtype=dtypes)
+        df = file_writer.read_csv(table_path, nrows=rows, dtype=dtypes)
     except pd.errors.EmptyDataError:
         return pd.DataFrame()
     except Exception as e:
@@ -310,16 +314,15 @@ def check_table(instance_id: str, table_name: str, db_dir: str) -> None:
     artifact_main_dir = artifact.get_artifact_folder(
         instance_id, table_name, db_dir, respect_temp=False
     )
-
+    filewriter = CopyOnWriteFile(db_dir)
     for _, row in df_custom.iterrows():
         for _, val in row.items():
             if not pd.isna(val) and val != "":
                 artifact_temp_path = os.path.join(artifact_temp_dir, val)
                 artifact_main_path = os.path.join(artifact_main_dir, val)
-
                 if not os.path.exists(artifact_temp_path):
                     if os.path.exists(artifact_main_path):
-                        shutil.copy2(artifact_main_path, artifact_temp_path)
+                        filewriter.copy2(artifact_main_path, artifact_temp_path)
                     else:
                         raise tv_errors.TVTableError(f"Artifact {val} not found")
                 artifact_paths.append(artifact_temp_path)
@@ -360,8 +363,10 @@ def write_df_entry(
     file_name = gen_tv_id() + ".df.pkl"
     file_name = os.path.join(db_dir, table_name, instance_id, file_name)
     pkf = {"value": value, "index": index, "col_name": col_name}
-    with open(file_name, "wb") as f:
+    filewriter = CopyOnWriteFile(db_dir)
+    with filewriter.open(file_name, "wb") as f:
         pickle.dump(pkf, f)
+    
 
 
 def make_df(
@@ -375,12 +380,13 @@ def make_df(
     pkl_files = [f for f in os.listdir(file_dir) if f.endswith(".df.pkl")]
     if not pkl_files:
         return False
+    filewriter = CopyOnWriteFile(db_dir)
 
     df = pd.DataFrame()
     records = []
     for file_name in pkl_files:
         file_path = os.path.join(file_dir, file_name)
-        with open(file_path, "rb") as f:
+        with filewriter.open(file_path, "rb") as f:
             pkf = pickle.load(f)
             records.append(
                 {"index": pkf["index"], "col": pkf["col_name"], "val": pkf["value"]}
@@ -399,5 +405,5 @@ def make_df(
 
     for file_name in pkl_files:
         file_path = os.path.join(file_dir, file_name)
-        os.remove(file_path)
+        filewriter.remove(file_path)
     return diff_flag

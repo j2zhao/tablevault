@@ -5,7 +5,35 @@ from typing import Optional
 from tablevault._defintions import tv_errors
 
 
-def set_not_writable(
+def _can_program_modify_permissions(filepath: str) -> bool:
+    if os.name == "nt":
+        return False
+    current_euid = os.geteuid()
+    if current_euid == 0:
+        return True
+    file_stat = os.stat(filepath)
+    file_owner_uid = file_stat.st_uid
+    return current_euid == file_owner_uid
+
+def _check_all_open(path: str) -> tuple[bool, list[str]]:
+    failures = []
+    # Walk includes the root path as the first `root`
+    for root, dirs, files in os.walk(path):
+        # include the directory itself
+        entries = [root] + [os.path.join(root, d) for d in dirs] + [os.path.join(root, f) for f in files]
+        for p in entries:
+            if os.name == 'nt':
+                # On Windows: check current user has r/w/x
+                if not (os.access(p, os.R_OK) and os.access(p, os.W_OK) and os.access(p, os.X_OK)):
+                    failures.append(p)
+            else:
+                # On Unix: check mode bits exactly 0o777
+                mode = stat.S_IMODE(os.stat(p).st_mode)
+                if mode & 0o777 != 0o777:
+                    failures.append(p)
+    return len(failures) == 0
+
+def _set_not_writable(
     path: str,
     set_children: bool = True,
     set_children_files=True,
@@ -17,8 +45,6 @@ def set_not_writable(
 
     If `path` is a directory, set it (and everything underneath) to read+execute.
     """
-    if os.name == "nt":
-        return
     # First, chmod the path itself
     mode = (
         stat.S_IREAD
@@ -39,7 +65,7 @@ def set_not_writable(
             full_path = os.path.join(path, entry)
             if os.path.isdir(full_path) and set_children:
                 if entry not in skip_children:
-                    set_not_writable(
+                    _set_not_writable(
                         full_path, set_children, set_children_files, skip_children
                     )
                 else:
@@ -49,7 +75,7 @@ def set_not_writable(
                     os.chmod(full_path, mode)
 
 
-def set_writable(
+def _set_writable(
     path: str,
     set_children: bool = True,
     set_children_files=True,
@@ -61,8 +87,6 @@ def set_writable(
 
     If it's a directory, recurse into children.
     """
-    if os.name == "nt":
-        return
     # Always grant r, w, x to owner/group/others
     mode = (
         stat.S_IREAD
@@ -86,7 +110,7 @@ def set_writable(
             full_path = os.path.join(path, entry)
             if os.path.isdir(full_path) and set_children:
                 if entry not in skip_children:
-                    set_writable(
+                    _set_writable(
                         full_path, set_children, set_children_files, skip_children
                     )
                 else:
@@ -105,9 +129,7 @@ def _check_ex_lock(path: str) -> Optional[bool]:
     return False
 
 
-def set_tv_lock_instance(instance_id: str, table_name: str, db_dir: str):
-    if os.name == "nt":
-        return
+def _set_tv_lock_instance(instance_id: str, table_name: str, db_dir: str):
     lock_dir = os.path.join(db_dir, constants.LOCK_FOLDER)
     table_lock_path = os.path.join(lock_dir, table_name)
     table_full_path = os.path.join(db_dir, table_name)
@@ -127,18 +149,16 @@ def set_tv_lock_instance(instance_id: str, table_name: str, db_dir: str):
     if check_ex is None:
         return
     elif not check_ex:
-        set_not_writable(
+        _set_not_writable(
             instance_full_path, set_children=set_children, skip_children=skip_children
         )
     else:
-        set_writable(
+        _set_writable(
             instance_full_path, set_children=set_children, skip_children=skip_children
         )
 
 
-def set_tv_lock_table(table_name, db_dir):
-    if os.name == "nt":
-        return
+def _set_tv_lock_table(table_name, db_dir):
     lock_dir = os.path.join(db_dir, constants.LOCK_FOLDER)
     table_lock_path = os.path.join(lock_dir, table_name)
     table_full_path = os.path.join(db_dir, table_name)
@@ -147,12 +167,12 @@ def set_tv_lock_table(table_name, db_dir):
         if check_ex is None:
             raise tv_errors.TVFileError("Lock files not found")
         if not check_ex:
-            set_not_writable(table_full_path, set_children_files=False)
+            _set_not_writable(table_full_path, set_children_files=False)
         else:
-            set_writable(table_full_path, set_children_files=False)
+            _set_writable(table_full_path, set_children_files=False)
     else:
         # we don't lock tables for now
-        set_tv_lock_instance(constants.ARTIFACT_FOLDER, table_name, db_dir)
+        _set_tv_lock_instance(constants.ARTIFACT_FOLDER, table_name, db_dir)
         for instance_id in os.listdir(table_lock_path):
             if (
                 not instance_id.startswith(".")
@@ -160,14 +180,12 @@ def set_tv_lock_table(table_name, db_dir):
             ):
                 instance_lock_path = os.path.join(table_lock_path, instance_id)
                 if os.path.isdir(instance_lock_path):
-                    set_tv_lock_instance(instance_id, table_name, db_dir)
+                    _set_tv_lock_instance(instance_id, table_name, db_dir)
 
 
-def set_tv_lock_db(db_dir: str):
-    if os.name == "nt":
-        return
+def _set_tv_lock_db(db_dir: str):
     lock_dir = os.path.join(db_dir, constants.LOCK_FOLDER)
-    set_tv_lock_table(constants.CODE_FOLDER, db_dir)
+    _set_tv_lock_table(constants.CODE_FOLDER, db_dir)
     for table_name in os.listdir(lock_dir):
         if (
             not table_name.startswith(".")
@@ -175,15 +193,22 @@ def set_tv_lock_db(db_dir: str):
         ):
             table_lock_path = os.path.join(lock_dir, table_name)
             if os.path.isdir(table_lock_path):
-                set_tv_lock_table(table_name, db_dir)
+                _set_tv_lock_table(table_name, db_dir)
 
 
 def set_tv_lock(instance_id: str, table_name: str, db_dir: str):
-    if os.name == "nt":
+    if not _can_program_modify_permissions(db_dir):
+        if not _check_all_open(db_dir):
+            raise tv_errors.TVLockError("Locked files on system where file locks not support.")
         return
     if instance_id != "":
-        set_tv_lock_instance(instance_id, table_name, db_dir)
+        _set_tv_lock_instance(instance_id, table_name, db_dir)
     elif table_name != "":
-        set_tv_lock_table(table_name, db_dir)
+        _set_tv_lock_table(table_name, db_dir)
     else:
-        set_tv_lock_db(db_dir)
+        _set_tv_lock_db(db_dir)
+
+def set_writable(db_dir: str):
+    _set_writable(db_dir)
+    if not _check_all_open(db_dir):
+        raise tv_errors.TVLockError("Locked files on system where file locks not support.")

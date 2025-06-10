@@ -93,12 +93,12 @@ class MetadataStore:
     def __init__(self, db_dir: str) -> None:
         self.db_dir = db_dir
         meta_dir = os.path.join(db_dir, "metadata")
-        self.log_file = os.path.join(meta_dir, "logs.txt")
+        self.log_file = os.path.join(meta_dir, constants.META_LOG_FILE)
         self.column_history_file = os.path.join(meta_dir, constants.META_CHIST_FILE)
         self.table_history_file = os.path.join(meta_dir, constants.META_THIST_FILE)
         self.active_file = os.path.join(meta_dir, constants.META_ALOG_FILE)
         self.completed_file = os.path.join(meta_dir, constants.META_CLOG_FILE)
-        meta_lock = os.path.join(meta_dir, "LOG.lock")
+        meta_lock = os.path.join(meta_dir, constants.META_LOG_LOCK_FILE)
         self.lock = FileLock(meta_lock)
 
     def _create_table_operation(self, log: ProcessLog) -> None:
@@ -359,9 +359,7 @@ class MetadataStore:
         before_time: Optional[float] = None,
         active_only: bool = True,
     ) -> tuple[float, float, str]:
-        print("GET TABLE")
         table_history = self._get_table_history()
-        print(table_history)
         max_changed_time = 0
         max_start_time = 0
         max_id = ""
@@ -373,15 +371,12 @@ class MetadataStore:
                 and version != ""
                 and not instance_id.startswith(version)
             ):
-                print("HELLO1")
                 continue
             if active_only and end_time is not None:
-                print("HELLO2")
                 continue
             if start_time > max_start_time and (
                 before_time is None or start_time <= before_time
             ):
-                print("HELLO3")
                 max_start_time = start_time
                 max_changed_time = changed_time
                 max_id = instance_id

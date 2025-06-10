@@ -31,11 +31,8 @@ tablevault = "tablevault.cli:main"
 dev = [
     "ruff",
     "pytest",
-]
-
-docs = [
-    "sphinx>=5.0",
-    "sphinx-rtd-theme"
+    "mkdocs-material",
+    "mike"
 ]
 
 [tool.setuptools.package-data]

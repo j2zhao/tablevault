@@ -12,16 +12,7 @@ import logging
 import shutil
 
 
-def _can_program_modify_permissions(filepath: str) -> bool:
-    if os.name == "nt":
-        return True
-    current_euid = os.geteuid()
-    if current_euid == 0:
-        return True
 
-    file_stat = os.stat(filepath)
-    file_owner_uid = file_stat.st_uid
-    return current_euid == file_owner_uid
 
 
 class TableVault:
@@ -64,10 +55,8 @@ class TableVault:
         else:
             # Ensure the directory exists and is writable by this user
             if os.path.isdir(db_dir):
-                if not _can_program_modify_permissions(db_dir):
-                    raise tv_errors.TVArgumentError(
-                        f"Need ownership permission for {db_dir}"
-                    )
+                if not os.path.isfile(os.path.join(db_dir, constants.TABLEVAULT_IDENTIFIER)):
+                    raise tv_errors.TVArgumentError(f"Folder at {db_dir} is not a TableVault Repository")
             else:
                 raise tv_errors.TVArgumentError(f"No folder found at {db_dir}")
 
@@ -190,7 +179,7 @@ class TableVault:
         active_only: bool = True,
         safe_locking: bool = True,
         rows: Optional[int] = None,
-        artifact_path: bool = True,
+        full_artifact_path: bool = True,
     ) -> tuple[pd.DataFrame, str]:
         """Retrieve a pandas ``DataFrame`` for a table instance.
 
@@ -218,7 +207,7 @@ class TableVault:
             active_only=active_only,
             safe_locking=safe_locking,
             rows=rows,
-            artifact_path=artifact_path,
+            artifact_path=full_artifact_path,
         )
 
     def create_code_module(
@@ -560,6 +549,9 @@ def compress_vault(db_dir: str, preset: int = 6) -> None:
     """
     if not os.path.isdir(db_dir):
         raise FileNotFoundError(f"No such directory: {db_dir}")
+    if not os.path.isfile(os.path.join(db_dir, constants.TABLEVAULT_IDENTIFIER)):
+        raise tv_errors.TVArgumentError(f"Folder at {db_dir} is not a TableVault Repository")
+    set_writable(db_dir)
 
     base = os.path.basename(os.path.normpath(db_dir))
     output_tar_xz = f"{base}.tar.xz"
@@ -581,14 +573,14 @@ def decompress_vault(db_dir: str) -> None:
     if not os.path.isfile(db_dir_compressed):
         raise FileNotFoundError(f"No such file: {db_dir_compressed}")
 
-    base = os.path.basename(db_dir_compressed)[:-7]  # strip ".tar.xz"
-    extract_to = base
-
-    if not os.path.isdir(extract_to):
-        os.makedirs(extract_to)
+    if not os.path.isdir(db_dir):
+        os.makedirs(db_dir)
 
     with tarfile.open(db_dir_compressed, mode="r:xz") as tar:
-        tar.extractall(path=extract_to)
+        tar.extractall(path=db_dir)
+    if not os.path.isfile(os.path.join(db_dir, constants.TABLEVAULT_IDENTIFIER)):
+        raise tv_errors.TVArgumentError(f"Folder at {db_dir} is not a TableVault Repository")
+    set_tv_lock(table_name="", instance_id="", db_dir=db_dir)
 
 
 def delete_vault(db_dir: str):
@@ -596,5 +588,7 @@ def delete_vault(db_dir: str):
 
     :param str db_dir: Base directory.
     """
+    if not os.path.isfile(os.path.join(db_dir, constants.TABLEVAULT_IDENTIFIER)):
+        raise tv_errors.TVArgumentError(f"Folder at {db_dir} is not a TableVault Repository")
     set_writable(db_dir)
     shutil.rmtree(db_dir)

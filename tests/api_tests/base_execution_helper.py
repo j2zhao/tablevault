@@ -93,7 +93,7 @@ def base_exception_function(tablevault: TableVault, process_ids: list):
     process_ids.append(last_process_id)
     tablevault.execute_instance("stories", process_id=last_process_id)
     copy_example_tv()
-    table, _ = tablevault.get_dataframe("stories", artifact_path=False)
+    table, _ = tablevault.get_dataframe("stories", full_artifact_path=False)
     tablevault.create_instance("stories", external_edit=True, copy=True)
     copy_example_tv()
     last_process_id = tablevault.generate_process_id()

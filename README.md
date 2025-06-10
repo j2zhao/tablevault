@@ -14,4 +14,12 @@ t.b.d.
 
 
 TODOS
-- update tests to match new api (LARGE)
+- change to hardlinks instead of copying in python? (HARD)
+- CHANGE COPY OUT DATAFRAME TO WRITABLE
+
+## AFTER FIXING
+- Add examples
+- Fix links
+- Add paper bibtext
+- add pip install
+

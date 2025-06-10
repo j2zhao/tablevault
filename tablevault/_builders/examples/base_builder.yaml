@@ -11,7 +11,7 @@ arguments:
 n_threads: 1
 
 is_custom: false # Optional
-is_udf: false # Optional
+row_wise: false # Optional
 
 dtypes: # Optional
   COLUMN_NAME_1: Int64

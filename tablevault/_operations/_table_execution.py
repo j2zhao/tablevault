@@ -30,6 +30,19 @@ def execute_instance(
         for builder_name, ybuilder in yaml_builders.items()
     }
     column_dtypes = {}
+    cache = {}
+    for builder_name in top_builder_names: 
+        cache = table_operations.fetch_table_cache(
+                external_deps[builder_name],
+                internal_deps,
+                instance_id,
+                table_name,
+                db_metadata,
+                cache,
+            )
+    
+    for builder_name in top_builder_names:
+        builders[builder_name].transform_table_string(cache, instance_id, table_name, db_metadata.db_dir)
 
     for builder_name in top_builder_names:
         column_dtypes.update(builders[builder_name].dtypes)
@@ -49,27 +62,22 @@ def execute_instance(
         )
 
         db_metadata.update_process_step(process_id, constants.EX_CLEAR_TABLE)
-    cache = {}
     for i, builder_name in enumerate(top_builder_names):
         if builder_name in prev_completed_steps:
             continue
         cache = table_operations.fetch_table_cache(
-            external_deps[builder_name],
-            internal_deps,
-            instance_id,
-            table_name,
-            db_metadata,
-            cache,
-        )
-
+                external_deps[builder_name],
+                internal_deps,
+                instance_id,
+                table_name,
+                db_metadata,
+                cache,
+            )
         if i == 0:
             update_rows = builders[builder_name].execute(
                 cache, instance_id, table_name, db_metadata.db_dir, process_id
             )
             db_metadata.update_process_data(process_id, {"update_rows": update_rows})
-        elif not update_rows and len(changed_columns) == 0:
-            db_metadata.update_process_step(process_id, builder_name)
-            continue
         else:
             if update_rows or set(builders[builder_name].changed_columns).issubset(
                 changed_columns

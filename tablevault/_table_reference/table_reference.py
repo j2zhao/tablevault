@@ -6,7 +6,7 @@ from tablevault._defintions import tv_errors, constants
 import pandas as pd
 from pandas.api.types import is_string_dtype
 from tablevault._defintions.types import Cache
-
+import ast
 
 # ───────────────────────────────────────────── helpers ──
 def _find_matching(text: str, pos: int, open_sym: str, close_sym: str) -> int:
@@ -51,8 +51,7 @@ def _simplify_df(df: pd.DataFrame):
     elif df.shape[1] == 1:
         return df.iloc[:, 0].tolist()
     else:
-        return df.to_dict(orient="list")
-
+        return df
 
 # forward reference
 Condition = Union[str, "TableReference"]
@@ -270,7 +269,12 @@ class TableReference:
                     pieces.append(self.text[i])
                     i += 1
 
-            return "".join(pieces)
+            output = "".join(pieces)
+            try:
+                output = ast.literal_eval(output)
+            except Exception:
+                pass
+            return output
 
         except tv_errors.TableReferenceError:
             if raise_error:

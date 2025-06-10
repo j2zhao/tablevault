@@ -50,7 +50,7 @@ class IndexBuilder(TVBuilder):
                     instance_id,
                     table_name,
                 )
-            if self.is_udf and self.n_threads != 1:
+            if self.row_wise and self.n_threads != 1:
                 indices = list(range(len(cache[constants.TABLE_SELF])))
                 with ThreadPoolExecutor(max_workers=self.n_threads) as executor:
                     _ = list(
@@ -61,7 +61,7 @@ class IndexBuilder(TVBuilder):
                             indices,
                         )
                     )
-            elif self.is_udf and self.n_threads == 1:
+            elif self.row_wise and self.n_threads == 1:
                 for i in list(range(len(cache[constants.TABLE_SELF]))):
                     _execute_code_from_builder(
                         i, self, funct, cache, instance_id, table_name, db_dir

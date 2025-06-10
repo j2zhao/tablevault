@@ -1,6 +1,3 @@
-"""For each operation we want to be able to write the logs to db, and
-fetch locks."""
-
 from tablevault._defintions import tv_errors, constants
 from tablevault._helper.database_lock import DatabaseLock
 from tablevault._helper.metadata_store import MetadataStore
