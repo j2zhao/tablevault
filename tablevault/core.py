@@ -12,9 +12,6 @@ import logging
 import shutil
 
 
-
-
-
 class TableVault:
     """Interface with a TableVault directory.
 
@@ -55,8 +52,12 @@ class TableVault:
         else:
             # Ensure the directory exists and is writable by this user
             if os.path.isdir(db_dir):
-                if not os.path.isfile(os.path.join(db_dir, constants.TABLEVAULT_IDENTIFIER)):
-                    raise tv_errors.TVArgumentError(f"Folder at {db_dir} is not a TableVault Repository")
+                if not os.path.isfile(
+                    os.path.join(db_dir, constants.TABLEVAULT_IDENTIFIER)
+                ):
+                    raise tv_errors.TVArgumentError(
+                        f"Folder at {db_dir} is not a TableVault Repository"
+                    )
             else:
                 raise tv_errors.TVArgumentError(f"No folder found at {db_dir}")
 
@@ -550,7 +551,9 @@ def compress_vault(db_dir: str, preset: int = 6) -> None:
     if not os.path.isdir(db_dir):
         raise FileNotFoundError(f"No such directory: {db_dir}")
     if not os.path.isfile(os.path.join(db_dir, constants.TABLEVAULT_IDENTIFIER)):
-        raise tv_errors.TVArgumentError(f"Folder at {db_dir} is not a TableVault Repository")
+        raise tv_errors.TVArgumentError(
+            f"Folder at {db_dir} is not a TableVault Repository"
+        )
     set_writable(db_dir)
 
     base = os.path.basename(os.path.normpath(db_dir))
@@ -579,7 +582,9 @@ def decompress_vault(db_dir: str) -> None:
     with tarfile.open(db_dir_compressed, mode="r:xz") as tar:
         tar.extractall(path=db_dir)
     if not os.path.isfile(os.path.join(db_dir, constants.TABLEVAULT_IDENTIFIER)):
-        raise tv_errors.TVArgumentError(f"Folder at {db_dir} is not a TableVault Repository")
+        raise tv_errors.TVArgumentError(
+            f"Folder at {db_dir} is not a TableVault Repository"
+        )
     set_tv_lock(table_name="", instance_id="", db_dir=db_dir)
 
 
@@ -589,6 +594,8 @@ def delete_vault(db_dir: str):
     :param str db_dir: Base directory.
     """
     if not os.path.isfile(os.path.join(db_dir, constants.TABLEVAULT_IDENTIFIER)):
-        raise tv_errors.TVArgumentError(f"Folder at {db_dir} is not a TableVault Repository")
+        raise tv_errors.TVArgumentError(
+            f"Folder at {db_dir} is not a TableVault Repository"
+        )
     set_writable(db_dir)
     shutil.rmtree(db_dir)

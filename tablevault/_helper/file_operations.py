@@ -68,6 +68,7 @@ def setup_database_folder(db_dir: str, description: str, replace: bool = False) 
     with open(os.path.join(db_dir, constants.TABLEVAULT_IDENTIFIER), "w") as file:
         pass
 
+
 def setup_table_instance_folder(
     instance_id: str,
     table_name: str,
@@ -126,13 +127,9 @@ def setup_table_instance_folder(
                 db_dir, origin_table, constants.ARTIFACT_FOLDER
             )
             if os.path.isdir(prev_artifact_dir_instance):
-                filewriter.copytree(
-                    prev_artifact_dir_instance, artifact_dir
-                )
+                filewriter.copytree(prev_artifact_dir_instance, artifact_dir)
             elif os.path.isdir(prev_artifact_dir_table):
-                filewriter.copytree(
-                    prev_artifact_dir_table, artifact_dir
-                )
+                filewriter.copytree(prev_artifact_dir_table, artifact_dir)
             else:
                 filewriter.makedirs(artifact_dir)
         else:
@@ -181,7 +178,7 @@ def write_description(
 def setup_table_folder(
     table_name: str, db_dir: str, make_artifacts: bool = True
 ) -> None:
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     table_dir = os.path.join(db_dir, table_name)
     if os.path.isdir(table_dir):
         raise TVFileError("table folder already exists.")
@@ -198,7 +195,7 @@ def setup_table_folder(
 def rename_table_instance(
     instance_id: str, prev_instance_id: str, table_name: str, db_dir: str
 ) -> None:
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     table_dir = os.path.join(db_dir, table_name)
     temp_dir = os.path.join(table_dir, prev_instance_id)
     new_dir = os.path.join(table_dir, instance_id)
@@ -210,7 +207,7 @@ def rename_table_instance(
 
 
 def rename_table(new_table_name: str, table_name: str, db_dir: str) -> None:
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     new_dir = os.path.join(db_dir, new_table_name)
     old_dir = os.path.join(db_dir, table_name)
     if os.path.exists(new_dir) or not os.path.exists(old_dir):
@@ -219,7 +216,7 @@ def rename_table(new_table_name: str, table_name: str, db_dir: str) -> None:
 
 
 def delete_table_folder_2(table_name: str, db_dir: str, instance_id: str = "") -> None:
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     instance_dir = os.path.join(db_dir, table_name)
     if instance_id != "":
         instance_dir = os.path.join(instance_dir, str(instance_id))
@@ -228,7 +225,7 @@ def delete_table_folder_2(table_name: str, db_dir: str, instance_id: str = "") -
 
 
 def delete_table_folder(table_name: str, db_dir: str, instance_id: str = "") -> None:
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     table_dir = os.path.join(db_dir, table_name)
     if instance_id != "":
         instance_dir = os.path.join(table_dir, str(instance_id))
@@ -259,7 +256,7 @@ def delete_table_folder(table_name: str, db_dir: str, instance_id: str = "") -> 
 def get_yaml_builders(
     instance_id: str, table_name: str, db_dir: str, yaml_name: str = ""
 ) -> dict[str, dict]:
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     table_dir = os.path.join(db_dir, table_name)
     if instance_id != "":
         table_dir = os.path.join(table_dir, instance_id)
@@ -291,7 +288,7 @@ def get_yaml_builders(
 def save_yaml_builder(
     builder: Any, instance_id: str, table_name: str, db_dir: str
 ) -> None:
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     table_dir = os.path.join(db_dir, table_name)
     if instance_id != "":
         table_dir = os.path.join(table_dir, instance_id)
@@ -327,7 +324,7 @@ def check_builder_equality(
     table_name_2: str,
     db_dir: str,
 ) -> bool:
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     builder_dir_1 = os.path.join(
         db_dir,
         table_name_1,
@@ -354,7 +351,7 @@ def check_builder_equality(
 
 
 def create_copy_code_file(db_dir: str, module_name: str = "", copy_dir: str = ""):
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     code_dir = os.path.join(db_dir, constants.CODE_FOLDER)
     if copy_dir != "":
         if os.path.isdir(copy_dir):
@@ -389,7 +386,7 @@ def create_copy_code_file(db_dir: str, module_name: str = "", copy_dir: str = ""
 
 
 def delete_code_file(module_name: str, db_dir: str):
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     file_path = os.path.join(db_dir, constants.CODE_FOLDER, f"{module_name}.py")
     if not os.path.exists(file_path):
         raise TVFileError("code file doesn't exist")
@@ -400,7 +397,7 @@ def delete_code_file(module_name: str, db_dir: str):
 def delete_builder_file(
     builder_name: str, instance_id: str, table_name: str, db_dir: str
 ):
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     file_path = os.path.join(
         db_dir,
         table_name,
@@ -421,7 +418,7 @@ def create_copy_builder_file(
     builder_name: str = "",
     copy_dir: str = "",
 ):
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     builder_dir = os.path.join(
         db_dir, table_name, instance_id, constants.BUILDER_FOLDER
     )
@@ -471,7 +468,7 @@ def create_copy_builder_file(
 
 
 def move_artifacts_to_table(db_dir: str, table_name: str = "", instance_id: str = ""):
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     new_artifact_dir = os.path.join(db_dir, table_name, constants.ARTIFACT_FOLDER)
     if not os.path.exists(new_artifact_dir):
         return
@@ -494,7 +491,7 @@ def upload_artifact(
     table_name: str,
     instance_id: str,
 ) -> tuple[str, str]:
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     artifact_dir = os.path.join(
         db_dir, table_name, instance_id, constants.ARTIFACT_FOLDER, artifact_name
     )
@@ -529,7 +526,7 @@ def copy_folder_to_temp(
     table_name: str = "",
     subfolder: str = "",
 ):
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     folder_dir = db_dir
     temp_dir = os.path.join(db_dir, constants.TEMP_FOLDER, process_id)
     if table_name != "":
@@ -549,14 +546,14 @@ def copy_temp_to_db(
     process_id: str,
     db_dir: str,
 ):
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     temp_dir = os.path.join(db_dir, constants.TEMP_FOLDER, process_id)
     if os.path.isdir(temp_dir):
         filewriter.copytree(temp_dir, db_dir, dirs_exist_ok=True)
 
 
 def delete_from_temp(process_id: str, db_dir: str):
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     temp_dir = os.path.join(db_dir, constants.TEMP_FOLDER)
     for sub_folder in os.listdir(temp_dir):
         sub_dir = os.path.join(temp_dir, sub_folder)
@@ -565,7 +562,7 @@ def delete_from_temp(process_id: str, db_dir: str):
 
 
 def cleanup_temp(active_ids: list[str], db_dir: str):
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     temp_dir = os.path.join(db_dir, constants.TEMP_FOLDER)
     for sub_folder in os.listdir(temp_dir):
         sub_dir = os.path.join(temp_dir, sub_folder)
@@ -580,7 +577,7 @@ def copy_table(
     prev_table_name: str,
     db_dir: str,
 ):
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     prev_table_path = os.path.join(
         db_dir, prev_table_name, prev_instance_id, constants.TABLE_FILE
     )
@@ -601,7 +598,7 @@ def load_code_function(
     instance_id: str = "",
     table_name: str = "",
 ):
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     if instance_id != "":
         file_path_ = os.path.join(
             db_dir,
@@ -631,7 +628,7 @@ def load_code_function(
 def move_code_to_instance(
     module_name: str, instance_id: str, table_name: str, db_dir: str
 ):
-    filewriter =  CopyOnWriteFile(db_dir)
+    filewriter = CopyOnWriteFile(db_dir)
     file_path = os.path.join(db_dir, constants.CODE_FOLDER, module_name + ".py")
     if not os.path.exists(file_path):
         raise TVFileError(f"Function '{module_name}' not found")

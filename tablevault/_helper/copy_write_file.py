@@ -120,11 +120,13 @@ class CopyOnWriteFile:
     def read_json(self, path: str, **kwargs):
         with self.open(path, "r", encoding="utf-8") as f:
             import json
+
             return json.load(f, **kwargs)
 
     def write_json(self, path: str, obj, **kwargs):
         with self.open(path, "w", encoding="utf-8") as f:
             import json
+
             return json.dump(obj, f, **kwargs)
 
     # YAML
@@ -147,8 +149,9 @@ class CopyOnWriteFile:
 
     # ─────────────── safe destructive ops ───────────────
     @staticmethod
-    def _handle_remove_readonly(func: Callable, path: str,
-                                exc_info: Tuple[type, BaseException, object]):
+    def _handle_remove_readonly(
+        func: Callable, path: str, exc_info: Tuple[type, BaseException, object]
+    ):
         exc_type, exc_value, _ = exc_info
         if exc_type is PermissionError:
             os.chmod(path, stat.S_IWRITE)
@@ -191,13 +194,16 @@ class CopyOnWriteFile:
                         return
                     raise
                 except OSError as err:
-                    if (err.errno not in (errno.EBUSY, errno.ENOTEMPTY) or
-                            attempt + 1 == self._DELETE_RETRIES):
+                    if (
+                        err.errno not in (errno.EBUSY, errno.ENOTEMPTY)
+                        or attempt + 1 == self._DELETE_RETRIES
+                    ):
                         raise
                     time.sleep(self._DELETE_SLEEP)
+
     def rename(self, src: str, dst: str):
         with self._lock:
-            os.rename(src, dst)                  # atomic directory swap
+            os.rename(src, dst)  # atomic directory swap
         return dst
 
     # ─────────────── copy / move helpers ───────────────
@@ -220,7 +226,8 @@ class CopyOnWriteFile:
         copy_fn = copy_function or self.copy2
         with self._lock:
             return shutil.copytree(
-                src, dst,
+                src,
+                dst,
                 symlinks=symlinks,
                 ignore=ignore,
                 dirs_exist_ok=dirs_exist_ok,
@@ -249,7 +256,9 @@ class CopyOnWriteFile:
         with self._lock:
             # Fallback if no hard‑link support
             if not self._hardlink_supported:
-                return self.copytree(src, dst, dirs_exist_ok=dirs_exist_ok, ignore=ignore)
+                return self.copytree(
+                    src, dst, dirs_exist_ok=dirs_exist_ok, ignore=ignore
+                )
 
             if os.path.exists(dst):
                 if not dirs_exist_ok:
@@ -273,9 +282,9 @@ class CopyOnWriteFile:
                     dst_dir = os.path.join(dst, rel)
                     if not os.path.exists(dst_dir):
                         os.makedirs(dst_dir, exist_ok=True)
-                    shutil.copystat(os.path.join(dirpath, dirname),
-                                    dst_dir,
-                                    follow_symlinks=False)
+                    shutil.copystat(
+                        os.path.join(dirpath, dirname), dst_dir, follow_symlinks=False
+                    )
                 for filename in filenames:
                     if filename in ignored:
                         continue

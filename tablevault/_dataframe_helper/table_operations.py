@@ -366,7 +366,6 @@ def write_df_entry(
     filewriter = CopyOnWriteFile(db_dir)
     with filewriter.open(file_name, "wb") as f:
         pickle.dump(pkf, f)
-    
 
 
 def make_df(

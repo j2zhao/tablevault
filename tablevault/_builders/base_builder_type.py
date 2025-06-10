@@ -43,7 +43,9 @@ class TVBuilder(BaseModel):
     python_function: Union[str, TableReference] = Field(
         description="Function to execute."
     )
-    arguments: Union[TableReference, dict[Union[str, TableReference], Any]] = Field(description="Function")
+    arguments: Union[TableReference, dict[Union[str, TableReference], Any]] = Field(
+        description="Function"
+    )
 
     @model_validator(mode="before")
     @classmethod

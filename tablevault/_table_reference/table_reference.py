@@ -8,6 +8,7 @@ from pandas.api.types import is_string_dtype
 from tablevault._defintions.types import Cache
 import ast
 
+
 # ───────────────────────────────────────────── helpers ──
 def _find_matching(text: str, pos: int, open_sym: str, close_sym: str) -> int:
     """Return index *after* the matching close_sym for the opener at
@@ -52,6 +53,7 @@ def _simplify_df(df: pd.DataFrame):
         return df.iloc[:, 0].tolist()
     else:
         return df
+
 
 # forward reference
 Condition = Union[str, "TableReference"]

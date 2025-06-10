@@ -2,6 +2,7 @@ import pandas as pd
 import random
 import string
 
+
 def random_column_string(df, colunm_names, **kwargs):
     """
     Generate a new DataFrame of the same length as `df` with random string values in specified columns.

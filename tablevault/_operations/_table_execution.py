@@ -31,18 +31,20 @@ def execute_instance(
     }
     column_dtypes = {}
     cache = {}
-    for builder_name in top_builder_names: 
-        cache = table_operations.fetch_table_cache(
-                external_deps[builder_name],
-                internal_deps,
-                instance_id,
-                table_name,
-                db_metadata,
-                cache,
-            )
-    
     for builder_name in top_builder_names:
-        builders[builder_name].transform_table_string(cache, instance_id, table_name, db_metadata.db_dir)
+        cache = table_operations.fetch_table_cache(
+            external_deps[builder_name],
+            internal_deps,
+            instance_id,
+            table_name,
+            db_metadata,
+            cache,
+        )
+
+    for builder_name in top_builder_names:
+        builders[builder_name].transform_table_string(
+            cache, instance_id, table_name, db_metadata.db_dir
+        )
 
     for builder_name in top_builder_names:
         column_dtypes.update(builders[builder_name].dtypes)
@@ -66,13 +68,13 @@ def execute_instance(
         if builder_name in prev_completed_steps:
             continue
         cache = table_operations.fetch_table_cache(
-                external_deps[builder_name],
-                internal_deps,
-                instance_id,
-                table_name,
-                db_metadata,
-                cache,
-            )
+            external_deps[builder_name],
+            internal_deps,
+            instance_id,
+            table_name,
+            db_metadata,
+            cache,
+        )
         if i == 0:
             update_rows = builders[builder_name].execute(
                 cache, instance_id, table_name, db_metadata.db_dir, process_id

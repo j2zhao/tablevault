@@ -20,6 +20,7 @@ from tablevault._defintions import tv_errors, constants
 # Utility helpers
 # -----------------------------------------------------------------------------
 
+
 def _echo(obj):
     """Pretty‑print *obj* to stdout so shell users can capture the value."""
     if isinstance(obj, (dict, list)):
@@ -37,6 +38,7 @@ def _bail(ctx: click.Context, param: str):
 # -----------------------------------------------------------------------------
 # Main CLI group
 # -----------------------------------------------------------------------------
+
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option(
@@ -64,6 +66,7 @@ def cli(ctx: click.Context, db_dir: Optional[Path], author: Optional[str]):
 # Helper to lazily instantiate a TableVault when a command needs it
 # -----------------------------------------------------------------------------
 
+
 def _get_vault(ctx: click.Context, verbose: bool = True) -> TableVault:
     db_dir: Optional[Path] = ctx.obj.get("db_dir")
     author: Optional[str] = ctx.obj.get("author")
@@ -83,7 +86,9 @@ def _get_vault(ctx: click.Context, verbose: bool = True) -> TableVault:
 
 @cli.command("compress")
 @click.argument("db_dir", type=click.Path(exists=True, path_type=Path))
-@click.option("--preset", default=6, show_default=True, help="LZMA compression level 1–9")
+@click.option(
+    "--preset", default=6, show_default=True, help="LZMA compression level 1–9"
+)
 def compress_cmd(db_dir: Path, preset: int):
     """Create a `DB_DIR.tar.xz` archive from *DB_DIR*."""
     compress_vault(str(db_dir), preset=preset)
@@ -100,7 +105,9 @@ def decompress_cmd(archive: Path):
 
 @cli.command("delete-vault")
 @click.argument("db_dir", type=click.Path(exists=True, path_type=Path))
-@click.confirmation_option(prompt="⚠️  This will permanently delete the vault – continue?")
+@click.confirmation_option(
+    prompt="⚠️  This will permanently delete the vault – continue?"
+)
 def delete_vault_cmd(db_dir: Path):
     """**Irreversibly** delete an entire vault directory."""
     delete_vault(str(db_dir))
@@ -125,7 +132,12 @@ def get_process_completion_cmd(ctx: click.Context, process_id: str):
 @click.argument("table_name")
 @click.option("--instance-id", default="", help="Specific instance ID (optional)")
 @click.option("--version", default=constants.BASE_TABLE_VERSION, help="Table version")
-@click.option("--temp/--materialised", "is_temp", default=True, help="Return the temporary or last materialised folder")
+@click.option(
+    "--temp/--materialised",
+    "is_temp",
+    default=True,
+    help="Return the temporary or last materialised folder",
+)
 @click.pass_context
 def get_artifact_folder_cmd(
     ctx: click.Context,
@@ -154,14 +166,25 @@ def get_instances_cmd(ctx: click.Context, table_name: str, version: str):
     vault = _get_vault(ctx)
     _echo(vault.get_instances(table_name=table_name, version=version))
 
+
 @cli.command("get-dataframe")
 @click.argument("table_name")
-@click.option("--output", "output_csv", required=True, type=click.Path(path_type=Path), help="Destination CSV file")
+@click.option(
+    "--output",
+    "output_csv",
+    required=True,
+    type=click.Path(path_type=Path),
+    help="Destination CSV file",
+)
 @click.option("--instance-id", default="")
 @click.option("--version", default=constants.BASE_TABLE_VERSION)
 @click.option("--rows", type=int, default=None, help="Row limit (None ⇒ no limit)")
 @click.option("--include-inactive", is_flag=True, help="Include inactive instances")
-@click.option("--no-artifact-path", is_flag=True, help="Skip prepending artifact folder to 'artifact_string' columns")
+@click.option(
+    "--no-artifact-path",
+    is_flag=True,
+    help="Skip prepending artifact folder to 'artifact_string' columns",
+)
 @click.pass_context
 def get_dataframe_cmd(
     ctx: click.Context,
@@ -186,19 +209,26 @@ def get_dataframe_cmd(
     df.to_csv(output_csv, index=False)
     _echo({"instance_id": inst_id, "rows": len(df), "csv": str(output_csv)})
 
+
 @cli.command("stop-process")
 @click.argument("process_id")
 @click.option("--force", is_flag=True, help="Force‑kill the running process")
-@click.option("--materialize", is_flag=True, help="Materialise partial instances if possible")
+@click.option(
+    "--materialize", is_flag=True, help="Materialise partial instances if possible"
+)
 @click.pass_context
-def stop_process_cmd(ctx: click.Context, process_id: str, force: bool, materialize: bool):
+def stop_process_cmd(
+    ctx: click.Context, process_id: str, force: bool, materialize: bool
+):
     vault = _get_vault(ctx)
     _echo(vault.stop_process(process_id, force=force, materialize=materialize))
 
 
 @cli.command("create-code-module")
 @click.option("--module-name", default="", help="Name for the new module (optional)")
-@click.option("--copy-dir", default="", type=click.Path(), help="File/dir to copy into the vault")
+@click.option(
+    "--copy-dir", default="", type=click.Path(), help="File/dir to copy into the vault"
+)
 @click.pass_context
 def create_code_module_cmd(ctx: click.Context, module_name: str, copy_dir: str):
     vault = _get_vault(ctx)
@@ -242,7 +272,9 @@ def create_builder_file_cmd(
 @click.argument("builder_name")
 @click.option("--version", default=constants.BASE_TABLE_VERSION)
 @click.pass_context
-def delete_builder_file_cmd(ctx: click.Context, table_name: str, builder_name: str, version: str):
+def delete_builder_file_cmd(
+    ctx: click.Context, table_name: str, builder_name: str, version: str
+):
     vault = _get_vault(ctx)
     _echo(vault.delete_builder_file(builder_name, table_name, version))
 
@@ -275,10 +307,18 @@ def delete_instance_cmd(ctx: click.Context, table_name: str, instance_id: str):
 
 @cli.command("write-instance")
 @click.argument("table_name")
-@click.option("--csv", "csv_path", required=True, type=click.Path(exists=True, path_type=Path), help="CSV file containing the dataframe")
+@click.option(
+    "--csv",
+    "csv_path",
+    required=True,
+    type=click.Path(exists=True, path_type=Path),
+    help="CSV file containing the dataframe",
+)
 @click.option("--version", default=constants.BASE_TABLE_VERSION)
 @click.pass_context
-def write_instance_cmd(ctx: click.Context, table_name: str, csv_path: Path, version: str):
+def write_instance_cmd(
+    ctx: click.Context, table_name: str, csv_path: Path, version: str
+):
     """Write a CSV file as a materialised instance."""
     vault = _get_vault(ctx)
     df = pd.read_csv(csv_path)
@@ -291,7 +331,9 @@ def write_instance_cmd(ctx: click.Context, table_name: str, csv_path: Path, vers
 @click.option("--force", is_flag=True, help="Force a full rebuild")
 @click.option("--background", is_flag=True, help="Run in the background")
 @click.pass_context
-def execute_instance_cmd(ctx: click.Context, table_name: str, version: str, force: bool, background: bool):
+def execute_instance_cmd(
+    ctx: click.Context, table_name: str, version: str, force: bool, background: bool
+):
     vault = _get_vault(ctx)
     _echo(
         vault.execute_instance(
@@ -309,8 +351,10 @@ def execute_instance_cmd(ctx: click.Context, table_name: str, version: str, forc
 @click.option("--origin-id", default="")
 @click.option("--origin-table", default="")
 @click.option("--external-edit", is_flag=True)
-@click.option("--no-copy", is_flag=True, help="Do not copy from latest materialised instance")
-@click.option("--builder", "builders", multiple=True, help="Add builder names (repeat)" )
+@click.option(
+    "--no-copy", is_flag=True, help="Do not copy from latest materialised instance"
+)
+@click.option("--builder", "builders", multiple=True, help="Add builder names (repeat)")
 @click.pass_context
 def create_instance_cmd(
     ctx: click.Context,
@@ -341,7 +385,9 @@ def create_instance_cmd(
 @click.option("--multiple-artifacts", is_flag=True)
 @click.option("--side-effects", is_flag=True)
 @click.pass_context
-def create_table_cmd(ctx: click.Context, table_name: str, multiple_artifacts: bool, side_effects: bool):
+def create_table_cmd(
+    ctx: click.Context, table_name: str, multiple_artifacts: bool, side_effects: bool
+):
     vault = _get_vault(ctx)
     _echo(
         vault.create_table(
@@ -367,7 +413,9 @@ def generate_process_id_cmd(ctx: click.Context):
 def main():  # pragma: no cover – convenience shim
     try:
         cli(obj={})
-    except tv_errors.TableVaultError as exc:  # base class of all tablevault custom errors
+    except (
+        tv_errors.TableVaultError
+    ) as exc:  # base class of all tablevault custom errors
         click.echo(f"TableVault error: {exc}", err=True)
         sys.exit(1)
     except Exception as exc:  # noqa: BLE001 – re‑raise unknown exceptions
