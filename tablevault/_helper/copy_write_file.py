@@ -10,7 +10,7 @@ from types import SimpleNamespace
 
 import yaml
 import pandas as pd
-from filelock import FileLock, Timeout
+from filelock import FileLock
 
 # ----------------------------------------------------------------------
 # Minimal stub for the constants that would normally come from TableVault
