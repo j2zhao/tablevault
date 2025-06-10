@@ -9,10 +9,10 @@ def tablevault():
     tv = TableVault("example_tv", author="jinjin", create=True)
 
     yield tv
-    # if os.path.isdir("example_tv"):
-    #     delete_vault("example_tv")
-    # if os.path.isdir("example_tv_copy"):
-    #     delete_vault("example_tv_copy")
+    if os.path.isdir("example_tv"):
+        delete_vault("example_tv")
+    if os.path.isdir("example_tv_copy"):
+        delete_vault("example_tv_copy")
 
 
 @pytest.fixture
