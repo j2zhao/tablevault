@@ -683,13 +683,16 @@ def check_code_function_equality(
         file_path_ = os.path.join(
             db_dir, table_name, instance_id, constants.CODE_FOLDER, module_name + ".py"
         )
-        if not os.path.exists(file_path):
+        if not os.path.exists(file_path_):
             return False
         return filecmp.cmp(file_path, file_path_, shallow=False)
     else:
-        origin_func, _ = load_code_function(
-            python_function, module_name, db_dir, instance_id, table_name
-        )
+        try:
+            origin_func, _ = load_code_function(
+                python_function, module_name, db_dir, instance_id, table_name
+            )
+        except Exception as e:
+            return False
         base_func, _ = load_code_function(python_function, module_name, db_dir)
         return origin_func.__code__ == base_func.__code__
 
