@@ -30,14 +30,14 @@ The **YAML Builder** tab has the **specified** arguments of the builder file for
     ```yaml
     builder_type: IndexBuilder
     changed_columns: ['file_name', 'artifact_name', 'original_path']
-    primary_key: ['paper_name'] 
+    primary_key: ['file_name'] 
     python_function: create_paper_table_from_folder
     code_module: table_generation
     arguments:    
         folder_dir: str
-        copies: int
-        artifact_folder: str
-        extension: str
+        copies: 1
+        artifact_folder:  ~ARTIFACT_STRING~
+        extension: '.pdf'
     is_custom: false
     ```
 
@@ -72,6 +72,7 @@ The resulting `DataFrame` has three columns:
 
     ```yaml
     builder_type: IndexBuilder
+    changed_columns: list
     python_function: create_data_table_from_table
     code_module: table_generation
     arguments:    
@@ -102,6 +103,7 @@ Return a **copy** of `df`, optionally truncated to the first `nrows`.
 
     ```yaml
     builder_type: IndexBuilder
+    changed_columns: list
     python_function: create_data_table_from_csv
     code_module: table_generation
     arguments:    
@@ -130,6 +132,7 @@ Return a **copy** of `df`, optionally truncated to the first `nrows`.
     ```yaml
     builder_type: IndexBuilder
     changed_columns: [str] # only single column
+    primary_key: list
     python_function: create_data_table_from_list
     code_module: table_generation
     arguments:    
