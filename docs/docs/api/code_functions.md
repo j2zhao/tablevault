@@ -37,6 +37,7 @@ The **YAML Builder** tab has the **specified** arguments of the builder file for
         folder_dir: str
         copies: int
         artifact_folder: str
+        extension: str
     is_custom: false
     ```
 
