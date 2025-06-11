@@ -13,6 +13,7 @@ from tablevault._builders.examples.mapping import BUILDER_EXAMPLE_MAPPING
 from tablevault._helper import user_lock
 from tablevault._builders import builder_constants
 from tablevault._helper.copy_write_file import CopyOnWriteFile
+from rich.tree import Tree
 
 
 def delete_database_folder(db_dir) -> None:
@@ -43,6 +44,9 @@ def setup_database_folder(db_dir: str, description: str, replace: bool = False) 
         pass
     with open(os.path.join(meta_dir, constants.META_CLOG_FILE), "w") as file:
         pass
+
+    with open(os.path.join(meta_dir, constants.META_TEMP_FILE), "w") as file:
+        json.dump({}, file)
 
     with open(os.path.join(meta_dir, constants.META_ALOG_FILE), "w") as file:
         json.dump({}, file)
@@ -98,14 +102,13 @@ def setup_table_instance_folder(
             prev_dir = os.path.join(db_dir, origin_table, str(origin_id))
             prev_builder_dir = os.path.join(prev_dir, constants.BUILDER_FOLDER)
             filewriter.copytree(prev_builder_dir, builder_dir)
-
-            prev_artifact_dir = os.path.join(prev_dir, constants.ARTIFACT_FOLDER)
-            if os.path.isdir(prev_artifact_dir):
-                filewriter.copytree(
-                    prev_artifact_dir, artifact_dir, copy_function=shutil.copy2
-                )
-            else:
-                filewriter.makedirs(artifact_dir)
+            # prev_artifact_dir = os.path.join(prev_dir, constants.ARTIFACT_FOLDER)
+            # if os.path.isdir(prev_artifact_dir):
+            #     filewriter.copytree(
+            #         prev_artifact_dir, artifact_dir)
+            # else:
+            #     filewriter.makedirs(artifact_dir)
+            filewriter.makedirs(artifact_dir)
         else:
             filewriter.makedirs(builder_dir)
             filewriter.makedirs(artifact_dir)
@@ -120,18 +123,18 @@ def setup_table_instance_folder(
     else:
         if origin_id != "":
             copy_table(instance_id, table_name, origin_id, origin_table, db_dir)
-            prev_artifact_dir_instance = os.path.join(
-                db_dir, origin_table, str(origin_id), constants.ARTIFACT_FOLDER
-            )
-            prev_artifact_dir_table = os.path.join(
-                db_dir, origin_table, constants.ARTIFACT_FOLDER
-            )
-            if os.path.isdir(prev_artifact_dir_instance):
-                filewriter.copytree(prev_artifact_dir_instance, artifact_dir)
-            elif os.path.isdir(prev_artifact_dir_table):
-                filewriter.copytree(prev_artifact_dir_table, artifact_dir)
-            else:
-                filewriter.makedirs(artifact_dir)
+            # prev_artifact_dir_instance = os.path.join(
+            #     db_dir, origin_table, str(origin_id), constants.ARTIFACT_FOLDER
+            # )
+            # prev_artifact_dir_table = os.path.join(
+            #     db_dir, origin_table, constants.ARTIFACT_FOLDER
+            # )
+            # if os.path.isdir(prev_artifact_dir_instance):
+            #     filewriter.copytree(prev_artifact_dir_instance, artifact_dir)
+            # elif os.path.isdir(prev_artifact_dir_table):
+            #     filewriter.copytree(prev_artifact_dir_table, artifact_dir)
+            # else:
+            filewriter.makedirs(artifact_dir)
         else:
             df = pd.DataFrame()
             filewriter.write_csv(current_table_path, df)
@@ -255,7 +258,7 @@ def delete_table_folder(table_name: str, db_dir: str, instance_id: str = "") -> 
 
 def get_yaml_builders(
     instance_id: str, table_name: str, db_dir: str, yaml_name: str = ""
-) -> dict[str, dict]:
+) -> dict[str, dict] | dict:
     filewriter = CopyOnWriteFile(db_dir)
     table_dir = os.path.join(db_dir, table_name)
     if instance_id != "":
@@ -275,14 +278,11 @@ def get_yaml_builders(
                 builders[name] = builder
         return builders
     else:
-        builder_path = os.path.join(builder_dir, yaml_name)
+        builder_path = os.path.join(builder_dir, f"{yaml_name}.yaml")
         with filewriter.open(builder_path, "r") as file:
-            builders = {}
-            name = yaml_name.split(".")[0]
             builder = yaml.safe_load(file)
             builder[constants.BUILDER_NAME] = name
-            builders[name] = builder
-        return builders
+        return builder
 
 
 def save_yaml_builder(
@@ -300,20 +300,49 @@ def save_yaml_builder(
 
 
 def get_builder_names(instance_id: str, table_name: str, db_dir: str) -> list[str]:
-    if instance_id != "":
-        builder_dir = os.path.join(
-            db_dir, table_name, instance_id, constants.BUILDER_FOLDER
-        )
-        if not os.path.isdir(builder_dir):
-            return []
-    else:
-        builder_dir = os.path.join(db_dir, table_name, constants.BUILDER_FOLDER)
+    builder_dir = os.path.join(
+        db_dir, table_name, instance_id, constants.BUILDER_FOLDER
+    )
+    if not os.path.isdir(builder_dir):
+        return []
     builder_names = []
     for file in os.listdir(builder_dir):
         if file.endswith(".yaml"):
             builder_name = file.split(".")[0]
             builder_names.append(builder_name)
     return builder_names
+
+
+def get_builder_str(
+    builder_name: str, instance_id: str, table_name: str, db_dir: str
+) -> str:
+    builder_path = os.path.join(
+        db_dir,
+        table_name,
+        instance_id,
+        constants.BUILDER_FOLDER,
+        f"{builder_name}.yaml",
+    )
+    filewriter = CopyOnWriteFile(db_dir)
+    with filewriter.open(builder_path, "r") as f:
+        return f.read()
+
+
+def get_code_module_names(db_dir: str) -> list[str]:
+    module_dir = os.path.join(db_dir, constants.CODE_FOLDER)
+    module_names = []
+    for file in os.listdir(module_dir):
+        if file.endswith(".py"):
+            module_name = file.split(".")[0]
+            module_names.append(module_name)
+    return module_names
+
+
+def get_code_module_str(module_name: str, db_dir: str) -> str:
+    module_path = os.path.join(db_dir, constants.CODE_FOLDER, f"{module_name}.py")
+    filewriter = CopyOnWriteFile(db_dir)
+    with filewriter.open(module_path, "r") as f:
+        return f.read()
 
 
 def check_builder_equality(
@@ -350,7 +379,9 @@ def check_builder_equality(
     return builder1 == builder2
 
 
-def create_copy_code_file(db_dir: str, module_name: str = "", copy_dir: str = ""):
+def create_copy_code_file(
+    db_dir: str, module_name: str = "", copy_dir: str = "", text: str = ""
+):
     filewriter = CopyOnWriteFile(db_dir)
     code_dir = os.path.join(db_dir, constants.CODE_FOLDER)
     if copy_dir != "":
@@ -379,7 +410,10 @@ def create_copy_code_file(db_dir: str, module_name: str = "", copy_dir: str = ""
         else:
             raise TVFileError("could not copy file path")
     else:
-        data = resources.read_binary("tablevault._helper.examples", "example.py")
+        if text == "":
+            data = resources.read_binary("tablevault._helper.examples", "example.py")
+        else:
+            data = text
         code_path = os.path.join(code_dir, f"{module_name}.py")
         try:
             with filewriter.open(code_path, "wb") as f:
@@ -420,6 +454,7 @@ def create_copy_builder_file(
     db_dir: str,
     builder_name: str = "",
     copy_dir: str = "",
+    text: str = "",
 ):
     filewriter = CopyOnWriteFile(db_dir)
     builder_dir = os.path.join(
@@ -461,7 +496,10 @@ def create_copy_builder_file(
             )
         else:
             example_builder = BUILDER_EXAMPLE_MAPPING[builder_constants.COLUMN_BUILDER]
-        data = resources.read_binary(example_builder[0], example_builder[1])
+        if text == "":
+            data = resources.read_binary(example_builder[0], example_builder[1])
+        else:
+            data = text
         builder_path = os.path.join(builder_dir, f"{builder_name}.yaml")
         try:
             with filewriter.open(builder_path, "wb") as f:
@@ -485,24 +523,6 @@ def move_artifacts_to_table(db_dir: str, table_name: str = "", instance_id: str 
         old_artifact_dir,
         new_artifact_dir,
     )
-
-
-def upload_artifact(
-    artifact_name: str,
-    path_name: str,
-    db_dir: str,
-    table_name: str,
-    instance_id: str,
-) -> tuple[str, str]:
-    filewriter = CopyOnWriteFile(db_dir)
-    artifact_dir = os.path.join(
-        db_dir, table_name, instance_id, constants.ARTIFACT_FOLDER, artifact_name
-    )
-    table_dir = os.path.join(
-        db_dir, table_name, constants.ARTIFACT_FOLDER, artifact_name
-    )
-    filewriter.copy2(path_name, artifact_dir)
-    return artifact_dir, table_dir
 
 
 def has_artifact(instance_id: str, table_name: str, db_dir: str) -> bool:
@@ -552,7 +572,7 @@ def copy_temp_to_db(
     filewriter = CopyOnWriteFile(db_dir)
     temp_dir = os.path.join(db_dir, constants.TEMP_FOLDER, process_id)
     if os.path.isdir(temp_dir):
-        filewriter.copytree(temp_dir, db_dir, dirs_exist_ok=True)
+        filewriter.linktree(temp_dir, db_dir, dirs_exist_ok=True)
 
 
 def delete_from_temp(process_id: str, db_dir: str):
@@ -673,3 +693,104 @@ def check_folder_existance(instance_id: str, table_name: str, db_dir: str):
     if instance_id != "":
         file_path = os.path.join(file_path, instance_id)
     return os.path.isdir(file_path)
+
+
+def sort_with_key(lst) -> list:
+    tail_set = set(constants.ILLEGAL_TABLE_NAMES)
+    return sorted(lst, key=lambda x: (x in tail_set, x))
+
+
+def _get_file_tree_all(path: str, tree: Tree, extension: Optional[str] = None) -> True:
+    for name in sorted(os.listdir(path)):
+        full = os.path.join(path, name)
+
+        if os.path.isdir(full):
+            branch = tree.add(f"[bold magenta]{name}/")
+            _get_file_tree_all(full, branch, extension)
+        elif extension is None or name.endswith(extension):
+            tree.add(f"[red]{name}")
+    return tree
+
+
+def _get_file_tree(
+    path: str,
+    tree: Tree,
+    code_files: bool,
+    builder_files: bool,
+    metadata_files: bool,
+    artifact_files: bool,
+) -> Tree:
+    file_names = list(os.listdir(path))
+    file_names = sort_with_key(file_names)
+    for name in file_names:
+        full = os.path.join(path, name)
+        if name == constants.TABLEVAULT_IDENTIFIER or name.endswith(".lock"):
+            continue
+        elif not metadata_files and name in [
+            constants.LOCK_FOLDER,
+            constants.TEMP_FOLDER,
+            constants.METADATA_FOLDER,
+            constants.META_DESCRIPTION_FILE,
+            constants.ARCHIVE_FOLDER,
+            constants.DELETION_FOLDER,
+            constants.DTYPE_FILE,
+            constants.TABLE_FILE,
+        ]:
+            continue
+        elif name == constants.BUILDER_FOLDER and not builder_files:
+            continue
+        elif name == constants.BUILDER_FOLDER:
+            branch = tree.add(f"[bold blue]{name}/")
+            _get_file_tree_all(full, branch, ".yaml")
+        elif name == constants.ARTIFACT_FOLDER and not artifact_files:
+            continue
+        elif name == constants.ARTIFACT_FOLDER:
+            branch = tree.add(f"[bold blue]{name}/")
+            _get_file_tree_all(full, branch)
+        elif name == constants.CODE_FOLDER and not code_files:
+            continue
+        elif name == constants.CODE_FOLDER:
+            branch = tree.add(f"[bold blue]{name}/")
+            _get_file_tree_all(full, branch, ".py")
+        elif name == constants.METADATA_FOLDER:
+            branch = tree.add(f"[bold blue]{name}/")
+            _get_file_tree(
+                full, branch, code_files, builder_files, metadata_files, artifact_files
+            )
+        elif name == constants.META_DESCRIPTION_FILE:
+            tree.add(f"[cyan]{name}")
+        elif name in [
+            constants.LOCK_FOLDER,
+            constants.TEMP_FOLDER,
+            constants.ARCHIVE_FOLDER,
+            constants.DELETION_FOLDER,
+        ]:
+            branch = tree.add(f"[bold blue]{name}/")
+        elif os.path.isdir(full):
+            branch = tree.add(f"[bold magenta]{name}/")
+            _get_file_tree(
+                full, branch, code_files, builder_files, metadata_files, artifact_files
+            )
+        else:
+            tree.add(f"[green]{name}")
+    return tree
+
+
+def get_file_tree(
+    instance_id: str,
+    table_name: str,
+    code_files: bool,
+    builder_files: bool,
+    metadata_files: bool,
+    artifact_files: bool,
+    db_dir: str,
+) -> Tree:
+    full = db_dir
+    if table_name != "":
+        full = os.path.join(full, table_name)
+    if instance_id != "":
+        full = os.path.join(full, instance_id)
+    tree = Tree(f"[bold magenta]{full}/")
+    return _get_file_tree(
+        full, tree, code_files, builder_files, metadata_files, artifact_files
+    )

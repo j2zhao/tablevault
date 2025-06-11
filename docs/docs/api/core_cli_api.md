@@ -393,7 +393,6 @@ These commands require the global `--db-dir` and `--author` options to be set.
 
 ---
 
-
 ### `get-dataframe`
 
 ```bash
@@ -402,129 +401,157 @@ tablevault get-dataframe <TABLE_NAME> --output <OUTPUT_CSV> [OPTIONS]
 
 Fetch a table instance and write its contents to a CSV file.
 
-**Argument:**
+| Argument     | Type   | Description        |
+| ------------ | ------ | ------------------ |
+| `TABLE_NAME` | `TEXT` | Name of the table. |
+
+| Option               | Type   | Description                                                                                      | Default                             |
+| -------------------- | ------ | ------------------------------------------------------------------------------------------------ | ----------------------------------- |
+| `--output`           | `PATH` | **Required.** Destination CSV file path.                                                         | –                                   |
+| `--instance-id`      | `TEXT` | Specific instance ID (empty ⇒ latest of `version`).                                              | `""`                                |
+| `--version`          | `TEXT` | Table version (used if `instance-id` omitted).                                                   | `constants.BASE_TABLE_VERSION`      |
+| `--rows`             | `INT`  | Limit rows fetched (`None` = no limit).                                                          | `None`                              |
+| `--include-inactive` |        | If set, also consider *inactive* instances (negates `active_only`).                              | Flag (False by default)             |
+| `--successful-only`  |        | If set, require the instance to have completed successfully.                                     | Flag (False by default)             |
+| `--no-artifact-path` |        | Skip prepending the repository path to `"artifact_string"` columns (`full_artifact_path=False`). | Flag (False by default)             |
+| `--no-safe-locking`  |        | Disable file-locking while reading.                                                              | Flag (locks **enabled** by default) |
+| `-h, --help`         |        | Show this message and exit.                                                                      |                                     |
+
+**Output:**
+Writes the DataFrame to `OUTPUT_CSV` and prints a JSON blob containing the resolved `instance_id`, final row count, and the CSV path.
+
+---
+
+### `get-descriptions`
+
+```bash
+tablevault get-descriptions [OPTIONS]
+```
+
+Fetch description metadata for the whole database, a single table, or a specific instance.
+
+| Option          | Type   | Description                               | Default |
+| --------------- | ------ | ----------------------------------------- | ------- |
+| `--table-name`  | `TEXT` | Target table (omit for DB-level).         | `""`    |
+| `--instance-id` | `TEXT` | Specific instance (overrides table-only). | `""`    |
+| `-h, --help`    |        | Show this message and exit.               |         |
+
+**Output:**
+Prints a JSON dictionary with the requested description(s).
+
+---
+
+### `get-file-tree`
+
+```bash
+tablevault get-file-tree [OPTIONS]
+```
+
+Render a human-readable tree (text) of files stored in the vault.
+
+| Option                                   | Type | Description                                | Default               |
+| ---------------------------------------- | ---- | ------------------------------------------ | --------------------- |
+| `--table-name`                           | TEXT | Limit tree to a given table (optional).    | `""`                  |
+| `--instance-id`                          | TEXT | Inspect a specific instance (else latest). | `""`                  |
+| `--code-files / --no-code-files`         |      | Include code modules.                      | `--code-files`        |
+| `--builder-files / --no-builder-files`   |      | Include builder scripts.                   | `--builder-files`     |
+| `--metadata-files / --no-metadata-files` |      | Include JSON/YAML metadata.                | `--no-metadata-files` |
+| `--artifact-files / --no-artifact-files` |      | Include artifact directory contents.       | `--no-artifact-files` |
+| `--safe-locking / --no-safe-locking`     |      | Enable/disable read locks while scanning.  | `--safe-locking`      |
+| `-h, --help`                             |      | Show this message and exit.                |                       |
+
+**Output:**
+Prints the file-tree string (or RichTree render if piping into `rich` aware terminal).
+
+---
+
+### `get-modules-list`
+
+```bash
+tablevault get-modules-list
+```
+
+List Python code modules stored in the repository.
+
+| Option       |   | Description                 |
+| ------------ | - | --------------------------- |
+| `-h, --help` |   | Show this message and exit. |
+
+**Output:**
+Prints a JSON list of module names.
+
+---
+
+### `get-builders-list`
+
+```bash
+tablevault get-builders-list <TABLE_NAME> [OPTIONS]
+```
+
+Return the builder script names contained in a table instance.
 
 | Argument     | Type   | Description        |
 | ------------ | ------ | ------------------ |
 | `TABLE_NAME` | `TEXT` | Name of the table. |
 
-**Options:**
-
-| Option                 | Type   | Description                                                            | Default                        |
-| ---------------------- | ------ | ---------------------------------------------------------------------- | ------------------------------ |
-| `--output`             | `PATH` | **Required.** Destination CSV file path.                               | –                              |
-| `--instance-id`        | `TEXT` | Specific instance ID. If empty, latest of `version` is used.         | `""`                           |
-| `--version`            | `TEXT` | Table version (used if `instance-id` is omitted).                      | `constants.BASE_TABLE_VERSION` |
-| `--rows`               | `INT`  | Limit the number of rows fetched (None = no limit).                    | `None`                         |
-| `--include-inactive`   |        | If set, consider inactive instances as well.                           | Flag (False by default)        |
-| `--no-artifact-path`   |        | If set, skip prepending artifact folder path to "artifact\_string" columns. | Flag (False by default)        |
-| `-h, --help`           |        | Show this message and exit.                                            |                                |
+| Option                    | Type   | Description                                                      | Default                        |
+| ------------------------- | ------ | ---------------------------------------------------------------- | ------------------------------ |
+| `--instance-id`           | `TEXT` | Specific instance (empty ⇒ latest).                              | `""`                           |
+| `--version`               | `TEXT` | Version used if `instance-id` omitted.                           | `constants.BASE_TABLE_VERSION` |
+| `--temp / --materialised` |        | Inspect a temporary (`--temp`) or final (`--materialised`) copy. | `--temp`                       |
+| `-h, --help`              |        | Show this message and exit.                                      |                                |
 
 **Output:**
-Writes the DataFrame to the specified `OUTPUT_CSV` file and prints a JSON object containing the `instance_id`, number of `rows`, and the `csv` path.
+Prints a JSON list of builder filenames.
 
 ---
 
-
-### `get-instances`
+### `get-builder-str`
 
 ```bash
-tablevault get-instances <TABLE_NAME> [OPTIONS]
+tablevault get-builder-str <BUILDER_NAME> <TABLE_NAME> [OPTIONS]
 ```
 
-Return a list of materialised instance IDs for a specific table and version.
+Print the source of a stored builder script.
 
-**Argument:**
+| Argument       | Type   | Description                   |
+| -------------- | ------ | ----------------------------- |
+| `BUILDER_NAME` | `TEXT` | Builder name (without `.py`). |
+| `TABLE_NAME`   | `TEXT` | Table containing the builder. |
 
-| Argument     | Type   | Description        |
-| ------------ | ------ | ------------------ |
-| `TABLE_NAME` | `TEXT` | Name of the table. |
-
-**Options:**
-
-| Option      | Type   | Description           | Default                        |
-| ----------- | ------ | --------------------- | ------------------------------ |
-| `--version` | `TEXT` | Version of the table. | `constants.BASE_TABLE_VERSION` |
-| `-h, --help`|        | Show this message and exit. |                                |
+| Option                    | Type   | Description                                                        | Default                        |
+| ------------------------- | ------ | ------------------------------------------------------------------ | ------------------------------ |
+| `--instance-id`           | `TEXT` | Specific instance (empty ⇒ latest).                                | `""`                           |
+| `--version`               | `TEXT` | Version used if `instance-id` omitted.                             | `constants.BASE_TABLE_VERSION` |
+| `--temp / --materialised` |        | Read from temporary (`--temp`) or materialised (`--materialised`). | `--temp`                       |
+| `-h, --help`              |        | Show this message and exit.                                        |                                |
 
 **Output:**
-Prints a JSON list of materialised instance IDs.
+Prints the full builder source code.
 
 ---
 
-### `get-active-processes`
+### `get-code-module-str`
 
 ```bash
-tablevault get-active-processes [OPTIONS]
+tablevault get-code-module-str <MODULE_NAME>
 ```
 
-List all currently active processes in the vault.
+Print the source of an arbitrary code module stored in the vault.
 
-**Options:**
+| Argument      | Type   | Description                  |
+| ------------- | ------ | ---------------------------- |
+| `MODULE_NAME` | `TEXT` | Module name (without `.py`). |
 
-| Option      |        | Description                 |
-| ----------- | ------ | --------------------------- |
-| `-h, --help`|        | Show this message and exit. |
+| Option       |   | Description                 |
+| ------------ | - | --------------------------- |
+| `-h, --help` |   | Show this message and exit. |
 
 **Output:**
-Prints a JSON object where keys are process IDs and values are metadata about each process.
+Prints the module’s source code.
 
 ---
 
-
-### `get-artifact-folder`
-
-```bash
-tablevault get-artifact-folder <TABLE_NAME> [OPTIONS]
-```
-
-Return the path to the artifact folder for a given table instance.
-
-**Argument:**
-
-| Argument     | Type   | Description        |
-| ------------ | ------ | ------------------ |
-| `TABLE_NAME` | `TEXT` | Name of the table. |
-
-**Options:**
-
-| Option                  | Type   | Description                                                       | Default                        |
-| ----------------------- | ------ | ----------------------------------------------------------------- | ------------------------------ |
-| `--instance-id`         | `TEXT` | Specific instance ID (optional).                                  | `""`                           |
-| `--version`             | `TEXT` | Table version.                                                    | `constants.BASE_TABLE_VERSION` |
-| `--temp` / `--materialised` |        | Return the temporary (`--temp`) or last materialised (`--materialised`) folder. | `--temp`                       |
-| `-h, --help`            |        | Show this message and exit.                                       |                                |
-
-**Output:**
-Prints the path to the requested artifact folder.
-
----
-
-
-### `get-process-completion`
-
-```bash
-tablevault get-process-completion <PROCESS_ID> [OPTIONS]
-```
-
-Return **True** if the specified `PROCESS_ID` has finished, **False** otherwise.
-
-**Argument:**
-
-| Argument     | Type   | Description                |
-| ------------ | ------ | -------------------------- |
-| `PROCESS_ID` | `TEXT` | Identifier of the process. |
-
-**Options:**
-
-| Option      |        | Description                 |
-| ----------- | ------ | --------------------------- |
-| `-h, --help`|        | Show this message and exit. |
-
-**Output:**
-Prints `true` or `false`.
-
----
 
 
 ## Vault-Independent Utilities

@@ -12,9 +12,10 @@ t.b.d.
 
 **LOOK HERE**: See examples/run_basic_script.ipynb and examples/run_basic_object.ipynb for a walkthrough of basic functionalities.
 
+## COLAB TODOS
+- ADD CODE EXAMPLES
 
-## AFTER FIXING
-- Add examples
+## FOR CLEANUP
 - Fix links
 - Add paper bibtext
 - add pip install

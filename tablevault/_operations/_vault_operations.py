@@ -1,5 +1,5 @@
-from tablevault._helper import file_operations, database_lock, utils
-from tablevault._helper.metadata_store import MetadataStore, ActiveProcessDict
+from tablevault._helper import file_operations
+from tablevault._helper.metadata_store import MetadataStore
 from tablevault._operations._meta_operations import tablevault_operation
 from tablevault._operations import _table_execution
 from tablevault._defintions.types import ExternalDeps, InternalDeps
@@ -8,84 +8,31 @@ from tablevault._defintions import constants
 from tablevault._defintions import tv_errors
 from tablevault._helper.database_lock import DatabaseLock
 from tablevault._operations._takedown_operations import TAKEDOWN_MAP
-from tablevault._dataframe_helper import artifact
 import pandas as pd
 from typing import Optional, Any
-
-
-def get_artifact_folder(
-    instance_id: str, table_name: str, version: str, is_temp: bool, db_dir: str
-):
-    if instance_id == "":
-        if is_temp:
-            instance_id = constants.TEMP_INSTANCE + version
-        else:
-            db_metadata = MetadataStore(db_dir)
-            _, _, instance_id = db_metadata.get_last_table_update(table_name, version)
-    return artifact.get_artifact_folder(instance_id, table_name, db_dir)
 
 
 def setup_database(db_dir: str, description: str, replace: bool = False) -> None:
     file_operations.setup_database_folder(db_dir, description, replace)
 
 
-def active_processes(db_dir: str) -> ActiveProcessDict:
-    db_metadata = MetadataStore(db_dir)
-    return db_metadata.get_active_processes()
-
-
-def complete_process(process_id: str, db_dir: str) -> bool:
-    db_metadata = MetadataStore(db_dir)
-    return db_metadata.check_written(process_id)
-
-
-def get_instances(table_name: str, db_dir: str, version: str) -> list[str] | None:
-    db_metadata = MetadataStore(db_dir)
-    return db_metadata.get_table_instances(table_name, version)
-
-
-def get_table(
-    instance_id: str,
-    table_name: str,
-    version: str,
-    db_dir: str,
-    active_only: bool,
-    safe_locking: bool,
-    rows: Optional[int],
-    artifact_path: bool,
+def _create_code_module(
+    module_name: str, copy_dir: str, text: str, db_metadata: MetadataStore
 ):
-    db_metadata = MetadataStore(db_dir)
-    if instance_id == "":
-        _, _, instance_id = db_metadata.get_last_table_update(
-            table_name, version, active_only=active_only
-        )
-    process_id = utils.gen_tv_id()
-    db_lock = database_lock.DatabaseLock(process_id, db_dir)
-    if safe_locking:
-        db_lock.acquire_shared_lock(table_name, instance_id)
-    try:
-        df = table_operations.get_table(
-            instance_id,
-            table_name,
-            db_dir,
-            rows,
-            artifact_dir=artifact_path,
-            get_index=False,
-        )
-    finally:
-        if safe_locking:
-            db_lock.release_all_locks()
-    return df, instance_id
-
-
-def _create_code_module(module_name: str, copy_dir: str, db_metadata: MetadataStore):
-    file_operations.create_copy_code_file(db_metadata.db_dir, module_name, copy_dir)
+    file_operations.create_copy_code_file(
+        db_metadata.db_dir, module_name, copy_dir, text
+    )
 
 
 def create_code_module(
-    author: str, module_name: str, copy_dir: str, process_id: str, db_dir: str
+    author: str,
+    module_name: str,
+    copy_dir: str,
+    text: str,
+    process_id: str,
+    db_dir: str,
 ):
-    setup_kwargs = {"module_name": module_name, "copy_dir": copy_dir}
+    setup_kwargs = {"module_name": module_name, "copy_dir": copy_dir, "text": text}
     return tablevault_operation(
         author,
         constants.CREATE_CODE_MODULE_OP,
@@ -117,6 +64,7 @@ def _create_builder_file(
     instance_id: str,
     table_name: str,
     copy_dir: str,
+    text: str,
     db_metadata: MetadataStore,
 ):
     file_operations.create_copy_builder_file(
@@ -125,6 +73,7 @@ def _create_builder_file(
         db_metadata.db_dir,
         builder_name,
         copy_dir,
+        text,
     )
 
 
@@ -134,6 +83,7 @@ def create_builder_file(
     table_name: str,
     version: str,
     copy_dir: str,
+    text: str,
     process_id: str,
     db_dir: str,
 ):
@@ -142,6 +92,7 @@ def create_builder_file(
         "table_name": table_name,
         "version": version,
         "copy_dir": copy_dir,
+        "text": text,
     }
     return tablevault_operation(
         author,
@@ -243,6 +194,8 @@ def _materialize_instance(
     instance_id: str,
     table_name: str,
     perm_instance_id: str,
+    origin_id: str,
+    origin_table: str,
     dtypes: dict[str, str],
     success: bool,
     dependencies: list[tuple[str, str]],
@@ -252,12 +205,20 @@ def _materialize_instance(
     table_operations.update_dtypes(dtypes, instance_id, table_name, db_metadata.db_dir)
 
     if success:
-        table_operations.check_table(instance_id, table_name, db_metadata.db_dir)
+        table_operations.check_table(
+            instance_id,
+            table_name,
+            origin_id,
+            origin_table,
+            db_metadata.db_dir,
+            not table_data[constants.TABLE_ALLOW_MARTIFACT],
+        )
 
     if not table_data[constants.TABLE_ALLOW_MARTIFACT] and success:
         file_operations.move_artifacts_to_table(
             db_metadata.db_dir, table_name, instance_id
         )
+        table_data[constants.DESCRIPTION_ARTIFACT] = perm_instance_id
 
     file_operations.rename_table_instance(
         perm_instance_id, instance_id, table_name, db_metadata.db_dir
@@ -272,6 +233,7 @@ def _materialize_instance(
     file_operations.write_description(
         instance_descript, perm_instance_id, table_name, db_metadata.db_dir
     )
+    file_operations.write_description(table_data, "", table_name, db_metadata.db_dir)
 
 
 def materialize_instance(
@@ -787,6 +749,7 @@ def _restart_database(
                 module_name="",
                 copy_dir="",
                 process_id=prid,
+                text="",
                 db_dir=db_metadata.db_dir,
             )
         if active_processes[prid].operation == constants.DELTE_CODE_MODULE_OP:
@@ -803,6 +766,7 @@ def _restart_database(
                 table_name="",
                 version="",
                 copy_dir="",
+                text="",
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
             )

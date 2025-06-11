@@ -47,8 +47,6 @@ class ColumnBuilder(TVBuilder):
                     )
             elif self.row_wise and self.n_threads == 1:
                 for i in range(len(cache[constants.TABLE_SELF])):
-                    print("HELLO")
-                    print(i)
                     _execute_code_from_builder(
                         i, self, funct, cache, instance_id, table_name, db_dir
                     )

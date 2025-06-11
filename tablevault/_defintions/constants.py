@@ -14,6 +14,7 @@ META_CLOG_FILE = "log_ids.txt"
 META_ALOG_FILE = "active_logs.json"
 META_CHIST_FILE = "columns_history.json"
 META_THIST_FILE = "tables_history.json"
+META_TEMP_FILE = "tables_temp.json"
 META_DESCRIPTION_FILE = "description.yaml"
 META_LOG_LOCK_FILE = "LOG.lock"
 META_FILE_LOCK_FILE = "FILE.lock"
@@ -30,7 +31,9 @@ ARTIFACT_FOLDER = "artifacts"
 ARTIFACT_REFERENCE = "~ARTIFACT_FOLDER~"
 TABLEVAULT_IDENTIFIER = ".tablevault"
 ILLEGAL_TABLE_NAMES = [
+    ARCHIVE_FOLDER,
     BUILDER_FOLDER,
+    DELETION_FOLDER,
     CODE_FOLDER,
     METADATA_FOLDER,
     LOCK_FOLDER,
@@ -97,3 +100,4 @@ DESCRIPTION_DEPENDENCIES = "dependencies"
 DESCRIPTION_FUTURE = "future_version"
 DESCRIPTION_CHILDREN = "children"
 DESCRIPTION_SUCCESS = "success"
+DESCRIPTION_ARTIFACT = "artifact_instance"

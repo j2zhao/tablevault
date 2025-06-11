@@ -3,10 +3,13 @@ import stat
 from tablevault._defintions import constants
 from typing import Optional
 from tablevault._defintions import tv_errors
+from tablevault._helper.external_drive_check import is_on_separate_mount
 
 
 def _can_program_modify_permissions(filepath: str) -> bool:
     if os.name == "nt":
+        return False
+    if is_on_separate_mount(filepath):
         return False
     current_euid = os.geteuid()
     if current_euid == 0:
@@ -16,30 +19,20 @@ def _can_program_modify_permissions(filepath: str) -> bool:
     return current_euid == file_owner_uid
 
 
-def _check_all_open(path: str) -> tuple[bool, list[str]]:
-    failures = []
-    # Walk includes the root path as the first `root`
+def _check_all_open(path: str, require_exec: bool = True) -> bool:
+    failures: list[str] = []
+    want = os.R_OK | os.W_OK | (os.X_OK if require_exec else 0)
+
     for root, dirs, files in os.walk(path):
-        # include the directory itself
-        entries = (
-            [root]
-            + [os.path.join(root, d) for d in dirs]
-            + [os.path.join(root, f) for f in files]
-        )
-        for p in entries:
-            if os.name == "nt":
-                # On Windows: check current user has r/w/x
-                if not (
-                    os.access(p, os.R_OK)
-                    and os.access(p, os.W_OK)
-                    and os.access(p, os.X_OK)
-                ):
-                    failures.append(p)
-            else:
-                # On Unix: check mode bits exactly 0o777
-                mode = stat.S_IMODE(os.stat(p).st_mode)
-                if mode & 0o777 != 0o777:
-                    failures.append(p)
+        # Include the directory itself, subdirs, and files
+        for entry in [
+            root,
+            *[os.path.join(root, d) for d in dirs],
+            *[os.path.join(root, f) for f in files],
+        ]:
+            if not os.access(entry, want):
+                failures.append(entry)
+
     return len(failures) == 0
 
 
@@ -208,10 +201,6 @@ def _set_tv_lock_db(db_dir: str):
 
 def set_tv_lock(instance_id: str, table_name: str, db_dir: str):
     if not _can_program_modify_permissions(db_dir):
-        if not _check_all_open(db_dir):
-            raise tv_errors.TVLockError(
-                "Locked files on system where file locks not support."
-            )
         return
     if instance_id != "":
         _set_tv_lock_instance(instance_id, table_name, db_dir)
@@ -222,8 +211,6 @@ def set_tv_lock(instance_id: str, table_name: str, db_dir: str):
 
 
 def set_writable(db_dir: str):
+    if not _can_program_modify_permissions(db_dir):
+        return
     _set_writable(db_dir)
-    if not _check_all_open(db_dir):
-        raise tv_errors.TVLockError(
-            "Locked files on system where file locks not support."
-        )

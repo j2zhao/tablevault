@@ -46,6 +46,9 @@ def create_data_table_from_list(vals: list[str]):
     return pd.DataFrame({"temp_name": vals})
 ```
 
+If you don't have direct access to a text editor on your platform, you can add the code as a string argument, `text`, in `create_code_module`.
+
+
 ## 4. Write the Builder Files
 
 ```python
@@ -71,12 +74,14 @@ is_custom: true                         #using a user-supplied function in code_
 
 ```
 
+If you don't have direct access to a text editor on your platform, you can add the code as a string argument, `text`, in `create_builder_file`.
+
 ---
 
 ## 5. Materialize the Instance
 
 ```python
-tablevault.execute(table_name = "fruits_table")
+tablevault.execute_instance(table_name = "fruits_table")
 ```
 
 ---
@@ -103,7 +108,7 @@ arguments:                               # Arguments passed to the function
 You then can execute normally:
 
 ```python
-tablevault.execute(table_name = "fruits_table")
+tablevault.execute_instance(table_name = "fruits_table")
 ```
 
 ---

@@ -303,31 +303,53 @@ def is_hidden(file_path: str) -> bool:
     return True
 
 
-def check_table(instance_id: str, table_name: str, db_dir: str) -> None:
+def check_table(
+    instance_id: str,
+    table_name: str,
+    origin_id: str,
+    origin_table: str,
+    db_dir: str,
+    table_artifact: bool,
+) -> None:
     df = get_table(instance_id, table_name, db_dir, artifact_dir=False)
     cols = [col for col, dt in df.dtypes.items() if dt.name == constants.ARTIFACT_DTYPE]
     df_custom = df[cols]
     if df_custom.shape[1] == 0:
         return
     artifact_paths = []
-    artifact_temp_dir = artifact.get_artifact_folder(instance_id, table_name, db_dir)
-    artifact_main_dir = artifact.get_artifact_folder(
-        instance_id, table_name, db_dir, respect_temp=False
-    )
+    artifact_dirs = []
+    artifact_dirs.append(artifact.get_artifact_folder(instance_id, table_name, db_dir))
+    if origin_table != "":
+        try:
+            dir = artifact.get_artifact_folder(
+                origin_id, origin_table, db_dir, respect_temp=False
+            )
+            artifact_dirs.append(dir)
+        except tv_errors.TVArtifactError:
+            pass
+    if table_artifact:
+        artifact_dirs.append(
+            os.path.join(db_dir, table_name, constants.ARTIFACT_FOLDER)
+        )
     filewriter = CopyOnWriteFile(db_dir)
     for _, row in df_custom.iterrows():
         for _, val in row.items():
             if not pd.isna(val) and val != "":
-                artifact_temp_path = os.path.join(artifact_temp_dir, val)
-                artifact_main_path = os.path.join(artifact_main_dir, val)
-                if not os.path.exists(artifact_temp_path):
-                    if os.path.exists(artifact_main_path):
-                        filewriter.copy2(artifact_main_path, artifact_temp_path)
-                    else:
-                        raise tv_errors.TVTableError(f"Artifact {val} not found")
-                artifact_paths.append(artifact_temp_path)
+                artifact_exists = False
+                artifact_path = os.path.join(artifact_dirs[0], val)
+                for dir in artifact_dirs:
+                    artifact_temp_path = os.path.join(dir, val)
+                    print(artifact_temp_path)
+                    if os.path.exists(artifact_temp_path):
+                        if artifact_temp_path != artifact_path:
+                            filewriter.linkfile(artifact_temp_path, artifact_path)
+                        artifact_exists = True
+                        artifact_paths.append(artifact_temp_path)
+                        break
+                if not artifact_exists:
+                    raise tv_errors.TVTableError(f"Artifact {val} not found")
 
-    for root, _, files in os.walk(artifact_temp_dir):
+    for root, _, files in os.walk(artifact_dirs[0]):
         for file_name in files:
             file_path = os.path.join(root, file_name)
             if not is_hidden(file_path):

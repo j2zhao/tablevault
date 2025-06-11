@@ -21,7 +21,8 @@ dependencies = [
     "dataclasses_json",
     "psutil",
     "pydantic",
-    "click"
+    "click",
+    "rich"
 ]
 
 [project.scripts]

@@ -8,6 +8,7 @@ from tablevault._defintions.types import (
     ColumnHistoryDict,
     TableHistoryDict,
     ActiveProcessDict,
+    TableTempDict,
 )
 from tablevault._helper.file_operations import get_description
 
@@ -61,6 +62,10 @@ class MetadataStore:
         with open(self.table_history_file, "w") as f:
             json.dump(table_history, f, indent=4)
 
+    def _save_table_temp(self, table_temp: TableTempDict) -> None:
+        with open(self.table_temp_file, "w") as f:
+            json.dump(table_temp, f, indent=4)
+
     def _get_active_logs(self) -> ActiveProcessDict:
         with open(self.active_file, "r") as file:
             data = json.load(file)
@@ -76,6 +81,11 @@ class MetadataStore:
         with open(self.table_history_file, "r") as file:
             table_history = json.load(file)
             return table_history
+
+    def _get_table_temp(self) -> TableTempDict:
+        with open(self.table_temp_file, "r") as file:
+            table_temp = json.load(file)
+            return table_temp
 
     def _write_to_history(self, log_entry: ProcessLog) -> None:
         log_entry.log_time = time.time()
@@ -96,6 +106,7 @@ class MetadataStore:
         self.log_file = os.path.join(meta_dir, constants.META_LOG_FILE)
         self.column_history_file = os.path.join(meta_dir, constants.META_CHIST_FILE)
         self.table_history_file = os.path.join(meta_dir, constants.META_THIST_FILE)
+        self.table_temp_file = os.path.join(meta_dir, constants.META_TEMP_FILE)
         self.active_file = os.path.join(meta_dir, constants.META_ALOG_FILE)
         self.completed_file = os.path.join(meta_dir, constants.META_CLOG_FILE)
         meta_lock = os.path.join(meta_dir, constants.META_LOG_LOCK_FILE)
@@ -109,6 +120,9 @@ class MetadataStore:
         table_history = self._get_table_history()
         table_history[table_name] = {}
         self._save_table_history(table_history)
+        table_temp = self._get_table_temp()
+        table_temp[table_name] = []
+        self._save_table_temp(table_temp)
 
     def _delete_table_operation(self, log: ProcessLog) -> None:
         table_name = log.data["table_name"]
@@ -120,59 +134,83 @@ class MetadataStore:
         if table_name in column_history:
             del column_history[table_name]
         self._save_column_history(column_history)
+        table_temp = self._get_table_temp()
+        if table_name in table_temp:
+            del table_temp[table_name]
+        self._save_table_temp(table_temp)
 
     def _delete_instance_operation(self, log: ProcessLog) -> None:
         table_history = self._get_table_history()
         column_history = self._get_column_history()
+        table_temp = self._get_table_temp()
         instance_id = log.data["instance_id"]
         table_name = log.data["table_name"]
         if instance_id in table_history[table_name]:
             del table_history[table_name][instance_id]
         if instance_id in column_history[table_name]:
             del column_history[table_name][instance_id]
+        if instance_id in table_temp[table_name]:
+            table_temp[table_name].remove(instance_id)
         self._save_table_history(table_history)
         self._save_column_history(column_history)
+        self._save_table_temp(table_temp)
 
     def _rename_table_operation(self, log: ProcessLog) -> None:
         table_history = self._get_table_history()
         column_history = self._get_column_history()
+        table_temp = self._get_table_temp()
         table_name = log.data["table_name"]
         new_table_name = log.data["new_table_name"]
         if table_name in table_history:
             table_history[new_table_name] = table_history.pop(table_name)
         if table_name in column_history:
             column_history[new_table_name] = column_history.pop(table_name)
+        if table_name in table_temp:
+            table_temp[new_table_name] = table_temp.pop(table_name)
         self._save_table_history(table_history)
         self._save_column_history(column_history)
+        self._save_table_temp(table_temp)
 
     def _create_instance_operation(self, log: ProcessLog) -> None:
-        pass
+        table_temp = self._get_table_temp()
+        table_name = log.data["table_name"]
+        instance_id = log.data["instance_id"]
+        if instance_id not in table_temp[table_name]:
+            table_temp[table_name].append(instance_id)
+        self._save_table_temp(table_temp)
 
     def _materialize_operation(self, log: ProcessLog) -> None:
         table_name = log.data["table_name"]
         perm_instance_id = log.data["perm_instance_id"]
+        instance_id = log.data["instance_id"]
         changed_columns = log.data["changed_columns"]
         all_columns = log.data["all_columns"]
         origin_id = log.data["origin_id"]
         origin_table = log.data["origin_table"]
+        success = log.data["success"]
         table_history = self._get_table_history()
+        table_temp = self._get_table_temp()
         table_metadata = get_description(
             instance_id="", table_name=table_name, db_dir=self.db_dir
         )
         if table_metadata[constants.TABLE_SIDE_EFFECTS] and len(changed_columns) > 0:
             for id in table_history[table_name]:
-                changed_time, mat_time, stop_time = table_history[table_name][id]
+                changed_time, mat_time, stop_time, success = table_history[table_name][
+                    id
+                ]
                 if stop_time is None:
                     table_history[table_name][id] = (
                         changed_time,
                         mat_time,
                         log.log_time,
+                        success,
                     )
         if len(changed_columns) > 0:
             table_history[table_name][perm_instance_id] = (
                 log.log_time,
                 log.log_time,
                 None,
+                success,
             )
         else:
             prev_changed_time = table_history[origin_table][origin_id][0]
@@ -180,6 +218,7 @@ class MetadataStore:
                 prev_changed_time,
                 log.log_time,
                 None,
+                success,
             )
 
         self._save_table_history(table_history)
@@ -193,6 +232,9 @@ class MetadataStore:
                     origin_table
                 ][origin_id][column]
         self._save_column_history(columns_history)
+        if instance_id in table_temp[table_name]:
+            table_temp[table_name].remove(instance_id)
+        self._save_table_temp(table_temp)
 
     def _write_process(self, process_id: str) -> None:
         logs = self._get_active_logs()
@@ -337,7 +379,7 @@ class MetadataStore:
 
     def get_table_times(
         self, instance_id: str, table_name: str
-    ) -> tuple[float, float, Optional[float]]:
+    ) -> tuple[float, float, Optional[float], bool]:
         with self.lock:
             table_history = self._get_table_history()
             return table_history[table_name][instance_id]
@@ -349,7 +391,7 @@ class MetadataStore:
             column_history = self._get_column_history()
             table_history = self._get_table_history()
             mat_time = column_history[table_name][instance_id][column_name]
-            _, start_time, end_time = table_history[table_name][instance_id]
+            _, start_time, end_time, _ = table_history[table_name][instance_id]
             return mat_time, start_time, end_time
 
     def _get_last_table_update(
@@ -358,14 +400,17 @@ class MetadataStore:
         version: str = "",
         before_time: Optional[float] = None,
         active_only: bool = True,
+        success_only=False,
     ) -> tuple[float, float, str]:
         table_history = self._get_table_history()
         max_changed_time = 0
         max_start_time = 0
         max_id = ""
-        for instance_id, (changed_time, start_time, end_time) in table_history[
+        for instance_id, (changed_time, start_time, end_time, success) in table_history[
             table_name
         ].items():
+            if success_only and not success:
+                continue
             if (
                 version is not None
                 and version != ""
@@ -388,9 +433,10 @@ class MetadataStore:
         version: str = "",
         before_time: Optional[float] = None,
         active_only: bool = True,
+        success_only=False,
     ) -> tuple[float, float, str]:
         return self._get_last_table_update(
-            table_name, version, before_time, active_only
+            table_name, version, before_time, active_only, success_only
         )
 
     def get_last_column_update(
@@ -400,6 +446,7 @@ class MetadataStore:
         before_time: Optional[float] = None,
         version: str = "base",
         active_only: bool = True,
+        success_only: bool = False,
     ) -> tuple[float, float, str]:
         """Returns 0 when we didn't find any tables that meet
         conditions.
@@ -409,7 +456,7 @@ class MetadataStore:
         """
         with self.lock:
             _, max_start_time, max_id = self._get_last_table_update(
-                table_name, version, before_time, active_only
+                table_name, version, before_time, active_only, success_only
             )
             columns_history = self._get_column_history()
             max_mat_time = columns_history[table_name][max_id][column]
@@ -420,17 +467,21 @@ class MetadataStore:
             active_logs = self._get_active_logs()
             return active_logs
 
-    def get_table_instances(self, table_name: str, version: str) -> None | list[str]:
+    def get_table_instances(
+        self, table_name: str, version: str, include_temp=False
+    ) -> None | list[str]:
         with self.lock:
             table_history = self._get_table_history()
             if table_name not in table_history:
                 return None
             instances = list(table_history[table_name].keys())
             instances.sort(key=lambda x: table_history[table_name][x][1])
+            if include_temp:
+                table_temp = self._get_table_temp()
+                if table_name in table_temp:
+                    instances.append(table_temp[table_name].copy())
             if version != "":
-                instances_ = [
-                    instance for instance in instances if instance.startswith(version)
-                ]
+                instances_ = [instance for instance in instances if version in instance]
                 instances = instances_
                 return instances
             else:

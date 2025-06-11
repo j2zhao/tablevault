@@ -34,6 +34,10 @@ def fetch_image_from_string(fruit: str, artifact_dir:str ):
     return f'{fruit}.png' # return relative path
 ```
 
+If you don't have direct access to a text editor on your platform, you can add the code as a string argument, `text`, in `create_code_module`.
+
+!!! note "Executing the Example"
+    In order for your code to actually execute, an actual image needs to exist in the  `file_path` location.
 
 ## 3. A Builder with `~ARTIFACT_STRING~`
 ```python
@@ -80,6 +84,8 @@ The `~ARTIFACT_FOLDER~` keyword is automatically replaced with the correct folde
 Each artifact file needs a corresponding `artifact_string` value in the dataframe. This value is the file path of the artifact, relative to the temporary artifact folder. This is user-generated (as seen in the `fetch_image_from_string()` function).
 
 You can see examples of `TableReference` strings with `<<fruit_table.fruits>> ` and `<<self.fruits[index]>> `. The first string returns a column in the lastest `fruit_table` dataframe. The second string returns a string corresponding to the current index value from the `fruits` column of the **executing dataframe**.
+
+If you don't have direct access to a text editor on your platform, you can add the code as a string argument, `text`, in `create_code_module`.
 
 ## 4. Execute and Materialize Instance
 

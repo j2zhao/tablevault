@@ -1,13 +1,19 @@
+# tablevault_cli.py
+"""
+TableVault command-line interface
+
+Run   $ tablevault-cli --help   to see the top-level help.
+"""
+
 import json
 import sys
-import click
-import pandas as pd
 from pathlib import Path
 from typing import Optional, Tuple
 
-# --- TableVault imports ------------------------------------------------------
-# NB: assumes the original TableVault implementation (shown in the prompt)
-#     lives in tablevault.core together with the helper module‑level utilities.
+import click
+import pandas as pd
+
+# ─── TableVault imports ────────────────────────────────────────────────────────
 from tablevault.core import (
     TableVault,
     compress_vault,
@@ -16,13 +22,11 @@ from tablevault.core import (
 )
 from tablevault._defintions import tv_errors, constants
 
-# -----------------------------------------------------------------------------
-# Utility helpers
-# -----------------------------------------------------------------------------
+# ─── Helpers ───────────────────────────────────────────────────────────────────
 
 
 def _echo(obj):
-    """Pretty‑print *obj* to stdout so shell users can capture the value."""
+    """Pretty-print *obj* for easy shell capture."""
     if isinstance(obj, (dict, list)):
         click.echo(json.dumps(obj, indent=2, default=str))
     else:
@@ -35,9 +39,7 @@ def _bail(ctx: click.Context, param: str):
     )
 
 
-# -----------------------------------------------------------------------------
-# Main CLI group
-# -----------------------------------------------------------------------------
+# ─── Main CLI group ────────────────────────────────────────────────────────────
 
 
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
@@ -49,11 +51,9 @@ def _bail(ctx: click.Context, param: str):
 @click.option("--author", type=str, help="Author name used for audit logging")
 @click.pass_context
 def cli(ctx: click.Context, db_dir: Optional[Path], author: Optional[str]):
-    """A convenient **command‑line interface** for *TableVault* operations.
+    """A convenient **command-line interface** for *TableVault* operations.
 
-    The vast majority of sub‑commands need a *TableVault* instance; provide the
-    `--db-dir` and `--author` options once and they will be reused by every
-    command you invoke:
+    Set `--db-dir` and `--author` once and every sub-command will reuse them:
 
         $ tablevault-cli --db-dir ./my_vault --author jinjin get-active-processes
     """
@@ -62,9 +62,7 @@ def cli(ctx: click.Context, db_dir: Optional[Path], author: Optional[str]):
     ctx.obj["author"] = author
 
 
-# -----------------------------------------------------------------------------
-# Helper to lazily instantiate a TableVault when a command needs it
-# -----------------------------------------------------------------------------
+# ─── Lazy TableVault instantiation ─────────────────────────────────────────────
 
 
 def _get_vault(ctx: click.Context, verbose: bool = True) -> TableVault:
@@ -79,9 +77,7 @@ def _get_vault(ctx: click.Context, verbose: bool = True) -> TableVault:
     return TableVault(db_dir=str(db_dir), author=author, verbose=verbose)
 
 
-# -----------------------------------------------------------------------------
-# Vault‑*independent* utilities (archive / delete)
-# -----------------------------------------------------------------------------
+# ─── Vault-independent utilities (archive / delete) ────────────────────────────
 
 
 @cli.command("compress")
@@ -114,9 +110,7 @@ def delete_vault_cmd(db_dir: Path):
     _echo("Vault deleted ✔")
 
 
-# -----------------------------------------------------------------------------
-# TableVault instance‑based commands (skip get‑dataframe for now)
-# -----------------------------------------------------------------------------
+# ─── Instance / table queries ──────────────────────────────────────────────────
 
 
 @cli.command("get-process-completion")
@@ -167,6 +161,134 @@ def get_instances_cmd(ctx: click.Context, table_name: str, version: str):
     _echo(vault.get_instances(table_name=table_name, version=version))
 
 
+# ── NEW: metadata helpers ──────────────────────────────────────────────────────
+
+
+@cli.command("get-descriptions")
+@click.option("--table-name", default="", help="Table name (optional)")
+@click.option("--instance-id", default="", help="Instance ID (optional)")
+@click.pass_context
+def get_descriptions_cmd(ctx: click.Context, table_name: str, instance_id: str):
+    """Fetch database / table / instance descriptions."""
+    vault = _get_vault(ctx)
+    _echo(vault.get_descriptions(instance_id=instance_id, table_name=table_name))
+
+
+@cli.command("get-file-tree")
+@click.option("--table-name", default="", help="Table name (optional)")
+@click.option("--instance-id", default="", help="Instance ID (optional)")
+@click.option("--code-files/--no-code-files", default=True, show_default=True)
+@click.option("--builder-files/--no-builder-files", default=True, show_default=True)
+@click.option("--metadata-files/--no-metadata-files", default=False, show_default=True)
+@click.option("--artifact-files/--no-artifact-files", default=False, show_default=True)
+@click.option("--safe-locking/--no-safe-locking", default=True, show_default=True)
+@click.pass_context
+def get_file_tree_cmd(
+    ctx: click.Context,
+    table_name: str,
+    instance_id: str,
+    code_files: bool,
+    builder_files: bool,
+    metadata_files: bool,
+    artifact_files: bool,
+    safe_locking: bool,
+):
+    """Render a list/tree of files inside the vault."""
+    vault = _get_vault(ctx)
+    _echo(
+        vault.get_file_tree(
+            table_name=table_name,
+            instance_id=instance_id,
+            code_files=code_files,
+            builder_files=builder_files,
+            metadata_files=metadata_files,
+            artifact_files=artifact_files,
+            safe_locking=safe_locking,
+        )
+    )
+
+
+@cli.command("get-modules-list")
+@click.pass_context
+def get_code_modules_list_cmd(ctx: click.Context):
+    """List Python code modules stored in the vault."""
+    vault = _get_vault(ctx)
+    _echo(vault.get_code_modules_list())
+
+
+@cli.command("get-builders-list")
+@click.argument("table_name")
+@click.option("--instance-id", default="")
+@click.option("--version", default=constants.BASE_TABLE_VERSION)
+@click.option(
+    "--temp/--materialised",
+    "is_temp",
+    default=True,
+    help="Look at temporary or materialised instance",
+)
+@click.pass_context
+def get_builders_list_cmd(
+    ctx: click.Context,
+    table_name: str,
+    instance_id: str,
+    version: str,
+    is_temp: bool,
+):
+    vault = _get_vault(ctx)
+    _echo(
+        vault.get_builders_list(
+            table_name=table_name,
+            instance_id=instance_id,
+            version=version,
+            is_temp=is_temp,
+        )
+    )
+
+
+@cli.command("get-builder-str")
+@click.argument("builder_name")
+@click.argument("table_name")
+@click.option("--instance-id", default="")
+@click.option("--version", default=constants.BASE_TABLE_VERSION)
+@click.option(
+    "--temp/--materialised",
+    "is_temp",
+    default=True,
+    help="Fetch from temporary or materialised instance",
+)
+@click.pass_context
+def get_builder_str_cmd(
+    ctx: click.Context,
+    builder_name: str,
+    table_name: str,
+    instance_id: str,
+    version: str,
+    is_temp: bool,
+):
+    vault = _get_vault(ctx)
+    _echo(
+        vault.get_builder_str(
+            builder_name=builder_name,
+            table_name=table_name,
+            instance_id=instance_id,
+            version=version,
+            is_temp=is_temp,
+        )
+    )
+
+
+@cli.command("get-code-module-str")
+@click.argument("module_name")
+@click.pass_context
+def get_code_module_str_cmd(ctx: click.Context, module_name: str):
+    """Print the source code of a stored module."""
+    vault = _get_vault(ctx)
+    _echo(vault.get_code_module_str(module_name))
+
+
+# ─── Dataframe extraction ──────────────────────────────────────────────────────
+
+
 @cli.command("get-dataframe")
 @click.argument("table_name")
 @click.option(
@@ -210,9 +332,12 @@ def get_dataframe_cmd(
     _echo({"instance_id": inst_id, "rows": len(df), "csv": str(output_csv)})
 
 
+# ─── Process control ───────────────────────────────────────────────────────────
+
+
 @cli.command("stop-process")
 @click.argument("process_id")
-@click.option("--force", is_flag=True, help="Force‑kill the running process")
+@click.option("--force", is_flag=True, help="Force-kill the running process")
 @click.option(
     "--materialize", is_flag=True, help="Materialise partial instances if possible"
 )
@@ -222,6 +347,9 @@ def stop_process_cmd(
 ):
     vault = _get_vault(ctx)
     _echo(vault.stop_process(process_id, force=force, materialize=materialize))
+
+
+# ─── Code modules ──────────────────────────────────────────────────────────────
 
 
 @cli.command("create-code-module")
@@ -241,6 +369,9 @@ def create_code_module_cmd(ctx: click.Context, module_name: str, copy_dir: str):
 def delete_code_module_cmd(ctx: click.Context, module_name: str):
     vault = _get_vault(ctx)
     _echo(vault.delete_code_module(module_name))
+
+
+# ─── Builders ─────────────────────────────────────────────────────────────────
 
 
 @cli.command("create-builder-file")
@@ -277,6 +408,9 @@ def delete_builder_file_cmd(
 ):
     vault = _get_vault(ctx)
     _echo(vault.delete_builder_file(builder_name, table_name, version))
+
+
+# ─── Table / instance housekeeping ────────────────────────────────────────────
 
 
 @cli.command("rename-table")
@@ -398,6 +532,9 @@ def create_table_cmd(
     )
 
 
+# ─── Misc helpers ──────────────────────────────────────────────────────────────
+
+
 @cli.command("generate-process-id")
 @click.pass_context
 def generate_process_id_cmd(ctx: click.Context):
@@ -405,20 +542,16 @@ def generate_process_id_cmd(ctx: click.Context):
     _echo(vault.generate_process_id())
 
 
-# -----------------------------------------------------------------------------
-# Entry‑point – allows `python -m tablevault_cli` and pip‑installed cmd `tablevault-cli`
-# -----------------------------------------------------------------------------
+# ─── Entry-point (python -m tablevault_cli) ────────────────────────────────────
 
 
 def main():  # pragma: no cover – convenience shim
     try:
         cli(obj={})
-    except (
-        tv_errors.TableVaultError
-    ) as exc:  # base class of all tablevault custom errors
+    except tv_errors.TableVaultError as exc:  # base class of custom errors
         click.echo(f"TableVault error: {exc}", err=True)
         sys.exit(1)
-    except Exception as exc:  # noqa: BLE001 – re‑raise unknown exceptions
+    except Exception as exc:  # noqa: BLE001 – re-raise unknown exceptions
         click.echo(f"Unexpected error: {exc}", err=True)
         raise
 

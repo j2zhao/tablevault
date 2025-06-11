@@ -36,10 +36,15 @@ def get_artifact_folder(
     if instance_id.startswith(constants.TEMP_INSTANCE) and respect_temp:
         return instance_folder
     table_data = get_description("", table_name, db_dir)
-    if table_data[constants.TABLE_ALLOW_MARTIFACT]:
+    if instance_id != "":
+        instance_data = get_description(instance_id, table_name, db_dir)
+        success = instance_data[constants.DESCRIPTION_SUCCESS]
+    else:
+        success = True
+    table_folder = os.path.join(db_dir, table_name, constants.ARTIFACT_FOLDER)
+    if table_data[constants.TABLE_ALLOW_MARTIFACT] or not success:
         return instance_folder
     else:
-        table_folder = os.path.join(db_dir, table_name, constants.ARTIFACT_FOLDER)
         return table_folder
 
 

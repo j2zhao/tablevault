@@ -6,20 +6,11 @@ import errno
 import stat
 import time
 from typing import Callable, Tuple
-from types import SimpleNamespace
 
 import yaml
 import pandas as pd
 from filelock import FileLock
-
-# ----------------------------------------------------------------------
-# Minimal stub for the constants that would normally come from TableVault
-# ----------------------------------------------------------------------
-constants = SimpleNamespace(
-    TIMEOUT=5.0,
-    METADATA_FOLDER=".metadata",
-    META_FILE_LOCK_FILE="io.lock",
-)
+from tablevault._defintions import constants
 
 
 # ----------------------------------------------------------------------
@@ -42,30 +33,33 @@ class CopyOnWriteFile:
         )
         os.makedirs(os.path.dirname(lock_path), exist_ok=True)
         self._lock = FileLock(lock_path, timeout=lock_timeout)
-        self._hardlink_supported = self._detect_hardlink_support()
+        self._hardlink_supported = self._detect_hardlink_support(self.db_dir)
 
     # ───── platform / capability helpers ──────
     @staticmethod
-    def _detect_hardlink_support() -> bool:
-        """Assume POSIX supports links; probe on Windows."""
-        if os.name != "nt":
-            return True
+    def _detect_hardlink_support(test_dir: str | None = None) -> bool:
+        """
+        Return True iff the filesystem that backs *test_dir* supports hard links.
+        Running the probe in the target directory avoids false-positives on
+        FUSE mounts such as Google Drive.
+        """
+        # Default to a safe temp dir if caller gave nothing
+        test_dir = os.fspath(test_dir or tempfile.gettempdir())
 
-        tmpdir = tempfile.gettempdir()
         src = dst = None
         try:
-            fd, src = tempfile.mkstemp(dir=tmpdir)
+            fd, src = tempfile.mkstemp(dir=test_dir)
             os.close(fd)
-            dst = src + ".lnk"
-            os.link(src, dst)
+            dst = f"{src}.lnk"
+            os.link(src, dst)  # will raise OSError on Drive/FUSE
             return True
-        except OSError:
+        except (OSError, NotImplementedError):
             return False
         finally:
             with contextlib.suppress(FileNotFoundError):
-                if dst and os.path.exists(dst):
+                if dst:
                     os.unlink(dst)
-                if src and os.path.exists(src):
+                if src:
                     os.unlink(src)
 
     @staticmethod
@@ -243,6 +237,29 @@ class CopyOnWriteFile:
         with self._lock:
             os.makedirs(path, mode=mode, exist_ok=exist_ok)
         return path
+
+    def linkfile(self, src: str, dst: str, overwrite: bool = False) -> str:
+        with self._lock:
+            if not self._hardlink_supported:
+                return shutil.copy2(src, dst)
+
+            # Ensure destination directory exists
+            parent = os.path.dirname(dst)
+            if parent:
+                os.makedirs(parent, exist_ok=True)
+
+            # Handle existing dst file
+            if os.path.exists(dst):
+                if not overwrite:
+                    raise FileExistsError(f"Destination '{dst}' already exists.")
+                os.unlink(dst)
+
+            try:
+                os.link(src, dst)
+            except OSError:
+                shutil.copy2(src, dst)
+
+            return dst
 
     # ─────────────── hard‑link “copy‑tree” ───────────────
     def linktree(

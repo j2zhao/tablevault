@@ -37,7 +37,9 @@ class ProcessLog:
 
 
 ColumnHistoryDict = dict[str, dict[str, dict[str, float]]]
-TableHistoryDict = dict[str, dict[str, tuple[float, float, Optional[float]]]]
+TableHistoryDict = dict[str, dict[str, tuple[float, float, Optional[float], bool]]]
+TableTempDict = dict[str, list[str]]
+
 ActiveProcessDict = dict[str, ProcessLog]
 
 SETUP_OUTPUT = dict[str, Any]

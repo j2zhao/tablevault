@@ -317,6 +317,7 @@ Stop an active process and optionally terminate it forcefully.
 
 ## `TableVault` Data Fetching Methods
 
+---
 
 ### `get_dataframe()`
 
@@ -327,23 +328,57 @@ def get_dataframe(
     instance_id: str = "",
     version: str = constants.BASE_TABLE_VERSION,
     active_only: bool = True,
+    successful_only: bool = False,
     safe_locking: bool = True,
     rows: Optional[int] = None,
-    artifact_path: bool = True,
+    full_artifact_path: bool = True,
 ) -> tuple[pd.DataFrame, str]:
 ```
 
-| Parameter       | Type                | Description                                        | Default                        |
-| --------------- | ------------------- | -------------------------------------------------- | ------------------------------ |
-| `table_name`    | `str`               | Name of the table.                                 | –                              |
-| `instance_id`   | `str`               | Specific instance ID; empty ⇒ latest of *version*. | `""`                           |
-| `version`       | `str`               | Version when *instance\_id* omitted.               | `constants.BASE_TABLE_VERSION` |
-| `active_only`   | `bool`              | **True** ⇒ consider only active instances.         | `True`                         |
-| `safe_locking`  | `bool`              | **True** ⇒ acquire locks.                          | `True`                         |
-| `rows`          | `Optional[int]`     | Row limit (None = no limit).                       | `None`                         |
-| `artifact_path` | `bool`              | **True** ⇒ prefix artifact\_string columns.        | `True`                         |
+| Parameter            | Type            | Description                                                            | Default                        |
+| -------------------- | --------------- | ---------------------------------------------------------------------- | ------------------------------ |
+| `table_name`         | `str`           | Name of the table.                                                     | –                              |
+| `instance_id`        | `str`           | Specific instance ID; empty ⇒ latest of *version*.                     | `""`                           |
+| `version`            | `str`           | Version when *instance\_id* omitted.                                   | `constants.BASE_TABLE_VERSION` |
+| `active_only`        | `bool`          | **True** ⇒ consider only active instances.                             | `True`                         |
+| `successful_only`    | `bool`          | **True** ⇒ consider only *successful* runs.                            | `False`                        |
+| `safe_locking`       | `bool`          | **True** ⇒ acquire locks.                                              | `True`                         |
+| `rows`               | `Optional[int]` | Row limit (`None` = no limit).                                         | `None`                         |
+| `full_artifact_path` | `bool`          | **True** ⇒ prefix `"artifact_string"` columns with the repository path | `True`                         |
 
 **Returns** → `tuple[pd.DataFrame, str]` – *(dataframe, resolved\_instance\_id)*.
+
+---
+
+
+### `get_file_tree()`
+
+```python
+def get_file_tree(
+    self,
+    instance_id: str = "",
+    table_name: str = "",
+    code_files: bool = True,
+    builder_files: bool = True,
+    metadata_files: bool = False,
+    artifact_files: bool = False,
+    safe_locking: bool = True,
+) -> str:
+```
+
+Return a text-formatted tree (or RichTree object) of files contained in the target.
+
+| Parameter        | Type   | Description                                | Default |
+| ---------------- | ------ | ------------------------------------------ | ------- |
+| `instance_id`    | `str`  | Resolve a specific instance (else latest). | `""`    |
+| `table_name`     | `str`  | Limit to a table (optional).               | `""`    |
+| `code_files`     | `bool` | Include stored *code* modules.             | `True`  |
+| `builder_files`  | `bool` | Include builder scripts.                   | `True`  |
+| `metadata_files` | `bool` | Include JSON/YAML metadata.                | `False` |
+| `artifact_files` | `bool` | Include artifact directory contents.       | `False` |
+| `safe_locking`   | `bool` | Acquire read locks while generating tree.  | `True`  |
+
+**Returns** → `str` – printable file-tree representation.
 
 ---
 
@@ -368,44 +403,19 @@ Return a list of materialised instance IDs for a specific table and version.
 
 ---
 
-
 ### `get_active_processes()`
 
 ```python
 def get_active_processes(self) -> ActiveProcessDict:
 ```
 
-Return a dictionary of currently active processes in this vault. Each key is a process ID and each value is metadata about that process.
+Return a dictionary of currently active processes in the vault.
+Each key is a process ID and each value is metadata about that process.
 
-**Returns** → `ActiveProcessDict` (alias for `dict[str, Mapping[str, Any]]`).
-
----
-
-
-### `get_artifact_folder()`
-
-```python
-def get_artifact_folder(
-    self,
-    table_name: str,
-    instance_id: str = "",
-    version: str = constants.BASE_TABLE_VERSION,
-    is_temp: bool = True,
-) -> str:
-```
-
-Return the path to the artifact folder for a given table instance. If `allow_multiple_artifacts` is `False` for the given `Table` and the instance isn't temporary, the folder for the whole table is returned.
-
-| Parameter     | Type   | Description                                                                     | Default                        |
-| ------------- | ------ | ------------------------------------------------------------------------------- | ------------------------------ |
-| `table_name`  | `str`  | Name of the table.                                                              | –                              |
-| `instance_id` | `str`  | Table‑instance ID.                                                              | `""`                           |
-| `version`     | `str`  | Version string. When *instance\_id* is omitted, fetches latest of this version. | `constants.BASE_TABLE_VERSION` |
-| `is_temp`     | `bool` | **True** ⇒ path to temporary instance; **False** ⇒ last materialised instance.  | `True`                         |
-
-**Returns** → `str` – path to the requested artifact folder.
+**Returns** → `ActiveProcessDict` – alias `dict[str, Mapping[str, Any]]`.
 
 ---
+
 
 ### `get_process_completion()`
 
@@ -423,18 +433,132 @@ Return the completion status of a specific process.
 
 ---
 
-
-### `get_descriptions()` *(not yet implemented)*
+### `get_descriptions()`
 
 ```python
-def get_descriptions(self):
-    """(Planned) Return descriptions or metadata for all tables.
-
-    .. note::  This routine is not yet implemented.
-    """
+def get_descriptions(
+    self,
+    instance_id: str = "",
+    table_name: str = "",
+) -> dict:
 ```
 
-Raises **`NotImplementedError`**.
+Fetch the stored description metadata.
+
+| Parameter     | Type  | Description                                                          | Default |
+| ------------- | ----- | -------------------------------------------------------------------- | ------- |
+| `instance_id` | `str` | Instance ID to describe (empty ⇒ DB-level or *table\_name* level).   | `""`    |
+| `table_name`  | `str` | Table whose description is requested (ignored if `instance_id` set). | `""`    |
+
+**Returns** → `dict` – description dictionary for the requested entity.
+
+---
+
+### `get_artifact_folder()`
+
+```python
+def get_artifact_folder(
+    self,
+    table_name: str,
+    instance_id: str = "",
+    version: str = constants.BASE_TABLE_VERSION,
+    is_temp: bool = True,
+) -> str:
+```
+
+Return the path to the artifact folder for a given table instance.
+If `allow_multiple_artifacts` is **False** for the `Table` *and* the instance is not temporary, the folder for the whole table is returned.
+
+| Parameter     | Type   | Description                                                                     | Default                        |
+| ------------- | ------ | ------------------------------------------------------------------------------- | ------------------------------ |
+| `table_name`  | `str`  | Name of the table.                                                              | –                              |
+| `instance_id` | `str`  | Table‑instance ID.                                                              | `""`                           |
+| `version`     | `str`  | Version string. When *instance\_id* is omitted, fetches latest of this version. | `constants.BASE_TABLE_VERSION` |
+| `is_temp`     | `bool` | **True** ⇒ path to temporary instance; **False** ⇒ last materialised instance.  | `True`                         |
+
+**Returns** → `str` – path to the requested artifact folder.
+
+---
+
+
+### `get_builders_list()`
+
+```python
+def get_builders_list(
+    self,
+    table_name: str,
+    instance_id: str = "",
+    version: str = constants.BASE_TABLE_VERSION,
+    is_temp: bool = True,
+) -> list[str]:
+```
+
+List builder scripts stored within a specific table instance.
+
+| Parameter     | Type   | Description                                                      | Default                        |
+| ------------- | ------ | ---------------------------------------------------------------- | ------------------------------ |
+| `table_name`  | `str`  | Target table name.                                               | –                              |
+| `instance_id` | `str`  | Specific instance (empty ⇒ latest of *version*).                 | `""`                           |
+| `version`     | `str`  | Version used when *instance\_id* omitted.                        | `constants.BASE_TABLE_VERSION` |
+| `is_temp`     | `bool` | **True** ⇒ look at temporary instance; **False** ⇒ materialised. | `True`                         |
+
+**Returns** → `list[str]` – names of builder scripts in the instance.
+
+---
+
+### `get_builder_str()`
+
+```python
+def get_builder_str(
+    self,
+    builder_name: str,
+    table_name: str,
+    instance_id: str = "",
+    version: str = constants.BASE_TABLE_VERSION,
+    is_temp: bool = True,
+) -> str:
+```
+
+Retrieve a stored builder script as plain text.
+
+| Parameter      | Type   | Description                                      | Default                        |
+| -------------- | ------ | ------------------------------------------------ | ------------------------------ |
+| `builder_name` | `str`  | Name of the builder file (without “.py”).        | –                              |
+| `table_name`   | `str`  | Table that owns the builder.                     | –                              |
+| `instance_id`  | `str`  | Specific instance (empty ⇒ latest of *version*). | `""`                           |
+| `version`      | `str`  | Version used when *instance\_id* omitted.        | `constants.BASE_TABLE_VERSION` |
+| `is_temp`      | `bool` | **True** ⇒ read from temporary instance.         | `True`                         |
+
+**Returns** → `str` – full source code of the builder.
+
+---
+
+
+### `get_code_modules_list()`
+
+```python
+def get_code_modules_list(self) -> list[str]:
+```
+
+Return the names of code modules saved in the repository.
+
+**Returns** → `list[str]` – Python module names.
+
+---
+
+### `get_code_module_str()`
+
+```python
+def get_code_module_str(self, module_name: str) -> str:
+```
+
+Return the text of a stored code module.
+
+| Parameter     | Type  | Description                  |
+| ------------- | ----- | ---------------------------- |
+| `module_name` | `str` | Module name (without “.py”). |
+
+**Returns** → `str` – module source code.
 
 ---
 

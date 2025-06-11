@@ -16,6 +16,7 @@ from typing import Optional
 def setup_create_code_module(
     module_name: str,
     copy_dir: str,
+    text: str,
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
@@ -24,7 +25,7 @@ def setup_create_code_module(
         raise tv_errors.TVArgumentError(
             "One of module_name and copy_dir needs to be filled"
         )
-    funct_kwargs = {"module_name": module_name, "copy_dir": copy_dir}
+    funct_kwargs = {"module_name": module_name, "copy_dir": copy_dir, "text": text}
     db_locks.acquire_exclusive_lock(constants.CODE_FOLDER)
     file_operations.copy_folder_to_temp(
         process_id, db_metadata.db_dir, subfolder=constants.CODE_FOLDER
@@ -53,6 +54,7 @@ def setup_create_builder_file(
     table_name: str,
     version: str,
     copy_dir: str,
+    text: str,
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
@@ -80,6 +82,7 @@ def setup_create_builder_file(
         "instance_id": instance_id,
         "table_name": table_name,
         "copy_dir": copy_dir,
+        "text": text,
     }
 
     db_metadata.update_process_data(process_id, funct_kwargs)
@@ -838,6 +841,7 @@ def _parse_dependencies(
                     mat_time,
                     _,
                     _,
+                    _,
                 ) = db_metadata.get_table_times(dep.version, dep.table)
                 external_deps[builder_name].add(
                     (dep.table, dep.columns, dep.version, mat_time, dep.version)
@@ -930,7 +934,7 @@ def parse_builders(
     custom_code = False
     if origin_id != "":
         to_execute = []
-        prev_mat_time, _, _ = db_metadata.get_table_times(origin_id, table_name)
+        prev_mat_time, _, _, _ = db_metadata.get_table_times(origin_id, table_name)
         prev_builders = file_operations.get_builder_names(
             origin_id, origin_table, db_metadata.db_dir
         )

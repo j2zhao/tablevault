@@ -1,4 +1,4 @@
-from tablevault._operations import _vault_operations
+from tablevault._operations import _vault_operations, _get_operations
 from tablevault._helper.metadata_store import ActiveProcessDict
 from tablevault._helper.utils import gen_tv_id
 from tablevault._defintions import constants
@@ -31,6 +31,8 @@ class TableVault:
         this vault.  Defaults to ``False``. *Optional*.
     :param bool verbose: If ``True``, prints detailed logs of every operation.
         Defaults to ``False``. *Optional*.
+    :param bool is_remote: If ``True``, does not lock Files.
+        Defaults to ``False``. *Optional*.
     """
 
     def __init__(
@@ -41,6 +43,7 @@ class TableVault:
         create: bool = False,
         restart: bool = False,
         verbose: bool = True,
+        is_remote: bool = False,
     ) -> None:
         self.db_dir = db_dir
         self.author = author
@@ -75,7 +78,7 @@ class TableVault:
         :param str process_id: Identifier of the process.
         :returns bool: ``True`` if the process has completed, ``False`` otherwise.
         """
-        return _vault_operations.complete_process(
+        return _get_operations.get_process_completion(
             process_id=process_id, db_dir=self.db_dir
         )
 
@@ -96,17 +99,17 @@ class TableVault:
         :param str instance_id: Table-instance ID. *Optional*.
         :param str version: Latest (or temporary) instance ID for the version if
             *instance_id* is not supplied.  Defaults to the base version. *Optional*.
-        :param bool is_temp: If ``True`` return the path to the temporary instance;
-            if ``False`` return the path to the last materialised instance.
+        :param bool is_temp: If ``True`` return the path of the temporary artifact folder;
+            if ``False`` return of the path latest materialized artifact folder.
             *Optional*.
         :returns str: Path to the requested artifact folder.
         """
-        return _vault_operations.get_artifact_folder(
+        return _get_operations.get_artifact_folder(
             instance_id=instance_id,
             table_name=table_name,
             version=version,
-            db_dir=self.db_dir,
             is_temp=is_temp,
+            db_dir=self.db_dir,
         )
 
     def get_active_processes(self) -> ActiveProcessDict:
@@ -117,7 +120,7 @@ class TableVault:
 
         :returns dict[str, Mapping[str, Any]]: Mapping of process IDs to metadata.
         """
-        return _vault_operations.active_processes(db_dir=self.db_dir)
+        return _get_operations.get_active_processes(db_dir=self.db_dir)
 
     def get_instances(
         self,
@@ -133,16 +136,171 @@ class TableVault:
         :returns list[str]: Instance IDs that have been materialised for this
             table/version.
         """
-        return _vault_operations.get_instances(
-            table_name=table_name, db_dir=self.db_dir, version=version
+        return _get_operations.get_instances(
+            table_name=table_name,
+            version=version,
+            db_dir=self.db_dir,
         )
 
-    def get_descriptions(self):
-        """(Planned) Return descriptions or metadata for all tables.
+    def get_descriptions(self, instance_id: str = "", table_name: str = "") -> dict:
+        """Return description dictionary for specified item in the database.
+        If no parameters are given, return the description for the database itself.
 
-        .. note::  This routine is not yet implemented.
+        :param str instance_id: specified instance ID. *Optional*.
+        :param str table_name: Name of the table whose description are requested.
+            *Optional*.
+
+        :returns dict: Recorded description dictionary of specified item.
         """
-        raise NotImplementedError("Currently not implemented.")
+        return _get_operations.get_descriptions(
+            instance_id=instance_id, table_name=table_name, db_dir=self.db_dir
+        )
+
+    def get_file_tree(
+        self,
+        instance_id: str = "",
+        table_name: str = "",
+        code_files: bool = True,
+        builder_files: bool = True,
+        metadata_files: bool = False,
+        artifact_files: bool = False,
+        safe_locking: bool = True,
+    ):
+        return _get_operations.get_file_tree(
+            instance_id=instance_id,
+            table_name=table_name,
+            code_files=code_files,
+            builder_files=builder_files,
+            metadata_files=metadata_files,
+            artifact_files=artifact_files,
+            db_dir=self.db_dir,
+            safe_locking=safe_locking,
+        )
+
+    def get_code_modules_list(self) -> list[str]:
+        """Return a list of module names contained in this repository.
+
+        :returns list[str]: Python module names that have been saved to
+        this repository
+        """
+        return _get_operations.get_code_modules_list(
+            db_dir=self.db_dir,
+        )
+
+    def get_builders_list(
+        self,
+        table_name: str,
+        instance_id: str = "",
+        version: str = constants.BASE_TABLE_VERSION,
+        is_temp: bool = True,
+    ) -> list[str]:
+        """Return a list of builder names contained in an instance.
+
+        :param str table_name: Name of the table.
+        :param str instance_id: ID of a specific instance.  If empty, the
+            latest instance of *version* that satisfies conditions is used. *Optional*.
+        :param str version: Fetch the latest instance of *version* if *instance_id* is
+            not given.  Defaults to ``BASE_TABLE_VERSION``. *Optional*.
+        :param bool is_temp: If ``True`` find the relevant temporary instance;
+            if ``False`` find latest materialized instance.
+            *Optional*.
+        :returns list[str]: Python module names that have been saved to the
+            specified instance.
+        """
+        return _get_operations.get_builders_list(
+            instance_id=instance_id,
+            table_name=table_name,
+            version=version,
+            is_temp=is_temp,
+            db_dir=self.db_dir,
+        )
+
+    def get_builder_str(
+        self,
+        builder_name: str,
+        table_name: str,
+        instance_id: str = "",
+        version: str = constants.BASE_TABLE_VERSION,
+        is_temp: bool = True,
+    ) -> str:
+        """Retrieve the text of the stored builder as a string.
+
+        :param str module_name: Name of the module.
+            Do not include ``.py`` extension.
+        :param str table_name: Name of the table.
+        :param str instance_id: ID of a specific instance to fetch.  If empty, the
+            latest instance of *version* that satisfies conditions is used. *Optional*.
+        :param str version: Fetch the latest instance of *version* if *instance_id* is
+            not given.  Defaults to ``BASE_TABLE_VERSION``. *Optional*.
+        :param bool is_temp: If ``True`` find the relevant temporary instance;
+            if ``False`` find latest materialized instance.
+            *Optional*.
+        :returns str: The contents of the `builder_name` file as a string.
+        """
+        return _get_operations.get_builder_str(
+            builder_name=builder_name,
+            instance_id=instance_id,
+            table_name=table_name,
+            version=version,
+            is_temp=is_temp,
+            db_dir=self.db_dir,
+        )
+
+    def get_code_module_str(self, module_name: str) -> str:
+        """Retrieve the text of the stored code module as a string.
+
+        :param str module_name: Name of the module.
+            Do not include ``.py`` extension.
+
+        :returns str: The contents of the `module_name` file as a string.
+        """
+        return _get_operations.get_code_module_str(
+            module_name=module_name,
+            db_dir=self.db_dir,
+        )
+
+    def get_dataframe(
+        self,
+        table_name: str,
+        instance_id: str = "",
+        version: str = constants.BASE_TABLE_VERSION,
+        active_only: bool = True,
+        successful_only: bool = False,
+        safe_locking: bool = True,
+        rows: Optional[int] = None,
+        full_artifact_path: bool = True,
+    ) -> tuple[pd.DataFrame, str]:
+        """Retrieve a pandas ``DataFrame`` for a table instance.
+
+        :param str table_name: Name of the table.
+        :param str instance_id: ID of a specific instance to fetch.  If empty, the
+            latest instance of *version* that satisfies conditions is used. *Optional*.
+        :param str version: Fetch the latest instance of *version* if *instance_id* is
+            not given.  Defaults to ``BASE_TABLE_VERSION``. *Optional*.
+        :param bool active_only: If ``True`` consider only active instances.
+            Defaults to ``True``. *Optional*.
+        :param bool successful_only: If ``True`` consider only successfully executed
+            instances. Defaults to ``False``
+        :param bool safe_locking: If ``True`` acquire locks to prevent concurrent
+            writes.  Defaults to ``True``. *Optional*.
+        :param int | None rows: If given, limit the rows fetched to this number.
+            Defaults to ``None`` (no limit). *Optional*.
+        :param bool artifact_path: If ``True`` add the base folder path to all
+            ``"artifact_string"`` columns.  Defaults to ``True``. *Optional*.
+        :returns tuple[pandas.DataFrame, str]: The ``DataFrame`` and the instance ID
+            fetched.
+        """
+        return _get_operations.get_dataframe(
+            instance_id=instance_id,
+            table_name=table_name,
+            version=version,
+            active_only=active_only,
+            successful_only=successful_only,
+            rows=rows,
+            full_artifact_path=full_artifact_path,
+            db_dir=self.db_dir,
+            safe_locking=safe_locking,
+        )
 
     def stop_process(
         self,
@@ -172,47 +330,12 @@ class TableVault:
             process_id=process_id,
         )
 
-    def get_dataframe(
-        self,
-        table_name: str,
-        instance_id: str = "",
-        version: str = constants.BASE_TABLE_VERSION,
-        active_only: bool = True,
-        safe_locking: bool = True,
-        rows: Optional[int] = None,
-        full_artifact_path: bool = True,
-    ) -> tuple[pd.DataFrame, str]:
-        """Retrieve a pandas ``DataFrame`` for a table instance.
-
-        :param str table_name: Name of the table.
-        :param str instance_id: ID of a specific instance to fetch.  If empty, the
-            latest instance of *version* is used. *Optional*.
-        :param str version: Fetch the latest instance of *version* if *instance_id* is
-            not given.  Defaults to ``BASE_TABLE_VERSION``. *Optional*.
-        :param bool active_only: If ``True`` consider only active instances.
-            Defaults to ``True``. *Optional*.
-        :param bool safe_locking: If ``True`` acquire locks to prevent concurrent
-            writes.  Defaults to ``True``. *Optional*.
-        :param int | None rows: If given, limit the rows fetched to this number.
-            Defaults to ``None`` (no limit). *Optional*.
-        :param bool artifact_path: If ``True`` add the base folder path to all
-            ``"artifact_string"`` columns.  Defaults to ``True``. *Optional*.
-        :returns tuple[pandas.DataFrame, str]: The ``DataFrame`` and the instance ID
-            fetched.
-        """
-        return _vault_operations.get_table(
-            instance_id=instance_id,
-            table_name=table_name,
-            version=version,
-            db_dir=self.db_dir,
-            active_only=active_only,
-            safe_locking=safe_locking,
-            rows=rows,
-            artifact_path=full_artifact_path,
-        )
-
     def create_code_module(
-        self, module_name: str = "", copy_dir: str = "", process_id: str = ""
+        self,
+        module_name: str = "",
+        copy_dir: str = "",
+        text: str = "",
+        process_id: str = "",
     ) -> str:
         """Copy (or create) a code-module file or directory into the
         vault.
@@ -223,6 +346,9 @@ class TableVault:
         :param str copy_dir: Local directory containing Python files to copy **or**
             a specific Python-file path.  If empty, a new Python file is created.
             *Optional*.
+        :param str text: Text string containing content of the module file to save.
+            Is overriden by `copy_dir` if both given.
+            *Optional*.3
         :param str process_id: Identifier for the calling process (used for logging).
             Defaults to ``""``. *Optional*.
         :returns str: The process ID of the executed operation.
@@ -231,6 +357,7 @@ class TableVault:
             author=self.author,
             module_name=module_name,
             copy_dir=copy_dir,
+            text=text,
             process_id=process_id,
             db_dir=self.db_dir,
         )
@@ -257,6 +384,7 @@ class TableVault:
         builder_name: str = "",
         version: str = constants.BASE_TABLE_VERSION,
         copy_dir: str = "",
+        text: str = "",
         process_id: str = "",
     ) -> str:
         """Add or update a builder (YAML) file for a temporary table
@@ -272,6 +400,9 @@ class TableVault:
             ``BASE_TABLE_VERSION``. *Optional*.
         :param str copy_dir: Local directory containing the builder file(s) to copy.
             *Optional*.
+        :param str text: Text string containing content of the builder file to save.
+            Is overriden by `copy_dir` if both given.
+            *Optional*.
         :param str process_id: Identifier for the calling process.  Defaults to
             ``""``. *Optional*.
         :returns str: The process ID of the executed operation.
@@ -282,6 +413,7 @@ class TableVault:
             table_name=table_name,
             version=version,
             copy_dir=copy_dir,
+            text=text,
             process_id=process_id,
             db_dir=self.db_dir,
         )
