@@ -2,11 +2,10 @@ from tablevault._builders.base_builder_type import TVBuilder
 from tablevault._dataframe_helper import table_operations
 from tablevault._defintions.types import Cache
 from tablevault._helper import utils
-from tablevault._defintions import constants
+from tablevault._defintions import constants, tv_errors
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, Optional
 from tablevault._helper.file_operations import load_code_function, move_code_to_instance
-
 
 class ColumnBuilder(TVBuilder):
     def execute(
@@ -33,7 +32,7 @@ class ColumnBuilder(TVBuilder):
                     db_dir,
                     instance_id,
                     table_name,
-                )
+                )      
             if self.return_type == constants.BUILDER_RTYPE_ROWWISE and self.n_threads != 1:
                 indices = list(range(len(cache[constants.TABLE_SELF])))
                 with ThreadPoolExecutor(max_workers=self.n_threads) as executor:
@@ -79,9 +78,8 @@ def _execute_code_from_builder(
         )
         if is_filled:
             return
-    
     builder = builder.model_copy(deep=True)
-    builder.transform_table_string(cache, instance_id, table_name, db_dir, index)
+    builder.transform_table_string(cache, instance_id, table_name, db_dir, index, arguments=True)
     results = funct(**builder.arguments)
     if index is not None and builder.return_type == constants.BUILDER_RTYPE_ROWWISE:
         if len(builder.changed_columns) == 1:
@@ -93,6 +91,7 @@ def _execute_code_from_builder(
                 table_name,
                 db_dir,
             )
+            cache[constants.TABLE_SELF].at[index, builder.changed_columns[0]] = results
         else:
             for i, result in enumerate(results):
                 table_operations.write_df_entry(
@@ -103,18 +102,33 @@ def _execute_code_from_builder(
                     table_name,
                     db_dir,
                 )
+                cache[constants.TABLE_SELF].at[index, builder.changed_columns[i]] = result
     elif builder.return_type == constants.BUILDER_RTYPE_GENERATOR:
-        for results_ in results:
-            for i, result in results_:
+        for index, results_ in results:
+            if len(builder.changed_columns) == 1:
                 table_operations.write_df_entry(
-                    result,
+                    results_,
                     index,
-                    builder.changed_columns[i],
+                    builder.changed_columns[0],
                     instance_id,
                     table_name,
                     db_dir,
                 )
+                cache[constants.TABLE_SELF].at[index, builder.changed_columns[0]] = results_
+            else:
+                for i, result in enumerate(results_):
+                    table_operations.write_df_entry(
+                        result,
+                        index,
+                        builder.changed_columns[i],
+                        instance_id,
+                        table_name,
+                        db_dir,
+                    )
+                    cache[constants.TABLE_SELF].at[index, builder.changed_columns[i]] = result
     elif builder.return_type == constants.BUILDER_RTYPE_DATAFRAME:
         table_operations.save_new_columns(
             results, builder.changed_columns, instance_id, table_name, db_dir
         )
+    else:
+        raise tv_errors.TVBuilderError("return_type not recognized")

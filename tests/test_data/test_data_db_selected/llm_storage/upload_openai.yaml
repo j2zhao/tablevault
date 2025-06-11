@@ -1,11 +1,12 @@
 builder_type: ColumnBuilder
 changed_columns: [openai_id]
-python_function: random_row_string
+python_function: random_gen_string
 code_module: random_string
 is_custom: false
-return_type: row-wise
+return_type: generator
 
 arguments:
   column_names: [openai_id]
-  file_path: <<stories.artifact_name[paper_name::<<self.paper_name[index]>>]>>
-  key_file: ./tests/test_data/open_ai_key/key.txt
+  df: <<self>>
+  # file_path: <<stories.artifact_name[paper_name::<<self.paper_name[index]>>]>>
+  key_file: ./test/test_data/open_ai_key/key.txt # fake

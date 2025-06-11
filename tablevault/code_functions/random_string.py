@@ -61,4 +61,34 @@ def random_row_string(column_names, **kwargs):
     for col in column_names:
         val = "".join(random.choices(characters, k=20))
         row.append(val)
+    if len(row) == 1:
+        return row[0]
     return row
+
+def random_gen_string(column_names, df, **kwargs):
+    """Generate a single row of random string values.
+
+    Parameters
+    ----------
+    column_names : list of str
+        A list of column names for which to generate one random string value
+        per column.
+    **kwargs
+        Additional keyword arguments (currently unused).
+
+    Returns
+    -------
+    list
+        A list of random alphanumeric strings, each of length 20,
+        corresponding to the entries in `column_names`.
+    """
+    for i in range(len(df)):
+        characters = string.ascii_letters + string.digits  # a-zA-Z0-9
+        row = []
+        if len(column_names) > 1:
+            for col in column_names:
+                val = "".join(random.choices(characters, k=20))
+                row.append(val)
+        else:
+            row = "".join(random.choices(characters, k=20))
+        yield (i, row)

@@ -85,13 +85,16 @@ class TVBuilder(BaseModel):
         table_name: str,
         db_dir: str,
         index: Optional[int] = None,
+        arguments: bool = False
     ) -> None:
         for attr, val in vars(self).items():
+            if attr == constants.BUILDER_ARGUMENTS and not arguments:
+                continue
             if attr != constants.BUILDER_DEPENDENCIES:
                 val_ = get_table_result(val, cache, index)
                 val_ = apply_artifact_path(val_, instance_id, table_name, db_dir)
                 setattr(self, attr, val_)
-
+            
 
 def _get_builder_dependencies(values) -> Optional[list[TableValue]]:
     tables = []

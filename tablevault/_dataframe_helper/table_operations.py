@@ -262,7 +262,7 @@ def check_entry(
     index: Optional[int], columns: list[str], df: pd.DataFrame
 ) -> tuple[bool]:
     is_filled = True
-    if index is None:
+    if index is not None:
         for col in columns:
             value = df.at[index, col]
             if pd.isna(value):

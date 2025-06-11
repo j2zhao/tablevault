@@ -40,17 +40,14 @@ def execute_instance(
             db_metadata,
             cache,
         )
-
     for builder_name in top_builder_names:
         builders[builder_name].transform_table_string(
             cache, instance_id, table_name, db_metadata.db_dir
         )
-
     for builder_name in top_builder_names:
         column_dtypes.update(builders[builder_name].dtypes)
     
     column_dtypes = table_operations.write_dtype(column_dtypes, instance_id, table_name, db_metadata.db_dir)
-
     if constants.EX_CLEAR_TABLE not in prev_completed_steps:
         if origin_id != "":
             file_operations.copy_table(

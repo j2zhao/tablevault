@@ -127,7 +127,7 @@ arguments:
   source_data_id: "<<config_table.source_id[region::'US']>>"
 ```
 
-## Return Types
+## Function Return Types
 
 - Explain function return types. You have to create your function to match the return signature. generator always yields a tuple with the physical row index and the row-wise column entries. row-wise always returns a tuple (or singular value) representing one row. dataframe always returns a pandas dataframe that contains all saved rows and all columns in `changed_columns`.
 
@@ -159,4 +159,46 @@ arguments:
 
 ---
 
-**An `IndexBuilder` that yields a batch embedding to a row**
+
+**A `ColumnBuilder` that saves an `fruit_image` file for each `fruit` key**
+
+
+=== "Python Code"
+
+    ```python
+    import shutil
+
+    def fetch_image_from_string(fruit: str, artifact_dir:str ):
+        file_path = f'./all_images/{fruit}.png' # pre-existing file
+        new_file_path = f'{artifact_dir}/{fruit}.png'
+        
+        shutil.copy(file_path, new_file_path)
+        
+        return f'{fruit}.png' # return relative path
+    ```
+
+=== "Example YAML Builder"
+    ```yaml
+    builder_type: ColumnBuilder
+
+    changed_columns: ['fruit_image']                        # Output columns
+
+    python_function: create_data_table_from_table           # Function to execute
+    code_module: table_generation                           # Module containing the function
+    
+    is_custom: true                                         # Mark as user-supplied (searches in code_functions)
+    return_type: row-wise                                       # Specifies if the function processes row by row
+    
+    arguments:                                              # Arguments passed to the function
+        fruit: <<self.fruits[index]>> 
+        artifact_dir: ~ARTIFACT_FOLDER~ 
+
+    dtypes:                                                 # Column Data Types 
+        fruit_image: artifact_string            
+    ```
+
+---
+
+**An `IndexBuilder` that yields a batch of `GritLM` embedding to a new row**
+
+---

@@ -45,7 +45,19 @@ tablevault.create_builder_file("fruit_images_index")
 tablevault.create_builder_file("fetch_image_artifact")
 ```
 
+=== "fruit_images_index.yaml"
+    ```yaml
+    builder_type: IndexBuilder
 
+    changed_columns: ['fruits']        # Output columns
+    primary_key: ['fruits']            # DataFrame primary key (optional)
+
+    python_function: create_data_table_from_table           # Function to execute
+    code_module: table_generation                 # Module containing the function
+
+    arguments:                               # Arguments passed to the function
+        df: <<fruit_table.fruits>>                  
+    ```
 === "fetch_image_artifact.yaml"
     ```yaml
     builder_type: ColumnBuilder
@@ -64,19 +76,6 @@ tablevault.create_builder_file("fetch_image_artifact")
 
     dtypes:                                                 # Column Data Types 
         fruit_image: artifact_string            
-    ```
-=== "fruit_images_index.yaml"
-    ```yaml
-    builder_type: IndexBuilder
-
-    changed_columns: ['fruits']        # Output columns
-    primary_key: ['fruits']            # DataFrame primary key (optional)
-
-    python_function: create_data_table_from_table           # Function to execute
-    code_module: table_generation                 # Module containing the function
-
-    arguments:                               # Arguments passed to the function
-        df: <<fruit_table.fruits>>                  
     ```
 
 The `~ARTIFACT_FOLDER~` keyword is automatically replaced with the correct folder path at runtime. The `artifact_string` data type tells the system that the `fruit_image` column is linked to artifacts. 

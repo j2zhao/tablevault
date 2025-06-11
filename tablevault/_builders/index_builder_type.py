@@ -93,7 +93,8 @@ def _execute_code_from_builder(
     db_dir: str,
 ) -> None:
     builder = builder.model_copy(deep=True)
-    builder.transform_table_string(cache, instance_id, table_name, db_dir, index)
+    builder.transform_table_string(cache, instance_id, table_name, db_dir, index, arguments=True)
+
     results = funct(**builder.arguments)
 
     if index is not None and builder.return_type == constants.BUILDER_RTYPE_ROWWISE:
@@ -106,6 +107,7 @@ def _execute_code_from_builder(
                 table_name,
                 db_dir,
             )
+            cache[constants.TABLE_SELF].at[index, builder.changed_columns[0]] = results
         else:
             for i, result in enumerate(results):
                 table_operations.write_df_entry(
@@ -116,18 +118,30 @@ def _execute_code_from_builder(
                     table_name,
                     db_dir,
                 )
-        return None
+                cache[constants.TABLE_SELF].at[index, builder.changed_columns[i]] = result
     elif builder.return_type == constants.BUILDER_RTYPE_GENERATOR:
-        for results_ in results:
-            for i, result in results_:
+        for index, results_ in results:
+            if len(builder.changed_columns) == 1:
                 table_operations.write_df_entry(
-                    result,
+                    results_,
                     index,
-                    builder.changed_columns[i],
+                    builder.changed_columns[0],
                     instance_id,
                     table_name,
                     db_dir,
                 )
+                cache[constants.TABLE_SELF].at[index, builder.changed_columns[0]] = results_
+            else:
+                for i, result in enumerate(results_):
+                    table_operations.write_df_entry(
+                        result,
+                        index,
+                        builder.changed_columns[i],
+                        instance_id,
+                        table_name,
+                        db_dir,
+                    )
+                    cache[constants.TABLE_SELF].at[index, builder.changed_columns[i]] = result
     elif builder.return_type == constants.BUILDER_RTYPE_DATAFRAME:
         diff_flag = table_operations.save_new_columns(
             results,
@@ -139,3 +153,5 @@ def _execute_code_from_builder(
             keep_old=builder.keep_old,
         )
         return diff_flag
+    else:
+        raise tv_errors.TVBuilderError("return_type not recognized")

@@ -8,6 +8,7 @@ BUILDER_NAME = "name"
 BUILDER_TYPE = "builder_type"
 INDEX_BUILDER_SUFFIX = "_index"
 BUILDER_DEPENDENCIES = "dependencies"
+BUILDER_ARGUMENTS = "arguments"
 
 META_LOG_FILE = "logs.txt"
 META_CLOG_FILE = "log_ids.txt"
