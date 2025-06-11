@@ -3,7 +3,7 @@ import pandas as pd
 import shutil
 
 
-def create_paper_table_from_folder(folder_dir, copies, artifact_folder):
+def create_paper_table_from_folder(folder_dir, copies, artifact_folder, extension='.pdf'):
     """
     Scan a folder for PDF files, copy them into an artifact directory, and build a DataFrame
     describing each paper.
@@ -17,14 +17,16 @@ def create_paper_table_from_folder(folder_dir, copies, artifact_folder):
     :type copies: int
     :param artifact_folder: Path to the directory where copies of the PDF files will be written.
     :type artifact_folder: str
+    :param extension: File extension to be filtered.
+    :type extension: str
 
-    :return: A DataFrame with three columns: "paper_name", "artifact_name", and "original_path".
+    :return: A DataFrame with three columns: "file_name", "artifact_name", and "original_path".
              Each row corresponds to one copied file artifact.
     :rtype: pandas.DataFrame
     """
     papers = []
     for file_name in os.listdir(folder_dir):
-        if file_name.endswith(".pdf"):
+        if file_name.endswith(extension):
             name, extension = file_name.split(".")
             path = os.path.join(folder_dir, file_name)
             if copies == 1:
@@ -38,7 +40,7 @@ def create_paper_table_from_folder(folder_dir, copies, artifact_folder):
                     artifact_path = os.path.join(artifact_folder, file_name_)
                     shutil.copy(path, artifact_path)
                     papers.append([name_, file_name_, path])
-    df = pd.DataFrame(papers, columns=["paper_name", "artifact_name", "original_path"])
+    df = pd.DataFrame(papers, columns=["file_name", "artifact_name", "original_path"])
     return df
 
 

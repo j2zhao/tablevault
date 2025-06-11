@@ -20,7 +20,8 @@ The **YAML Builder** tab has the **specified** arguments of the builder file for
     create_paper_table_from_folder(
         folder_dir: str,
         copies: int,
-        artifact_folder: str
+        artifact_folder: str,
+        extension: str ='.pdf'
     ) -> pandas.DataFrame
     ```
 
@@ -28,7 +29,7 @@ The **YAML Builder** tab has the **specified** arguments of the builder file for
 
     ```yaml
     builder_type: IndexBuilder
-    changed_columns: ['paper_name', 'artifact_name', 'original_path']
+    changed_columns: ['file_name', 'artifact_name', 'original_path']
     primary_key: ['paper_name'] 
     python_function: create_paper_table_from_folder
     code_module: table_generation
@@ -39,17 +40,18 @@ The **YAML Builder** tab has the **specified** arguments of the builder file for
     is_custom: false
     ```
 
-Scan a directory for **`.pdf` files**, copy each into an artifact directory, and return a table describing every copy.
+Scan a directory for **`extension` files**, copy each into an artifact directory, and return a table describing every copy.
 
 | Parameter         | Type  | Description                          |
 | ----------------- | ----- | ------------------------------------ |
 | `folder_dir`      | `str` | Folder containing the source PDFs    |
-| `copies`          | `int` | How many copies per PDF (≥1)         |
+| `copies`          | `int` | How many copies per file (≥1)        |
 | `artifact_folder` | `str` | Destination directory for the copies |
+| `extension`       | `str` | File extension to be filtered        |
 
 The resulting `DataFrame` has three columns:
 
-1. **`paper_name`** – base filename (without extension)
+1. **`file_name`** – base filename (without extension)
 2. **`artifact_name`** – copied file’s name (includes suffixes when `copies > 1`)
 3. **`original_path`** – path to the original PDF
 
