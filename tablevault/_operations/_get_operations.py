@@ -107,13 +107,15 @@ def get_builders_list(
 
 
 def get_builder_str(
+    table_name: str,
     builder_name: str,
     instance_id: str,
-    table_name: str,
     version: str,
     is_temp: bool,
     db_dir: str,
 ) -> str:
+    if builder_name == "":
+        builder_name = builder_name + constants.INDEX_BUILDER_SUFFIX
     if instance_id == "":
         if is_temp:
             instance_id = constants.TEMP_INSTANCE + version

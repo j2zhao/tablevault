@@ -90,7 +90,7 @@ Return a **copy** of `df`, optionally truncated to the first `nrows`.
 | Parameter | Type               | Description |                                       |
 | --------- | ------------------ | ----------- | ------------------------------------- |
 | `df`      | `pandas.DataFrame` | Source data |                                       |
-| `nrows`   | \`int              | None\`      | Row limit (leave `None` for all rows) |
+| `nrows`   | `int`              | `None`      | Row limit (leave `None` for all rows) |
 
 ---
 
@@ -114,11 +114,11 @@ Return a **copy** of `df`, optionally truncated to the first `nrows`.
     is_custom: false
     ```
 
-    Load a CSV file into a new `DataFrame` and return a copy.
+Load a CSV file into a new `DataFrame` and return a copy.
 
-    | Parameter       | Type  | Description             |
-    | --------------- | ----- | ----------------------- |
-    | `csv_file_path` | `str` | Path to the CSV on disk |
+| Parameter       | Type  | Description             |
+| --------------- | ----- | ----------------------- |
+| `csv_file_path` | `str` | Path to the CSV on disk |
 
 ---
 

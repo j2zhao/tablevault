@@ -118,7 +118,7 @@ def create_builder_file(
 | Parameter      | Type  | Description                           | Default                        |
 | -------------- | ----- | ------------------------------------- | ------------------------------ |
 | `table_name`   | `str` | Name of the table.                    | –                              |
-| `builder_name` | `str` | Builder file name; empty ⇒ inferred.  | `""`                           |
+| `builder_name` | `str` | Builder file name; empty ⇒ inferred.  | `{table_name}_index`           |
 | `version`      | `str` | Version of the table.                 | `constants.BASE_TABLE_VERSION` |
 | `copy_dir`     | `str` | Directory containing builder file(s). | `""`                           |
 | `process_id`   | `str` | Calling process identifier.           | `""`                           |
@@ -511,8 +511,8 @@ List builder scripts stored within a specific table instance.
 ```python
 def get_builder_str(
     self,
-    builder_name: str,
     table_name: str,
+    builder_name: str = "",
     instance_id: str = "",
     version: str = constants.BASE_TABLE_VERSION,
     is_temp: bool = True,
@@ -521,13 +521,13 @@ def get_builder_str(
 
 Retrieve a stored builder script as plain text.
 
-| Parameter      | Type   | Description                                      | Default                        |
-| -------------- | ------ | ------------------------------------------------ | ------------------------------ |
-| `builder_name` | `str`  | Name of the builder file (without “.py”).        | –                              |
-| `table_name`   | `str`  | Table that owns the builder.                     | –                              |
-| `instance_id`  | `str`  | Specific instance (empty ⇒ latest of *version*). | `""`                           |
-| `version`      | `str`  | Version used when *instance\_id* omitted.        | `constants.BASE_TABLE_VERSION` |
-| `is_temp`      | `bool` | **True** ⇒ read from temporary instance.         | `True`                         |
+| Parameter      | Type   | Description                                      | Default                          |
+| -------------- | ------ | ------------------------------------------------ | -------------------------------- |
+| `table_name`   | `str`  | Table that owns the builder.                     | –                                |
+| `builder_name` | `str`  | Name of the builder file (empty ⇒ inferred).     | `{table_name}_index` (converted) |
+| `instance_id`  | `str`  | Specific instance (empty ⇒ latest of *version*). | `""`                             |
+| `version`      | `str`  | Version used when *instance\_id* omitted.        | `constants.BASE_TABLE_VERSION`   |
+| `is_temp`      | `bool` | **True** ⇒ read from temporary instance.         | `True`                           |
 
 **Returns** → `str` – full source code of the builder.
 

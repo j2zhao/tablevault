@@ -73,7 +73,7 @@ Create a new temporary instance of a table.
 
 | Option            | Type   | Description                                                                         | Default                 |
 | ----------------- | ------ | ----------------------------------------------------------------------------------- | ----------------------- |
-| `--version`       | `TEXT` | Table version.                                                                      | `""`                    |
+| `--version`       | `TEXT` | Version of the table.                                                               | `""`                    |
 | `--origin-id`     | `TEXT` | If supplied, copy state from this existing instance ID.                             | `""`                    |
 | `--origin-table`  | `TEXT` | Table associated with `origin-id`. Defaults to `table_name` if empty.               | `""`                    |
 | `--external-edit` |        | If set, this instance will be edited externally (no builder files constructed).     | Flag (False by default) |
@@ -125,8 +125,8 @@ Add or update a builder (YAML) file for a temporary table instance.
 
 | Option           | Type   | Description                                                                 | Default                        |
 | ---------------- | ------ | --------------------------------------------------------------------------- | ------------------------------ |
-| `--builder-name` | `TEXT` | File name of the builder. If empty, inferred from `copy-dir`.                 | `""`                           |
-| `--version`      | `TEXT` | Version of the table.                                                       | `constants.BASE_TABLE_VERSION` |
+| `--builder-name` | `TEXT` | File name of the builder. If empty, inferred from `copy-dir`.               | `""`                           |
+| `--version`      | `TEXT` | Version of the table.                                                       | `base`                         |
 | `--copy-dir`     | `PATH` | Local directory containing the builder file(s) to copy.                     | `""`                           |
 | `-h, --help`     |        | Show this message and exit.                                                 |                                |
 
@@ -157,7 +157,7 @@ Materialise an existing temporary table instance.
 
 | Option         | Type   | Description                                                                 | Default                        |
 | -------------- | ------ | --------------------------------------------------------------------------- | ------------------------------ |
-| `--version`    | `TEXT` | Version of the table.                                                       | `constants.BASE_TABLE_VERSION` |
+| `--version`    | `TEXT` | Version of the table.                                                       | `base`                         |
 | `--force`      |        | Force a full rebuild; otherwise, attempts to reuse an origin instance.      | Flag (False by default)        |
 | `--background` |        | Run materialisation in a background process.                                | Flag (False by default)        |
 | `-h, --help`   |        | Show this message and exit.                                                 |                                |
@@ -184,11 +184,11 @@ Write data from a CSV file as a materialized instance of a table. The table must
 
 **Options:**
 
-| Option      | Type   | Description                                   | Default                        |
-| ----------- | ------ | --------------------------------------------- | ------------------------------ |
+| Option      | Type   | Description                                                   | Default                        |
+| ----------- | ------ | ------------------------------------------------------------- | ------------------------------ |
 | `--csv`     | `PATH` | **Required.** CSV file containing the dataframe (must exist). | –                              |
-| `--version` | `TEXT` | Target version.                               | `constants.BASE_TABLE_VERSION` |
-| `-h, --help`|        | Show this message and exit.                   |                                |
+| `--version` | `TEXT` | Table version.                                                | `base`                         |
+| `-h, --help`|        | Show this message and exit.                                   |                                |
 
 **Output:**
 Prints the process ID of the executed write operation.
@@ -322,9 +322,9 @@ Remove a builder file from a temporary table instance.
 
 **Options:**
 
-| Option      | Type   | Description           | Default                        |
-| ----------- | ------ | --------------------- | ------------------------------ |
-| `--version` | `TEXT` | Version of the table. | `constants.BASE_TABLE_VERSION` |
+| Option      | Type   | Description                 | Default                        |
+| ----------- | ------ | --------------------------- | ------------------------------ |
+| `--version` | `TEXT` | Version of the table.       | `base`                         |
 | `-h, --help`|        | Show this message and exit. |                                |
 
 **Output:**
@@ -409,7 +409,7 @@ Fetch a table instance and write its contents to a CSV file.
 | -------------------- | ------ | ------------------------------------------------------------------------------------------------ | ----------------------------------- |
 | `--output`           | `PATH` | **Required.** Destination CSV file path.                                                         | –                                   |
 | `--instance-id`      | `TEXT` | Specific instance ID (empty ⇒ latest of `version`).                                              | `""`                                |
-| `--version`          | `TEXT` | Table version (used if `instance-id` omitted).                                                   | `constants.BASE_TABLE_VERSION`      |
+| `--version`          | `TEXT` | Table version (used if `instance-id` omitted).                                                   | `base`                              |
 | `--rows`             | `INT`  | Limit rows fetched (`None` = no limit).                                                          | `None`                              |
 | `--include-inactive` |        | If set, also consider *inactive* instances (negates `active_only`).                              | Flag (False by default)             |
 | `--successful-only`  |        | If set, require the instance to have completed successfully.                                     | Flag (False by default)             |
@@ -497,7 +497,7 @@ Return the builder script names contained in a table instance.
 | Option                    | Type   | Description                                                      | Default                        |
 | ------------------------- | ------ | ---------------------------------------------------------------- | ------------------------------ |
 | `--instance-id`           | `TEXT` | Specific instance (empty ⇒ latest).                              | `""`                           |
-| `--version`               | `TEXT` | Version used if `instance-id` omitted.                           | `constants.BASE_TABLE_VERSION` |
+| `--version`               | `TEXT` | Version used if `instance-id` omitted.                           | `base`                         |
 | `--temp / --materialised` |        | Inspect a temporary (`--temp`) or final (`--materialised`) copy. | `--temp`                       |
 | `-h, --help`              |        | Show this message and exit.                                      |                                |
 
@@ -509,7 +509,7 @@ Prints a JSON list of builder filenames.
 ### `get-builder-str`
 
 ```bash
-tablevault get-builder-str <BUILDER_NAME> <TABLE_NAME> [OPTIONS]
+tablevault get-builder-str <TABLE_NAME> [OPTIONS]
 ```
 
 Print the source of a stored builder script.
@@ -521,6 +521,7 @@ Print the source of a stored builder script.
 
 | Option                    | Type   | Description                                                        | Default                        |
 | ------------------------- | ------ | ------------------------------------------------------------------ | ------------------------------ |
+| `--builder-name`          | `TEXT` | Name of the builder file (empty ⇒ inferred).                       | `{table_name}_index`           |
 | `--instance-id`           | `TEXT` | Specific instance (empty ⇒ latest).                                | `""`                           |
 | `--version`               | `TEXT` | Version used if `instance-id` omitted.                             | `constants.BASE_TABLE_VERSION` |
 | `--temp / --materialised` |        | Read from temporary (`--temp`) or materialised (`--materialised`). | `--temp`                       |

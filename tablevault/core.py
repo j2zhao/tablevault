@@ -217,17 +217,19 @@ class TableVault:
 
     def get_builder_str(
         self,
-        builder_name: str,
         table_name: str,
+        builder_name: str = "",
         instance_id: str = "",
         version: str = constants.BASE_TABLE_VERSION,
         is_temp: bool = True,
     ) -> str:
         """Retrieve the text of the stored builder as a string.
 
-        :param str module_name: Name of the module.
-            Do not include ``.py`` extension.
         :param str table_name: Name of the table.
+        :param str module_name: Name of the module.
+            Do not include ``.yaml`` extension. If empty, assumed as
+            `{table_name}_index`
+            *Optional*.
         :param str instance_id: ID of a specific instance to fetch.  If empty, the
             latest instance of *version* that satisfies conditions is used. *Optional*.
         :param str version: Fetch the latest instance of *version* if *instance_id* is
@@ -238,8 +240,8 @@ class TableVault:
         :returns str: The contents of the `builder_name` file as a string.
         """
         return _get_operations.get_builder_str(
-            builder_name=builder_name,
             instance_id=instance_id,
+            builder_name=builder_name,
             table_name=table_name,
             version=version,
             is_temp=is_temp,

@@ -246,8 +246,8 @@ def get_builders_list_cmd(
 
 
 @cli.command("get-builder-str")
-@click.argument("builder_name")
 @click.argument("table_name")
+@click.option("--builder-name",default="")
 @click.option("--instance-id", default="")
 @click.option("--version", default=constants.BASE_TABLE_VERSION)
 @click.option(

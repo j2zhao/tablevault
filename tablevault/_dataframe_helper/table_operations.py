@@ -19,15 +19,18 @@ nullable_map = {
     "int16": "Int16",
     "int32": "Int32",
     "int64": "Int64",
+    "int": "Int64",
     # unsigned integers
     "uint8": "UInt8",
     "uint16": "UInt16",
     "uint32": "UInt32",
     "uint64": "UInt64",
+    "uint": "UInt64",
     # floats (all mapped to Float64, the only nullable float)
     "float16": "Float64",
     "float32": "Float64",
     "float64": "Float64",
+    "float": "Float64",
 }
 
 valid_nullable_dtypes = [
@@ -61,7 +64,7 @@ valid_nullable_dtypes = [
 
 def update_dtypes(
     dtypes: dict[str, str], instance_id: str, table_name: str, db_dir: str
-) -> None:
+) -> dict[str, str]:
     filewriter = CopyOnWriteFile(db_dir)
     type_path = os.path.join(db_dir, table_name, instance_id, constants.DTYPE_FILE)
     with filewriter.open(type_path, "r") as f:
@@ -76,9 +79,9 @@ def update_dtypes(
         dtypes_[col_name] = dtype
     with filewriter.open(type_path, "w") as f:
         json.dump(dtypes_, f)
+    return dtypes
 
-
-def write_dtype(dtypes, instance_id, table_name, db_dir) -> None:
+def write_dtype(dtypes, instance_id, table_name, db_dir) -> dict[str, str]:
     filewriter = CopyOnWriteFile(db_dir)
     table_dir = os.path.join(db_dir, table_name, instance_id)
     dtypes = {col: str(dtype) for col, dtype in dtypes.items()}
@@ -93,6 +96,7 @@ def write_dtype(dtypes, instance_id, table_name, db_dir) -> None:
     type_path = os.path.join(table_dir, constants.DTYPE_FILE)
     with filewriter.open(type_path, "w") as f:
         json.dump(dtypes, f)
+    return dtypes
 
 
 def write_table(
