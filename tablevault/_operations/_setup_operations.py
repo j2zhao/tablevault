@@ -66,7 +66,6 @@ def setup_create_builder_file(
     existance = db_metadata.get_table_instances(table_name, "", include_temp=True)
     if existance is None:
         raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
-    print(existance)
     if instance_id not in existance:
         raise tv_errors.TVArgumentError("instance doesn't exist")
     db_locks.acquire_exclusive_lock(table_name, instance_id)

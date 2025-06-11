@@ -284,6 +284,8 @@ class TableReference:
             else:
                 # propagate “can’t resolve yet” by returning the reference object itself
                 return self
+        except Exception as e:
+            raise tv_errors.TVArgumentError(f"Couldn't parse TableReference: {e}")
 
     # ---------------------------- factory ----------------------------
     @classmethod
@@ -393,6 +395,10 @@ def _read_table_reference(ref: TableValue, cache: Cache, index: Optional[int]) -
                 table_columns.append(col.parse(cache, index, raise_error=True))
             else:
                 table_columns.append(col)
+    if table_name == constants.TABLE_SELF:
+        for col in table_columns:
+            if col not in cache[table_name].columns:
+                raise tv_errors.TableReferenceError()
     if isinstance(ref.version, TableReference):
         table_version = ref.version.parse(cache, index, raise_error=True)
     else:
