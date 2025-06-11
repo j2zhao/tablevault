@@ -479,7 +479,7 @@ class MetadataStore:
             if include_temp:
                 table_temp = self._get_table_temp()
                 if table_name in table_temp:
-                    instances.append(table_temp[table_name].copy())
+                    instances += table_temp[table_name]
             if version != "":
                 instances_ = [instance for instance in instances if version in instance]
                 instances = instances_

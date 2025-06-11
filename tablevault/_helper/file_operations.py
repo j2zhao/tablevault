@@ -424,8 +424,6 @@ def create_copy_code_file(
                     f.write(text)
             except Exception as e:
                 raise TVFileError(f"could not create code file: {e}")
-        
-        
 
 
 def delete_code_file(module_name: str, db_dir: str):
@@ -516,8 +514,6 @@ def create_copy_builder_file(
                     f.write(text)
             except Exception as e:
                 raise TVFileError(f"could not create builder file: {e}")
-        
-            
 
 
 def move_artifacts_to_table(db_dir: str, table_name: str = "", instance_id: str = ""):

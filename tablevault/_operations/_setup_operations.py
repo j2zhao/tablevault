@@ -62,12 +62,13 @@ def setup_create_builder_file(
     instance_id = constants.TEMP_INSTANCE + version
     if builder_name == "" and copy_dir == "":
         builder_name = f"{table_name}{constants.INDEX_BUILDER_SUFFIX}"
-    
-    existance = file_operations.check_folder_existance(
-        instance_id, table_name, db_metadata.db_dir
-    )
+
+    existance = db_metadata.get_table_instances(table_name, "", include_temp=True)
     if existance is None:
-        raise tv_errors.TVArgumentError("temporary instance doesn't exist")
+        raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
+    print(existance)
+    if instance_id not in existance:
+        raise tv_errors.TVArgumentError("instance doesn't exist")
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     file_operations.copy_folder_to_temp(
         process_id,
@@ -97,11 +98,11 @@ def setup_delete_builder_file(
     db_locks: DatabaseLock,
 ) -> SETUP_OUTPUT:
     instance_id = constants.TEMP_INSTANCE + version
-    existance = file_operations.check_folder_existance(
-        instance_id, table_name, db_metadata.db_dir
-    )
+    existance = db_metadata.get_table_instances(table_name, "", include_temp=True)
     if existance is None:
-        raise tv_errors.TVArgumentError("temporary instance doesn't exist")
+        raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
+    if instance_id not in existance:
+        raise tv_errors.TVArgumentError("instance doesn't exist")
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     file_operations.copy_folder_to_temp(
         process_id,
@@ -133,10 +134,10 @@ def setup_rename_table(
         raise tv_errors.TVArgumentError("Forbidden Table Name: {new_table_name}")
     existance = db_metadata.get_table_instances(table_name, "")
     if existance is None:
-        raise tv_errors.TVArgumentError("table_name doesn't exist")
+        raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
     existance = db_metadata.get_table_instances(new_table_name, "")
     if existance is not None:
-        raise tv_errors.TVArgumentError("new_table_name exist")
+        raise tv_errors.TVArgumentError(f"{new_table_name} exist")
     db_locks.acquire_exclusive_lock(table_name)
     db_locks.make_lock_path(new_table_name)
     db_locks.make_lock_path(new_table_name, constants.ARTIFACT_FOLDER)
@@ -159,7 +160,7 @@ def setup_delete_table(
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
     existance = db_metadata.get_table_instances(table_name, "")
     if existance is None:
-        raise tv_errors.TVArgumentError("table_name doesn't exist")
+        raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
     db_locks.acquire_exclusive_lock(table_name)
     file_operations.copy_folder_to_temp(
         process_id, db_metadata.db_dir, table_name=table_name
@@ -178,14 +179,11 @@ def setup_delete_instance(
 ) -> SETUP_OUTPUT:
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
-    existance = db_metadata.get_table_instances(table_name, "")
+    existance = db_metadata.get_table_instances(table_name, "", include_temp=True)
     if existance is None:
-        raise tv_errors.TVArgumentError("table_name doesn't exist")
-    existance = file_operations.check_folder_existance(
-        instance_id, table_name, db_metadata.db_dir
-    )
-    if existance is None:
-        raise tv_errors.TVArgumentError("temporary instance doesn't exist")
+        raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
+    if instance_id not in existance:
+        raise tv_errors.TVArgumentError("instance doesn't exist")
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     file_operations.copy_folder_to_temp(
         process_id, db_metadata.db_dir, instance_id=instance_id, table_name=table_name
@@ -220,14 +218,11 @@ def setup_materialize_instance(
             start_time = db_metadata.get_active_processes()[process_id].start_time
             perm_instance_id = "_" + str(int(start_time)) + "_" + gen_tv_id()
             perm_instance_id = version + perm_instance_id
-    existance = db_metadata.get_table_instances(table_name, "")
+    existance = db_metadata.get_table_instances(table_name, "", include_temp=True)
     if existance is None:
-        raise tv_errors.TVArgumentError("table_name doesn't exist")
-    existance = file_operations.check_folder_existance(
-        instance_id, table_name, db_metadata.db_dir
-    )
-    if existance is None:
-        raise tv_errors.TVArgumentError("temporary instance doesn't exist")
+        raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
+    if instance_id not in existance:
+        raise tv_errors.TVArgumentError("instance doesn't exist")
     # db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     db_locks.make_lock_path(table_name, perm_instance_id)
@@ -449,14 +444,11 @@ def setup_write_instance(
     if version == "":
         version = constants.BASE_TABLE_VERSION
     instance_id = constants.TEMP_INSTANCE + version
-    existance = db_metadata.get_table_instances(table_name, "")
+    existance = db_metadata.get_table_instances(table_name, "", include_temp=True)
     if existance is None:
-        raise tv_errors.TVArgumentError("table_name doesn't exist")
-    existance = file_operations.check_folder_existance(
-        instance_id, table_name, db_metadata.db_dir
-    )
-    if existance is None:
-        raise tv_errors.TVArgumentError("temporary instance doesn't exist")
+        raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
+    if instance_id not in existance:
+        raise tv_errors.TVArgumentError("instance doesn't exist")
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     instance_data = file_operations.get_description(
         instance_id, table_name, db_metadata.db_dir
@@ -577,14 +569,11 @@ def setup_execute_instance(
     perm_instance_id = "_" + str(int(start_time)) + "_" + gen_tv_id()
     perm_instance_id = version + perm_instance_id
     instance_id = constants.TEMP_INSTANCE + version
-    existance = db_metadata.get_table_instances(table_name, "")
+    existance = db_metadata.get_table_instances(table_name, "", include_temp=True)
     if existance is None:
-        raise tv_errors.TVArgumentError("table_name doesn't exist")
-    existance = file_operations.check_folder_existance(
-        instance_id, table_name, db_metadata.db_dir
-    )
-    if existance is None:
-        raise tv_errors.TVArgumentError("temporary instance doesn't exist")
+        raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
+    if instance_id not in existance:
+        raise tv_errors.TVArgumentError("instance doesn't exist")
     instance_data = file_operations.get_description(
         instance_id, table_name, db_metadata.db_dir
     )
@@ -701,7 +690,7 @@ def setup_create_instance(
     instance_id = constants.TEMP_INSTANCE + version
     existance = db_metadata.get_table_instances(table_name, "")
     if existance is None:
-        raise tv_errors.TVArgumentError("table_name doesn't exist")
+        raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
     start_time = db_metadata.get_active_processes()[process_id].start_time
     if origin_id != "":
         if origin_table == "":
@@ -747,6 +736,9 @@ def setup_create_table(
 ) -> SETUP_OUTPUT:
     if table_name in constants.ILLEGAL_TABLE_NAMES or table_name.startswith("."):
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
+    existance = db_metadata.get_table_instances(table_name, "")
+    if existance is not None:
+        raise tv_errors.TVArgumentError(f"{table_name} exists")
     funct_kwargs = {
         "table_name": table_name,
         "allow_multiple_artifacts": allow_multiple_artifacts,

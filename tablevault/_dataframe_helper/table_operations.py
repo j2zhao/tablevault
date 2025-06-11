@@ -339,7 +339,6 @@ def check_table(
                 artifact_path = os.path.join(artifact_dirs[0], val)
                 for dir in artifact_dirs:
                     artifact_temp_path = os.path.join(dir, val)
-                    print(artifact_temp_path)
                     if os.path.exists(artifact_temp_path):
                         if artifact_temp_path != artifact_path:
                             filewriter.linkfile(artifact_temp_path, artifact_path)

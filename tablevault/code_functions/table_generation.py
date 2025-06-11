@@ -3,7 +3,9 @@ import pandas as pd
 import shutil
 
 
-def create_paper_table_from_folder(folder_dir, copies, artifact_folder, extension='.pdf'):
+def create_paper_table_from_folder(
+    folder_dir, copies, artifact_folder, extension=".pdf"
+):
     """
     Scan a folder for PDF files, copy them into an artifact directory, and build a DataFrame
     describing each paper.

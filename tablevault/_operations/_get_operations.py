@@ -43,7 +43,7 @@ def get_instances(
     db_dir: str,
 ):
     db_metadata = MetadataStore(db_dir)
-    return db_metadata.get_table_instances(table_name, version, include_temp=True)
+    return db_metadata.get_table_instances(table_name, version, include_temp=False)
 
 
 def get_descriptions(
