@@ -16,7 +16,7 @@ class IndexBuilder(TVBuilder):
         default=[],
         description="Specifies the output column names that index the table.",
     )
-    keep_old: list[Union[bool, TableReference]] = Field(
+    keep_old: Union[bool, TableReference] = Field(
         default=False, description="Keep previous dataframe rows."
     )
 
