@@ -169,15 +169,6 @@ def fetch_table_cache(
             )
         elif (table, instance) in cache:
             cache[(table, version)] = cache[(table, instance)]
-    for key in cache:
-        if isinstance(key, tuple):
-            temp = False
-            for dep in external_dependencies:
-                table_, _, _, _, version_ = dep
-                if table_ == table and version_ == version:
-                    temp = True
-            if not temp:
-                del cache[(table, version)]
     return cache
 
 
