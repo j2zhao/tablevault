@@ -5,7 +5,8 @@ from tablevault._helper import user_lock
 
 
 def copy_example_tv(new_dir_name="example_tv_copy", old_dir_name="example_tv"):
-    user_lock.set_writable(new_dir_name)
+    if os.path.exists(new_dir_name):
+        user_lock.set_writable(new_dir_name)
     if os.path.isdir(new_dir_name):
         shutil.rmtree(new_dir_name)
     shutil.copytree(old_dir_name, new_dir_name, dirs_exist_ok=True)
