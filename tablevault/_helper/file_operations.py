@@ -410,16 +410,22 @@ def create_copy_code_file(
         else:
             raise TVFileError("could not copy file path")
     else:
+        code_path = os.path.join(code_dir, f"{module_name}.py")
         if text == "":
             data = resources.read_binary("tablevault._helper.examples", "example.py")
+            try:
+                with filewriter.open(code_path, "wb") as f:
+                    f.write(data)
+            except Exception as e:
+                raise TVFileError(f"could not create code file: {e}")
         else:
-            data = text
-        code_path = os.path.join(code_dir, f"{module_name}.py")
-        try:
-            with filewriter.open(code_path, "wb") as f:
-                f.write(data)
-        except Exception as e:
-            raise TVFileError(f"could not create code file: {e}")
+            try:
+                with filewriter.open(code_path, "w") as f:
+                    f.write(text)
+            except Exception as e:
+                raise TVFileError(f"could not create code file: {e}")
+        
+        
 
 
 def delete_code_file(module_name: str, db_dir: str):
@@ -488,6 +494,7 @@ def create_copy_builder_file(
             raise TVFileError("could not copy builder path")
     else:
         index_name = table_name + constants.INDEX_BUILDER_SUFFIX
+        builder_path = os.path.join(builder_dir, f"{builder_name}.yaml")
         if builder_name == index_name:
             example_builder = BUILDER_EXAMPLE_MAPPING[builder_constants.INDEX_BUILDER]
         elif builder_name.endswith(constants.INDEX_BUILDER_SUFFIX):
@@ -498,14 +505,19 @@ def create_copy_builder_file(
             example_builder = BUILDER_EXAMPLE_MAPPING[builder_constants.COLUMN_BUILDER]
         if text == "":
             data = resources.read_binary(example_builder[0], example_builder[1])
+            try:
+                with filewriter.open(builder_path, "wb") as f:
+                    f.write(data)
+            except Exception as e:
+                raise TVFileError(f"could not create builder file: {e}")
         else:
-            data = text
-        builder_path = os.path.join(builder_dir, f"{builder_name}.yaml")
-        try:
-            with filewriter.open(builder_path, "wb") as f:
-                f.write(data)
-        except Exception as e:
-            raise TVFileError(f"could not create builder file: {e}")
+            try:
+                with filewriter.open(builder_path, "w") as f:
+                    f.write(text)
+            except Exception as e:
+                raise TVFileError(f"could not create builder file: {e}")
+        
+            
 
 
 def move_artifacts_to_table(db_dir: str, table_name: str = "", instance_id: str = ""):

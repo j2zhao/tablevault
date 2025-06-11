@@ -59,11 +59,10 @@ def setup_create_builder_file(
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
 ) -> SETUP_OUTPUT:
-    if builder_name == "" and copy_dir == "":
-        raise tv_errors.TVArgumentError(
-            "One of builder_name and copy_dir needs to be filled"
-        )
     instance_id = constants.TEMP_INSTANCE + version
+    if builder_name == "" and copy_dir == "":
+        builder_name = f"{instance_id}_{constants.INDEX_BUILDER_SUFFIX}.yaml"
+    
     existance = file_operations.check_folder_existance(
         instance_id, table_name, db_metadata.db_dir
     )
