@@ -21,7 +21,6 @@ class ColumnBuilder(TVBuilder):
             self.transform_table_string(
                 cache, instance_id, table_name, db_dir, index=None
             )
-            print(self.arguments)
             if not self.is_custom:
                 funct = utils.get_function_from_module(
                     self.code_module, self.python_function
@@ -83,10 +82,7 @@ def _execute_code_from_builder(
     
     builder = builder.model_copy(deep=True)
     builder.transform_table_string(cache, instance_id, table_name, db_dir, index)
-    print("HELLO")
-    print(builder.arguments)
     results = funct(**builder.arguments)
-    print('END')
     if index is not None and builder.return_type == constants.BUILDER_RTYPE_ROWWISE:
         if len(builder.changed_columns) == 1:
             table_operations.write_df_entry(

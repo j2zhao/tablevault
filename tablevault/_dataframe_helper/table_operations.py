@@ -407,7 +407,6 @@ def make_df(
                 {"index": pkf["index"], "col": pkf["col_name"], "val": pkf["value"]}
             )
     df = pd.DataFrame.from_records(records)
-    print(df)
     df = df.pivot(index="index", columns="col", values="val")
     diff_flag = save_new_columns(
         df,
