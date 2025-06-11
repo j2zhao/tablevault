@@ -80,7 +80,7 @@ class IndexBuilder(TVBuilder):
             )
             if diff_flag is None:
                 diff_flag = output
-            return diff_flag
+        return diff_flag
 
 
 def _execute_code_from_builder(

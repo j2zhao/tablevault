@@ -62,7 +62,6 @@ def execute_instance(
             table_name,
             db_metadata.db_dir,
         )
-
         db_metadata.update_process_step(process_id, constants.EX_CLEAR_TABLE)
     for i, builder_name in enumerate(top_builder_names):
         if builder_name in prev_completed_steps:

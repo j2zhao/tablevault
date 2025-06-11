@@ -30,15 +30,18 @@ The **YAML Builder** tab has the **specified** arguments of the builder file for
     ```yaml
     builder_type: IndexBuilder
     changed_columns: ['file_name', 'artifact_name', 'original_path']
-    primary_key: ['file_name'] 
+    primary_key: ['file_name']
     python_function: create_paper_table_from_folder
     code_module: table_generation
-    arguments:    
+    arguments:
         folder_dir: str
         copies: 1
-        artifact_folder:  ~ARTIFACT_STRING~
-        extension: '.pdf'
+        artifact_folder: ~ARTIFACT_FOLDER~
+        extension: '.txt'
     is_custom: false
+
+    dtypes:
+    artifact_name: artifact_string
     ```
 
 Scan a directory for **`extension` files**, copy each into an artifact directory, and return a table describing every copy.
