@@ -107,7 +107,6 @@ def _execute_code_from_builder(
                 table_name,
                 db_dir,
             )
-            cache[constants.TABLE_SELF].at[index, builder.changed_columns[0]] = results
         else:
             for i, result in enumerate(results):
                 table_operations.write_df_entry(
@@ -118,7 +117,6 @@ def _execute_code_from_builder(
                     table_name,
                     db_dir,
                 )
-                cache[constants.TABLE_SELF].at[index, builder.changed_columns[i]] = result
     elif builder.return_type == constants.BUILDER_RTYPE_GENERATOR:
         for index, results_ in results:
             if len(builder.changed_columns) == 1:
@@ -130,7 +128,6 @@ def _execute_code_from_builder(
                     table_name,
                     db_dir,
                 )
-                cache[constants.TABLE_SELF].at[index, builder.changed_columns[0]] = results_
             else:
                 for i, result in enumerate(results_):
                     table_operations.write_df_entry(
@@ -141,7 +138,6 @@ def _execute_code_from_builder(
                         table_name,
                         db_dir,
                     )
-                    cache[constants.TABLE_SELF].at[index, builder.changed_columns[i]] = result
     elif builder.return_type == constants.BUILDER_RTYPE_DATAFRAME:
         diff_flag = table_operations.save_new_columns(
             results,

@@ -54,7 +54,8 @@ def random_row_string(column_names, **kwargs):
     -------
     list
         A list of random alphanumeric strings, each of length 20,
-        corresponding to the entries in `column_names`.
+        corresponding to the entries in `column_names` or a single string
+        if `column_names` has only one entry
     """
     characters = string.ascii_letters + string.digits  # a-zA-Z0-9
     row = []
