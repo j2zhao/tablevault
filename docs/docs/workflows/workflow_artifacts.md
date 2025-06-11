@@ -4,7 +4,7 @@ In TableVault, an **artifact** is any file that isn't a dataframe. Every artifac
 
 ## 1. Creating an Artifact Table and Instance
 
-You can start with the `TableVault` repository generated with the [Basic Workflow]().
+You can start with the `TableVault` repository generated with the [Basic Workflow](workflow.md).
 
 ```python
 tablevault = TableVault(db_dir = "test_tv", author = "dixie")
@@ -56,7 +56,7 @@ tablevault.create_builder_file("fetch_image_artifact")
     code_module: table_generation                           # Module containing the function
     
     is_custom: true                                         # Mark as user-supplied (searches in code_functions)
-    row_wise: true                                          # Specifies if the function processes row by row
+    return_type: row-wise                                       # Specifies if the function processes row by row
     
     arguments:                                              # Arguments passed to the function
         fruit: <<self.fruits[index]>> 

@@ -62,7 +62,7 @@ All user-provided Python code functions for the TableVault repository are stored
 
 ### Code Function Specifications
 
-Executed code functions can return two types of objects. If `row-wise` is `False` (the default), the function must return a pandas DataFrame containing all columns listed in `changed_columns`. If `row-wise` is `True`, the function must return a tuple of objects representing one row, with all the columns specified in the `changed_columns` list. Row-wise execution is highly efficient for transformations where each row can be processed independently, such as applying a complex scoring model or making an API call for each entry.
+Executed code functions can return two types of objects. If `row-wise` is `False` (the default), the function must return a pandas DataFrame containing all columns listed in `changed_columns`. If `row-wise` is `True`, the function must return a tuple of objects (or a singular object) representing one row, with all the columns specified in the `changed_columns` list. Row-wise execution is highly efficient for transformations where each row can be processed independently, such as applying a complex scoring model or making an API call for each entry.
 
 In the row-wise case, TableVault executes the function once per row (based on the DataFrame's state before that builder is executed) and efficiently consolidates the results using a map-reduce approach. The functions can be executed across multiple Python threads, as specified by the `n_threads` argument in the builder file.
 

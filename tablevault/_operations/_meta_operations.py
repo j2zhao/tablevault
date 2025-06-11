@@ -39,7 +39,7 @@ def background_instance_execution(
         )
         TAKEDOWN_MAP[constants.EXECUTE_OP](process_id, db_metadata, db_locks)
         db_metadata.write_process(process_id)
-        raise e
+        raise
     except Exception as e:
         if force_takedown:
             error = (e.__class__.__name__, str(e))
@@ -48,7 +48,7 @@ def background_instance_execution(
             )
             TAKEDOWN_MAP[constants.EXECUTE_OP](process_id, db_metadata, db_locks)
             db_metadata.write_process(process_id)
-        raise e
+        raise
     db_metadata.update_process_execution_status(process_id, success=True)
     TAKEDOWN_MAP[constants.EXECUTE_OP](process_id, db_metadata, db_locks)
     db_metadata.write_process(process_id)
@@ -125,7 +125,7 @@ def tablevault_operation(
             )
             TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
             db_metadata.write_process(process_id)
-            raise e
+            raise
         except Exception as e:
             if force_takedown:
                 error = (e.__class__.__name__, str(e))
@@ -134,7 +134,7 @@ def tablevault_operation(
                 )
                 TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
                 db_metadata.write_process(process_id)
-            raise e
+            raise
 
         db_metadata.update_process_start_status(process_id, success=True)
 
@@ -160,7 +160,7 @@ def tablevault_operation(
             )
             TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
             db_metadata.write_process(process_id)
-            raise e
+            raise
         except Exception as e:
             if force_takedown:
                 error = (e.__class__.__name__, str(e))
@@ -169,7 +169,7 @@ def tablevault_operation(
                 )
                 TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
                 db_metadata.write_process(process_id)
-            raise e
+            raise
         db_metadata.update_process_execution_status(process_id, success=True)
         TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
         db_metadata.write_process(process_id)

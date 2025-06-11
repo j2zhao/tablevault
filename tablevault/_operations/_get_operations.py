@@ -5,6 +5,7 @@ from tablevault._defintions import constants
 from tablevault._dataframe_helper import artifact
 import pandas as pd
 from typing import Optional
+from rich.tree import Tree
 
 
 def get_process_completion(
@@ -63,7 +64,7 @@ def get_file_tree(
     artifact_files: bool,
     db_dir: str,
     safe_locking: bool,
-):
+) ->Tree:
     process_id = utils.gen_tv_id()
     db_lock = database_lock.DatabaseLock(process_id, db_dir)
     if safe_locking:

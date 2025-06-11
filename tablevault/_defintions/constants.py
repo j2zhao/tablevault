@@ -101,3 +101,7 @@ DESCRIPTION_FUTURE = "future_version"
 DESCRIPTION_CHILDREN = "children"
 DESCRIPTION_SUCCESS = "success"
 DESCRIPTION_ARTIFACT = "artifact_instance"
+
+BUILDER_RTYPE_DATAFRAME = "dataframe"
+BUILDER_RTYPE_ROWWISE = "row-wise"
+BUILDER_RTYPE_GENERATOR = "generator"

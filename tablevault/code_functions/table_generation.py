@@ -6,30 +6,34 @@ import shutil
 def create_paper_table_from_folder(
     folder_dir, copies, artifact_folder, extension=".pdf"
 ):
-    """
-    Scan a folder for PDF files, copy them into an artifact directory, and build a DataFrame
-    describing each paper.
+    """Scan a folder for files, copy them, and create a descriptive DataFrame.
 
-    :param folder_dir: Path to the directory containing PDF files to process.
-    :type folder_dir: str
-    :param copies: Number of copies to make of each PDF. If ``copies == 1``, a single copy is made
-                   under its original filename. If ``copies > 1``, multiple copies are made with a
-                   suffix ``_0``, ``_1``, etc. appended to the base filename (before the ``.pdf``
-                   extension).
-    :type copies: int
-    :param artifact_folder: Path to the directory where copies of the PDF files will be written.
-    :type artifact_folder: str
-    :param extension: File extension to be filtered.
-    :type extension: str
+    Scans a specified folder for files with a given extension, copies them
+    to an artifact directory, and builds a pandas DataFrame that catalogs
+    the original and copied files.
 
-    :return: A DataFrame with three columns: "file_name", "artifact_name", and "original_path".
-             Each row corresponds to one copied file artifact.
-    :rtype: pandas.DataFrame
+    Parameters
+    ----------
+    folder_dir : str
+        Path to the directory containing the files to process.
+    copies : int
+        Number of copies to make of each file. If `copies > 1`, a numeric
+        suffix (e.g., `_0`, `_1`) is appended to the filename.
+    artifact_folder : str
+        Path to the directory where copies of the files will be written.
+    extension : str, optional
+        The file extension to filter for, by default ".pdf".
+
+    Returns
+    -------
+    pandas.DataFrame
+        A DataFrame with three columns: "file_name", "artifact_name", and
+        "original_path". Each row corresponds to one copied file.
     """
     papers = []
     for file_name in os.listdir(folder_dir):
         if file_name.endswith(extension):
-            name, extension = file_name.split(".")
+            name, ext = os.path.splitext(file_name)
             path = os.path.join(folder_dir, file_name)
             if copies == 1:
                 artifact_path = os.path.join(artifact_folder, file_name)
@@ -37,8 +41,8 @@ def create_paper_table_from_folder(
                 papers.append([name, file_name, path])
             else:
                 for i in range(copies):
-                    name_ = name + "_" + str(i)
-                    file_name_ = name_ + "." + extension
+                    name_ = f"{name}_{i}"
+                    file_name_ = f"{name_}{ext}"
                     artifact_path = os.path.join(artifact_folder, file_name_)
                     shutil.copy(path, artifact_path)
                     papers.append([name_, file_name_, path])
@@ -46,49 +50,64 @@ def create_paper_table_from_folder(
     return df
 
 
-def create_data_table_from_table(df, nrows=None):
-    """
-    Return a copy of the given DataFrame, optionally truncated to the first n rows.
+def create_data_table_from_table(df, nrows=None, random_sample=False):
+    """Return a copy of a DataFrame with optional truncation or sampling.
 
-    :param df: The source DataFrame to copy.
-    :type df: pandas.DataFrame
-    :param nrows: If provided, only the first `nrows` rows of `df` will be included in the returned
-                  DataFrame. If ``None``, the entire DataFrame is copied.
-    :type nrows: int or None
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The source DataFrame to copy.
+    nrows : int, optional
+        The number of rows to include. If None, the entire DataFrame is
+        copied. By default None.
+    random_sample : bool, optional
+        If True and `nrows` is specified, randomly sample `nrows` rows
+        without replacement. If False, the first `nrows` are taken.
+        By default False.
 
-    :return: A copy of `df`, truncated to `nrows` rows if specified, otherwise a full copy.
-    :rtype: pandas.DataFrame
+    Returns
+    -------
+    pandas.DataFrame
+        A modified copy of the input DataFrame.
     """
-    if nrows is not None:
-        return df.head(nrows).copy()
-    return df.copy()
+    if nrows is None:
+        return df.copy()
+
+    if random_sample:
+        return df.sample(n=nrows, replace=False).copy()
+
+    return df.head(nrows).copy()
 
 
 def create_data_table_from_csv(csv_file_path):
-    """
-    Read a CSV file into a DataFrame and return a copy.
+    """Read a CSV file into a DataFrame.
 
-    :param csv_file_path: Path to the CSV file to read.
-    :type csv_file_path: str
+    Parameters
+    ----------
+    csv_file_path : str
+        Path to the CSV file to read.
 
-    :return: A DataFrame containing the contents of the CSV file. The returned DataFrame is a copy
-             of the data loaded from disk.
-    :rtype: pandas.DataFrame
+    Returns
+    -------
+    pandas.DataFrame
+        A DataFrame containing a copy of the data from the CSV file.
     """
     df = pd.read_csv(csv_file_path)
     return df.copy()
 
 
 def create_data_table_from_list(vals):
-    """
-    Construct a DataFrame from a list of values by creating a single-column table.
+    """Create a single-column DataFrame from a list of values.
 
-    :param vals: A Python list of values. Each element in the list becomes a row in the output
-                 DataFrame under the column name "temp_name".
-    :type vals: list
+    Parameters
+    ----------
+    vals : list
+        A list of values where each element will become a row.
 
-    :return: A DataFrame with one column, "temp_name", where each row corresponds to an entry in
-             `vals`.
-    :rtype: pandas.DataFrame
+    Returns
+    -------
+    pandas.DataFrame
+        A DataFrame with one column named "temp_name".
     """
     return pd.DataFrame({"temp_name": vals})
+

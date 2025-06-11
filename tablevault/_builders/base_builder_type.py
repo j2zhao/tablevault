@@ -31,8 +31,8 @@ class TVBuilder(BaseModel):
     )
     is_custom: Union[bool, TableReference] = Field(description="Custom to database.")
 
-    row_wise: Union[bool, TableReference] = Field(
-        default=False, description="Is a row-by-row function."
+    return_type: Union[str, TableReference] = Field(
+        default='dataframe', description="Return type: [dataframe, row-wise, generator]"
     )
 
     n_threads: Union[int, TableReference] = Field(

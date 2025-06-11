@@ -35,13 +35,13 @@ The **YAML Builder** tab has the **specified** arguments of the builder file for
     code_module: table_generation
     arguments:
         folder_dir: str
-        copies: 1
+        copies: int
         artifact_folder: ~ARTIFACT_FOLDER~
-        extension: '.txt'
+        extension: str
     is_custom: false
 
     dtypes:
-    artifact_name: artifact_string
+        artifact_name: artifact_string
     ```
 
 Scan a directory for **`extension` files**, copy each into an artifact directory, and return a table describing every copy.
@@ -68,9 +68,11 @@ The resulting `DataFrame` has three columns:
     ```python
     create_data_table_from_table(
         df: pandas.DataFrame,
-        nrows: int | None = None
+        nrows: int | None = None,
+        random_sample: bool = False
     ) -> pandas.DataFrame
     ```
+
 === "YAML Builder"
 
     ```yaml
@@ -78,19 +80,20 @@ The resulting `DataFrame` has three columns:
     changed_columns: list
     python_function: create_data_table_from_table
     code_module: table_generation
-    arguments:    
+    arguments:
         df: pandas.DataFrame
         nrows: int # Optional
+        random_sample: bool # Optional (need nrows)
     is_custom: false
     ```
 
+Return a **copy** of `df`, with optional truncation or random sampling.
 
-Return a **copy** of `df`, optionally truncated to the first `nrows`.
-
-| Parameter | Type               | Description |                                       |
-| --------- | ------------------ | ----------- | ------------------------------------- |
-| `df`      | `pandas.DataFrame` | Source data |                                       |
-| `nrows`   | `int`              | `None`      | Row limit (leave `None` for all rows) |
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `df` | `pandas.DataFrame` | | Source data |
+| `nrows` | `int` | `None` | Row limit (leave `None` for all rows) |
+| `random_sample` | `bool` | `False` | If `True`, randomly sample `nrows` from `df` |
 
 ---
 
@@ -110,7 +113,7 @@ Return a **copy** of `df`, optionally truncated to the first `nrows`.
     python_function: create_data_table_from_csv
     code_module: table_generation
     arguments:    
-        csv_file_path: pandas.str
+        csv_file_path: str
     is_custom: false
     ```
 
@@ -135,7 +138,7 @@ Load a CSV file into a new `DataFrame` and return a copy.
     ```yaml
     builder_type: IndexBuilder
     changed_columns: [str] # only single column
-    primary_key: list
+    primary_key: [str]
     python_function: create_data_table_from_list
     code_module: table_generation
     arguments:    
@@ -160,7 +163,7 @@ Turn an in-memory Python list into a single-column table.
 === "Python Code"
 
     ```python
-    random_row_string(colunm_names: list[str], **kwargs) -> tuple[str, ...]
+    random_row_string(column_names: list[str], **kwargs) -> tuple[str, ...] | str
     ```
 
 === "YAML Builder"
@@ -171,18 +174,18 @@ Turn an in-memory Python list into a single-column table.
     python_function: random_row_string
     code_module: random_string
     arguments:    
-        colunm_names: list[str] # same as changed_columns
+        column_names: list[str] # same length as changed_columns
     is_custom: false
-    row_wise: true
+    return_type: row-wise
     ```
 
-Produce a single tuple of random strings—one per name in `colunm_names`.
+Produce a single tuple of random strings—one per name in `column_names`.
 
 | Parameter      | Type        | Description                               |
 | -------------- | ----------- | ----------------------------------------- |
-| `colunm_names` | `list[str]` | Column labels that determine tuple length |
+| `column_names` | `list[str]` | Column labels that determine tuple length |
 | `**kwargs`     | *unused*    | Reserved for future options               |
 
-**Returns:** a length-`len(colunm_names)` tuple of 20-character strings.
+**Returns:** a length-`len(column_names)` tuple of 20-character strings or a singular string (if only one column).
 
 ---

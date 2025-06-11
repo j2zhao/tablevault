@@ -363,10 +363,10 @@ def get_file_tree(
     metadata_files: bool = False,
     artifact_files: bool = False,
     safe_locking: bool = True,
-) -> str:
+) -> rich.tree.Tree:
 ```
 
-Return a text-formatted tree (or RichTree object) of files contained in the target.
+Return a RichTree object of files contained in the target.
 
 | Parameter        | Type   | Description                                | Default |
 | ---------------- | ------ | ------------------------------------------ | ------- |
@@ -378,7 +378,7 @@ Return a text-formatted tree (or RichTree object) of files contained in the targ
 | `artifact_files` | `bool` | Include artifact directory contents.       | `False` |
 | `safe_locking`   | `bool` | Acquire read locks while generating tree.  | `True`  |
 
-**Returns** → `str` – printable file-tree representation.
+**Returns** → `rich.tree.Tree` – printable file-tree representation.
 
 ---
 

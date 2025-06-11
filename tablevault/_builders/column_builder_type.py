@@ -21,6 +21,7 @@ class ColumnBuilder(TVBuilder):
             self.transform_table_string(
                 cache, instance_id, table_name, db_dir, index=None
             )
+            print(self.arguments)
             if not self.is_custom:
                 funct = utils.get_function_from_module(
                     self.code_module, self.python_function
@@ -34,7 +35,7 @@ class ColumnBuilder(TVBuilder):
                     instance_id,
                     table_name,
                 )
-            if self.row_wise and self.n_threads != 1:
+            if self.return_type == constants.BUILDER_RTYPE_ROWWISE and self.n_threads != 1:
                 indices = list(range(len(cache[constants.TABLE_SELF])))
                 with ThreadPoolExecutor(max_workers=self.n_threads) as executor:
                     _ = list(
@@ -45,7 +46,7 @@ class ColumnBuilder(TVBuilder):
                             indices,
                         )
                     )
-            elif self.row_wise and self.n_threads == 1:
+            elif self.return_type == constants.BUILDER_RTYPE_ROWWISE and self.n_threads == 1:
                 for i in range(len(cache[constants.TABLE_SELF])):
                     _execute_code_from_builder(
                         i, self, funct, cache, instance_id, table_name, db_dir
@@ -79,21 +80,45 @@ def _execute_code_from_builder(
         )
         if is_filled:
             return
-
+    
     builder = builder.model_copy(deep=True)
     builder.transform_table_string(cache, instance_id, table_name, db_dir, index)
+    print("HELLO")
+    print(builder.arguments)
     results = funct(**builder.arguments)
-    if index is not None:
-        for i, result in enumerate(results):
+    print('END')
+    if index is not None and builder.return_type == constants.BUILDER_RTYPE_ROWWISE:
+        if len(builder.changed_columns) == 1:
             table_operations.write_df_entry(
-                result,
+                results,
                 index,
-                builder.changed_columns[i],
+                builder.changed_columns[0],
                 instance_id,
                 table_name,
                 db_dir,
             )
-    else:
+        else:
+            for i, result in enumerate(results):
+                table_operations.write_df_entry(
+                    result,
+                    index,
+                    builder.changed_columns[i],
+                    instance_id,
+                    table_name,
+                    db_dir,
+                )
+    elif builder.return_type == constants.BUILDER_RTYPE_GENERATOR:
+        for results_ in results:
+            for i, result in results_:
+                table_operations.write_df_entry(
+                    result,
+                    index,
+                    builder.changed_columns[i],
+                    instance_id,
+                    table_name,
+                    db_dir,
+                )
+    elif builder.return_type == constants.BUILDER_RTYPE_DATAFRAME:
         table_operations.save_new_columns(
             results, builder.changed_columns, instance_id, table_name, db_dir
         )

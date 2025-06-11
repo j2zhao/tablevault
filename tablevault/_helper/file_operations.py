@@ -691,7 +691,7 @@ def check_code_function_equality(
             origin_func, _ = load_code_function(
                 python_function, module_name, db_dir, instance_id, table_name
             )
-        except Exception as e:
+        except Exception:
             return False
         base_func, _ = load_code_function(python_function, module_name, db_dir)
         return origin_func.__code__ == base_func.__code__

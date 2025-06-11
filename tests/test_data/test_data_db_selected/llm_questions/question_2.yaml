@@ -3,9 +3,9 @@ changed_columns: [q2a, q2]
 python_function: random_row_string
 code_module: random_string
 is_custom: false
-row_wise: true
+return_type: row-wise
 arguments:
-  colunm_names: [q2a, q2]
+  column_names: [q2a, q2]
   upload_files:
     - <<llm_storage.openai_id[paper_name::<<self.paper_name[index]>>]>>
   file_msgs:

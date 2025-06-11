@@ -15,7 +15,7 @@ arguments:
 n_threads: 1
 
 is_custom: false # Optional: Default False
-row_wise: false # Optional: Default False
+return_type: dataframe # Optional: [row-wise, dataframe, generator]
 
 dtypes: # Optional datatype for columns
   COLUMN_NAME_1: Int64

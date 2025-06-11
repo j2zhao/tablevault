@@ -3,8 +3,9 @@ changed_columns: [openai_id]
 python_function: random_row_string
 code_module: random_string
 is_custom: false
-row_wise: true
+return_type: row-wise
+
 arguments:
-  colunm_names: [openai_id]
+  column_names: [openai_id]
   file_path: <<stories.artifact_name[paper_name::<<self.paper_name[index]>>]>>
   key_file: ./tests/test_data/open_ai_key/key.txt
