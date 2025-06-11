@@ -61,7 +61,7 @@ def setup_create_builder_file(
 ) -> SETUP_OUTPUT:
     instance_id = constants.TEMP_INSTANCE + version
     if builder_name == "" and copy_dir == "":
-        builder_name = f"{instance_id}_{constants.INDEX_BUILDER_SUFFIX}.yaml"
+        builder_name = f"{table_name}{constants.INDEX_BUILDER_SUFFIX}.yaml"
     
     existance = file_operations.check_folder_existance(
         instance_id, table_name, db_metadata.db_dir

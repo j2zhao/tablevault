@@ -494,7 +494,6 @@ def create_copy_builder_file(
             raise TVFileError("could not copy builder path")
     else:
         index_name = table_name + constants.INDEX_BUILDER_SUFFIX
-        builder_path = os.path.join(builder_dir, f"{builder_name}.yaml")
         if builder_name == index_name:
             example_builder = BUILDER_EXAMPLE_MAPPING[builder_constants.INDEX_BUILDER]
         elif builder_name.endswith(constants.INDEX_BUILDER_SUFFIX):
@@ -503,6 +502,7 @@ def create_copy_builder_file(
             )
         else:
             example_builder = BUILDER_EXAMPLE_MAPPING[builder_constants.COLUMN_BUILDER]
+        builder_path = os.path.join(builder_dir, f"{builder_name}.yaml")
         if text == "":
             data = resources.read_binary(example_builder[0], example_builder[1])
             try:
