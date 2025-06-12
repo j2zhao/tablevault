@@ -337,7 +337,7 @@
   
   
   <span class="md-ellipsis">
-    Builders, Code Functions, Artifacts, TableReferences
+    Builders, Python Functions, TableReferences, Artifacts
     
   </span>
   
@@ -828,9 +828,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#get-process-completion" class="md-nav__link">
+    <span class="md-ellipsis">
+      get-process-completion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-active-processes" class="md-nav__link">
+    <span class="md-ellipsis">
+      get-active-processes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-instances" class="md-nav__link">
+    <span class="md-ellipsis">
+      get-instances
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#get-descriptions" class="md-nav__link">
     <span class="md-ellipsis">
       get-descriptions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-artifact-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      get-artifact-folder
     </span>
   </a>
   
@@ -887,13 +923,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#vault-independent-utilities" class="md-nav__link">
+  <a href="#utility-commands" class="md-nav__link">
     <span class="md-ellipsis">
-      Vault-Independent Utilities
+      Utility Commands
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Vault-Independent Utilities">
+    <nav class="md-nav" aria-label="Utility Commands">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1371,9 +1407,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#get-process-completion" class="md-nav__link">
+    <span class="md-ellipsis">
+      get-process-completion
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-active-processes" class="md-nav__link">
+    <span class="md-ellipsis">
+      get-active-processes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-instances" class="md-nav__link">
+    <span class="md-ellipsis">
+      get-instances
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#get-descriptions" class="md-nav__link">
     <span class="md-ellipsis">
       get-descriptions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get-artifact-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      get-artifact-folder
     </span>
   </a>
   
@@ -1430,13 +1502,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#vault-independent-utilities" class="md-nav__link">
+  <a href="#utility-commands" class="md-nav__link">
     <span class="md-ellipsis">
-      Vault-Independent Utilities
+      Utility Commands
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Vault-Independent Utilities">
+    <nav class="md-nav" aria-label="Utility Commands">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1490,6 +1562,7 @@
   
 
 
+<p>Of course. Here is the updated CLI documentation with minimal edits to reflect the provided Python script.</p>
 <h1 id="tablevault-command-line-interface">TableVault Command Line Interface</h1>
 <p>A convenient command-line interface for <em>TableVault</em> operations.</p>
 <p>Most sub-commands require a <em>TableVault</em> instance. You can provide the <code>--db-dir</code> and <code>--author</code> global options once, and they will be reused by every command invoked.</p>
@@ -1498,26 +1571,26 @@
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--db-dir</code></td>
-<td><code>PATH</code></td>
-<td>Path to the TableVault directory (required by most commands).</td>
+<td style="text-align: left;"><code>--db-dir</code></td>
+<td style="text-align: left;"><code>PATH</code></td>
+<td style="text-align: left;">Path to the TableVault directory (required by most commands).</td>
 </tr>
 <tr>
-<td><code>--author</code></td>
-<td><code>TEXT</code></td>
-<td>Author name used for audit logging.</td>
+<td style="text-align: left;"><code>--author</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Author name used for audit logging.</td>
 </tr>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show the help message and exit.</td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show the help message and exit.</td>
 </tr>
 </tbody>
 </table>
@@ -1527,7 +1600,6 @@
 <hr />
 <h2 id="data-creation-commands">Data Creation Commands</h2>
 <p>These commands require the global <code>--db-dir</code> and <code>--author</code> options to be set.</p>
-<hr />
 <h3 id="create-table"><code>create-table</code></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>tablevault<span class="w"> </span>create-table<span class="w"> </span>&lt;TABLE_NAME&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </span></code></pre></div>
@@ -1536,16 +1608,16 @@
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>TABLE_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Name of the new table.</td>
+<td style="text-align: left;"><code>TABLE_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Name of the new table.</td>
 </tr>
 </tbody>
 </table>
@@ -1553,30 +1625,30 @@
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th></th>
-<th>Description</th>
-<th>Default</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--multiple-artifacts</code></td>
-<td></td>
-<td>If set, each materialised instance gets its own artifact folder.</td>
-<td>Flag (False by default)</td>
+<td style="text-align: left;"><code>--multiple-artifacts</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">If set, each materialised instance gets its own artifact folder.</td>
+<td style="text-align: left;">Flag (False by default)</td>
 </tr>
 <tr>
-<td><code>--side-effects</code></td>
-<td></td>
-<td>If set, builder files are assumed to have side effects (e.g., external API calls).</td>
-<td>Flag (False by default)</td>
+<td style="text-align: left;"><code>--side-effects</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">If set, builder files are assumed to have side effects (e.g., external API calls).</td>
+<td style="text-align: left;">Flag (False by default)</td>
 </tr>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
-<td></td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
 </tr>
 </tbody>
 </table>
@@ -1591,16 +1663,16 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>TABLE_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Name of the table.</td>
+<td style="text-align: left;"><code>TABLE_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Name of the table.</td>
 </tr>
 </tbody>
 </table>
@@ -1608,54 +1680,54 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--version</code></td>
-<td><code>TEXT</code></td>
-<td>Version of the table.</td>
-<td><code>""</code></td>
+<td style="text-align: left;"><code>--version</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Version of the table.</td>
+<td style="text-align: left;"><code>""</code></td>
 </tr>
 <tr>
-<td><code>--origin-id</code></td>
-<td><code>TEXT</code></td>
-<td>If supplied, copy state from this existing instance ID.</td>
-<td><code>""</code></td>
+<td style="text-align: left;"><code>--origin-id</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">If supplied, copy state from this existing instance ID.</td>
+<td style="text-align: left;"><code>""</code></td>
 </tr>
 <tr>
-<td><code>--origin-table</code></td>
-<td><code>TEXT</code></td>
-<td>Table associated with <code>origin-id</code>. Defaults to <code>table_name</code> if empty.</td>
-<td><code>""</code></td>
+<td style="text-align: left;"><code>--origin-table</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Table associated with <code>origin-id</code>. Defaults to <code>table_name</code> if empty.</td>
+<td style="text-align: left;"><code>""</code></td>
 </tr>
 <tr>
-<td><code>--external-edit</code></td>
-<td></td>
-<td>If set, this instance will be edited externally (no builder files constructed).</td>
-<td>Flag (False by default)</td>
+<td style="text-align: left;"><code>--external-edit</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">If set, this instance will be edited externally (no builder files constructed).</td>
+<td style="text-align: left;">Flag (False by default)</td>
 </tr>
 <tr>
-<td><code>--copy</code></td>
-<td></td>
-<td>If set, copy from the latest materialised instance (if <code>origin-id</code> not provided).</td>
-<td>Flag (False by default)</td>
+<td style="text-align: left;"><code>--copy</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">If set, copy from the latest materialised instance (if <code>origin-id</code> not provided).</td>
+<td style="text-align: left;">Flag (False by default)</td>
 </tr>
 <tr>
-<td><code>--builder</code></td>
-<td><code>TEXT</code></td>
-<td>Add builder names. Can be repeated for multiple builders.</td>
-<td>None (multiple)</td>
+<td style="text-align: left;"><code>--builder</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Add builder names. Can be repeated for multiple builders.</td>
+<td style="text-align: left;">None (multiple)</td>
 </tr>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
-<td></td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
 </tr>
 </tbody>
 </table>
@@ -1670,30 +1742,30 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--module-name</code></td>
-<td><code>TEXT</code></td>
-<td>Name for the new module. If empty, inferred from <code>copy-dir</code>.</td>
-<td><code>""</code></td>
+<td style="text-align: left;"><code>--module-name</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Name for the new module. If empty, inferred from <code>copy-dir</code>.</td>
+<td style="text-align: left;"><code>""</code></td>
 </tr>
 <tr>
-<td><code>--copy-dir</code></td>
-<td><code>PATH</code></td>
-<td>Local directory or Python file to copy. If empty, a new file is created.</td>
-<td><code>""</code></td>
+<td style="text-align: left;"><code>--copy-dir</code></td>
+<td style="text-align: left;"><code>PATH</code></td>
+<td style="text-align: left;">Local directory or Python file to copy. If empty, a new file is created.</td>
+<td style="text-align: left;"><code>""</code></td>
 </tr>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
-<td></td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
 </tr>
 </tbody>
 </table>
@@ -1708,16 +1780,16 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>TABLE_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Name of the table.</td>
+<td style="text-align: left;"><code>TABLE_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Name of the table.</td>
 </tr>
 </tbody>
 </table>
@@ -1725,36 +1797,36 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--builder-name</code></td>
-<td><code>TEXT</code></td>
-<td>File name of the builder. If empty, inferred from <code>copy-dir</code>.</td>
-<td><code>""</code></td>
+<td style="text-align: left;"><code>--builder-name</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">File name of the builder. If empty, inferred from <code>table_name</code>.</td>
+<td style="text-align: left;"><code>""</code></td>
 </tr>
 <tr>
-<td><code>--version</code></td>
-<td><code>TEXT</code></td>
-<td>Version of the table.</td>
-<td><code>base</code></td>
+<td style="text-align: left;"><code>--version</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Version of the table.</td>
+<td style="text-align: left;"><code>base</code></td>
 </tr>
 <tr>
-<td><code>--copy-dir</code></td>
-<td><code>PATH</code></td>
-<td>Local directory containing the builder file(s) to copy.</td>
-<td><code>""</code></td>
+<td style="text-align: left;"><code>--copy-dir</code></td>
+<td style="text-align: left;"><code>PATH</code></td>
+<td style="text-align: left;">Local directory containing the builder file(s) to copy.</td>
+<td style="text-align: left;"><code>""</code></td>
 </tr>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
-<td></td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
 </tr>
 </tbody>
 </table>
@@ -1770,16 +1842,16 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>TABLE_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Name of the table to materialise.</td>
+<td style="text-align: left;"><code>TABLE_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Name of the table to materialise.</td>
 </tr>
 </tbody>
 </table>
@@ -1787,36 +1859,36 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--version</code></td>
-<td><code>TEXT</code></td>
-<td>Version of the table.</td>
-<td><code>base</code></td>
+<td style="text-align: left;"><code>--version</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Version of the table.</td>
+<td style="text-align: left;"><code>base</code></td>
 </tr>
 <tr>
-<td><code>--force</code></td>
-<td></td>
-<td>Force a full rebuild; otherwise, attempts to reuse an origin instance.</td>
-<td>Flag (False by default)</td>
+<td style="text-align: left;"><code>--force</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Force a full rebuild; otherwise, attempts to reuse an origin instance.</td>
+<td style="text-align: left;">Flag (False by default)</td>
 </tr>
 <tr>
-<td><code>--background</code></td>
-<td></td>
-<td>Run materialisation in a background process.</td>
-<td>Flag (False by default)</td>
+<td style="text-align: left;"><code>--background</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Run materialisation in a background process.</td>
+<td style="text-align: left;">Flag (False by default)</td>
 </tr>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
-<td></td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
 </tr>
 </tbody>
 </table>
@@ -1831,16 +1903,16 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>TABLE_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Target table.</td>
+<td style="text-align: left;"><code>TABLE_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Target table.</td>
 </tr>
 </tbody>
 </table>
@@ -1848,30 +1920,30 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--csv</code></td>
-<td><code>PATH</code></td>
-<td><strong>Required.</strong> CSV file containing the dataframe (must exist).</td>
-<td>–</td>
+<td style="text-align: left;"><code>--csv</code></td>
+<td style="text-align: left;"><code>PATH</code></td>
+<td style="text-align: left;"><strong>Required.</strong> CSV file containing the dataframe (must exist).</td>
+<td style="text-align: left;">–</td>
 </tr>
 <tr>
-<td><code>--version</code></td>
-<td><code>TEXT</code></td>
-<td>Table version.</td>
-<td><code>base</code></td>
+<td style="text-align: left;"><code>--version</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Table version.</td>
+<td style="text-align: left;"><code>base</code></td>
 </tr>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
-<td></td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
 </tr>
 </tbody>
 </table>
@@ -1880,7 +1952,6 @@ Prints the process ID of the executed write operation.</p>
 <hr />
 <h2 id="data-deletionmodification-commands">Data Deletion/Modification Commands</h2>
 <p>These commands require the global <code>--db-dir</code> and <code>--author</code> options to be set.</p>
-<hr />
 <h3 id="rename-table"><code>rename-table</code></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>tablevault<span class="w"> </span>rename-table<span class="w"> </span>&lt;OLD_NAME&gt;<span class="w"> </span>&lt;NEW_NAME&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </span></code></pre></div>
@@ -1889,21 +1960,21 @@ Prints the process ID of the executed write operation.</p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>OLD_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Current name of the table.</td>
+<td style="text-align: left;"><code>OLD_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Current name of the table.</td>
 </tr>
 <tr>
-<td><code>NEW_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>New name for the table.</td>
+<td style="text-align: left;"><code>NEW_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">New name for the table.</td>
 </tr>
 </tbody>
 </table>
@@ -1911,16 +1982,16 @@ Prints the process ID of the executed write operation.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th></th>
-<th>Description</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
 </tr>
 </tbody>
 </table>
@@ -1935,16 +2006,16 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>TABLE_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Name of the table to delete.</td>
+<td style="text-align: left;"><code>TABLE_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Name of the table to delete.</td>
 </tr>
 </tbody>
 </table>
@@ -1952,16 +2023,16 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th></th>
-<th>Description</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
 </tr>
 </tbody>
 </table>
@@ -1976,21 +2047,21 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>TABLE_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Name of the table owns the instance.</td>
+<td style="text-align: left;"><code>TABLE_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Name of the table that owns the instance.</td>
 </tr>
 <tr>
-<td><code>INSTANCE_ID</code></td>
-<td><code>TEXT</code></td>
-<td>ID of the instance to delete.</td>
+<td style="text-align: left;"><code>INSTANCE_ID</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">ID of the instance to delete.</td>
 </tr>
 </tbody>
 </table>
@@ -1998,16 +2069,16 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th></th>
-<th>Description</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
 </tr>
 </tbody>
 </table>
@@ -2022,16 +2093,16 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>MODULE_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Name of the module to delete.</td>
+<td style="text-align: left;"><code>MODULE_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Name of the module to delete.</td>
 </tr>
 </tbody>
 </table>
@@ -2039,16 +2110,16 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th></th>
-<th>Description</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
 </tr>
 </tbody>
 </table>
@@ -2063,21 +2134,21 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>TABLE_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Name of the table owns the builder.</td>
+<td style="text-align: left;"><code>TABLE_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Name of the table that owns the builder.</td>
 </tr>
 <tr>
-<td><code>BUILDER_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Name of the builder file to delete.</td>
+<td style="text-align: left;"><code>BUILDER_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Name of the builder file to delete.</td>
 </tr>
 </tbody>
 </table>
@@ -2085,24 +2156,24 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--version</code></td>
-<td><code>TEXT</code></td>
-<td>Version of the table.</td>
-<td><code>base</code></td>
+<td style="text-align: left;"><code>--version</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Version of the table.</td>
+<td style="text-align: left;"><code>base</code></td>
 </tr>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
-<td></td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
 </tr>
 </tbody>
 </table>
@@ -2111,7 +2182,6 @@ Prints the process ID of the executed operation.</p>
 <hr />
 <h2 id="process-commands">Process Commands</h2>
 <p>These commands require the global <code>--db-dir</code> and <code>--author</code> options to be set.</p>
-<hr />
 <h3 id="generate-process-id"><code>generate-process-id</code></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>tablevault<span class="w"> </span>generate-process-id<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </span></code></pre></div>
@@ -2120,16 +2190,16 @@ Prints the process ID of the executed operation.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th></th>
-<th>Description</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
 </tr>
 </tbody>
 </table>
@@ -2144,16 +2214,16 @@ Prints a new, unique process identifier.</p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>PROCESS_ID</code></td>
-<td><code>TEXT</code></td>
-<td>ID of the process to stop.</td>
+<td style="text-align: left;"><code>PROCESS_ID</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">ID of the process to stop.</td>
 </tr>
 </tbody>
 </table>
@@ -2161,30 +2231,30 @@ Prints a new, unique process identifier.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th></th>
-<th>Description</th>
-<th>Default</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--force</code></td>
-<td></td>
-<td>Force-kill the running process.</td>
-<td>Flag (False by default)</td>
+<td style="text-align: left;"><code>--force</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Force-kill the running process.</td>
+<td style="text-align: left;">Flag (False by default)</td>
 </tr>
 <tr>
-<td><code>--materialize</code></td>
-<td></td>
-<td>Materialise partial instances if possible.</td>
-<td>Flag (False by default)</td>
+<td style="text-align: left;"><code>--materialize</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Materialise partial instances if possible.</td>
+<td style="text-align: left;">Flag (False by default)</td>
 </tr>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
-<td></td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
 </tr>
 </tbody>
 </table>
@@ -2193,7 +2263,6 @@ Prints the process ID of the <em>stop_process</em> operation.</p>
 <hr />
 <h2 id="data-fetching-commands">Data Fetching Commands</h2>
 <p>These commands require the global <code>--db-dir</code> and <code>--author</code> options to be set.</p>
-<hr />
 <h3 id="get-dataframe"><code>get-dataframe</code></h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>tablevault<span class="w"> </span>get-dataframe<span class="w"> </span>&lt;TABLE_NAME&gt;<span class="w"> </span>--output<span class="w"> </span>&lt;OUTPUT_CSV&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </span></code></pre></div>
@@ -2201,197 +2270,327 @@ Prints the process ID of the <em>stop_process</em> operation.</p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>TABLE_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Name of the table.</td>
+<td style="text-align: left;"><code>TABLE_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Name of the table.</td>
 </tr>
 </tbody>
 </table>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--output</code></td>
-<td><code>PATH</code></td>
-<td><strong>Required.</strong> Destination CSV file path.</td>
-<td>–</td>
+<td style="text-align: left;"><code>--output</code></td>
+<td style="text-align: left;"><code>PATH</code></td>
+<td style="text-align: left;"><strong>Required.</strong> Destination CSV file path.</td>
+<td style="text-align: left;">–</td>
 </tr>
 <tr>
-<td><code>--instance-id</code></td>
-<td><code>TEXT</code></td>
-<td>Specific instance ID (empty ⇒ latest of <code>version</code>).</td>
-<td><code>""</code></td>
+<td style="text-align: left;"><code>--instance-id</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Specific instance ID (empty ⇒ latest of <code>version</code>).</td>
+<td style="text-align: left;"><code>""</code></td>
 </tr>
 <tr>
-<td><code>--version</code></td>
-<td><code>TEXT</code></td>
-<td>Table version (used if <code>instance-id</code> omitted).</td>
-<td><code>base</code></td>
+<td style="text-align: left;"><code>--version</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Table version (used if <code>instance-id</code> omitted).</td>
+<td style="text-align: left;"><code>base</code></td>
 </tr>
 <tr>
-<td><code>--rows</code></td>
-<td><code>INT</code></td>
-<td>Limit rows fetched (<code>None</code> = no limit).</td>
-<td><code>None</code></td>
+<td style="text-align: left;"><code>--rows</code></td>
+<td style="text-align: left;"><code>INT</code></td>
+<td style="text-align: left;">Limit rows fetched (<code>None</code> = no limit).</td>
+<td style="text-align: left;"><code>None</code></td>
 </tr>
 <tr>
-<td><code>--include-inactive</code></td>
-<td></td>
-<td>If set, also consider <em>inactive</em> instances (negates <code>active_only</code>).</td>
-<td>Flag (False by default)</td>
+<td style="text-align: left;"><code>--include-inactive</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">If set, also consider <em>inactive</em> instances.</td>
+<td style="text-align: left;">Flag (False by default)</td>
 </tr>
 <tr>
-<td><code>--successful-only</code></td>
-<td></td>
-<td>If set, require the instance to have completed successfully.</td>
-<td>Flag (False by default)</td>
+<td style="text-align: left;"><code>--no-artifact-path</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Skip prepending the repository path to <code>"artifact_string"</code> columns.</td>
+<td style="text-align: left;">Flag (False by default)</td>
 </tr>
 <tr>
-<td><code>--no-artifact-path</code></td>
-<td></td>
-<td>Skip prepending the repository path to <code>"artifact_string"</code> columns (<code>full_artifact_path=False</code>).</td>
-<td>Flag (False by default)</td>
-</tr>
-<tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
-<td></td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
 </tr>
 </tbody>
 </table>
 <p><strong>Output:</strong>
 Writes the DataFrame to <code>OUTPUT_CSV</code> and prints a JSON blob containing the resolved <code>instance_id</code>, final row count, and the CSV path.</p>
 <hr />
+<h3 id="get-process-completion"><code>get-process-completion</code></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>tablevault<span class="w"> </span>get-process-completion<span class="w"> </span>&lt;PROCESS_ID&gt;
+</span></code></pre></div>
+<p>Check if a process has completed.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>PROCESS_ID</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">The identifier of the process to check.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Output:</strong>
+Prints <code>True</code> or <code>False</code>.</p>
+<hr />
+<h3 id="get-active-processes"><code>get-active-processes</code></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>tablevault<span class="w"> </span>get-active-processes
+</span></code></pre></div>
+<p>List all currently active processes in the vault.</p>
+<p><strong>Output:</strong>
+Prints a JSON dictionary of active processes.</p>
+<hr />
+<h3 id="get-instances"><code>get-instances</code></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>tablevault<span class="w"> </span>get-instances<span class="w"> </span>&lt;TABLE_NAME&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</span></code></pre></div>
+<p>List instance IDs for a specific table and version.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>TABLE_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Name of the table.</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>--version</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Version of the table.</td>
+<td style="text-align: left;"><code>base</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Output:</strong>
+Prints a JSON list of instance IDs.</p>
+<hr />
 <h3 id="get-descriptions"><code>get-descriptions</code></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>tablevault<span class="w"> </span>get-descriptions<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>tablevault<span class="w"> </span>get-descriptions<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </span></code></pre></div>
 <p>Fetch description metadata for the whole database, a single table, or a specific instance.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--table-name</code></td>
-<td><code>TEXT</code></td>
-<td>Target table (omit for DB-level).</td>
-<td><code>""</code></td>
+<td style="text-align: left;"><code>--table-name</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Target table (omit for DB-level).</td>
+<td style="text-align: left;"><code>""</code></td>
 </tr>
 <tr>
-<td><code>--instance-id</code></td>
-<td><code>TEXT</code></td>
-<td>Specific instance (overrides table-only).</td>
-<td><code>""</code></td>
+<td style="text-align: left;"><code>--instance-id</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Specific instance (overrides table-only).</td>
+<td style="text-align: left;"><code>""</code></td>
 </tr>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
-<td></td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
 </tr>
 </tbody>
 </table>
 <p><strong>Output:</strong>
 Prints a JSON dictionary with the requested description(s).</p>
 <hr />
+<h3 id="get-artifact-folder"><code>get-artifact-folder</code></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>tablevault<span class="w"> </span>get-artifact-folder<span class="w"> </span>&lt;TABLE_NAME&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+</span></code></pre></div>
+<p>Get the path to an instance's artifact folder.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>TABLE_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Name of the table.</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>--instance-id</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Specific instance ID (latest if omitted).</td>
+<td style="text-align: left;"><code>""</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--version</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Table version.</td>
+<td style="text-align: left;"><code>base</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--temp / --materialised</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Path to temporary (<code>--temp</code>) or materialised (<code>--materialised</code>) folder.</td>
+<td style="text-align: left;"><code>--temp</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Output:</strong>
+Prints the path to the artifact folder.</p>
+<hr />
 <h3 id="get-file-tree"><code>get-file-tree</code></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>tablevault<span class="w"> </span>get-file-tree<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>tablevault<span class="w"> </span>get-file-tree<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </span></code></pre></div>
 <p>Render a human-readable tree (text) of files stored in the vault.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--table-name</code></td>
-<td>TEXT</td>
-<td>Limit tree to a given table (optional).</td>
-<td><code>""</code></td>
+<td style="text-align: left;"><code>--table-name</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Limit tree to a given table (optional).</td>
+<td style="text-align: left;"><code>""</code></td>
 </tr>
 <tr>
-<td><code>--instance-id</code></td>
-<td>TEXT</td>
-<td>Inspect a specific instance (else latest).</td>
-<td><code>""</code></td>
+<td style="text-align: left;"><code>--instance-id</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Inspect a specific instance (else latest).</td>
+<td style="text-align: left;"><code>""</code></td>
 </tr>
 <tr>
-<td><code>--code-files / --no-code-files</code></td>
-<td></td>
-<td>Include code modules.</td>
-<td><code>--code-files</code></td>
+<td style="text-align: left;"><code>--code-files / --no-code-files</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Include code modules.</td>
+<td style="text-align: left;"><code>--code-files</code></td>
 </tr>
 <tr>
-<td><code>--builder-files / --no-builder-files</code></td>
-<td></td>
-<td>Include builder scripts.</td>
-<td><code>--builder-files</code></td>
+<td style="text-align: left;"><code>--builder-files / --no-builder-files</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Include builder scripts.</td>
+<td style="text-align: left;"><code>--builder-files</code></td>
 </tr>
 <tr>
-<td><code>--metadata-files / --no-metadata-files</code></td>
-<td></td>
-<td>Include JSON/YAML metadata.</td>
-<td><code>--no-metadata-files</code></td>
+<td style="text-align: left;"><code>--metadata-files / --no-metadata-files</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Include JSON/YAML metadata.</td>
+<td style="text-align: left;"><code>--no-metadata-files</code></td>
 </tr>
 <tr>
-<td><code>--artifact-files / --no-artifact-files</code></td>
-<td></td>
-<td>Include artifact directory contents.</td>
-<td><code>--no-artifact-files</code></td>
+<td style="text-align: left;"><code>--artifact-files / --no-artifact-files</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Include artifact directory contents.</td>
+<td style="text-align: left;"><code>--no-artifact-files</code></td>
 </tr>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
-<td></td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
 </tr>
 </tbody>
 </table>
 <p><strong>Output:</strong>
-Prints the file-tree string (or RichTree render if piping into <code>rich</code> aware terminal).</p>
+Prints the file-tree string.</p>
 <hr />
 <h3 id="get-modules-list"><code>get-modules-list</code></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>tablevault<span class="w"> </span>get-modules-list
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>tablevault<span class="w"> </span>get-modules-list
 </span></code></pre></div>
 <p>List Python code modules stored in the repository.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th></th>
-<th>Description</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
 </tr>
 </tbody>
 </table>
@@ -2399,58 +2598,58 @@ Prints the file-tree string (or RichTree render if piping into <code>rich</code>
 Prints a JSON list of module names.</p>
 <hr />
 <h3 id="get-builders-list"><code>get-builders-list</code></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>tablevault<span class="w"> </span>get-builders-list<span class="w"> </span>&lt;TABLE_NAME&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>tablevault<span class="w"> </span>get-builders-list<span class="w"> </span>&lt;TABLE_NAME&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </span></code></pre></div>
 <p>Return the builder script names contained in a table instance.</p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>TABLE_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Name of the table.</td>
+<td style="text-align: left;"><code>TABLE_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Name of the table.</td>
 </tr>
 </tbody>
 </table>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--instance-id</code></td>
-<td><code>TEXT</code></td>
-<td>Specific instance (empty ⇒ latest).</td>
-<td><code>""</code></td>
+<td style="text-align: left;"><code>--instance-id</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Specific instance (empty ⇒ latest).</td>
+<td style="text-align: left;"><code>""</code></td>
 </tr>
 <tr>
-<td><code>--version</code></td>
-<td><code>TEXT</code></td>
-<td>Version used if <code>instance-id</code> omitted.</td>
-<td><code>base</code></td>
+<td style="text-align: left;"><code>--version</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Version used if <code>instance-id</code> omitted.</td>
+<td style="text-align: left;"><code>base</code></td>
 </tr>
 <tr>
-<td><code>--temp / --materialised</code></td>
-<td></td>
-<td>Inspect a temporary (<code>--temp</code>) or final (<code>--materialised</code>) copy.</td>
-<td><code>--temp</code></td>
+<td style="text-align: left;"><code>--temp / --materialised</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Inspect a temporary (<code>--temp</code>) or final (<code>--materialised</code>) copy.</td>
+<td style="text-align: left;"><code>--temp</code></td>
 </tr>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
-<td></td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
 </tr>
 </tbody>
 </table>
@@ -2458,69 +2657,64 @@ Prints a JSON list of module names.</p>
 Prints a JSON list of builder filenames.</p>
 <hr />
 <h3 id="get-builder-str"><code>get-builder-str</code></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>tablevault<span class="w"> </span>get-builder-str<span class="w"> </span>&lt;TABLE_NAME&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>tablevault<span class="w"> </span>get-builder-str<span class="w"> </span>&lt;TABLE_NAME&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </span></code></pre></div>
 <p>Print the source of a stored builder script.</p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>BUILDER_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Builder name (without <code>.py</code>).</td>
-</tr>
-<tr>
-<td><code>TABLE_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Table containing the builder.</td>
+<td style="text-align: left;"><code>TABLE_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Table containing the builder.</td>
 </tr>
 </tbody>
 </table>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--builder-name</code></td>
-<td><code>TEXT</code></td>
-<td>Name of the builder file (empty ⇒ inferred).</td>
-<td><code>{table_name}_index</code></td>
+<td style="text-align: left;"><code>--builder-name</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Name of the builder file (empty ⇒ inferred).</td>
+<td style="text-align: left;"><code>{table_name}_index</code></td>
 </tr>
 <tr>
-<td><code>--instance-id</code></td>
-<td><code>TEXT</code></td>
-<td>Specific instance (empty ⇒ latest).</td>
-<td><code>""</code></td>
+<td style="text-align: left;"><code>--instance-id</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Specific instance (empty ⇒ latest).</td>
+<td style="text-align: left;"><code>""</code></td>
 </tr>
 <tr>
-<td><code>--version</code></td>
-<td><code>TEXT</code></td>
-<td>Version used if <code>instance-id</code> omitted.</td>
-<td><code>constants.BASE_TABLE_VERSION</code></td>
+<td style="text-align: left;"><code>--version</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Version used if <code>instance-id</code> omitted.</td>
+<td style="text-align: left;"><code>base</code></td>
 </tr>
 <tr>
-<td><code>--temp / --materialised</code></td>
-<td></td>
-<td>Read from temporary (<code>--temp</code>) or materialised (<code>--materialised</code>).</td>
-<td><code>--temp</code></td>
+<td style="text-align: left;"><code>--temp / --materialised</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Read from temporary (<code>--temp</code>) or materialised (<code>--materialised</code>).</td>
+<td style="text-align: left;"><code>--temp</code></td>
 </tr>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
-<td></td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
 </tr>
 </tbody>
 </table>
@@ -2528,65 +2722,64 @@ Prints a JSON list of builder filenames.</p>
 Prints the full builder source code.</p>
 <hr />
 <h3 id="get-code-module-str"><code>get-code-module-str</code></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>tablevault<span class="w"> </span>get-code-module-str<span class="w"> </span>&lt;MODULE_NAME&gt;
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>tablevault<span class="w"> </span>get-code-module-str<span class="w"> </span>&lt;MODULE_NAME&gt;
 </span></code></pre></div>
 <p>Print the source of an arbitrary code module stored in the vault.</p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>MODULE_NAME</code></td>
-<td><code>TEXT</code></td>
-<td>Module name (without <code>.py</code>).</td>
+<td style="text-align: left;"><code>MODULE_NAME</code></td>
+<td style="text-align: left;"><code>TEXT</code></td>
+<td style="text-align: left;">Module name (without <code>.py</code>).</td>
 </tr>
 </tbody>
 </table>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th></th>
-<th>Description</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Output:</strong>
 Prints the module’s source code.</p>
 <hr />
-<h2 id="vault-independent-utilities">Vault-Independent Utilities</h2>
-<p>These commands operate on vault directories but do not require an initialized <code>TableVault</code> instance in the same way as other commands (i.e., they don't use the global <code>--author</code> for their direct operation but might be used in conjunction with a vault managed by an author).</p>
-<hr />
+<h2 id="utility-commands">Utility Commands</h2>
+<p>These commands operate on vault directories but do not require an initialized <code>TableVault</code> instance.</p>
 <h3 id="compress"><code>compress</code></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>tablevault<span class="w"> </span>compress<span class="w"> </span>&lt;DB_DIR&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>tablevault<span class="w"> </span>compress<span class="w"> </span>&lt;DB_DIR&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </span></code></pre></div>
 <p>Create a <code>DB_DIR.tar.xz</code> archive from the specified <code>DB_DIR</code>.</p>
 <p><strong>Argument:</strong></p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>DB_DIR</code></td>
-<td><code>PATH</code></td>
-<td>Path to the TableVault directory to compress (must exist).</td>
+<td style="text-align: left;"><code>DB_DIR</code></td>
+<td style="text-align: left;"><code>PATH</code></td>
+<td style="text-align: left;">Path to the TableVault directory to compress (must exist).</td>
 </tr>
 </tbody>
 </table>
@@ -2594,24 +2787,24 @@ Prints the module’s source code.</p>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: left;">Default</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--preset</code></td>
-<td><code>INT</code></td>
-<td>LZMA compression level (1-9).</td>
-<td><code>6</code></td>
+<td style="text-align: left;"><code>--preset</code></td>
+<td style="text-align: left;"><code>INT</code></td>
+<td style="text-align: left;">LZMA compression level (1-9).</td>
+<td style="text-align: left;"><code>6</code></td>
 </tr>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
-<td></td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
+<td style="text-align: left;"></td>
 </tr>
 </tbody>
 </table>
@@ -2619,23 +2812,23 @@ Prints the module’s source code.</p>
 Prints a confirmation message with the name of the created archive, e.g., "Compressed → my_vault.tar.xz".</p>
 <hr />
 <h3 id="decompress"><code>decompress</code></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>tablevault<span class="w"> </span>decompress<span class="w"> </span>&lt;ARCHIVE&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>tablevault<span class="w"> </span>decompress<span class="w"> </span>&lt;ARCHIVE&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </span></code></pre></div>
-<p>Extract a <code>*.tar.xz</code> archive (created by <code>tablevault compress</code>) into a directory named after the archive (without the <code>.tar.xz</code> extension).</p>
+<p>Extract a <code>*.tar.xz</code> archive into a directory named after the archive (without the <code>.tar.xz</code> extension).</p>
 <p><strong>Argument:</strong></p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>ARCHIVE</code></td>
-<td><code>PATH</code></td>
-<td>Path to the <code>*.tar.xz</code> archive file (must exist).</td>
+<td style="text-align: left;"><code>ARCHIVE</code></td>
+<td style="text-align: left;"><code>PATH</code></td>
+<td style="text-align: left;">Path to the <code>*.tar.xz</code> archive file (must exist).</td>
 </tr>
 </tbody>
 </table>
@@ -2643,16 +2836,16 @@ Prints a confirmation message with the name of the created archive, e.g., "Compr
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th></th>
-<th>Description</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
 </tr>
 </tbody>
 </table>
@@ -2660,23 +2853,23 @@ Prints a confirmation message with the name of the created archive, e.g., "Compr
 Prints a confirmation message with the name of the directory where files were decompressed, e.g., "Decompressed → my_vault/".</p>
 <hr />
 <h3 id="delete-vault"><code>delete-vault</code></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>tablevault<span class="w"> </span>delete-vault<span class="w"> </span>&lt;DB_DIR&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>tablevault<span class="w"> </span>delete-vault<span class="w"> </span>&lt;DB_DIR&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </span></code></pre></div>
 <p><strong>Irreversibly</strong> delete an entire TableVault directory. This command will ask for confirmation before proceeding.</p>
 <p><strong>Argument:</strong></p>
 <table>
 <thead>
 <tr>
-<th>Argument</th>
-<th>Type</th>
-<th>Description</th>
+<th style="text-align: left;">Argument</th>
+<th style="text-align: left;">Type</th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>DB_DIR</code></td>
-<td><code>PATH</code></td>
-<td>Path to the TableVault directory to delete (must exist).</td>
+<td style="text-align: left;"><code>DB_DIR</code></td>
+<td style="text-align: left;"><code>PATH</code></td>
+<td style="text-align: left;">Path to the TableVault directory to delete (must exist).</td>
 </tr>
 </tbody>
 </table>
@@ -2684,27 +2877,26 @@ Prints a confirmation message with the name of the directory where files were de
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th></th>
-<th>Description</th>
+<th style="text-align: left;">Option</th>
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--yes</code></td>
-<td></td>
-<td>Skip the confirmation prompt.</td>
+<td style="text-align: left;"><code>--yes</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Skip the confirmation prompt.</td>
 </tr>
 <tr>
-<td><code>-h, --help</code></td>
-<td></td>
-<td>Show this message and exit.</td>
+<td style="text-align: left;"><code>-h, --help</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Show this message and exit.</td>
 </tr>
 </tbody>
 </table>
 <p><strong>Output:</strong>
 Prints "Vault deleted ✔" upon successful deletion.</p>
-<hr />
 
 
 

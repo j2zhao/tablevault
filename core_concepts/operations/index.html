@@ -408,7 +408,7 @@
   
   
   <span class="md-ellipsis">
-    Builders, Code Functions, Artifacts, TableReferences
+    Builders, Python Functions, TableReferences, Artifacts
     
   </span>
   
@@ -951,77 +951,43 @@
 
 
 <h1 id="operations">Operations</h1>
-<p>Every write operation to the TableVault repository follows a multi-step, managed process designed for safety and recoverability. Orchestrated by the main <code>tablevault_operation</code> function, this process involves distinct <strong>setup</strong>, <strong>execution</strong>, and <strong>takedown</strong> phases. This structure ensures the database remains in a consistent state, even if an operation is interrupted by errors or external factors.</p>
-<p>All operations that follow this pattern allow the user to include an optional <code>process_id</code> string, which uniquely identifies the operation to the system.</p>
+<p>TableVault manages every write operation through a multi-step process designed for safety and recoverability. This process involves distinct <strong>setup</strong>, <strong>execution</strong>, and <strong>takedown</strong> phases to ensure the repository remains in a consistent state, even if an operation is interrupted.</p>
 <hr />
 <h2 id="process-ids-pauses-and-restarts">Process IDs, Pauses, and Restarts</h2>
-<p>Each write operation in TableVault is identified by a unique <code>process_id</code> string. This ID is either provided by the user or generated internally by the system. A user can provide their own <code>process_id</code> by first creating one with the <code>generate_process_id</code> function from the core API. You can observe active operations using the <code>get_active_processes()</code> function.</p>
-<p>The behavior of an interrupted operation depends on whether a <code>process_id</code> was provided:</p>
+<p>Operations can include an optional <code>process_id</code>:</p>
 <ul>
-<li>
-<p><strong>Without a user-provided <code>process_id</code></strong>, if an operation encounters an unexpected error or is externally interrupted (e.g., by killing a Jupyter notebook cell), it is <strong>safely reverted</strong>. The system state will be as if the operation never started.</p>
-</li>
-<li>
-<p><strong>With a user-provided <code>process_id</code></strong>, an interruption only <strong>pauses</strong> the operation. It maintains its system locks, preventing other operations from accessing the same resources. Users can restart the <em>exact same</em> operation by re-running the function call with the same <code>process_id</code> or by setting <code>restart=True</code> in a new TableVault object. This is especially useful for long-running <code>execute_instance</code> operations that might be stopped. Note that the operation restarts from its last checkpoint, and its input arguments cannot be changed.</p>
-</li>
+<li><strong>Without a provided <code>process_id</code></strong>: Unexpected interruptions cause a safe revert to the pre-operation state.</li>
+<li><strong>With a provided <code>process_id</code></strong>: Interruptions pause the operation, maintaining locks. Users can restart exactly where paused by reusing the same <code>process_id</code> or setting <code>restart</code> to <code>True</code>.</li>
 </ul>
-<p>To explicitly stop and revert an active process, you can call the <code>stop_process</code> function. Internal TableVault errors, which typically indicate invalid user inputs, will always cause the operation to revert.</p>
-<p>A record of all completed processes can be found in the <code>TABLEVAULT_NAME/metadata/logs.txt</code> file.</p>
+<p>Explicitly stopping active processes uses <code>stop_process()</code>. Logs of operations reside in <code>TABLEVAULT_NAME/metadata/logs.txt</code>.</p>
 <hr />
 <h2 id="the-core-transactional-steps">The Core Transactional Steps</h2>
 <p>Each write operation follows a series of universal, transactional steps:</p>
 <ol>
 <li>
-<p><strong>Process Initialization</strong>: TableVault generates a unique <code>process_id</code> if one is not provided. If an ID is given, the system checks for existing logs associated with it. This allows a failed or paused operation to be resumed from where it left off.</p>
+<p><strong>Process Initialization</strong>: TableVault generates a unique internal <code>process_id</code> if one is not provided.</p>
 </li>
 <li>
-<p><strong>Setup Phase</strong>: An operation-specific setup function runs to prepare for the main task. It is responsible for:</p>
-<ul>
-<li><strong>Validation</strong>: Checking for illegal arguments, such as attempting to modify a protected table.</li>
-<li><strong>Locking</strong>: Acquiring <strong>exclusive and shared locks</strong> on the necessary resources to prevent conflicts during multi-processing.</li>
-<li><strong>Creating a Backup</strong>: Copying the data to be modified into a temporary location. This is critical for recovery.</li>
-<li><strong>Passing Arguments</strong>: Preparing and returning the arguments needed for the main execution function.</li>
-</ul>
+<p><strong>Setup Phase</strong>: An operation-specific setup function prepares for the main task. It is responsible for validation (e.g., checking for illegal arguments), acquiring <strong>exclusive and shared locks</strong> on resources, creating a temporary backup of data to be modified, and preparing arguments for the execution phase.</p>
 </li>
 <li>
-<p><strong>Execution Phase</strong>: If the setup is successful, the main operation function is called. The system supports <strong>background execution</strong> for <code>execute_instance()</code> calls by spawning a new Python process, which allows the main program to continue without waiting.</p>
+<p><strong>Execution Phase</strong>: If setup is successful, the main operation function is called. The system supports <strong>background execution</strong> for <code>execute_instance()</code> calls by spawning a new Python process.</p>
 </li>
 <li>
-<p><strong>Takedown Phase</strong>: After execution finishes, an operation-specific takedown function cleans up the process:</p>
-<ul>
-<li><strong>On Success</strong>: The function removes the locks, signifying that the operation is complete and the data is in its new, consistent state. It then removes the temporary backup.</li>
-<li><strong>On Failure</strong>: The function uses the temporary backup to <strong>restore the original data</strong>, effectively rolling back any changes.</li>
-<li><strong>Cleanup</strong>: In either case, it releases all locks held by the process and deletes temporary data.</li>
-</ul>
+<p><strong>Takedown Phase</strong>: After execution, a takedown function cleans up the process. On success, it removes the temporary backup and releases locks. On failure, it uses the backup to <strong>restore the original data</strong>, effectively rolling back any changes before releasing locks.</p>
 </li>
 <li>
-<p><strong>Logging</strong>: Throughout this entire process, the operation's status (e.g., start, success, errors) is logged to persistent storage, making the system resilient.</p>
+<p><strong>Logging</strong>: The operation's status is logged to persistent storage throughout the entire process to ensure system resiliency.</p>
 </li>
 </ol>
 <hr />
 <h2 id="example-the-delete-operation">Example: The Delete Operation</h2>
-<p>The <code>setup_delete_instance</code> and <code>takedown_delete_instance</code> functions provide a concrete example of this process.</p>
+<p>The <code>setup_delete_instance()</code> and <code>takedown_delete_instance()</code> internal functions provide a concrete example of this process.</p>
 <ul>
-<li>
-<p><strong>Setup (<code>setup_delete_instance</code>)</strong>:</p>
-<ol>
-<li>Validates that the table and the specific instance to be deleted both exist.</li>
-<li>Acquires an exclusive lock on that table and instance ID.</li>
-<li>Copies the instance to a temporary directory associated with the <code>process_id</code>.</li>
-<li>Updates the process log with the <code>table_name</code> and <code>instance_id</code> so the takedown function knows what to clean up.</li>
-</ol>
-</li>
-<li>
-<p><strong>Takedown (<code>takedown_delete_instance</code>)</strong>:</p>
-<ol>
-<li>If the main deletion logic <strong>failed</strong>, it copies the data from the temporary directory back to its original location, undoing any partial changes.</li>
-<li>If the main deletion logic <strong>succeeded</strong>, it simply deletes the temporary backup and lock files.</li>
-<li>Finally, it releases all of its locks.</li>
-</ol>
-</li>
+<li><strong>Setup (<code>setup_delete_instance()</code>)</strong>: Validates that the table and instance exist, acquires an exclusive lock, copies the instance to a temporary directory, and logs the <code>table_name</code> and <code>instance_id</code> for cleanup.</li>
+<li><strong>Takedown (<code>takedown_delete_instance()</code>)</strong>: If the main logic failed, it restores the instance from the temporary directory. If it succeeded, it deletes the temporary backup. Finally, it releases all locks.</li>
 </ul>
-<p>In essence, TableVault's write operations are <strong>transactional</strong>. Through a combination of <strong>locking</strong>, <strong>temporary data backups</strong>, and <strong>detailed process logging</strong>, they ensure that an operation either completes successfully, leaving the repository in a new consistent state, or it fails and the repository is returned to the state it was in before the operation began.</p>
-<hr />
+<p>TableVault ensures operations are transactional, leaving repositories either fully updated or reverted safely.</p>
 
 
 

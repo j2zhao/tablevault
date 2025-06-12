@@ -338,51 +338,36 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-tablevault-repository" class="md-nav__link">
+  <a href="#tablevault-repository" class="md-nav__link">
     <span class="md-ellipsis">
-      1. TableVault Repository
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. TableVault Repository">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#physical-folder-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      Physical Folder Setup
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-tablevault-instance" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. TableVault Instance
+      TableVault Repository
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-table-folder" class="md-nav__link">
+  <a href="#tablevault-instance" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Table Folder
+      TableVault Instance
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-metadata" class="md-nav__link">
+  <a href="#table-folder" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Metadata
+      Table Folder
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadata
     </span>
   </a>
   
@@ -432,7 +417,7 @@
   
   
   <span class="md-ellipsis">
-    Builders, Code Functions, Artifacts, TableReferences
+    Builders, Python Functions, TableReferences, Artifacts
     
   </span>
   
@@ -929,51 +914,36 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-tablevault-repository" class="md-nav__link">
+  <a href="#tablevault-repository" class="md-nav__link">
     <span class="md-ellipsis">
-      1. TableVault Repository
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. TableVault Repository">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#physical-folder-setup" class="md-nav__link">
-    <span class="md-ellipsis">
-      Physical Folder Setup
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-tablevault-instance" class="md-nav__link">
-    <span class="md-ellipsis">
-      2. TableVault Instance
+      TableVault Repository
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-table-folder" class="md-nav__link">
+  <a href="#tablevault-instance" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Table Folder
+      TableVault Instance
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-metadata" class="md-nav__link">
+  <a href="#table-folder" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Metadata
+      Table Folder
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metadata" class="md-nav__link">
+    <span class="md-ellipsis">
+      Metadata
     </span>
   </a>
   
@@ -999,14 +969,8 @@
 
 
 <h1 id="repository-structure">Repository Structure</h1>
-<h2 id="1-tablevault-repository">1. TableVault Repository</h2>
-<p>Everything in a TableVault repository is stored and organized transparently within your local file system. This allows you to directly view all your data and the exact execution code using any interface application you prefer. Additionally, transferring your TableVault workflow to a new device is as simple as copying the relevant TableVault folder and setting up the same environment.</p>
-<p>However, it is crucial to note that most <em>writes</em> to a TableVault folder must be done through the API to avoid breaking the system.</p>
-<p>!!! note "Builders and Code Files"
-Builders and Python code files are the only two cases where direct edits using an external editor are permitted.</p>
-<p>!!! note "Unix Systems"
-On Unix systems, we have set some files in TableVault to read-only to make this restriction more explicit. While this does not prevent malicious users, it can help prevent unintentional mistakes.</p>
-<h3 id="physical-folder-setup">Physical Folder Setup</h3>
+<h2 id="tablevault-repository">TableVault Repository</h2>
+<p>The TableVault repository stores and organizes all data and code transparently within your local file system. This design allows you to view files directly and transfer a workflow to a new device by copying the repository folder. It is crucial, however, that most write operations are performed through the TableVault API to maintain system integrity.</p>
 <p>The following diagram illustrates the internal storage structure of a TableVault repository:</p>
 <figure>
 <p><img alt="Internal TableVault Structure" src="../../assets/storage_files.png" width="60%" /></p>
@@ -1014,21 +978,30 @@ On Unix systems, we have set some files in TableVault to read-only to make this 
 <p><strong>TableVault File Structure</strong></p>
 </figcaption>
 </figure>
+<div class="admonition note">
+<p class="admonition-title">Direct File Edits</p>
+<p>Directly editing files is generally discouraged, with two exceptions: Builder (YAML) and Python code files may be modified using an external editor. To help prevent accidental modifications on Unix systems, TableVault sets certain files to read-only. While this does not stop intentional changes, it serves as a safeguard against common mistakes.</p>
+</div>
 <hr />
-<h2 id="2-tablevault-instance">2. TableVault Instance</h2>
-<p>A TableVault instance represents a dataframe with its associated metadata and optional artifacts. Physically, all files relevant to an instance are stored in a dedicated instance folder.</p>
-<p>There are two types of instances:</p>
-<p><strong>Temporary Instance.</strong> This type of instance has not yet been executed and cannot be queried by the system. A temporary instance is created with the <code>create_instance</code> operation and contains various data, such as metadata, a description, and builder files (YAML files that specify how to construct the dataframe). You can specify whether an instance will be executed within the TableVault framework or populated from an external dataframe by using the <code>external_edit</code> parameter in the <code>create_instance</code> operation. If <code>external_edit</code> is set to <code>False</code>, the instance is prepared for execution using its internal builder files. If set to <code>True</code>, the instance is marked to be populated by an external process.</p>
-<p><strong>Materialized Instance.</strong> This type of instance has been executed (either by the system or externally) and is indexed by TableVault. The dataframe within a materialized instance is read-only; it can be deleted but not modified. If the instance is active (as determined by table properties), you can fetch its associated dataframe and select metadata using the TableVault API. The code functions and builder files used at execution are recorded where relevant. Materialized instances within the same table are versioned by a timestamp and, optionally, a user-specified <code>version</code> string.</p>
+<h2 id="tablevault-instance">TableVault Instance</h2>
+<p>A TableVault instance represents a dataframe with its associated metadata and optional artifacts. All files relevant to an instance are stored in a dedicated instance folder. There are two types of instances:</p>
+<ul>
+<li><strong>Temporary Instance</strong>: An instance that has not yet been executed and cannot be queried. It is created with <code>create_instance()</code> and contains metadata, a description, and builder files. The <code>external_edit</code> parameter specifies whether the instance will be built internally by TableVault (<code>False</code>) or populated by an external process (<code>True</code>).</li>
+<li><strong>Materialized Instance</strong>: An instance that has been executed and is indexed by TableVault. Its dataframe is read-only. If the instance is active, its data and metadata can be fetched via the API. The code functions and builder files used at execution are recorded. Materialized instances are versioned by a timestamp and an optional <code>version</code> string.</li>
+</ul>
+<p>A free-form description can be added via the <code>create_instance()</code> function.</p>
 <hr />
-<h2 id="3-table-folder">3. Table Folder</h2>
-<p>In TableVault, a "table" is more of a semantic abstraction than a concrete object. It is a collection of TableVault instances that can be referenced by the same name. All instances are encapsulated within a containing folder. In many TableVault API functions, the latest instance of a collection can be retrieved or queried using only the <code>table_name</code> reference, rather than its <code>instance_id</code>. In your file system, all instances belonging to the same table are stored together in the same folder.</p>
-<p>Instances under the same table can share additional properties. During table initialization, if <code>allow_multiple_artifacts</code> is set to <code>False</code>, only the latest instance can be queried by TableVault, and only its indexed artifacts are stored. This is useful when you only want one active version of an artifact collection. If <code>has_side_effects</code> is set to <code>True</code>, all other instances of the same table become un-queryable the moment one instance begins execution. This is useful if your program performs an action that invalidates previous instances, such as changing the state of external storage.</p>
-<p>Examples of tables include: a collection of instances testing different prompts for the same task, an instance tracking a repository of scientific papers, or evolving instances of an embedding model trained on different documents. You can add a free-form text description of a table by filling in the <code>description</code> argument in the <code>create_table</code> function.</p>
+<h2 id="table-folder">Table Folder</h2>
+<p>In TableVault, a "table" is a semantic collection of instances that can be referenced by the same name. All instances of a table are stored together in the same folder. In many API functions, the latest instance of a table can be retrieved using only the <code>table_name</code> reference.</p>
+<p>Instances under the same table can share additional properties set during table initialization:</p>
+<ul>
+<li>If <code>allow_multiple_artifacts</code> is set to <code>False</code>, only the latest instance can be queried, and only its artifacts are stored.</li>
+<li>If <code>has_side_effects</code> is set to <code>True</code>, all other instances of the table become un-queryable the moment one instance begins execution. This is useful if an operation invalidates previous versions.</li>
+</ul>
+<p>Examples of tables include a collection of instances testing different model prompts, a repository of scientific papers, or evolving versions of an embedding model. A free-form description can be added via the <code>create_table()</code> function.</p>
 <hr />
-<h2 id="4-metadata">4. Metadata</h2>
-<p>A TableVault repository stores various metadata files. A detailed list of these files and their functions can be found in the <a href="https://www.google.com/search?q=">Advanced</a> section.</p>
-<hr />
+<h2 id="metadata">Metadata</h2>
+<p>A TableVault repository stores various metadata files. A detailed list of these files and their functions can be found in <a href="../../advanced/metadata/">Advanced</a>.</p>
 
 
 

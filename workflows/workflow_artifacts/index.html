@@ -337,7 +337,7 @@
   
   
   <span class="md-ellipsis">
-    Builders, Code Functions, Artifacts, TableReferences
+    Builders, Python Functions, TableReferences, Artifacts
     
   </span>
   
@@ -985,18 +985,19 @@
 
 
 <h1 id="workflow-with-artifacts">Workflow with Artifacts</h1>
-<p>In TableVault, an <strong>artifact</strong> is any file that isn't a dataframe. Every artifact must be linked to a specific table instance and indexed with a reference within the corresponding dataframe. This connection is established by the user through builders and Python functions.</p>
+<p>This is a basic workflow for handling artifacts in TableVault.</p>
+<hr />
 <h2 id="1-creating-an-artifact-table-and-instance">1. Creating an Artifact Table and Instance</h2>
-<p>You can start with the <code>TableVault</code> repository generated with the <a href="../workflow/">Basic Workflow</a>.</p>
+<p>You can continue from the TableVault repository generated from the <a href="../workflow/">Basic Workflow</a>.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">tablevault</span> <span class="o">=</span> <span class="n">TableVault</span><span class="p">(</span><span class="n">db_dir</span> <span class="o">=</span> <span class="s2">&quot;test_tv&quot;</span><span class="p">,</span> <span class="n">author</span> <span class="o">=</span> <span class="s2">&quot;dixie&quot;</span><span class="p">)</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="n">table_name</span> <span class="o">=</span> <span class="s2">&quot;fruit_images&quot;</span><span class="p">,</span> <span class="n">allow_multiple_artifacts</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">create_instance</span><span class="p">(</span><span class="n">table_name</span> <span class="o">=</span> <span class="s2">&quot;fruit_images&quot;</span><span class="p">)</span>
 </span></code></pre></div>
-<p>Setting <code>allow_multiple_artifacts</code> to <code>False</code> tells the system that we will only have one artifact repository for the whole folder.</p>
+<p>Setting <code>allow_multiple_artifacts</code> to <code>False</code> tells the system that there will only be one artifact repository for the entire folder.</p>
 <h2 id="2-a-code-function-that-generates-artifacts">2. A Code Function that Generates Artifacts</h2>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">create_code_module</span><span class="p">(</span><span class="n">module_name</span> <span class="o">=</span> <span class="s2">&quot;fetch_images&quot;</span><span class="p">)</span>
 </span></code></pre></div>
-<p>You can fill out the code file to import an image, given a type of fruit:</p>
+<p>You can then populate the code file to import an image, given a type of fruit:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">fetch_image_from_string</span><span class="p">(</span><span class="n">fruit</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">artifact_dir</span><span class="p">:</span><span class="nb">str</span> <span class="p">):</span>
@@ -1007,7 +1008,7 @@
 </span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
 </span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">fruit</span><span class="si">}</span><span class="s1">.png&#39;</span> <span class="c1"># return relative path</span>
 </span></code></pre></div>
-<p>If you don't have direct access to a text editor on your platform, you can add the code as a string argument, <code>text</code>, in <code>create_code_module</code>.</p>
+<p>If you don't have direct access to a text editor on your platform, you can add the code as a string argument, <code>text</code> in <code>create_code_module()</code>.</p>
 <div class="admonition note">
 <p class="admonition-title">Executing the Example</p>
 <p>In order for your code to actually execute, an actual image needs to exist in the  <code>file_path</code> location.</p>
@@ -1039,23 +1040,20 @@
 </span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="nt">python_function</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">create_data_table_from_table</span><span class="w">           </span><span class="c1"># Function to execute</span>
 </span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="nt">code_module</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">table_generation</span><span class="w">                           </span><span class="c1"># Module containing the function</span>
 </span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="nt">is_custom</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                                         </span><span class="c1"># Mark as user-supplied (searches in code_functions)</span>
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="nt">return_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">row-wise</span><span class="w">                                       </span><span class="c1"># Specifies if the function processes row by row</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="nt">is_custom</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                  </span><span class="c1"># Mark as user-supplied (searches in code_functions)</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="nt">return_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">row-wise</span><span class="w">            </span><span class="c1"># Specifies if the function processes row by row</span>
 </span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
-</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="nt">arguments</span><span class="p">:</span><span class="w">                                              </span><span class="c1"># Arguments passed to the function</span>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="nt">arguments</span><span class="p">:</span><span class="w">                                 </span><span class="c1"># Arguments passed to the function</span>
 </span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="nt">fruit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;&lt;self.fruits[index]&gt;&gt;</span><span class="w"> </span>
 </span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">    </span><span class="nt">artifact_dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">~ARTIFACT_FOLDER~</span><span class="w"> </span>
 </span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>
-</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="nt">dtypes</span><span class="p">:</span><span class="w">                                                 </span><span class="c1"># Column Data Types </span>
+</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="nt">dtypes</span><span class="p">:</span><span class="w">                           </span><span class="c1"># Column Data Types </span>
 </span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">    </span><span class="nt">fruit_image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">artifact_string</span><span class="w">            </span>
 </span></code></pre></div>
 </div>
 </div>
 </div>
-<p>The <code>~ARTIFACT_FOLDER~</code> keyword is automatically replaced with the correct folder path at runtime. The <code>artifact_string</code> data type tells the system that the <code>fruit_image</code> column is linked to artifacts. </p>
-<p>Each artifact file needs a corresponding <code>artifact_string</code> value in the dataframe. This value is the file path of the artifact, relative to the temporary artifact folder. This is user-generated (as seen in the <code>fetch_image_from_string()</code> function).</p>
-<p>You can see examples of <code>TableReference</code> strings with <code>&lt;&lt;fruit_table.fruits&gt;&gt;</code> and <code>&lt;&lt;self.fruits[index]&gt;&gt;</code>. The first string returns a column in the lastest <code>fruit_table</code> dataframe. The second string returns a string corresponding to the current index value from the <code>fruits</code> column of the <strong>executing dataframe</strong>.</p>
-<p>If you don't have direct access to a text editor on your platform, you can add the code as a string argument, <code>text</code>, in <code>create_code_module</code>.</p>
+<p>If you don't have direct access to a text editor on your platform, you can add the code as a string argument, <code>text</code> in <code>create_code_module()</code>.</p>
 <h2 id="4-execute-and-materialize-instance">4. Execute and Materialize Instance</h2>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">execute_instance</span><span class="p">(</span><span class="s2">&quot;fruit_image&quot;</span><span class="p">)</span>
 </span></code></pre></div>
@@ -1063,7 +1061,6 @@
 <p class="admonition-title"><strong>Strict Checks</strong></p>
 <p>Various checks are performed before the table is materialized to ensure everything is configured correctly. Most importantly, each <code>artifact_string</code> value must have a corresponding artifact file and vice versa.</p>
 </div>
-<p>Once materialized, the artifact is moved to a permanent location associated with the materialized instance.</p>
 <h2 id="5-query-for-an-artifact-dataframe">5. Query for An Artifact Dataframe</h2>
 <p>You can easily retrieve the dataframe with the full or partial artifact path: </p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">df_1</span> <span class="o">=</span> <span class="n">tablevault</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span><span class="n">table_name</span> <span class="o">=</span> <span class="s2">&quot;fruits_table&quot;</span><span class="p">,</span> <span class="n">full_artifact_path</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>

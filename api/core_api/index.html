@@ -337,7 +337,7 @@
   
   
   <span class="md-ellipsis">
-    Builders, Code Functions, Artifacts, TableReferences
+    Builders, Python Functions, TableReferences, Artifacts
     
   </span>
   
@@ -909,13 +909,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#helper-functions" class="md-nav__link">
+  <a href="#utility-functions" class="md-nav__link">
     <span class="md-ellipsis">
-      Helper Functions
+      Utility Functions
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Helper Functions">
+    <nav class="md-nav" aria-label="Utility Functions">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1520,13 +1520,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#helper-functions" class="md-nav__link">
+  <a href="#utility-functions" class="md-nav__link">
     <span class="md-ellipsis">
-      Helper Functions
+      Utility Functions
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Helper Functions">
+    <nav class="md-nav" aria-label="Utility Functions">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1636,14 +1636,16 @@
 <hr />
 <h2 id="tablevault-data-creation-methods"><code>TableVault</code> Data Creation Methods</h2>
 <h3 id="create_table"><code>create_table()</code></h3>
+<p>Create a new table definition in the vault.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">create_table</span><span class="p">(</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">allow_multiple_artifacts</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 </span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">has_side_effects</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">process_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">process_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span></code></pre></div>
 <table>
 <thead>
@@ -1674,15 +1676,15 @@
 <td><code>False</code></td>
 </tr>
 <tr>
-<td><code>process_id</code></td>
-<td><code>str</code></td>
-<td>Calling process identifier.</td>
-<td><code>""</code></td>
-</tr>
-<tr>
 <td><code>description</code></td>
 <td><code>str</code></td>
 <td>Description for the table.</td>
+<td><code>""</code></td>
+</tr>
+<tr>
+<td><code>process_id</code></td>
+<td><code>str</code></td>
+<td>Generated process identifier.</td>
 <td><code>""</code></td>
 </tr>
 </tbody>
@@ -1690,10 +1692,11 @@
 <p><strong>Returns</strong> → <code>str</code> – process ID of this operation.</p>
 <hr />
 <h3 id="create_instance"><code>create_instance()</code></h3>
+<p>Create a new temporary instance of a table.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">create_instance</span><span class="p">(</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span>
 </span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">origin_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">origin_table</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">external_edit</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -1722,8 +1725,8 @@
 <tr>
 <td><code>version</code></td>
 <td><code>str</code></td>
-<td>Version of the table; empty ⇒ <code>BASE_TABLE_VERSION</code>.</td>
-<td><code>""</code></td>
+<td>Version of the table.</td>
+<td><code>"base"</code></td>
 </tr>
 <tr>
 <td><code>origin_id</code></td>
@@ -1756,15 +1759,15 @@
 <td><code>None</code></td>
 </tr>
 <tr>
-<td><code>process_id</code></td>
-<td><code>str</code></td>
-<td>Calling process identifier.</td>
-<td><code>""</code></td>
-</tr>
-<tr>
 <td><code>description</code></td>
 <td><code>str</code></td>
 <td>Description for this instance.</td>
+<td><code>""</code></td>
+</tr>
+<tr>
+<td><code>process_id</code></td>
+<td><code>str</code></td>
+<td>Process identifier.</td>
 <td><code>""</code></td>
 </tr>
 </tbody>
@@ -1779,6 +1782,7 @@
 </span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">process_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 </span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span></code></pre></div>
+<p>Create or copy a Python module file into TableVault.</p>
 <table>
 <thead>
 <tr>
@@ -1804,7 +1808,7 @@
 <tr>
 <td><code>process_id</code></td>
 <td><code>str</code></td>
-<td>Calling process identifier.</td>
+<td>Generated process identifier.</td>
 <td><code>""</code></td>
 </tr>
 </tbody>
@@ -1812,11 +1816,13 @@
 <p><strong>Returns</strong> → <code>str</code> – process ID of this operation.</p>
 <hr />
 <h3 id="create_builder_file"><code>create_builder_file()</code></h3>
+<p>Create or update a builder (YAML) file for a temporary table instance.</p>
+<p>If the builder content is not specified, a template file will be created.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">create_builder_file</span><span class="p">(</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">builder_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">BASE_TABLE_VERSION</span><span class="p">,</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span>
 </span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">copy_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">process_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -1847,7 +1853,7 @@
 <td><code>version</code></td>
 <td><code>str</code></td>
 <td>Version of the table.</td>
-<td><code>constants.BASE_TABLE_VERSION</code></td>
+<td><code>"base"</code></td>
 </tr>
 <tr>
 <td><code>copy_dir</code></td>
@@ -1858,7 +1864,7 @@
 <tr>
 <td><code>process_id</code></td>
 <td><code>str</code></td>
-<td>Calling process identifier.</td>
+<td>Generated process identifier.</td>
 <td><code>""</code></td>
 </tr>
 </tbody>
@@ -1867,11 +1873,13 @@
 <hr />
 <h2 id="tablevault-instance-materialization-methods"><code>TableVault</code> Instance Materialization Methods</h2>
 <h3 id="write_instance"><code>write_instance()</code></h3>
+<p>Write <code>table_df</code> as a <strong>materialized instance</strong> of <code>table_name</code> and <code>version</code>.</p>
+<p>The table must already have a <strong>temporary instance</strong> of the same version that is open for external edits (generated by <code>create_instance()</code>).</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">write_instance</span><span class="p">(</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">table_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
 </span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">BASE_TABLE_VERSION</span><span class="p">,</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&quot;base&quot;&#39;</span><span class="p">,</span>
 </span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">dependencies</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 </span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">dtypes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 </span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">process_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
@@ -1903,7 +1911,7 @@
 <td><code>version</code></td>
 <td><code>str</code></td>
 <td>Target version.</td>
-<td><code>constants.BASE_TABLE_VERSION</code></td>
+<td><code>"base"</code></td>
 </tr>
 <tr>
 <td><code>dependencies</code></td>
@@ -1920,7 +1928,7 @@
 <tr>
 <td><code>process_id</code></td>
 <td><code>str</code></td>
-<td>Calling process identifier.</td>
+<td>Generated process identifier.</td>
 <td><code>""</code></td>
 </tr>
 </tbody>
@@ -1928,10 +1936,11 @@
 <p><strong>Returns</strong> → <code>str</code> – The process ID of the executed write operation.</p>
 <hr />
 <h3 id="execute_instance"><code>execute_instance()</code></h3>
+<p>Executes and materialise an existing temporary table instance from builder files.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">execute_instance</span><span class="p">(</span>
 </span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">BASE_TABLE_VERSION</span><span class="p">,</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span>
 </span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">force_execute</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 </span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">process_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">background</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -1957,7 +1966,7 @@
 <td><code>version</code></td>
 <td><code>str</code></td>
 <td>Version of the table.</td>
-<td><code>constants.BASE_TABLE_VERSION</code></td>
+<td><code>"base"</code></td>
 </tr>
 <tr>
 <td><code>force_execute</code></td>
@@ -1968,7 +1977,7 @@
 <tr>
 <td><code>process_id</code></td>
 <td><code>str</code></td>
-<td>Calling process identifier.</td>
+<td>Generated process identifier.</td>
 <td><code>""</code></td>
 </tr>
 <tr>
@@ -1983,6 +1992,7 @@
 <hr />
 <h2 id="tablevault-data-deletionmodification-methods"><code>TableVault</code> Data Deletion/Modification Methods</h2>
 <h3 id="rename_table"><code>rename_table()</code></h3>
+<p>Rename an existing table within the TableVault repository.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">rename_table</span><span class="p">(</span>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="bp">self</span><span class="p">,</span> <span class="n">new_table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">process_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -2012,7 +2022,7 @@
 <tr>
 <td><code>process_id</code></td>
 <td><code>str</code></td>
-<td>Calling process identifier.</td>
+<td>Generated process identifier.</td>
 <td><code>""</code></td>
 </tr>
 </tbody>
@@ -2020,6 +2030,7 @@
 <p><strong>Returns</strong> → <code>str</code> – process ID of this operation.</p>
 <hr />
 <h3 id="delete_table"><code>delete_table()</code></h3>
+<p>Permanently delete a table and all its instances from the repository. Only the dataframes and artifacts are removed; table metadata is retained.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">delete_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">process_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span></code></pre></div>
 <table>
@@ -2041,7 +2052,7 @@
 <tr>
 <td><code>process_id</code></td>
 <td><code>str</code></td>
-<td>Calling process identifier.</td>
+<td>Generated process identifier.</td>
 <td><code>""</code></td>
 </tr>
 </tbody>
@@ -2049,10 +2060,11 @@
 <p><strong>Returns</strong> → <code>str</code> – process ID of this operation.</p>
 <hr />
 <h3 id="delete_instance"><code>delete_instance()</code></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">delete_instance</span><span class="p">(</span>
+<p><div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">delete_instance</span><span class="p">(</span>
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="bp">self</span><span class="p">,</span> <span class="n">instance_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">process_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 </span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span></code></pre></div>
+Delete a materialised table instance from the vault. Only the dataframe is removed and artifacts; instance metadata is retained.</p>
 <table>
 <thead>
 <tr>
@@ -2078,7 +2090,7 @@
 <tr>
 <td><code>process_id</code></td>
 <td><code>str</code></td>
-<td>Calling process identifier.</td>
+<td>Generated process identifier.</td>
 <td><code>""</code></td>
 </tr>
 </tbody>
@@ -2086,6 +2098,7 @@
 <p><strong>Returns</strong> → <code>str</code> – process ID of this operation.</p>
 <hr />
 <h3 id="delete_code_module"><code>delete_code_module()</code></h3>
+<p>Delete a Python module file from the repository.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">delete_code_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">process_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span></code></pre></div>
 <table>
@@ -2107,7 +2120,7 @@
 <tr>
 <td><code>process_id</code></td>
 <td><code>str</code></td>
-<td>Calling process identifier.</td>
+<td>Generated process identifier.</td>
 <td><code>""</code></td>
 </tr>
 </tbody>
@@ -2119,10 +2132,11 @@
 </span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="n">builder_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">BASE_TABLE_VERSION</span><span class="p">,</span>
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span>
 </span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="n">process_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span></code></pre></div>
+<p>Delete a builder file from a temporary table instance.</p>
 <table>
 <thead>
 <tr>
@@ -2149,12 +2163,12 @@
 <td><code>version</code></td>
 <td><code>str</code></td>
 <td>Version of the table.</td>
-<td><code>constants.BASE_TABLE_VERSION</code></td>
+<td><code>"base"</code></td>
 </tr>
 <tr>
 <td><code>process_id</code></td>
 <td><code>str</code></td>
-<td>Calling process identifier.</td>
+<td>Generated process identifier.</td>
 <td><code>""</code></td>
 </tr>
 </tbody>
@@ -2165,10 +2179,11 @@
 <h3 id="generate_process_id"><code>generate_process_id()</code></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">generate_process_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span></code></pre></div>
-<p><strong>Returns</strong> → <code>str</code> – A new, unique process identifier.</p>
+<p>Generate and return a unique process ID. If a process ID is supplied to an operation, that operation persists on errors and can be restarted with the same ID</p>
+<p><strong>Returns</strong> → <code>str</code> – A unique process identifier.</p>
 <hr />
 <h3 id="stop_process"><code>stop_process()</code></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">stop_process</span><span class="p">(</span>
+<p><div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">stop_process</span><span class="p">(</span>
 </span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    <span class="n">to_stop_process_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -2176,7 +2191,7 @@
 </span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    <span class="n">process_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-13-7"><a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span></code></pre></div>
-<p>Stop an active process and optionally terminate it forcefully.</p>
+Stop an active process and optionally terminate it forcefully.</p>
 <table>
 <thead>
 <tr>
@@ -2208,7 +2223,7 @@
 <tr>
 <td><code>process_id</code></td>
 <td><code>str</code></td>
-<td>ID of the calling process (audit).</td>
+<td>Generated process identifier.</td>
 <td><code>""</code></td>
 </tr>
 </tbody>
@@ -2222,13 +2237,14 @@
 </span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>    <span class="n">instance_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">BASE_TABLE_VERSION</span><span class="p">,</span>
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span>
 </span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="n">active_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 </span><span id="__span-14-7"><a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    <span class="n">successful_only</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 </span><span id="__span-14-8"><a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>    <span class="n">rows</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 </span><span id="__span-14-9"><a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>    <span class="n">full_artifact_path</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 </span><span id="__span-14-10"><a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 </span></code></pre></div>
+<p>Retrieve a pandas <code>DataFrame</code> for a table instance.</p>
 <table>
 <thead>
 <tr>
@@ -2255,7 +2271,7 @@
 <td><code>version</code></td>
 <td><code>str</code></td>
 <td>Version when <em>instance_id</em> omitted.</td>
-<td><code>constants.BASE_TABLE_VERSION</code></td>
+<td><code>"base"</code></td>
 </tr>
 <tr>
 <td><code>active_only</code></td>
@@ -2286,7 +2302,7 @@
 <p><strong>Returns</strong> → <code>tuple[pd.DataFrame, str]</code> – <em>(dataframe, resolved_instance_id)</em>.</p>
 <hr />
 <h3 id="get_file_tree"><code>get_file_tree()</code></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_file_tree</span><span class="p">(</span>
+<p><div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_file_tree</span><span class="p">(</span>
 </span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    <span class="n">instance_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>    <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
@@ -2296,7 +2312,7 @@
 </span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>    <span class="n">artifact_files</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 </span><span id="__span-15-9"><a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">rich</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">Tree</span><span class="p">:</span>
 </span></code></pre></div>
-<p>Return a RichTree object of files contained in the target.</p>
+Retrieves a RichTree object representation of the repository.</p>
 <table>
 <thead>
 <tr>
@@ -2310,31 +2326,31 @@
 <tr>
 <td><code>instance_id</code></td>
 <td><code>str</code></td>
-<td>Resolve a specific instance (else latest).</td>
+<td>Retrieve partial instance tree.</td>
 <td><code>""</code></td>
 </tr>
 <tr>
 <td><code>table_name</code></td>
 <td><code>str</code></td>
-<td>Limit to a table (optional).</td>
+<td>Retrieve partial table tree.</td>
 <td><code>""</code></td>
 </tr>
 <tr>
 <td><code>code_files</code></td>
 <td><code>bool</code></td>
-<td>Include stored <em>code</em> modules.</td>
+<td>Include stored Python modules.</td>
 <td><code>True</code></td>
 </tr>
 <tr>
 <td><code>builder_files</code></td>
 <td><code>bool</code></td>
-<td>Include builder scripts.</td>
+<td>Include builder files.</td>
 <td><code>True</code></td>
 </tr>
 <tr>
 <td><code>metadata_files</code></td>
 <td><code>bool</code></td>
-<td>Include JSON/YAML metadata.</td>
+<td>Include metadata files.</td>
 <td><code>False</code></td>
 </tr>
 <tr>
@@ -2351,10 +2367,10 @@
 <div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_instances</span><span class="p">(</span>
 </span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">BASE_TABLE_VERSION</span><span class="p">,</span>
+</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span>
 </span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span></code></pre></div>
-<p>Return a list of materialised instance IDs for a specific table and version.</p>
+<p>Retrieves a list of instance IDs for a specific table and version.</p>
 <table>
 <thead>
 <tr>
@@ -2375,23 +2391,23 @@
 <td><code>version</code></td>
 <td><code>str</code></td>
 <td>Version of the table.</td>
-<td><code>constants.BASE_TABLE_VERSION</code></td>
+<td><code>"base"</code></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Returns</strong> → <code>list[str]</code> – materialised instance IDs for this table/version.</p>
+<p><strong>Returns</strong> → <code>list[str]</code> – instance IDs for this table/version.</p>
 <hr />
 <h3 id="get_active_processes"><code>get_active_processes()</code></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_active_processes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ActiveProcessDict</span><span class="p">:</span>
 </span></code></pre></div>
-<p>Return a dictionary of currently active processes in the vault.
+<p>Retrieves a dictionary of currently active processes in the vault.
 Each key is a process ID and each value is metadata about that process.</p>
 <p><strong>Returns</strong> → <code>ActiveProcessDict</code> – alias <code>dict[str, Mapping[str, Any]]</code>.</p>
 <hr />
 <h3 id="get_process_completion"><code>get_process_completion()</code></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_process_completion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">process_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 </span></code></pre></div>
-<p>Return the completion status of a specific process.</p>
+<p>Retrieves the completion status of a specific process.</p>
 <table>
 <thead>
 <tr>
@@ -2417,7 +2433,7 @@ Each key is a process ID and each value is metadata about that process.</p>
 </span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-19-5"><a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 </span></code></pre></div>
-<p>Fetch the stored description metadata.</p>
+<p>Retrieves the stored description metadata.</p>
 <table>
 <thead>
 <tr>
@@ -2449,12 +2465,12 @@ Each key is a process ID and each value is metadata about that process.</p>
 </span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>    <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a>    <span class="n">instance_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">BASE_TABLE_VERSION</span><span class="p">,</span>
+</span><span id="__span-20-5"><a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span>
 </span><span id="__span-20-6"><a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a>    <span class="n">is_temp</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 </span><span id="__span-20-7"><a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span></code></pre></div>
-<p>Return the path to the artifact folder for a given table instance.
-If <code>allow_multiple_artifacts</code> is <strong>False</strong> for the <code>Table</code> <em>and</em> the instance is not temporary, the folder for the whole table is returned.</p>
+<p>Retrieves the path to the artifact folder for a given table instance.
+If <code>allow_multiple_artifacts</code> is <strong>False</strong> for the table, the instance is not temporary, <em>and</em> the instance was successfully executed, the folder for the whole table is returned.</p>
 <table>
 <thead>
 <tr>
@@ -2481,7 +2497,7 @@ If <code>allow_multiple_artifacts</code> is <strong>False</strong> for the <code
 <td><code>version</code></td>
 <td><code>str</code></td>
 <td>Version string. When <em>instance_id</em> is omitted, fetches latest of this version.</td>
-<td><code>constants.BASE_TABLE_VERSION</code></td>
+<td><code>"base"</code></td>
 </tr>
 <tr>
 <td><code>is_temp</code></td>
@@ -2494,15 +2510,15 @@ If <code>allow_multiple_artifacts</code> is <strong>False</strong> for the <code
 <p><strong>Returns</strong> → <code>str</code> – path to the requested artifact folder.</p>
 <hr />
 <h3 id="get_builders_list"><code>get_builders_list()</code></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_builders_list</span><span class="p">(</span>
+<p><div class="language-python highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_builders_list</span><span class="p">(</span>
 </span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-21-3"><a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>    <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="__span-21-4"><a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="n">instance_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-</span><span id="__span-21-5"><a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">BASE_TABLE_VERSION</span><span class="p">,</span>
+</span><span id="__span-21-4"><a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>    <span class="n">instance_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+</span><span id="__span-21-5"><a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span>
 </span><span id="__span-21-6"><a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a>    <span class="n">is_temp</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 </span><span id="__span-21-7"><a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span></code></pre></div>
-<p>List builder scripts stored within a specific table instance.</p>
+Retrieve a list of builder names contained in an instance.</p>
 <table>
 <thead>
 <tr>
@@ -2523,13 +2539,13 @@ If <code>allow_multiple_artifacts</code> is <strong>False</strong> for the <code
 <td><code>instance_id</code></td>
 <td><code>str</code></td>
 <td>Specific instance (empty ⇒ latest of <em>version</em>).</td>
-<td><code>""</code></td>
+<td><code>''</code></td>
 </tr>
 <tr>
 <td><code>version</code></td>
 <td><code>str</code></td>
 <td>Version used when <em>instance_id</em> omitted.</td>
-<td><code>constants.BASE_TABLE_VERSION</code></td>
+<td><code>"base"</code></td>
 </tr>
 <tr>
 <td><code>is_temp</code></td>
@@ -2547,11 +2563,11 @@ If <code>allow_multiple_artifacts</code> is <strong>False</strong> for the <code
 </span><span id="__span-22-3"><a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>    <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="__span-22-4"><a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a>    <span class="n">builder_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 </span><span id="__span-22-5"><a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="n">instance_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
-</span><span id="__span-22-6"><a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">BASE_TABLE_VERSION</span><span class="p">,</span>
+</span><span id="__span-22-6"><a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span>
 </span><span id="__span-22-7"><a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>    <span class="n">is_temp</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 </span><span id="__span-22-8"><a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span></code></pre></div>
-<p>Retrieve a stored builder script as plain text.</p>
+<p>Retrieve a builder file as plain text.</p>
 <table>
 <thead>
 <tr>
@@ -2584,7 +2600,7 @@ If <code>allow_multiple_artifacts</code> is <strong>False</strong> for the <code
 <td><code>version</code></td>
 <td><code>str</code></td>
 <td>Version used when <em>instance_id</em> omitted.</td>
-<td><code>constants.BASE_TABLE_VERSION</code></td>
+<td><code>"base"</code></td>
 </tr>
 <tr>
 <td><code>is_temp</code></td>
@@ -2599,13 +2615,13 @@ If <code>allow_multiple_artifacts</code> is <strong>False</strong> for the <code
 <h3 id="get_code_modules_list"><code>get_code_modules_list()</code></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_code_modules_list</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span></code></pre></div>
-<p>Return the names of code modules saved in the repository.</p>
+<p>Retrieves a list of module names contained in this repository.</p>
 <p><strong>Returns</strong> → <code>list[str]</code> – Python module names.</p>
 <hr />
 <h3 id="get_code_module_str"><code>get_code_module_str()</code></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_code_module_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 </span></code></pre></div>
-<p>Return the text of a stored code module.</p>
+<p>Retrieve a code module file as plain text.</p>
 <table>
 <thead>
 <tr>
@@ -2624,7 +2640,7 @@ If <code>allow_multiple_artifacts</code> is <strong>False</strong> for the <code
 </table>
 <p><strong>Returns</strong> → <code>str</code> – module source code.</p>
 <hr />
-<h2 id="helper-functions">Helper Functions</h2>
+<h2 id="utility-functions">Utility Functions</h2>
 <hr />
 <p>These functions help transport and delete a TableVault repository.</p>
 <h3 id="compress_vault"><code>compress_vault()</code></h3>

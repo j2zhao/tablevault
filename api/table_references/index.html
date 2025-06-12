@@ -337,7 +337,7 @@
   
   
   <span class="md-ellipsis">
-    Builders, Code Functions, Artifacts, TableReferences
+    Builders, Python Functions, TableReferences, Artifacts
     
   </span>
   
@@ -706,9 +706,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-version-version" class="md-nav__link">
+  <a href="#2-version-instance_id" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Version ((version))
+      2. Version ((instance_id))
     </span>
   </a>
   
@@ -1002,9 +1002,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-version-version" class="md-nav__link">
+  <a href="#2-version-instance_id" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Version ((version))
+      2. Version ((instance_id))
     </span>
   </a>
   
@@ -1090,7 +1090,7 @@
 
 <h1 id="using-table-references-in-builder-files">Using Table References in Builder Files</h1>
 <p>Table References provide a powerful way to dynamically fetch and use data from other table instances, or the current table instance, directly within most string-based fields of your builder YAML files. This allows for highly dynamic and data-driven configurations.</p>
-<p>The <code>&lt;&lt; ... &gt;&gt;</code> syntax can be applied to any singular string, boolean or numeric entry in your builder definition, such as values in the <code>arguments</code> block, items in the <code>changed_columns</code> list, or even the <code>python_function</code> and <code>code_module</code> names themselves. The primary exception is the <code>dependencies</code> field, which does not support this dynamic resolution.</p>
+<p>The <code>&lt;&lt; ... &gt;&gt;</code> syntax can be applied to any singular string, boolean or numeric entry in your builder definition, such as values in the <code>arguments</code> block, items in the <code>changed_columns</code> list, or even the <code>python_function</code> and <code>code_module</code> names themselves. The primary exception is the <code>dependencies</code> field, which does not support this dynamic resolution (since <code>dependencies</code> is generated from Table References themselves).</p>
 <hr />
 <h2 id="core-concept-the-wrapper">Core Concept: The <code>&lt;&lt; ... &gt;&gt;</code> Wrapper</h2>
 <p>The fundamental syntax for a table reference is to enclose the reference string within double angle brackets: <code>&lt;&lt; ... &gt;&gt;</code>.</p>
@@ -1114,19 +1114,18 @@
 <p>If a field value is entirely a table reference (e.g., <code>python_function: "&lt;&lt;config.func_name&gt;&gt;"</code>), the resolved value of the reference will be used directly. If the reference is part of a larger string (e.g., in <code>arguments</code>), the resolved value will be converted to a string and substituted into place.</p>
 <hr />
 <h2 id="anatomy-of-a-table-reference-string">Anatomy of a Table Reference String</h2>
-<p>Inside the <code>&lt;&lt; ... &gt;&gt;</code> wrapper, a table reference string follows a specific structure to identify the table, an optional version, specific columns, and optional filtering conditions:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>tableName(version).{column1,column2,...}[condition1,condition2,...]
+<p>Inside the <code>&lt;&lt; ... &gt;&gt;</code> wrapper, a table reference string follows a specific structure to identify the table, an optional instance_id, specific columns, and optional filtering conditions:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>tableName(instance_id).{column1,column2,...}[condition1,condition2,...]
 </span></code></pre></div>
-<p>All parts (version, columns, conditions) are optional.</p>
+<p>All parts (instance_id, columns, conditions) are optional.</p>
 <hr />
 <p><strong>Components:</strong></p>
 <ol>
 <li><strong><code>tableName</code></strong>: The name of the table to query.</li>
-<li><strong><code>(version)</code></strong>: (Optional) Specifies a particular version of the table.</li>
+<li><strong><code>(instance_id)</code></strong>: (Optional) Specifies a particular instance of the table.</li>
 <li><strong><code>.{columns}</code> or <code>.COLUMN</code></strong>: (Optional) Selects specific columns.</li>
 <li><strong><code>[conditions]</code></strong>: (Optional) Filters the rows of the table.</li>
 </ol>
-<p>Let's break down each component:</p>
 <hr />
 <h3 id="1-table-name-tablename">1. Table Name (<code>tableName</code>)</h3>
 <ul>
@@ -1145,10 +1144,10 @@
 </li>
 </ul>
 <hr />
-<h3 id="2-version-version">2. Version (<code>(version)</code>)</h3>
+<h3 id="2-version-instance_id">2. Version (<code>(instance_id)</code>)</h3>
 <ul>
-<li><strong>Syntax</strong>: Enclosed in parentheses, e.g., <code>(v1.0.0)</code> or <code>(prod)</code>.</li>
-<li><strong>Optional</strong>: If omitted, TableVault will typically use the default or latest available version of the table based on its internal logic and cache.</li>
+<li><strong>Syntax</strong>: Instance in parentheses, e.g., <code>(base_1748113624_d049944b-8548-46d2-a247-bbf3769fbadc)</code>.</li>
+<li><strong>Optional</strong>: If omitted, TableVault will typically use the latest available instance of the table based on its internal logic and cache.</li>
 <li><strong>Dynamic Version</strong>: The version string can be a nested table reference.<ul>
 <li>Example reference string: <code>my_table(&lt;&lt;version_control_table.active_version[table_name::'my_table']&gt;&gt;)</code></li>
 </ul>
@@ -1224,7 +1223,7 @@
 </ul>
 <hr />
 <h2 id="nested-references">Nested References</h2>
-<p>As shown in many examples above, any component of a table reference—the table name, version string, column names, condition keys, or condition values—can itself be another table reference enclosed in <code>&lt;&lt; ... &gt;&gt;</code>. TableVault will resolve the innermost references first and use their results to construct the outer reference before resolving it.</p>
+<p>As shown in examples above, any component of a table reference—the table name, version string, column names, condition keys, or condition values—can itself be another table reference enclosed in <code>&lt;&lt; ... &gt;&gt;</code>. TableVault will resolve the innermost references first and use their results to construct the outer reference before resolving it.</p>
 <p><strong>Complex Example (from code, used in an argument):</strong>
 <code>&lt;&lt;stories.artifact_name[paper_name::&lt;&lt;self.paper_name[index]&gt;&gt;]&gt;&gt;</code>
 1.  <code>&lt;&lt;self.paper_name[index]&gt;&gt;</code>: Resolves first. It fetches the <code>paper_name</code> from the current row (<code>index</code>) of the <code>self</code> table.

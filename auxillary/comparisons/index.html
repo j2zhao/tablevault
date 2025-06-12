@@ -337,7 +337,7 @@
   
   
   <span class="md-ellipsis">
-    Builders, Code Functions, Artifacts, TableReferences
+    Builders, Python Functions, TableReferences, Artifacts
     
   </span>
   
@@ -729,13 +729,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-tablevault-vs-sqlite" class="md-nav__link">
+  <a href="#tablevault-vs-sqlite" class="md-nav__link">
     <span class="md-ellipsis">
-      1. TableVault vs. SQLite
+      TableVault vs. SQLite
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="1. TableVault vs. SQLite">
+    <nav class="md-nav" aria-label="TableVault vs. SQLite">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -762,13 +762,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-tablevault-vs-apache-airflow" class="md-nav__link">
+  <a href="#tablevault-vs-apache-airflow" class="md-nav__link">
     <span class="md-ellipsis">
-      2. TableVault vs. Apache Airflow
+      TableVault vs. Apache Airflow
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. TableVault vs. Apache Airflow">
+    <nav class="md-nav" aria-label="TableVault vs. Apache Airflow">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -795,13 +795,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-tablevauilt-vs-langchain" class="md-nav__link">
+  <a href="#tablevault-vs-langchain" class="md-nav__link">
     <span class="md-ellipsis">
-      3. TableVauilt vs. LangChain
+      TableVault vs. LangChain
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="3. TableVauilt vs. LangChain">
+    <nav class="md-nav" aria-label="TableVault vs. LangChain">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -975,13 +975,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-tablevault-vs-sqlite" class="md-nav__link">
+  <a href="#tablevault-vs-sqlite" class="md-nav__link">
     <span class="md-ellipsis">
-      1. TableVault vs. SQLite
+      TableVault vs. SQLite
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="1. TableVault vs. SQLite">
+    <nav class="md-nav" aria-label="TableVault vs. SQLite">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1008,13 +1008,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-tablevault-vs-apache-airflow" class="md-nav__link">
+  <a href="#tablevault-vs-apache-airflow" class="md-nav__link">
     <span class="md-ellipsis">
-      2. TableVault vs. Apache Airflow
+      TableVault vs. Apache Airflow
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="2. TableVault vs. Apache Airflow">
+    <nav class="md-nav" aria-label="TableVault vs. Apache Airflow">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1041,13 +1041,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-tablevauilt-vs-langchain" class="md-nav__link">
+  <a href="#tablevault-vs-langchain" class="md-nav__link">
     <span class="md-ellipsis">
-      3. TableVauilt vs. LangChain
+      TableVault vs. LangChain
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="3. TableVauilt vs. LangChain">
+    <nav class="md-nav" aria-label="TableVault vs. LangChain">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1093,102 +1093,101 @@
 
 
 <h1 id="comparisons">Comparisons</h1>
-<h2 id="1-tablevault-vs-sqlite">1. TableVault vs. SQLite</h2>
+<h2 id="tablevault-vs-sqlite">TableVault vs. SQLite</h2>
 <h3 id="key-differences">Key Differences</h3>
 <table>
 <thead>
 <tr>
-<th><strong><em>TableVault</em></strong></th>
-<th><strong><em>SQLite</em></strong></th>
+<th style="text-align: left;"><strong><em>TableVault</em></strong></th>
+<th style="text-align: left;"><strong><em>SQLite</em></strong></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Native Support for Unstructured Files with Artifacts</strong></td>
-<td><strong>Only Supports Database Tables</strong></td>
+<td style="text-align: left;"><strong>Native Support for Unstructured Files with Artifacts</strong></td>
+<td style="text-align: left;"><strong>Only Supports Database Tables</strong></td>
 </tr>
 <tr>
-<td><strong>Transparent Data Storage Using OS File System</strong></td>
-<td><strong>All Tables are Stored within a single SQLite File</strong></td>
+<td style="text-align: left;"><strong>Transparent Data Storage Using the OS File System</strong></td>
+<td style="text-align: left;"><strong>All Tables are Stored Within a Single SQLite File</strong></td>
 </tr>
 <tr>
-<td><strong>Focus on Python Execution</strong></td>
-<td><strong>Only Supports SQL Executions</strong></td>
+<td style="text-align: left;"><strong>Focus on Python Execution</strong></td>
+<td style="text-align: left;"><strong>Only Supports SQL Execution</strong></td>
 </tr>
 <tr>
-<td><strong>Performance Optimizations Up to the User</strong></td>
-<td><strong>Internal Performance Optimizations</strong></td>
+<td style="text-align: left;"><strong>Performance Optimizations Are Up to the User</strong></td>
+<td style="text-align: left;"><strong>Internal Performance Optimizations</strong></td>
 </tr>
 </tbody>
 </table>
 <h3 id="summary">Summary</h3>
-<p>TableVault is geared towards Python operations over complex, versioned datasets and artifacts, while SQLite and other traditional databases are primarily focused on SQL execution on database tables. Both TableVault and SQLite maintains data integrity and reliability by enforcing ACID principles and techniques.</p>
-<p>If your workflow is primarily dealing with SQL and tables, SQLite might be preferred. If you are working in data science or machine learning, you are primarily dealing with heterogeneous data, or you want exact control over execution, TableVault might be better suited for your application.</p>
+<p>TableVault is geared towards Python operations over complex, versioned datasets and artifacts, while SQLite and other traditional databases are primarily focused on SQL execution on database tables. Both TableVault and SQLite maintain data integrity and reliability by enforcing ACID principles and techniques.</p>
+<p>If your workflow primarily deals with SQL and tables, SQLite might be preferred. If you work in data science or machine learning, deal with heterogeneous data, or want exact control over execution, TableVault might be better suited for your application.</p>
 <hr />
-<h2 id="2-tablevault-vs-apache-airflow">2. TableVault vs. Apache Airflow</h2>
+<h2 id="tablevault-vs-apache-airflow">TableVault vs. Apache Airflow</h2>
 <h3 id="key-differences_1">Key Differences</h3>
 <table>
 <thead>
 <tr>
-<th><strong><em>TableVault</em></strong></th>
-<th><strong><em>Airflow</em></strong></th>
+<th style="text-align: left;"><strong><em>TableVault</em></strong></th>
+<th style="text-align: left;"><strong><em>Airflow</em></strong></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Native Support for Unstructured Files with Artifacts</strong></td>
-<td><strong>Does not Store Data Artifacts</strong></td>
+<td style="text-align: left;"><strong>Native Support for Unstructured Files with Artifacts</strong></td>
+<td style="text-align: left;"><strong>Does Not Store Data Artifacts</strong></td>
 </tr>
 <tr>
-<td><strong>Can Query Data Artifacts from Different Tables</strong></td>
-<td><strong>DAGs are Treated as Independent</strong></td>
+<td style="text-align: left;"><strong>Can Query Data Artifacts from Different Tables</strong></td>
+<td style="text-align: left;"><strong>DAGs are Treated as Independent</strong></td>
 </tr>
 <tr>
-<td><strong>Built in Logging for All Data Operations</strong></td>
-<td><strong>Only Logs DAG Execution</strong></td>
+<td style="text-align: left;"><strong>Built-in Logging for All Data Operations</strong></td>
+<td style="text-align: left;"><strong>Only Logs DAG Execution</strong></td>
 </tr>
 <tr>
-<td><strong>Execution Scheduling up to the User</strong></td>
-<td><strong>Controls Scheduling of Pipelines</strong></td>
+<td style="text-align: left;"><strong>Execution Scheduling Is Up to the User</strong></td>
+<td style="text-align: left;"><strong>Controls Scheduling of Pipelines</strong></td>
 </tr>
 </tbody>
 </table>
 <h3 id="summary_1">Summary</h3>
-<p>TableVault is a lightweight execution system that is designed to ensure data integrity and transparency, and improve data reusability across different workfows. Apache Airflow is a platform to programmatically author, schedule, and monitor workflows (data pipelines). Both TableVault and Airflow track and version data transformation executions.</p>
+<p>TableVault is a lightweight execution system designed to ensure data integrity and transparency and improve data reusability across different workflows. Apache Airflow is a platform to programmatically author, schedule, and monitor workflows (data pipelines). Both TableVault and Airflow track and version data transformation executions.</p>
 <p>If you need a tool to organize recurring executions with a rich ecosystem of custom operators, Airflow might be the right choice. If you want a Python execution system that organizes data outputs and manages metadata to improve data explainability, TableVault might make more sense for your workflow.</p>
 <hr />
-<h2 id="3-tablevauilt-vs-langchain">3. TableVauilt vs. LangChain</h2>
+<h2 id="tablevault-vs-langchain">TableVault vs. LangChain</h2>
 <h3 id="key-differences_2">Key Differences</h3>
 <table>
 <thead>
 <tr>
-<th><strong><em>TableVault</em></strong></th>
-<th><strong><em>LangChain</em></strong></th>
+<th style="text-align: left;"><strong><em>TableVault</em></strong></th>
+<th style="text-align: left;"><strong><em>LangChain</em></strong></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Every LLM Execution and Output is Logged</strong></td>
-<td><strong>No Record of Executed LLM Calls</strong></td>
+<td style="text-align: left;"><strong>Every LLM Execution and Output Is Logged</strong></td>
+<td style="text-align: left;"><strong>No Record of Executed LLM Calls</strong></td>
 </tr>
 <tr>
-<td><strong>Allows Versioning of Data Artifacts</strong></td>
-<td><strong>No Explict Versioning</strong></td>
+<td style="text-align: left;"><strong>Allows Versioning of Data Artifacts</strong></td>
+<td style="text-align: left;"><strong>No Explicit Versioning</strong></td>
 </tr>
 <tr>
-<td><strong>Agents Interact Safely with Persistant Data Store</strong></td>
-<td><strong>Agents Don't Directly Write to Persistant Data</strong></td>
+<td style="text-align: left;"><strong>Agents Interact Safely with a Persistent Data Store</strong></td>
+<td style="text-align: left;"><strong>Agents Don't Directly Write to Persistent Data</strong></td>
 </tr>
 <tr>
-<td><strong>General User-Defined Python Functions</strong></td>
-<td><strong>Specialized Suite of Custom LLM Operations</strong></td>
+<td style="text-align: left;"><strong>General, User-Defined Python Functions</strong></td>
+<td style="text-align: left;"><strong>Specialized Suite of Custom LLM Operations</strong></td>
 </tr>
 </tbody>
 </table>
 <h3 id="summary_2">Summary</h3>
-<p>Large Language models can be used with TableVault by calling the relevant API (including the <code>LangChain</code> library) or locally running the model. TableVault is complimentary to libraries such as LangChain and can be used in conjunction to organize multiple model calls, inputs and outputs. </p>
-<p>TableVault enables more complex language model workflows by explicitly tracking execution versions, and allowing models to safely interact with persistant artifacts that all conform to the same organization structure.</p>
-<hr />
+<p>Large language models can be used with TableVault by calling the relevant API (including the <code>LangChain</code> library) or by locally running the model. TableVault is complementary to libraries such as LangChain and can be used in conjunction to organize multiple model calls, inputs, and outputs.</p>
+<p>TableVault enables more complex language model workflows by explicitly tracking execution versions and allowing models to safely interact with persistent artifacts that all conform to the same organizational structure.</p>
 
 
 

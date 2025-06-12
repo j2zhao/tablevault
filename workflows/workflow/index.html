@@ -337,7 +337,7 @@
   
   
   <span class="md-ellipsis">
-    Builders, Code Functions, Artifacts, TableReferences
+    Builders, Python Functions, TableReferences, Artifacts
     
   </span>
   
@@ -448,46 +448,46 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-write-the-builder-files" class="md-nav__link">
+  <a href="#5-write-the-builder-files" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Write the Builder Files
+      5. Write the Builder Files
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-materialize-the-instance" class="md-nav__link">
+  <a href="#6-materialize-the-instance" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Materialize the Instance
+      6. Materialize the Instance
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#6-create-a-second-instance" class="md-nav__link">
+  <a href="#7-create-a-second-instance" class="md-nav__link">
     <span class="md-ellipsis">
-      6. Create a Second Instance
+      7. Create a Second Instance
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="6. Create a Second Instance">
+    <nav class="md-nav" aria-label="7. Create a Second Instance">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-copying-previous-instances" class="md-nav__link">
+  <a href="#v1-copying-previous-instances" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Copying Previous Instances
+      (V1) Copying Previous Instances
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-externally-writing-instances" class="md-nav__link">
+  <a href="#v2-externally-writing-instances" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Externally Writing Instances
+      (V2) Externally Writing Instances
     </span>
   </a>
   
@@ -499,9 +499,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#7-query-for-a-dataframe" class="md-nav__link">
+  <a href="#8-query-for-a-dataframe" class="md-nav__link">
     <span class="md-ellipsis">
-      7. Query for A Dataframe
+      8. Query for a Dataframe
     </span>
   </a>
   
@@ -1008,46 +1008,46 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-write-the-builder-files" class="md-nav__link">
+  <a href="#5-write-the-builder-files" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Write the Builder Files
+      5. Write the Builder Files
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-materialize-the-instance" class="md-nav__link">
+  <a href="#6-materialize-the-instance" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Materialize the Instance
+      6. Materialize the Instance
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#6-create-a-second-instance" class="md-nav__link">
+  <a href="#7-create-a-second-instance" class="md-nav__link">
     <span class="md-ellipsis">
-      6. Create a Second Instance
+      7. Create a Second Instance
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="6. Create a Second Instance">
+    <nav class="md-nav" aria-label="7. Create a Second Instance">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-copying-previous-instances" class="md-nav__link">
+  <a href="#v1-copying-previous-instances" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Copying Previous Instances
+      (V1) Copying Previous Instances
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-externally-writing-instances" class="md-nav__link">
+  <a href="#v2-externally-writing-instances" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Externally Writing Instances
+      (V2) Externally Writing Instances
     </span>
   </a>
   
@@ -1059,9 +1059,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#7-query-for-a-dataframe" class="md-nav__link">
+  <a href="#8-query-for-a-dataframe" class="md-nav__link">
     <span class="md-ellipsis">
-      7. Query for A Dataframe
+      8. Query for a Dataframe
     </span>
   </a>
   
@@ -1087,24 +1087,24 @@
 
 
 <h1 id="basic-workflow">Basic Workflow</h1>
-<p>The TableVault API allows users to generate and execute instances of data tables through a straightforward workflow. The process begins with establishing a central repository, followed by defining the structure of a table, creating specific instances of that table, and then using builder files to populate and materialize the data.</p>
+<p>This is a basic sample workflow for a TableVault repository.</p>
 <hr />
 <h2 id="1-make-a-repository">1. Make a Repository</h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">tablevault</span> <span class="o">=</span> <span class="n">TableVault</span><span class="p">(</span><span class="n">db_dir</span> <span class="o">=</span> <span class="s2">&quot;test_tv&quot;</span><span class="p">,</span> <span class="n">author</span> <span class="o">=</span> <span class="s2">&quot;kong&quot;</span><span class="p">,</span> <span class="n">create</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;this is an example repository.&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">tablevault</span> <span class="o">=</span> <span class="n">TableVault</span><span class="p">(</span><span class="n">db_dir</span><span class="o">=</span><span class="s2">&quot;test_tv&quot;</span><span class="p">,</span> <span class="n">author</span><span class="o">=</span><span class="s2">&quot;kong&quot;</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;This is an example repository.&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
 <h2 id="2-make-a-table">2. Make a Table</h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="n">table_name</span> <span class="o">=</span> <span class="s2">&quot;fruits_table&quot;</span><span class="p">,</span> 
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;this is an example table.&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">create_table</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="s2">&quot;fruits_table&quot;</span><span class="p">,</span> 
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;This is an example table.&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
 <h2 id="3-make-a-table-instance">3. Make a Table Instance</h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">create_instance</span><span class="p">(</span><span class="n">table_name</span> <span class="o">=</span> <span class="s2">&quot;fruits_table&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">create_instance</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="s2">&quot;fruits_table&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
 <h2 id="4-write-the-code-files">4. Write the Code Files</h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">create_code_module</span><span class="p">(</span><span class="n">module_name</span> <span class="o">=</span> <span class="s2">&quot;example_code&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">create_code_module</span><span class="p">(</span><span class="n">module_name</span><span class="o">=</span><span class="s2">&quot;example_code&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <p><strong>Example Code</strong></p>
 <p>You can fill out the code file with the following code:</p>
@@ -1113,9 +1113,9 @@
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">create_data_table_from_list</span><span class="p">(</span><span class="n">vals</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
 </span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;temp_name&quot;</span><span class="p">:</span> <span class="n">vals</span><span class="p">})</span>
 </span></code></pre></div>
-<p>If you don't have direct access to a text editor on your platform, you can add the code as a string argument, <code>text</code>, in <code>create_code_module</code>.</p>
-<h2 id="4-write-the-builder-files">4. Write the Builder Files</h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">create_builder_file</span><span class="p">(</span><span class="n">table_name</span> <span class="o">=</span> <span class="s2">&quot;fruits_table&quot;</span><span class="p">,</span> <span class="n">builder_name</span> <span class="o">=</span> <span class="s2">&quot;fruits_table_index&quot;</span><span class="p">)</span>
+<p>If you do not have direct access to a text editor on your platform, you can add the code as a string argument, <code>text</code>, in <code>create_code_module()</code>.</p>
+<h2 id="5-write-the-builder-files">5. Write the Builder Files</h2>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">create_builder_file</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="s2">&quot;fruits_table&quot;</span><span class="p">,</span> <span class="n">builder_name</span><span class="o">=</span><span class="s2">&quot;fruits_table_index&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <p><strong>Example Builder</strong></p>
 <p>You can fill out the builder file with the following text:</p>
@@ -1129,47 +1129,51 @@
 </span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
 </span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="nt">arguments</span><span class="p">:</span><span class="w">                               </span><span class="c1"># Arguments passed to the function</span>
 </span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">    </span><span class="nt">vals</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;pineapples&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;watermelons&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;coconuts&#39;</span><span class="p p-Indicator">]</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="nt">is_custom</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                         </span><span class="c1">#using a user-supplied function in code_module</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="nt">is_custom</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">                         </span><span class="c1"># Using a user-supplied function in code_module</span>
 </span></code></pre></div>
-<p>If you don't have direct access to a text editor on your platform, you can add the code as a string argument, <code>text</code>, in <code>create_builder_file</code>.</p>
+<p>If you do not have direct access to a text editor on your platform, you can add the code as a string argument, <code>text</code>, in <code>create_builder_file()</code>.</p>
 <hr />
-<h2 id="5-materialize-the-instance">5. Materialize the Instance</h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">execute_instance</span><span class="p">(</span><span class="n">table_name</span> <span class="o">=</span> <span class="s2">&quot;fruits_table&quot;</span><span class="p">)</span>
+<h2 id="6-materialize-the-instance">6. Materialize the Instance</h2>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">execute_instance</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="s2">&quot;fruits_table&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
-<h2 id="6-create-a-second-instance">6. Create a Second Instance</h2>
-<p>There are two different ways, you can create a second instance of the <code>fruits_table</code> table.</p>
-<h3 id="1-copying-previous-instances">1. Copying Previous Instances</h3>
+<h2 id="7-create-a-second-instance">7. Create a Second Instance</h2>
+<p>You can create a second instance of the <code>fruits_table</code> table in two different ways.</p>
+<h3 id="v1-copying-previous-instances">(V1) Copying Previous Instances</h3>
 <p>To make building the dataframe easier, you can copy the metadata of the last materialized instance:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">create_instance</span><span class="p">(</span><span class="n">table_name</span> <span class="o">=</span> <span class="s2">&quot;fruits_table&quot;</span><span class="p">,</span> <span class="n">copy</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">create_instance</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="s2">&quot;fruits_table&quot;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span></code></pre></div>
 <p>You simply need to change one line in the <code>fruits_table_index.YAML</code> file:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="nt">arguments</span><span class="p">:</span><span class="w">                               </span><span class="c1"># Arguments passed to the function</span>
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="nt">vals</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;bananas&#39;</span><span class="p p-Indicator">]</span>
 </span></code></pre></div>
-<p>You then can execute normally:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">execute_instance</span><span class="p">(</span><span class="n">table_name</span> <span class="o">=</span> <span class="s2">&quot;fruits_table&quot;</span><span class="p">)</span>
+<p>You can then execute normally:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">execute_instance</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="s2">&quot;fruits_table&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <hr />
-<h3 id="2-externally-writing-instances">2. Externally Writing Instances</h3>
-<p>If you want to edit the dataframe outside of the TableVault library (not generally recommended), you can explicitly declare this when generating the new instance: </p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">create_instance</span><span class="p">(</span><span class="n">table_name</span> <span class="o">=</span> <span class="s2">&quot;fruits_table&quot;</span><span class="p">,</span> <span class="n">external_edit</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;externally created dataframe&quot;</span><span class="p">)</span>
+<h3 id="v2-externally-writing-instances">(V2) Externally Writing Instances</h3>
+<p>If you want to edit the dataframe outside of the TableVault library, you can explicitly declare this when generating the new instance: </p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">create_instance</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="s2">&quot;fruits_table&quot;</span><span class="p">,</span> <span class="n">external_edit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Externally created dataframe.&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <p>You can now write a new dataframe directly into our table:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 </span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
 </span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;fruits&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;bananas&#39;</span><span class="p">]})</span>
 </span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>
-</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">write_instance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">table_name</span> <span class="o">=</span> <span class="s2">&quot;fruits_table&quot;</span><span class="p">)</span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="n">tablevault</span><span class="o">.</span><span class="n">write_instance</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">table_name</span><span class="o">=</span><span class="s2">&quot;fruits_table&quot;</span><span class="p">)</span>
 </span></code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">External Execution is Untracked</p>
+<p>Edits to the dataframe made outside of the TableVault system are untracked. It is recommended that you fill out the <code>description</code> field in your instance to explain the edits, and keep your edits small and intuitive.</p>
+</div>
 <hr />
-<h2 id="7-query-for-a-dataframe">7. Query for A Dataframe</h2>
-<p>You can easily retrieve the dataframe of both instances: </p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">instances</span> <span class="o">=</span> <span class="n">tablevault</span><span class="o">.</span><span class="n">get_instances</span><span class="p">(</span><span class="n">table_name</span> <span class="o">=</span> <span class="s2">&quot;fruits_table&quot;</span><span class="p">)</span>
+<h2 id="8-query-for-a-dataframe">8. Query for a Dataframe</h2>
+<p>You can easily retrieve the dataframes of both instances: </p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">instances</span> <span class="o">=</span> <span class="n">tablevault</span><span class="o">.</span><span class="n">get_instances</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="s2">&quot;fruits_table&quot;</span><span class="p">)</span>
 </span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
-</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">df_1</span> <span class="o">=</span> <span class="n">tablevault</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span><span class="n">table_name</span> <span class="o">=</span> <span class="s2">&quot;fruits_table&quot;</span><span class="p">,</span> <span class="n">instance_id</span> <span class="o">=</span> <span class="n">instances</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="n">df_2</span> <span class="o">=</span> <span class="n">tablevault</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span><span class="n">table_name</span> <span class="o">=</span> <span class="s2">&quot;fruits_table&quot;</span><span class="p">)</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">df_1</span> <span class="o">=</span> <span class="n">tablevault</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="s2">&quot;fruits_table&quot;</span><span class="p">,</span> <span class="n">instance_id</span><span class="o">=</span><span class="n">instances</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="n">df_2</span> <span class="o">=</span> <span class="n">tablevault</span><span class="o">.</span><span class="n">get_dataframe</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="s2">&quot;fruits_table&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <p>The dataframes should have the expected values:</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1"><strong>df_1</strong></label><label for="__tabbed_1_2"><strong>df_2</strong></label></div>
