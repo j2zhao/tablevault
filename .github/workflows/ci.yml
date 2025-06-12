@@ -28,16 +28,20 @@ jobs:
           ruff check tablevault
       - name: Tests
         run: pytest -q
+
   deploy-docs:
     name: Deploy MkDocs to GitHub Pages
     needs: test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    
+    # Add this permissions block to grant write access to the GITHUB_TOKEN
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        # important: we need the full history to let mkdocs-gh-deploy 
-        # see past commits on gh-pages
         with:
           fetch-depth: 0
 
