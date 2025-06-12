@@ -155,6 +155,7 @@ arguments:
     arguments:    
         vals: [2, 4, 6, 8]
     is_custom: false
+
     ```
 
 ---
@@ -169,15 +170,18 @@ arguments:
     import shutil
 
     def fetch_image_from_string(fruit: str, artifact_dir:str ):
+        
         file_path = f'./all_images/{fruit}.png' # pre-existing file
         new_file_path = f'{artifact_dir}/{fruit}.png'
         
         shutil.copy(file_path, new_file_path)
         
         return f'{fruit}.png' # return relative path
+
     ```
 
 === "Example YAML Builder"
+
     ```yaml
     builder_type: ColumnBuilder
 
@@ -200,5 +204,77 @@ arguments:
 ---
 
 **An `IndexBuilder` that yields a batch of `GritLM` embedding to a new row**
+
+
+=== "Python Code"
+
+    ```python
+    from typing import Iterator
+        from tqdm import tqdm
+        from gritlm import GritLM
+        import pandas as pd
+        import numpy as np
+        import time
+        import os
+        import torch
+        import gc
+
+        def get_batch_embeddings(df:pd.DataFrame,
+                                self_df:pd.DataFrame,
+                                artifact_column: str,
+                                raw_instruction:str,
+                                batch_size:int,
+                                artifact_name:str,
+                                artifact_folder:str)-> Iterator[tuple[int, tuple[int, str, float]]]:
+            gc.collect()
+            torch.cuda.empty_cache()
+            model = GritLM("GritLM/GritLM-7B", torch_dtype="auto", device_map="auto", mode="embedding")
+
+            for index, start_index in enumerate(tqdm(range(0, len(df), batch_size), desc="Batches")):
+            start_time = time.time()
+            end_index = start_index + batch_size
+            artifact_name_ = artifact_name + f"_{start_index}_{end_index}.npy"
+            artifact_dir = os.path.join(artifact_folder, artifact_name_)
+            if start_index in self_df['start_index']:
+                continue
+            batch_df = df.iloc[start_index:end_index][artifact_column]
+            batch_texts = []
+            for file_path in batch_df:
+                with open(file_path, 'r') as f:
+                    batch_texts.append(f.read())
+            ndarr = model.encode(batch_texts, batch_size=batch_size,
+                                    instruction=raw_instruction).astype(np.float16)
+            end_time = time.time()
+            np.save(artifact_dir, ndarr)
+            yield (index, (start_index, artifact_name_, end_time - start_time))
+    ```
+
+=== "Example YAML Builder"
+
+    ```yaml
+    builder_type: IndexBuilder
+
+    changed_columns: ['start_index', 'artifact_name', 'elapsed_time']        # Output columns created / overwritten
+    primary_key: ['start_index'] 
+    python_function: get_batch_embeddings         # e.g., build_features
+    code_module: batch_embedding                  # e.g., my_feature_lib
+
+    arguments:
+        df: <<paper_abstract_store.artifact_name>>
+        self_df: <<self>>
+        artifact_column: artifact_name
+        raw_instruction: "<|embed|>\n"
+        batch_size: 4
+        artifact_name: embeddings
+        artifact_folder: ~ARTIFACT_FOLDER~
+
+    is_custom: true
+    return_type: generator
+
+    dtypes:
+        artifact_name: artifact_string
+        elapsed_time: float
+
+    ```
 
 ---

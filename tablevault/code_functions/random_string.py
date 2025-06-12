@@ -66,6 +66,7 @@ def random_row_string(column_names, **kwargs):
         return row[0]
     return row
 
+
 def random_gen_string(column_names, df, **kwargs):
     """Generate a single row of random string values.
 

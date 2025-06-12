@@ -1,4 +1,4 @@
-from tablevault._helper import file_operations, database_lock, utils
+from tablevault._helper import file_operations
 from tablevault._helper.metadata_store import MetadataStore
 from tablevault._dataframe_helper import table_operations
 from tablevault._defintions import constants
@@ -63,25 +63,16 @@ def get_file_tree(
     metadata_files: bool,
     artifact_files: bool,
     db_dir: str,
-    safe_locking: bool,
-) ->Tree:
-    process_id = utils.gen_tv_id()
-    db_lock = database_lock.DatabaseLock(process_id, db_dir)
-    if safe_locking:
-        db_lock.acquire_shared_lock(table_name, instance_id)
-    try:
-        tree = file_operations.get_file_tree(
-            instance_id,
-            table_name,
-            code_files,
-            builder_files,
-            metadata_files,
-            artifact_files,
-            db_dir,
-        )
-    finally:
-        if safe_locking:
-            db_lock.release_all_locks()
+) -> Tree:
+    tree = file_operations.get_file_tree(
+        instance_id,
+        table_name,
+        code_files,
+        builder_files,
+        metadata_files,
+        artifact_files,
+        db_dir,
+    )
     return tree
 
 
@@ -141,27 +132,18 @@ def get_dataframe(
     rows: Optional[int],
     full_artifact_path: bool,
     db_dir,
-    safe_locking: bool,
 ) -> tuple[pd.DataFrame, str]:
     db_metadata = MetadataStore(db_dir)
     if instance_id == "":
         _, _, instance_id = db_metadata.get_last_table_update(
             table_name, version, active_only=active_only, success_only=successful_only
         )
-    process_id = utils.gen_tv_id()
-    db_lock = database_lock.DatabaseLock(process_id, db_dir)
-    if safe_locking:
-        db_lock.acquire_shared_lock(table_name, instance_id)
-    try:
-        df = table_operations.get_table(
-            instance_id,
-            table_name,
-            db_dir,
-            rows,
-            artifact_dir=full_artifact_path,
-            get_index=False,
-        )
-    finally:
-        if safe_locking:
-            db_lock.release_all_locks()
+    df = table_operations.get_table(
+        instance_id,
+        table_name,
+        db_dir,
+        rows,
+        artifact_dir=full_artifact_path,
+        get_index=False,
+    )
     return df, instance_id

@@ -14,6 +14,7 @@ def evaluate_restart(process_id: str):
     tablevault = TableVault("example_tv", "jinjin")
     processes = tablevault.get_active_processes()
     assert process_id in processes
+    assert not processes[process_id].force_takedown
     tablevault = TableVault("example_tv", "jinjin", restart=True)
     evaluate_operation_logging([process_id])
 

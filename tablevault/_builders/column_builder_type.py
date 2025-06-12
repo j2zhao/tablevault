@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, Optional
 from tablevault._helper.file_operations import load_code_function, move_code_to_instance
 
+
 class ColumnBuilder(TVBuilder):
     def execute(
         self,
@@ -32,8 +33,11 @@ class ColumnBuilder(TVBuilder):
                     db_dir,
                     instance_id,
                     table_name,
-                )      
-            if self.return_type == constants.BUILDER_RTYPE_ROWWISE and self.n_threads != 1:
+                )
+            if (
+                self.return_type == constants.BUILDER_RTYPE_ROWWISE
+                and self.n_threads != 1
+            ):
                 indices = list(range(len(cache[constants.TABLE_SELF])))
                 with ThreadPoolExecutor(max_workers=self.n_threads) as executor:
                     _ = list(
@@ -44,7 +48,10 @@ class ColumnBuilder(TVBuilder):
                             indices,
                         )
                     )
-            elif self.return_type == constants.BUILDER_RTYPE_ROWWISE and self.n_threads == 1:
+            elif (
+                self.return_type == constants.BUILDER_RTYPE_ROWWISE
+                and self.n_threads == 1
+            ):
                 for i in range(len(cache[constants.TABLE_SELF])):
                     _execute_code_from_builder(
                         i, self, funct, cache, instance_id, table_name, db_dir
@@ -79,7 +86,9 @@ def _execute_code_from_builder(
         if is_filled:
             return
     builder = builder.model_copy(deep=True)
-    builder.transform_table_string(cache, instance_id, table_name, db_dir, index, arguments=True)
+    builder.transform_table_string(
+        cache, instance_id, table_name, db_dir, index, arguments=True
+    )
     results = funct(**builder.arguments)
     if index is not None and builder.return_type == constants.BUILDER_RTYPE_ROWWISE:
         if len(builder.changed_columns) == 1:
@@ -102,7 +111,9 @@ def _execute_code_from_builder(
                     table_name,
                     db_dir,
                 )
-                cache[constants.TABLE_SELF].at[index, builder.changed_columns[i]] = result
+                cache[constants.TABLE_SELF].at[index, builder.changed_columns[i]] = (
+                    result
+                )
     elif builder.return_type == constants.BUILDER_RTYPE_GENERATOR:
         for index, results_ in results:
             if len(builder.changed_columns) == 1:
@@ -114,7 +125,9 @@ def _execute_code_from_builder(
                     table_name,
                     db_dir,
                 )
-                cache[constants.TABLE_SELF].at[index, builder.changed_columns[0]] = results_
+                cache[constants.TABLE_SELF].at[index, builder.changed_columns[0]] = (
+                    results_
+                )
             else:
                 for i, result in enumerate(results_):
                     table_operations.write_df_entry(
@@ -125,7 +138,9 @@ def _execute_code_from_builder(
                         table_name,
                         db_dir,
                     )
-                    cache[constants.TABLE_SELF].at[index, builder.changed_columns[i]] = result
+                    cache[constants.TABLE_SELF].at[
+                        index, builder.changed_columns[i]
+                    ] = result
     elif builder.return_type == constants.BUILDER_RTYPE_DATAFRAME:
         table_operations.save_new_columns(
             results, builder.changed_columns, instance_id, table_name, db_dir

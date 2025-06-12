@@ -12,6 +12,7 @@ import logging
 import shutil
 from rich.tree import Tree
 
+
 class TableVault:
     """Interface with a TableVault directory.
 
@@ -198,7 +199,6 @@ class TableVault:
         builder_files: bool = True,
         metadata_files: bool = False,
         artifact_files: bool = False,
-        safe_locking: bool = True,
     ) -> Tree:
         """Return a RichTree object of files contained in the target.
         Parameters
@@ -216,9 +216,6 @@ class TableVault:
             If ``True``, include JSON/YAML metadata files. Defaults to ``False``.
         artifact_files : bool, optional
             If ``True``, include artifact directory contents. Defaults to ``False``.
-        safe_locking : bool, optional
-            If ``True``, acquire read locks while generating the tree.
-            Defaults to ``True``.
 
         Returns
         -------
@@ -233,7 +230,6 @@ class TableVault:
             metadata_files=metadata_files,
             artifact_files=artifact_files,
             db_dir=self.db_dir,
-            safe_locking=safe_locking,
         )
 
     def get_code_modules_list(self) -> list[str]:
@@ -350,7 +346,6 @@ class TableVault:
         version: str = constants.BASE_TABLE_VERSION,
         active_only: bool = True,
         successful_only: bool = False,
-        safe_locking: bool = True,
         rows: Optional[int] = None,
         full_artifact_path: bool = True,
     ) -> tuple[pd.DataFrame, str]:
@@ -371,8 +366,6 @@ class TableVault:
         successful_only : bool, optional
             If ``True`` consider only successfully executed instances.
             Defaults to ``False``.
-        safe_locking : bool, optional
-            If ``True`` acquire locks to prevent concurrent writes. Defaults to ``True``.
         rows : Optional[int], optional
             If given, limit the rows fetched to this number. Defaults to ``None`` (no limit).
         full_artifact_path : bool, optional
@@ -393,7 +386,6 @@ class TableVault:
             rows=rows,
             full_artifact_path=full_artifact_path,
             db_dir=self.db_dir,
-            safe_locking=safe_locking,
         )
 
     def stop_process(
@@ -528,7 +520,7 @@ class TableVault:
             The process ID of the executed operation.
         """
         return _vault_operations.create_builder_file(
-            self.author,
+            author=self.author,
             builder_name=builder_name,
             table_name=table_name,
             version=version,
@@ -564,7 +556,7 @@ class TableVault:
             The process ID of the executed operation.
         """
         return _vault_operations.delete_builder_file(
-            self.author,
+            author=self.author,
             builder_name=builder_name,
             table_name=table_name,
             version=version,
@@ -749,7 +741,7 @@ class TableVault:
         origin_id: str = "",
         origin_table: str = "",
         external_edit: bool = False,
-        copy: bool = True,
+        copy: bool = False,
         builders: Optional[dict[str, str] | list[str]] = None,
         process_id: str = "",
         description: str = "",
@@ -774,7 +766,7 @@ class TableVault:
         copy : bool, optional
             If ``True`` and `origin_id` is not provided, use the latest
             materialised instance of (`table_name`, `version`) as the origin
-            (if it exists). Defaults to ``True``.
+            (if it exists). Defaults to ``False``.
         builders : Optional[list[str]], optional
             List of new builder names to generate. Defaults to None.
         process_id : str, optional

@@ -110,4 +110,3 @@ def create_data_table_from_list(vals):
         A DataFrame with one column named "temp_name".
     """
     return pd.DataFrame({"temp_name": vals})
-

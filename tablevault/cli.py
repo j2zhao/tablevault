@@ -181,7 +181,6 @@ def get_descriptions_cmd(ctx: click.Context, table_name: str, instance_id: str):
 @click.option("--builder-files/--no-builder-files", default=True, show_default=True)
 @click.option("--metadata-files/--no-metadata-files", default=False, show_default=True)
 @click.option("--artifact-files/--no-artifact-files", default=False, show_default=True)
-@click.option("--safe-locking/--no-safe-locking", default=True, show_default=True)
 @click.pass_context
 def get_file_tree_cmd(
     ctx: click.Context,
@@ -191,7 +190,6 @@ def get_file_tree_cmd(
     builder_files: bool,
     metadata_files: bool,
     artifact_files: bool,
-    safe_locking: bool,
 ):
     """Render a list/tree of files inside the vault."""
     vault = _get_vault(ctx)
@@ -203,7 +201,6 @@ def get_file_tree_cmd(
             builder_files=builder_files,
             metadata_files=metadata_files,
             artifact_files=artifact_files,
-            safe_locking=safe_locking,
         )
     )
 
@@ -247,7 +244,7 @@ def get_builders_list_cmd(
 
 @cli.command("get-builder-str")
 @click.argument("table_name")
-@click.option("--builder-name",default="")
+@click.option("--builder-name", default="")
 @click.option("--instance-id", default="")
 @click.option("--version", default=constants.BASE_TABLE_VERSION)
 @click.option(
@@ -486,7 +483,7 @@ def execute_instance_cmd(
 @click.option("--origin-table", default="")
 @click.option("--external-edit", is_flag=True)
 @click.option(
-    "--no-copy", is_flag=True, help="Do not copy from latest materialised instance"
+    "--copy", is_flag=True, help="Copy from latest materialised instance"
 )
 @click.option("--builder", "builders", multiple=True, help="Add builder names (repeat)")
 @click.pass_context
@@ -497,7 +494,7 @@ def create_instance_cmd(
     origin_id: str,
     origin_table: str,
     external_edit: bool,
-    no_copy: bool,
+    copy: bool,
     builders: Tuple[str, ...],
 ):
     vault = _get_vault(ctx)
@@ -508,7 +505,7 @@ def create_instance_cmd(
             origin_id=origin_id,
             origin_table=origin_table,
             external_edit=external_edit,
-            copy=not no_copy,
+            copy=copy,
             builders=list(builders),
         )
     )

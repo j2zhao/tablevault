@@ -50,7 +50,10 @@ class IndexBuilder(TVBuilder):
                     instance_id,
                     table_name,
                 )
-            if self.return_type == constants.BUILDER_RTYPE_ROWWISE and self.n_threads != 1:
+            if (
+                self.return_type == constants.BUILDER_RTYPE_ROWWISE
+                and self.n_threads != 1
+            ):
                 indices = list(range(len(cache[constants.TABLE_SELF])))
                 with ThreadPoolExecutor(max_workers=self.n_threads) as executor:
                     _ = list(
@@ -61,7 +64,10 @@ class IndexBuilder(TVBuilder):
                             indices,
                         )
                     )
-            elif self.return_type == constants.BUILDER_RTYPE_ROWWISE and self.n_threads == 1:
+            elif (
+                self.return_type == constants.BUILDER_RTYPE_ROWWISE
+                and self.n_threads == 1
+            ):
                 for i in list(range(len(cache[constants.TABLE_SELF]))):
                     _execute_code_from_builder(
                         i, self, funct, cache, instance_id, table_name, db_dir
@@ -93,7 +99,9 @@ def _execute_code_from_builder(
     db_dir: str,
 ) -> None:
     builder = builder.model_copy(deep=True)
-    builder.transform_table_string(cache, instance_id, table_name, db_dir, index, arguments=True)
+    builder.transform_table_string(
+        cache, instance_id, table_name, db_dir, index, arguments=True
+    )
 
     results = funct(**builder.arguments)
 

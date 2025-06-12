@@ -77,7 +77,7 @@ Create a new temporary instance of a table.
 | `--origin-id`     | `TEXT` | If supplied, copy state from this existing instance ID.                             | `""`                    |
 | `--origin-table`  | `TEXT` | Table associated with `origin-id`. Defaults to `table_name` if empty.               | `""`                    |
 | `--external-edit` |        | If set, this instance will be edited externally (no builder files constructed).     | Flag (False by default) |
-| `--no-copy`       |        | If set, do not copy from the latest materialised instance (if `origin-id` not provided). | Flag (False by default) |
+| `--copy`       |        | If set, copy from the latest materialised instance (if `origin-id` not provided). | Flag (False by default) |
 | `--builder`       | `TEXT` | Add builder names. Can be repeated for multiple builders.                           | None (multiple)         |
 | `-h, --help`      |        | Show this message and exit.                                                         |                         |
 
@@ -414,7 +414,6 @@ Fetch a table instance and write its contents to a CSV file.
 | `--include-inactive` |        | If set, also consider *inactive* instances (negates `active_only`).                              | Flag (False by default)             |
 | `--successful-only`  |        | If set, require the instance to have completed successfully.                                     | Flag (False by default)             |
 | `--no-artifact-path` |        | Skip prepending the repository path to `"artifact_string"` columns (`full_artifact_path=False`). | Flag (False by default)             |
-| `--no-safe-locking`  |        | Disable file-locking while reading.                                                              | Flag (locks **enabled** by default) |
 | `-h, --help`         |        | Show this message and exit.                                                                      |                                     |
 
 **Output:**
@@ -457,7 +456,6 @@ Render a human-readable tree (text) of files stored in the vault.
 | `--builder-files / --no-builder-files`   |      | Include builder scripts.                   | `--builder-files`     |
 | `--metadata-files / --no-metadata-files` |      | Include JSON/YAML metadata.                | `--no-metadata-files` |
 | `--artifact-files / --no-artifact-files` |      | Include artifact directory contents.       | `--no-artifact-files` |
-| `--safe-locking / --no-safe-locking`     |      | Enable/disable read locks while scanning.  | `--safe-locking`      |
 | `-h, --help`                             |      | Show this message and exit.                |                       |
 
 **Output:**

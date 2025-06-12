@@ -57,7 +57,7 @@ def create_instance(
     origin_id: str = "",
     origin_table: str = "",
     external_edit: bool = False,
-    copy: bool = True,
+    copy: bool = False,
     builders: Optional[dict[str, str] | list[str]] = None,
     process_id: str = "",
     description: str = "",
@@ -71,7 +71,7 @@ def create_instance(
 | `origin_id`     | `str`                                     | If supplied, copy state from this existing instance ID.                                  | `""`                           |
 | `origin_table`  | `str`                                     | Table for `origin_id`; empty ⇒ `table_name`.                                             | `""`                           |
 | `external_edit` | `bool`                                    | **True** ⇒ instance edited externally, no builders constructed.                          | `False`                        |
-| `copy`          | `bool`                                    | **True** (no `origin_id`) ⇒ use latest materialised instance as origin if it exists.     | `True`                         |
+| `copy`          | `bool`                                    | **False** (no `origin_id`) ⇒ use latest materialised instance as origin if it exists.     | `True`                         |
 | `builders`      | `Optional[dict[str, str] \| list[str]]`   | List of new builder names to generate.                                                   | `None`                         |
 | `process_id`    | `str`                                     | Calling process identifier.                                                              | `""`                           |
 | `description`   | `str`                                     | Description for this instance.                                                           | `""`                           |
@@ -329,7 +329,6 @@ def get_dataframe(
     version: str = constants.BASE_TABLE_VERSION,
     active_only: bool = True,
     successful_only: bool = False,
-    safe_locking: bool = True,
     rows: Optional[int] = None,
     full_artifact_path: bool = True,
 ) -> tuple[pd.DataFrame, str]:
@@ -342,7 +341,6 @@ def get_dataframe(
 | `version`            | `str`           | Version when *instance\_id* omitted.                                   | `constants.BASE_TABLE_VERSION` |
 | `active_only`        | `bool`          | **True** ⇒ consider only active instances.                             | `True`                         |
 | `successful_only`    | `bool`          | **True** ⇒ consider only *successful* runs.                            | `False`                        |
-| `safe_locking`       | `bool`          | **True** ⇒ acquire locks.                                              | `True`                         |
 | `rows`               | `Optional[int]` | Row limit (`None` = no limit).                                         | `None`                         |
 | `full_artifact_path` | `bool`          | **True** ⇒ prefix `"artifact_string"` columns with the repository path | `True`                         |
 
@@ -362,7 +360,6 @@ def get_file_tree(
     builder_files: bool = True,
     metadata_files: bool = False,
     artifact_files: bool = False,
-    safe_locking: bool = True,
 ) -> rich.tree.Tree:
 ```
 
@@ -376,7 +373,6 @@ Return a RichTree object of files contained in the target.
 | `builder_files`  | `bool` | Include builder scripts.                   | `True`  |
 | `metadata_files` | `bool` | Include JSON/YAML metadata.                | `False` |
 | `artifact_files` | `bool` | Include artifact directory contents.       | `False` |
-| `safe_locking`   | `bool` | Acquire read locks while generating tree.  | `True`  |
 
 **Returns** → `rich.tree.Tree` – printable file-tree representation.
 

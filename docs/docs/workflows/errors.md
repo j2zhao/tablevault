@@ -2,9 +2,9 @@
 
 TableVault is designed so that each write operation is transactional, and has a robust error-handing procedure.
 
-## 1. External TableVault Errors (without `process_id`)
+## 1. Unexpected Errors without `process_id`
 
-If an operation encounters an unexpected error or is externally interrupted (e.g., by killing a Jupyter notebook cell), it is **safely reverted**. The system state will be as if the operation never started.
+If an operation encounters an unexpected error, it is **safely reverted**. The system state will be as if the operation never started.
 
 !!! note "Executing Instances"
     Partially executed dataframes are not reverted for debugging purposes. However, if you rerun the `execute_instance` operation, the full dataframe is rebuilt. After an error, in this case, you can still directly edit the `builder` and `code_function` files, as if the instance hasn't executed.
@@ -36,9 +36,11 @@ If an operation encounters an unexpected error or is externally interrupted (e.g
 
     ```
 
-## 2. External TableVault Errors (with `process_id`)
+## 2. External TableVault Errors with `process_id` and System Interrupts
 
-With a user-provided `process_id`, an interruption only **pauses** the operation. It maintains its system locks, preventing other operations from accessing the same resources.  This is especially useful for long-running `execute_instance` operations that might be stopped. 
+With a user-provided `process_id`, an error only **pauses** the operation. It maintains its system locks, preventing other operations from accessing the same resources.  This is especially useful for long-running `execute_instance` operations that might be stopped. 
+
+This is also true if the program is externally interrupted (e.g., by killing a Jupyter notebook cell).
 
 Note that the operation restarts from its last checkpoint, and its input arguments cannot be changed.
 

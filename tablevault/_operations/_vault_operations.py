@@ -12,6 +12,25 @@ import pandas as pd
 from typing import Optional, Any
 
 
+# def stop_processes(func):
+#     def wrapper(*args, **kwargs):
+#         db_dir = kwargs["db_dir"]
+#         author = kwargs["author"]
+#         db_metadata = MetadataStore(db_dir)
+#         active_processes = db_metadata.get_active_processes()
+#         for process_id in active_processes:
+#             if active_processes[process_id].force_takedown:
+#                 print(active_processes)
+#                 stop_process(author, process_id, db_dir, 
+#                              force=False, 
+#                              materialize=False,
+#                              )
+#         result = func(*args, **kwargs)
+#         return result
+
+#     return wrapper
+
+
 def setup_database(db_dir: str, description: str, replace: bool = False) -> None:
     file_operations.setup_database_folder(db_dir, description, replace)
 

@@ -81,6 +81,7 @@ def update_dtypes(
         json.dump(dtypes_, f)
     return dtypes
 
+
 def write_dtype(dtypes, instance_id, table_name, db_dir) -> dict[str, str]:
     filewriter = CopyOnWriteFile(db_dir)
     table_dir = os.path.join(db_dir, table_name, instance_id)

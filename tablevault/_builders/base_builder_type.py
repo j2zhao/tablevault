@@ -32,7 +32,7 @@ class TVBuilder(BaseModel):
     is_custom: Union[bool, TableReference] = Field(description="Custom to database.")
 
     return_type: Union[str, TableReference] = Field(
-        default='dataframe', description="Return type: [dataframe, row-wise, generator]"
+        default="dataframe", description="Return type: [dataframe, row-wise, generator]"
     )
 
     n_threads: Union[int, TableReference] = Field(
@@ -85,7 +85,7 @@ class TVBuilder(BaseModel):
         table_name: str,
         db_dir: str,
         index: Optional[int] = None,
-        arguments: bool = False
+        arguments: bool = False,
     ) -> None:
         for attr, val in vars(self).items():
             if attr == constants.BUILDER_ARGUMENTS and not arguments:
@@ -94,7 +94,7 @@ class TVBuilder(BaseModel):
                 val_ = get_table_result(val, cache, index)
                 val_ = apply_artifact_path(val_, instance_id, table_name, db_dir)
                 setattr(self, attr, val_)
-            
+
 
 def _get_builder_dependencies(values) -> Optional[list[TableValue]]:
     tables = []
