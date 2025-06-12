@@ -1,0 +1,1345 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../operations/">
+      
+      
+        <link rel="next" href="../../workflows/workflow/">
+      
+      
+      <link rel="icon" href="../../assets/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+    
+    
+      
+        <title>Builders, Code Functions, Artifacts, TableReferences - TableVault</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.342714a4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="red" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#builders-code-functions-artifacts-tablereferences" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="TableVault" class="md-header__button md-logo" aria-label="TableVault" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M640 299.3V432c0 26.5-21.5 48-48 48H64c-17.7 0-32-14.3-32-32s14.3-32 32-32h384v-48H96c-17.7 0-32-14.3-32-32V219.4L33.8 214C14.2 210.5 0 193.5 0 173.7c0-8.9 2.9-17.5 8.2-24.6l35.6-47.5C76.7 57.8 128.2 32 182.9 32c27 0 53.6 6.3 77.8 18.4l326.2 163.1c32.6 16.2 53.1 49.5 53.1 85.8M448 304v-16l-320-57.1V304z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            TableVault
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Builders, Code Functions, Artifacts, TableReferences
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/j2zhao/tablevault" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tablevault
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="TableVault" class="md-nav__button md-logo" aria-label="TableVault" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M640 299.3V432c0 26.5-21.5 48-48 48H64c-17.7 0-32-14.3-32-32s14.3-32 32-32h384v-48H96c-17.7 0-32-14.3-32-32V219.4L33.8 214C14.2 210.5 0 193.5 0 173.7c0-8.9 2.9-17.5 8.2-24.6l35.6-47.5C76.7 57.8 128.2 32 182.9 32c27 0 53.6 6.3 77.8 18.4l326.2 163.1c32.6 16.2 53.1 49.5 53.1 85.8M448 304v-16l-320-57.1V304z"/></svg>
+
+    </a>
+    TableVault
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/j2zhao/tablevault" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tablevault
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core Concepts
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Core Concepts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Repository Structure
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Builders, Code Functions, Artifacts, TableReferences
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Builders, Code Functions, Artifacts, TableReferences
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-builders" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Builders
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Builders">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#physical-folder-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Physical Folder Setup
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connecting-builders-to-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      Connecting Builders to Code
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#executing-an-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Executing an Instance
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restarting-an-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Restarting an Execution
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-python-functions-and-the-code_function-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Python Functions and the code_function Folder
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Python Functions and the code_function Folder">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#physical-folder-setup_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Physical Folder Setup
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-function-specifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Function Specifications
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Artifacts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Artifacts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#artifact-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      Artifact Details
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usability-of-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usability of Artifacts
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-tablereferences" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. TableReferences
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. TableReferences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflows/workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Basic Workflow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflows/errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Handling Execution Errors
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflows/workflow_artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Workflow with Artifacts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Colab Notebook Examples
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Colab Notebook Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/api_call_example/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OpenAI API Call
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/local_embeddings_example/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Execution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/core_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TableVault Python Interface
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/core_cli_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TableVault Command Line Interface
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/builders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Builders and Custom Python Functions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/table_references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TableReference Strings
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/code_functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Default Code Functions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auxillary/comparisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Comparisons
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Advanced
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Advanced
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/metadata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metadata Documentation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/os/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Operating System Differences
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auxillary/about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    About TableVault
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-builders" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Builders
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Builders">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#physical-folder-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      Physical Folder Setup
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#connecting-builders-to-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      Connecting Builders to Code
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#executing-an-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Executing an Instance
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restarting-an-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      Restarting an Execution
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-python-functions-and-the-code_function-folder" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Python Functions and the code_function Folder
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Python Functions and the code_function Folder">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#physical-folder-setup_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Physical Folder Setup
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-function-specifications" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code Function Specifications
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Artifacts
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Artifacts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#artifact-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      Artifact Details
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#usability-of-artifacts" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usability of Artifacts
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-tablereferences" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. TableReferences
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. TableReferences">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="builders-code-functions-artifacts-tablereferences">Builders, Code Functions, Artifacts, TableReferences</h1>
+<p>Builders are YAML files that serve as blueprints for creating or modifying a table instance's DataFrame. They outline the steps for an instance's execution within TableVault. Unless the instance is written externally, it has a dedicated set of builders that can be created and modified while the instance is in a temporary state. This temporary state acts as a sandbox, allowing you to define and test your builders without affecting the final, materialized version of the table. These builders are then used to materialize the instance by applying the defined transformations.</p>
+<hr />
+<h2 id="1-builders">1. Builders</h2>
+<h3 id="physical-folder-setup">Physical Folder Setup</h3>
+<p>Every table instance possesses its own set of builder files. You can add builders to a temporary instance by copying them from a previous origin instance, specifying builder names during <code>create_instance</code>, or using the <code>create_builder</code> function.</p>
+<figure>
+<p><img alt="Internal TableVault Builders" src="../../assets/storage_builders.png" width="60%" /></p>
+<figcaption>
+<p><strong>TableVault Builders Location</strong></p>
+</figcaption>
+</figure>
+<h3 id="connecting-builders-to-code">Connecting Builders to Code</h3>
+<p>Builders do not contain the data transformation logic themselves. Instead, they point to the Python functions that perform the actual work. This connection is established through the <code>python_function</code> and <code>code_module</code> fields in the builder's YAML file.</p>
+<div class="language-text highlight"><pre><span></span><code>* `code_module`: This field specifies the Python file (e.g., `my_feature_lib`) containing the transformation function. This module must be added to TableVault using `create_code_module()`.
+* `python_function`: This is the name of the function within the `code_module` that will be executed (e.g., `build_features`). This function receives the arguments defined in the `arguments` section of the builder file.
+
+Here is a minimal example of a builder&#39;s YAML configuration:
+```yaml
+    builder_type: IndexBuilder
+
+    changed_columns: [&#39;fruits&#39;]        # Output columns
+    primary_key: [&#39;fruits&#39;]            # DataFrame primary key (optional)
+
+    python_function: create_data_table_from_list       # Function to execute
+    code_module: example_code                 # Module containing the function
+
+    arguments:                               # Arguments passed to the function
+        vals: [&#39;pineapples&#39;, &#39;watermelons&#39;, &#39;coconuts&#39;]
+    is_custom: true                         #using a user-supplied function in code_module
+```
+</code></pre></div>
+<h3 id="executing-an-instance">Executing an Instance</h3>
+<p>When you execute an instance with <code>execute_instance</code>, TableVault reads the associated builder files. It begins with the <code>IndexBuilder</code> to create the initial DataFrame. Subsequently, it processes any <code>ColumnBuilder</code> files, with each calling its specified Python function to modify the DataFrame. Arguments for these functions—which can be scalar values, references to other table columns (<code>&lt;&lt;TABLE.COLUMN&gt;&gt;</code>), or special keywords like <code>~ARTIFACT_FOLDER~</code>—are passed from the builder file to the Python function. The execution sequence of the builders is automatically determined by the internal dependencies among the columns of the generated DataFrame (using the <code>self</code> keyword). Builder execution can be performed in a background Python process.</p>
+<h3 id="restarting-an-execution">Restarting an Execution</h3>
+<p>After each Python function returns a result, the output is saved within the instance folder. If the process is configured to be restartable, it will skip re-executing any steps with cached results.</p>
+<hr />
+<h2 id="2-python-functions-and-the-code_function-folder">2. Python Functions and the <code>code_function</code> Folder</h2>
+<h3 id="physical-folder-setup_1">Physical Folder Setup</h3>
+<p>All user-provided Python code functions for the TableVault repository are stored in the <code>code_function</code> folder. You can create or copy files into this folder using the <code>create_code_module()</code> function. Once a file is created, it can be edited directly. During instance execution, builders retrieve the relevant function based on the specified file and function name and execute it in the same Python environment where TableVault is running.</p>
+<figure>
+<p><img alt="Internal TableVault Code" src="../../assets/storage_code.png" width="60%" /></p>
+<figcaption>
+<p><strong>TableVault Code Location</strong></p>
+</figcaption>
+</figure>
+<h3 id="code-function-specifications">Code Function Specifications</h3>
+<p>Executed code functions can return two types of objects. If <code>row-wise</code> is <code>False</code> (the default), the function must return a pandas DataFrame containing all columns listed in <code>changed_columns</code>. If <code>row-wise</code> is <code>True</code>, the function must return a tuple of objects (or a singular object) representing one row, with all the columns specified in the <code>changed_columns</code> list. Row-wise execution is highly efficient for transformations where each row can be processed independently, such as applying a complex scoring model or making an API call for each entry.</p>
+<p>In the row-wise case, TableVault executes the function once per row (based on the DataFrame's state before that builder is executed) and efficiently consolidates the results using a map-reduce approach. The functions can be executed across multiple Python threads, as specified by the <code>n_threads</code> argument in the builder file.</p>
+<p>For successful execution, all required input arguments for the Python function must be defined in the builder file.</p>
+<hr />
+<p><em>While Builders and Python functions define how to generate structured DataFrame content, your analysis often involves unstructured data. TableVault addresses this through Artifacts.</em></p>
+<hr />
+<hr />
+<h2 id="3-artifacts">3. Artifacts</h2>
+<h3 id="_1"></h3>
+<p>TableVault can store data that is unsuitable for a traditional DataFrame as <strong>artifacts</strong>. An artifact can be any file, such as an image, a PDF report, a log file, a serialized model, or custom binary data, that you want to associate with your table's data. You can store artifacts at either the table level or the instance level by setting the <code>allow_multiple_artifacts</code> boolean argument during table creation. When an artifact is generated, it is first temporarily stored in the instance. After passing validation checks, TableVault moves it to permanent storage.</p>
+<figure>
+<p><img alt="Internal TableVault Artifact" src="../../assets/storage_artifacts.png" width="60%" /></p>
+<figcaption>
+<p><strong>TableVault Artifact Location</strong></p>
+</figcaption>
+</figure>
+<h3 id="artifact-details">Artifact Details</h3>
+<p>Each artifact is directly linked to a specific row in a table instance, creating an organized and powerful connection between structured data and related unstructured files.</p>
+<h3 id="usability-of-artifacts">Usability of Artifacts</h3>
+<p>The primary purpose of artifacts is to enrich your dataset and centralize all relevant information. Here’s how they can be used:</p>
+<ul>
+<li><strong>Machine Learning</strong>: A table of experiment results can have artifacts for each run, including saved model weights (<code>.pth</code>, <code>.h5</code>), performance charts (<code>.png</code>), configuration files (<code>.yaml</code>), or detailed logs.</li>
+<li><strong>Data Analysis and Reporting</strong>: A table summarizing sales data could link to detailed PDF invoices or CSV extracts for each transaction.</li>
+<li><strong>GenAI and Vision</strong>: A computer vision dataset could store the actual image or video files as artifacts linked to rows containing their metadata, labels, and features.</li>
+<li><strong>General Record-Keeping</strong>: A table of product information can use artifacts to store product manuals, warranty documents, or marketing materials.</li>
+</ul>
+<p>When you retrieve data from a table using the TableVault API, you can also obtain a direct, usable file path to any associated artifact. This allows you to seamlessly load and work with these files in your code—for example, displaying an image, parsing a log, or loading a model for inference—without needing to manage file storage locations yourself.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Just as Artifacts link external files to your data, TableReferences provide a dynamic way to link data from other tables directly into your builder configurations.</p>
+</div>
+<hr />
+<h2 id="4-tablereferences">4. TableReferences</h2>
+<p>TableReferences enable you to dynamically pull data from any active instance to configure your builder files.</p>
+<p>Instead of hard-coding values in the file, you can use a special <code>&lt;&lt; ... &gt;&gt;</code> syntax to fetch information from tables, making your configurations more flexible and automated. For example, you can use a reference to:</p>
+<ul>
+<li>Pull a specific setting from a central configuration table.</li>
+<li>Get a list of column names to be generated.</li>
+<li>Look up a value from another table based on data in the current row being processed.</li>
+</ul>
+<p>You can specify which table to query, filter for specific rows, and select the exact columns you need. References can even be nested to handle complex, multi-step lookups. The system automatically retrieves the data—whether it's a single value, a number, or a list—and inserts it into your configuration where the reference was placed.</p>
+<h3 id="examples">Examples</h3>
+<p>Here is a simple example showing a TableReference within a builder's arguments:
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Example: Using a TableReference to get a configuration value</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">arguments</span><span class="p">:</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">model_version</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&lt;&lt;config_table.value[setting_name::&#39;</span><span class="l l-Scalar l-Scalar-Plain">prod_model_version&#39;]&gt;&gt;&#39;</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="nt">api_key</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&lt;&lt;secrets_table.key[service::&#39;</span><span class="l l-Scalar l-Scalar-Plain">external_api&#39;]&gt;&gt;&#39;</span>
+</span></code></pre></div></p>
+<hr />
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "content.code.select"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      
+    
+  </body>
+</html>

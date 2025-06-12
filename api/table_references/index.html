@@ -1,0 +1,1328 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../builders/">
+      
+      
+        <link rel="next" href="../code_functions/">
+      
+      
+      <link rel="icon" href="../../assets/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+    
+    
+      
+        <title>TableReference Strings - TableVault</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.342714a4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="red" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#using-table-references-in-builder-files" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="TableVault" class="md-header__button md-logo" aria-label="TableVault" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M640 299.3V432c0 26.5-21.5 48-48 48H64c-17.7 0-32-14.3-32-32s14.3-32 32-32h384v-48H96c-17.7 0-32-14.3-32-32V219.4L33.8 214C14.2 210.5 0 193.5 0 173.7c0-8.9 2.9-17.5 8.2-24.6l35.6-47.5C76.7 57.8 128.2 32 182.9 32c27 0 53.6 6.3 77.8 18.4l326.2 163.1c32.6 16.2 53.1 49.5 53.1 85.8M448 304v-16l-320-57.1V304z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            TableVault
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              TableReference Strings
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/j2zhao/tablevault" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tablevault
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="TableVault" class="md-nav__button md-logo" aria-label="TableVault" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M640 299.3V432c0 26.5-21.5 48-48 48H64c-17.7 0-32-14.3-32-32s14.3-32 32-32h384v-48H96c-17.7 0-32-14.3-32-32V219.4L33.8 214C14.2 210.5 0 193.5 0 173.7c0-8.9 2.9-17.5 8.2-24.6l35.6-47.5C76.7 57.8 128.2 32 182.9 32c27 0 53.6 6.3 77.8 18.4l326.2 163.1c32.6 16.2 53.1 49.5 53.1 85.8M448 304v-16l-320-57.1V304z"/></svg>
+
+    </a>
+    TableVault
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/j2zhao/tablevault" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tablevault
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Core Concepts
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Core Concepts
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core_concepts/structure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Repository Structure
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core_concepts/operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Operations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../core_concepts/execution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Builders, Code Functions, Artifacts, TableReferences
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflows/workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Basic Workflow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflows/errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Handling Execution Errors
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../workflows/workflow_artifacts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Workflow with Artifacts
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Colab Notebook Examples
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Colab Notebook Examples
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/api_call_example/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    OpenAI API Call
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../examples/local_embeddings_example/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Local LLM Execution
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            API
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TableVault Python Interface
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../core_cli_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    TableVault Command Line Interface
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../builders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Builders and Custom Python Functions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    TableReference Strings
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    TableReference Strings
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#core-concept-the-wrapper" class="md-nav__link">
+    <span class="md-ellipsis">
+      Core Concept: The &lt;&lt; ... &gt;&gt; Wrapper
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#anatomy-of-a-table-reference-string" class="md-nav__link">
+    <span class="md-ellipsis">
+      Anatomy of a Table Reference String
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Anatomy of a Table Reference String">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-table-name-tablename" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Table Name (tableName)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-version-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Version ((version))
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-columns-columns-or-column" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Columns (.{columns} or .COLUMN)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-conditions-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Conditions ([conditions])
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nested-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      Nested References
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resolution-and-data-retrieval" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resolution and Data Retrieval
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples-of-reference-strings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples of Reference Strings
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Error Handling
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../code_functions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Default Code Functions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auxillary/comparisons/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Comparisons
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Advanced
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Advanced
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/metadata/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Metadata Documentation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../advanced/os/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Operating System Differences
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../auxillary/about/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    About TableVault
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#core-concept-the-wrapper" class="md-nav__link">
+    <span class="md-ellipsis">
+      Core Concept: The &lt;&lt; ... &gt;&gt; Wrapper
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#anatomy-of-a-table-reference-string" class="md-nav__link">
+    <span class="md-ellipsis">
+      Anatomy of a Table Reference String
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Anatomy of a Table Reference String">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-table-name-tablename" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Table Name (tableName)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-version-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Version ((version))
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-columns-columns-or-column" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Columns (.{columns} or .COLUMN)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-conditions-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Conditions ([conditions])
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#nested-references" class="md-nav__link">
+    <span class="md-ellipsis">
+      Nested References
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resolution-and-data-retrieval" class="md-nav__link">
+    <span class="md-ellipsis">
+      Resolution and Data Retrieval
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#examples-of-reference-strings" class="md-nav__link">
+    <span class="md-ellipsis">
+      Examples of Reference Strings
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#error-handling" class="md-nav__link">
+    <span class="md-ellipsis">
+      Error Handling
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="using-table-references-in-builder-files">Using Table References in Builder Files</h1>
+<p>Table References provide a powerful way to dynamically fetch and use data from other table instances, or the current table instance, directly within most string-based fields of your builder YAML files. This allows for highly dynamic and data-driven configurations.</p>
+<p>The <code>&lt;&lt; ... &gt;&gt;</code> syntax can be applied to any singular string, boolean or numeric entry in your builder definition, such as values in the <code>arguments</code> block, items in the <code>changed_columns</code> list, or even the <code>python_function</code> and <code>code_module</code> names themselves. The primary exception is the <code>dependencies</code> field, which does not support this dynamic resolution.</p>
+<hr />
+<h2 id="core-concept-the-wrapper">Core Concept: The <code>&lt;&lt; ... &gt;&gt;</code> Wrapper</h2>
+<p>The fundamental syntax for a table reference is to enclose the reference string within double angle brackets: <code>&lt;&lt; ... &gt;&gt;</code>.</p>
+<hr />
+<p><strong>Example of broad usage in a builder YAML:</strong></p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># In an IndexBuilder or ColumnBuilder</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nt">builder_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">IndexBuilder</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nt">python_function</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;&lt;config_table.builder_function_name[use_case::&#39;main_index&#39;]&gt;&gt;&quot;</span><span class="w"> </span><span class="c1"># Dynamic function name</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nt">code_module</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;&lt;config_table.builder_module_name&gt;&gt;&quot;</span><span class="w"> </span><span class="c1"># Dynamic module name</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="nt">changed_columns</span><span class="p">:</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;&lt;&lt;config_table.primary_output_column&gt;&gt;&quot;</span><span class="w">       </span><span class="c1"># Dynamic column name</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;fixed_secondary_column&quot;</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;&lt;&lt;self.another_dynamic_column_name_source[index]&gt;&gt;&quot;</span><span class="w"> </span><span class="c1"># Column name derived from self</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="nt">arguments</span><span class="p">:</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="nt">source_file_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/data/raw/&lt;&lt;config_table.file_name[source_id::&#39;source_A&#39;]&gt;&gt;.csv&quot;</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span><span class="nt">lookup_value</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;&lt;lookup_table.value[key::&lt;&lt;self.current_key[index]&gt;&gt;]&gt;&gt;&quot;</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span><span class="nt">static_text_with_ref</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Report</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">ID:</span><span class="nv"> </span><span class="s">&lt;&lt;self.id[index]&gt;&gt;&quot;</span>
+</span></code></pre></div>
+<p>If a field value is entirely a table reference (e.g., <code>python_function: "&lt;&lt;config.func_name&gt;&gt;"</code>), the resolved value of the reference will be used directly. If the reference is part of a larger string (e.g., in <code>arguments</code>), the resolved value will be converted to a string and substituted into place.</p>
+<hr />
+<h2 id="anatomy-of-a-table-reference-string">Anatomy of a Table Reference String</h2>
+<p>Inside the <code>&lt;&lt; ... &gt;&gt;</code> wrapper, a table reference string follows a specific structure to identify the table, an optional version, specific columns, and optional filtering conditions:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>tableName(version).{column1,column2,...}[condition1,condition2,...]
+</span></code></pre></div>
+<p>All parts (version, columns, conditions) are optional.</p>
+<hr />
+<p><strong>Components:</strong></p>
+<ol>
+<li><strong><code>tableName</code></strong>: The name of the table to query.</li>
+<li><strong><code>(version)</code></strong>: (Optional) Specifies a particular version of the table.</li>
+<li><strong><code>.{columns}</code> or <code>.COLUMN</code></strong>: (Optional) Selects specific columns.</li>
+<li><strong><code>[conditions]</code></strong>: (Optional) Filters the rows of the table.</li>
+</ol>
+<p>Let's break down each component:</p>
+<hr />
+<h3 id="1-table-name-tablename">1. Table Name (<code>tableName</code>)</h3>
+<ul>
+<li><strong>Syntax</strong>: A string of alphanumeric characters, underscores (<code>_</code>), or hyphens (<code>-</code>).</li>
+<li><strong>Special Keyword <code>self</code></strong>: The keyword <code>self</code> refers to the current table instance being processed by the builder.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title"><code>self</code> Keyword</p>
+<p>The <code>self</code> keyword cannot be be used in the <code>dtypes</code> field of a builder. The <code>dtypes</code> keyword is used when the</p>
+</div>
+<ul>
+<li><strong>Dynamic Table Name</strong>: The table name itself can be a nested table reference.<ul>
+<li>Example in a field: <code>code_module: "&lt;&lt; &lt;&lt;table_map.module_column[type::'etl']&gt;&gt; &gt;&gt;"</code></li>
+<li>Reference string example: <code>&lt;&lt; &lt;&lt;another_table.config_key[type::'source']&gt;&gt;.data_column &gt;&gt;</code></li>
+</ul>
+</li>
+</ul>
+<hr />
+<h3 id="2-version-version">2. Version (<code>(version)</code>)</h3>
+<ul>
+<li><strong>Syntax</strong>: Enclosed in parentheses, e.g., <code>(v1.0.0)</code> or <code>(prod)</code>.</li>
+<li><strong>Optional</strong>: If omitted, TableVault will typically use the default or latest available version of the table based on its internal logic and cache.</li>
+<li><strong>Dynamic Version</strong>: The version string can be a nested table reference.<ul>
+<li>Example reference string: <code>my_table(&lt;&lt;version_control_table.active_version[table_name::'my_table']&gt;&gt;)</code></li>
+</ul>
+</li>
+</ul>
+<hr />
+<h3 id="3-columns-columns-or-column">3. Columns (<code>.{columns}</code> or <code>.COLUMN</code>)</h3>
+<ul>
+<li><strong>Syntax</strong>:<ul>
+<li><strong>Single Column</strong>: Preceded by a dot (<code>.</code>), e.g., <code>.user_id</code>.</li>
+<li><strong>Multiple Columns</strong>: Preceded by a dot (<code>.</code>) and enclosed in curly braces <code>{}</code>, with column names separated by commas, e.g., <code>.{name,email,age}</code>.</li>
+</ul>
+</li>
+<li><strong>Optional</strong>:<ul>
+<li>If omitted, and conditions are present, all columns are available for filtering, and the selected columns depend on the output simplification (see below).</li>
+<li>If omitted, and no conditions are present, the entire DataFrame (or its simplified form) is returned.</li>
+</ul>
+</li>
+<li><strong>Dynamic Column Names</strong>: Column names within the list (or the single column name) can be nested table references. This is highly relevant for fields like <code>changed_columns</code> or <code>primary_key</code>.<ul>
+<li>Example in <code>changed_columns</code>: <code>changed_columns: ["id", "&lt;&lt;config_table.main_data_field_name&gt;&gt;"]</code></li>
+<li>Example reference string for a column name: <code>my_table.&lt;&lt;config.target_column&gt;&gt;</code></li>
+<li>Example reference string with multiple dynamic columns: <code>my_table.{id,&lt;&lt;audit_table.tracked_field[user::'admin']&gt;&gt;,status}</code></li>
+</ul>
+</li>
+<li><strong>Special Case: <code>self.index</code></strong>:
+    If you use <code>&lt;&lt;self.index&gt;&gt;</code> (assuming <code>index</code> is the name of the designated index column/concept in your TableVault constants), this specifically resolves to the current row's index value during row-wise operations or when an <code>index</code> context is available.</li>
+</ul>
+<hr />
+<h3 id="4-conditions-conditions">4. Conditions (<code>[conditions]</code>)</h3>
+<ul>
+<li><strong>Syntax</strong>: Enclosed in square brackets <code>[...]</code>. Multiple conditions are separated by commas <code>,</code>.</li>
+<li><strong>Optional</strong>: If omitted, all rows (of the selected version and columns) are considered.</li>
+<li>Each condition specifies a column to filter on and the criteria.</li>
+</ul>
+<p><strong>Condition Types:</strong></p>
+<ol>
+<li>
+<p><strong>Equality (<code>columnName::value</code>)</strong>:</p>
+<ul>
+<li>Filters rows where <code>columnName</code> equals <code>value</code>.</li>
+<li>Example reference string: <code>orders.product_id[customer_id::'cust123',status::'shipped']</code></li>
+<li>The <code>value</code> is automatically quoted for string comparisons if not already quoted (e.g., <code>status::shipped</code> becomes <code>status == 'shipped'</code>). Numerical values are used directly.</li>
+<li><code>value</code> can be a nested table reference: <code>orders.items[user_id::&lt;&lt;user_table.id[username::'jdoe']&gt;&gt;]</code></li>
+</ul>
+</li>
+<li>
+<p><strong>Range (<code>columnName::start_value:end_value</code>)</strong>:</p>
+<ul>
+<li>Filters rows where <code>columnName</code> is greater than or equal to <code>start_value</code> AND less than <code>end_value</code>.</li>
+<li>Example reference string: <code>events.timestamp[timestamp::'2023-01-01T00:00:00':'2023-01-01T23:59:59']</code></li>
+<li><code>start_value</code> and <code>end_value</code> can be literals or nested table references. Values are formatted appropriately for comparison based on the column's data type.</li>
+</ul>
+</li>
+<li>
+<p><strong>Implicit Index/Contextual Value (<code>columnName</code>)</strong>:</p>
+<ul>
+<li>Filters rows where <code>columnName</code> equals a contextually provided <code>index</code> value (the index of the row currently being processed by the builder).</li>
+<li>Example: If processing row <code>101</code> of <code>self</code>, then the reference <code>&lt;&lt;other_table.data_column[join_key_in_other_table]&gt;&gt;</code> (within an argument) would attempt to find rows in <code>other_table</code> where <code>join_key_in_other_table == 101</code>.</li>
+<li>This is particularly useful for lookups related to the current item in <code>self</code>.</li>
+<li>If <code>self.some_column[key_column]</code> is used, and <code>index</code> is defined, it implies <code>self.some_column</code> where <code>key_column == index</code>.</li>
+</ul>
+</li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title"><code>index</code> Condition</p>
+<p>The <code>index</code> keyword can only be used in the <code>arguments</code> key of a row-wise function (when <code>row-wise</code> is set to <code>true</code>).</p>
+</div>
+<ul>
+<li><strong>Dynamic Keys and Values</strong>: All parts of a condition (the column name, the value, start/end values) can be nested table references.<ul>
+<li>Example reference string: <code>my_table[&lt;&lt;config.filter_column&gt;&gt;::&lt;&lt;config.filter_value&gt;&gt;]</code></li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="nested-references">Nested References</h2>
+<p>As shown in many examples above, any component of a table reference—the table name, version string, column names, condition keys, or condition values—can itself be another table reference enclosed in <code>&lt;&lt; ... &gt;&gt;</code>. TableVault will resolve the innermost references first and use their results to construct the outer reference before resolving it.</p>
+<p><strong>Complex Example (from code, used in an argument):</strong>
+<code>&lt;&lt;stories.artifact_name[paper_name::&lt;&lt;self.paper_name[index]&gt;&gt;]&gt;&gt;</code>
+1.  <code>&lt;&lt;self.paper_name[index]&gt;&gt;</code>: Resolves first. It fetches the <code>paper_name</code> from the current row (<code>index</code>) of the <code>self</code> table.
+2.  Let's say the above yields <code>'my_research_paper'</code>.
+3.  The outer reference becomes: <code>&lt;&lt;stories.artifact_name[paper_name::'my_research_paper']&gt;&gt;</code>.
+4.  This then fetches <code>artifact_name</code> from the <code>stories</code> table where <code>paper_name</code> is <code>'my_research_paper'</code>.</p>
+<hr />
+<h2 id="resolution-and-data-retrieval">Resolution and Data Retrieval</h2>
+<ul>
+<li>When a builder is executed, TableVault parses these reference strings from the relevant YAML fields.</li>
+<li>It uses an internal cache of DataFrames (for already loaded tables and versions) to retrieve data efficiently.</li>
+<li>For references involving <code>self</code> or implicit index conditions, the context of the current row being processed (often an integer <code>index</code>) is crucial for resolving the correct data.</li>
+<li>The recursive parsing handles references within lists, dictionaries (values, and potentially keys if supported by the structure and parser), and other nested structures in the YAML, as long as they ultimately resolve to strings or collections of strings where references are found.</li>
+</ul>
+<hr />
+<h2 id="examples-of-reference-strings">Examples of Reference Strings</h2>
+<p>These examples illustrate the reference string syntax itself. These strings would be placed inside <code>&lt;&lt; &gt;&gt;</code> within a suitable YAML field.</p>
+<ol>
+<li>
+<p><strong>Fetch a single column from another table:</strong>
+    <code>my_data_table.user_email</code>
+    <em>(When used as <code>"&lt;&lt;my_data_table.user_email&gt;&gt;"</code>, result: A list of all user emails from <code>my_data_table</code>, or a simplified form)</em></p>
+</li>
+<li>
+<p><strong>Get a specific value using a filter:</strong>
+    <code>users_table.full_name[user_id::'user-007']</code>
+    <em>(When used as <code>"&lt;&lt;users_table.full_name[user_id::'user-007']&gt;&gt;"</code>, result: The <code>full_name</code> for <code>user_id</code> 'user-007', likely a single string)</em></p>
+</li>
+<li>
+<p><strong>Get a value from <code>self</code> based on the current row's context (implicit index):</strong>
+    <code>self.status[id_column_of_self]</code>
+    <em>(When used as <code>"&lt;&lt;self.status[id_column_of_self]&gt;&gt;"</code>, and the current processing index is, e.g., <code>101</code>, this effectively becomes <code>self.status</code> where <code>id_column_of_self == 101</code>)</em></p>
+</li>
+<li>
+<p><strong>Reference with a specific version:</strong>
+    <code>app_settings(base_1748275064_5782ef5b-4023-4618-a419-cf921c365c64).timeout_ms</code></p>
+</li>
+<li>
+<p><strong>Using a range condition:</strong>
+    <code>transactions.amount[transaction_date::'2024-01-01':'2024-01-31']</code></p>
+</li>
+<li>
+<p><strong>Nested reference for dynamic filtering:</strong>
+    <code>preferences.setting_value[user_id::&lt;&lt;self.user_identifier[index]&gt;&gt;, setting_key::'theme']</code></p>
+</li>
+</ol>
+<hr />
+<h2 id="error-handling">Error Handling</h2>
+<p>If a table reference string is malformed (e.g., unbalanced brackets, illegal characters) or if a reference cannot be resolved at runtime (e.g., table not found, column missing, nested reference fails), a <code>TableReferenceError</code> will typically be raised, halting the builder process. Ensure your references are correct and the data they point to exists.</p>
+<hr />
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["content.code.copy", "content.code.select"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      
+    
+  </body>
+</html>
