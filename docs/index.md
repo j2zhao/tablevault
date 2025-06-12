@@ -1,19 +1,15 @@
 # Welcome to TableVault
 
-TableVault is a tool to manage data artifacts in **complex and dynamic data workflows**. It enables the **reusability of data** by ensuring that the complete context of data transformations is captured, and that data states are atomic and transactional (transformations clearly succeed or fail). Its designed to work well with various Python data science libraries and tools (Jupyter notebooks, Colab, Pandas, Numpy, transformers, and etc).
+TableVault is designed to manage data tables and artifacts in **complex and dynamic data workflows**. It promotes **data reusability** by capturing the full context of data transformations and ensuring atomic and transactional data states—transformations either clearly succeed or fail. It enhances **data interoperability** by easily connecting previous results with the configuration and input variables of subsequent transformations.
 
-TableVault is particularly suited to deal with workflows that deal with multiple dataframes, external artifacts (images, videos, documents, and etc), and **large language model executions**. Check out the [Examples]() section for more detailed applications.
+TableVault integrates with Python and can be used with popular data science libraries and tools, including Jupyter Notebooks, Colab, Pandas, NumPy, Transformers, and many others. The tool is particularly effective for workflows involving multiple dataframes, external artifacts (e.g., images, videos, documents), and **large language model executions**.
 
-You can install the tool with:
+Installation via pip:
 
-``` unixconfig
-
-!pip install "git+https://github.com/j2zhao/tablevault.git"
-
+```bash
+pip install "git+https://github.com/j2zhao/tablevault.git"
 ```
 
-This library has been tested for `Python>=3.11`.
+This library is fully compatible with `Python>=3.11`.
 
-**Note:** Will be uploaded to the Python Package Index officially in July 2025.
-
----
+**Note:** An official release to the Python Package Index is scheduled for July 2025.

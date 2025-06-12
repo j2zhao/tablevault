@@ -24,24 +24,27 @@ Interface with a TableVault repository. Initialisation can create a new vault re
 
 ### `create_table()`
 
+Create a new table definition in the vault.
+
 ```python
 def create_table(
     self,
     table_name: str,
     allow_multiple_artifacts: bool = False,
     has_side_effects: bool = False,
-    process_id: str = "",
     description: str = "",
+    process_id: str = "",
+    
 ) -> str:
 ```
 
-| Parameter                  | Type   | Description                                                                    | Default |
-| -------------------------- | ------ | ------------------------------------------------------------------------------ | ------- |
-| `table_name`               | `str`  | Name of the new table.                                                         | –       |
+| Parameter                  | Type   | Description                                                                      | Default |
+| -------------------------- | ------ | -------------------------------------------------------------------------------- | ------- |
+| `table_name`               | `str`  | Name of the new table.                                                           | –       |
 | `allow_multiple_artifacts` | `bool` | **True** ⇒ instance has own artifact folder; **False** ⇒ one folder, one active. | `False` |
-| `has_side_effects`         | `bool` | **True** ⇒ builders have side effects (e.g. API calls).                         | `False` |
-| `process_id`               | `str`  | Calling process identifier.                                                    | `""`    |
-| `description`              | `str`  | Description for the table.                                                     | `""`    |
+| `has_side_effects`         | `bool` | **True** ⇒ builders have side effects (e.g. API calls).                          | `False` |
+| `description`              | `str`  | Description for the table.                                                       | `""`    |
+| `process_id`               | `str`  | Generated process identifier.                                                    | `""`    |
 
 **Returns** → `str` – process ID of this operation.
 
@@ -49,11 +52,13 @@ def create_table(
 
 ### `create_instance()`
 
+Create a new temporary instance of a table.
+
 ```python
 def create_instance(
     self,
     table_name: str,
-    version: str = "",
+    version: str = "base",
     origin_id: str = "",
     origin_table: str = "",
     external_edit: bool = False,
@@ -67,14 +72,14 @@ def create_instance(
 | Parameter       | Type                                      | Description                                                                              | Default                        |
 | --------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------ |
 | `table_name`    | `str`                                     | Name of the table.                                                                       | –                              |
-| `version`       | `str`                                     | Version of the table; empty ⇒ `BASE_TABLE_VERSION`.                                       | `""`                           |
+| `version`       | `str`                                     | Version of the table.                                                                    | `"base"`                       |
 | `origin_id`     | `str`                                     | If supplied, copy state from this existing instance ID.                                  | `""`                           |
 | `origin_table`  | `str`                                     | Table for `origin_id`; empty ⇒ `table_name`.                                             | `""`                           |
 | `external_edit` | `bool`                                    | **True** ⇒ instance edited externally, no builders constructed.                          | `False`                        |
-| `copy`          | `bool`                                    | **False** (no `origin_id`) ⇒ use latest materialised instance as origin if it exists.     | `True`                         |
+| `copy`          | `bool`                                    | **False** (no `origin_id`) ⇒ use latest materialised instance as origin if it exists.    | `True`                         |
 | `builders`      | `Optional[dict[str, str] \| list[str]]`   | List of new builder names to generate.                                                   | `None`                         |
-| `process_id`    | `str`                                     | Calling process identifier.                                                              | `""`                           |
 | `description`   | `str`                                     | Description for this instance.                                                           | `""`                           |
+| `process_id`    | `str`                                     | Process identifier.                                                                      | `""`                           |
 
 **Returns** → `str` – process ID of this operation.
 
@@ -91,11 +96,13 @@ def create_code_module(
 ) -> str:
 ```
 
+Create or copy a Python module file into TableVault.
+
 | Parameter     | Type  | Description                       | Default |
 | ------------- | ----- | --------------------------------- | ------- |
 | `module_name` | `str` | Name for the new module.          | `""`    |
 | `copy_dir`    | `str` | Directory or Python file to copy. | `""`    |
-| `process_id`  | `str` | Calling process identifier.       | `""`    |
+| `process_id`  | `str` | Generated process identifier.     | `""`    |
 
 **Returns** → `str` – process ID of this operation.
 
@@ -104,12 +111,16 @@ def create_code_module(
 
 ### `create_builder_file()`
 
+Create or update a builder (YAML) file for a temporary table instance.
+
+If the builder content is not specified, a template file will be created.
+
 ```python
 def create_builder_file(
     self,
     table_name: str,
     builder_name: str = "",
-    version: str = constants.BASE_TABLE_VERSION,
+    version: str = "base",
     copy_dir: str = "",
     process_id: str = "",
 ) -> str:
@@ -119,9 +130,9 @@ def create_builder_file(
 | -------------- | ----- | ------------------------------------- | ------------------------------ |
 | `table_name`   | `str` | Name of the table.                    | –                              |
 | `builder_name` | `str` | Builder file name; empty ⇒ inferred.  | `{table_name}_index`           |
-| `version`      | `str` | Version of the table.                 | `constants.BASE_TABLE_VERSION` |
+| `version`      | `str` | Version of the table.                 | `"base"`                         |
 | `copy_dir`     | `str` | Directory containing builder file(s). | `""`                           |
-| `process_id`   | `str` | Calling process identifier.           | `""`                           |
+| `process_id`   | `str` | Generated process identifier.         | `""`                           |
 
 **Returns** → `str` – process ID of this operation.
 
@@ -131,12 +142,16 @@ def create_builder_file(
 
 ### `write_instance()`
 
+Write `table_df` as a **materialized instance** of `table_name` and `version`.
+
+The table must already have a **temporary instance** of the same version that is open for external edits (generated by `create_instance()`).
+
 ```python
 def write_instance(
     self,
     table_df: pd.DataFrame,
     table_name: str,
-    version: str = constants.BASE_TABLE_VERSION,
+    version: str = '"base"',
     dependencies: Optional[list[tuple[str, str]]] = None,
     dtypes: Optional[dict[str, str]] = None,
     process_id: str = "",
@@ -147,10 +162,10 @@ def write_instance(
 | -------------- | ------------------------------------- | --------------------------------------------------------------------- | ------------------------------ |
 | `table_df`     | `pd.DataFrame`                        | Data to write.                                                        | –                              |
 | `table_name`   | `str`                                 | Target table.                                                         | –                              |
-| `version`      | `str`                                 | Target version.                                                       | `constants.BASE_TABLE_VERSION` |
-| `dependencies` | `Optional[list[tuple[str, str]]]`     | List of `(table_name, instance_id)` dependencies. None for no deps. | `None`                         |
+| `version`      | `str`                                 | Target version.                                                       | `"base"`                         |
+| `dependencies` | `Optional[list[tuple[str, str]]]`     | List of `(table_name, instance_id)` dependencies. None for no deps.   | `None`                         |
 | `dtypes`       | `Optional[dict[str, str]]`            | `{column: pandas-dtype}`. None for nullable defaults.                 | `None`                         |
-| `process_id`   | `str`                                 | Calling process identifier.                                           | `""`                           |
+| `process_id`   | `str`                                 | Generated process identifier.                                         | `""`                           |
 
 **Returns** → `str` – The process ID of the executed write operation.
 
@@ -158,11 +173,13 @@ def write_instance(
 
 ### `execute_instance()`
 
+Executes and materialise an existing temporary table instance from builder files.
+
 ```python
 def execute_instance(
     self,
     table_name: str,
-    version: str = constants.BASE_TABLE_VERSION,
+    version: str = "base",
     force_execute: bool = False,
     process_id: str = "",
     background: bool = False,
@@ -172,9 +189,9 @@ def execute_instance(
 | Parameter       | Type   | Description                                                                 | Default                        |
 | --------------- | ------ | --------------------------------------------------------------------------- | ------------------------------ |
 | `table_name`    | `str`  | Name of the table to materialise.                                           | –                              |
-| `version`       | `str`  | Version of the table.                                                       | `constants.BASE_TABLE_VERSION` |
+| `version`       | `str`  | Version of the table.                                                       | `"base"`                         |
 | `force_execute` | `bool` | **True** ⇒ force full rebuild; **False** ⇒ reuse origin if possible.        | `False`                        |
-| `process_id`    | `str`  | Calling process identifier.                                                 | `""`                           |
+| `process_id`    | `str`  | Generated process identifier.                                               | `""`                           |
 | `background`    | `bool` | **True** ⇒ run materialisation in background.                               | `False`                        |
 
 **Returns** → `str` – process ID of this operation.
@@ -187,17 +204,19 @@ def execute_instance(
 
 ### `rename_table()`
 
+Rename an existing table within the TableVault repository.
+
 ```python
 def rename_table(
     self, new_table_name: str, table_name: str, process_id: str = ""
 ) -> str:
 ```
 
-| Parameter        | Type  | Description                 | Default |
-| ---------------- | ----- | --------------------------- | ------- |
-| `new_table_name` | `str` | New table name.             | –       |
-| `table_name`     | `str` | Current table name.         | –       |
-| `process_id`     | `str` | Calling process identifier. | `""`    |
+| Parameter        | Type  | Description                   | Default |
+| ---------------- | ----- | ----------------------------- | ------- |
+| `new_table_name` | `str` | New table name.               | –       |
+| `table_name`     | `str` | Current table name.           | –       |
+| `process_id`     | `str` | Generated process identifier. | `""`    |
 
 **Returns** → `str` – process ID of this operation.
 
@@ -205,14 +224,16 @@ def rename_table(
 
 ### `delete_table()`
 
+Permanently delete a table and all its instances from the repository. Only the dataframes and artifacts are removed; table metadata is retained.
+
 ```python
 def delete_table(self, table_name: str, process_id: str = "") -> str:
 ```
 
-| Parameter    | Type  | Description                  | Default |
-| ------------ | ----- | ---------------------------- | ------- |
-| `table_name` | `str` | Name of the table to delete. | –       |
-| `process_id` | `str` | Calling process identifier.  | `""`    |
+| Parameter    | Type  | Description                    | Default |
+| ------------ | ----- | ------------------------------ | ------- |
+| `table_name` | `str` | Name of the table to delete.   | –       |
+| `process_id` | `str` | Generated process identifier.  | `""`    |
 
 **Returns** → `str` – process ID of this operation.
 
@@ -226,12 +247,13 @@ def delete_instance(
     self, instance_id: str, table_name: str, process_id: str = ""
 ) -> str:
 ```
+Delete a materialised table instance from the vault. Only the dataframe is removed and artifacts; instance metadata is retained.
 
-| Parameter     | Type  | Description                       | Default |
-| ------------- | ----- | --------------------------------- | ------- |
-| `instance_id` | `str` | ID of the instance to delete.     | –       |
-| `table_name`  | `str` | Name of the table owns instance.  | –       |
-| `process_id`  | `str` | Calling process identifier.       | `""`    |
+| Parameter     | Type  | Description                        | Default |
+| ------------- | ----- | ---------------------------------- | ------- |
+| `instance_id` | `str` | ID of the instance to delete.      | –       |
+| `table_name`  | `str` | Name of the table owns instance.   | –       |
+| `process_id`  | `str` | Generated process identifier.      | `""`    |
 
 **Returns** → `str` – process ID of this operation.
 
@@ -239,14 +261,16 @@ def delete_instance(
 
 ### `delete_code_module()`
 
+Delete a Python module file from the repository.
+
 ```python
 def delete_code_module(self, module_name: str, process_id: str = "") -> str:
 ```
 
-| Parameter     | Type  | Description                   | Default |
-| ------------- | ----- | ----------------------------- | ------- |
-| `module_name` | `str` | Name of the module to delete. | –       |
-| `process_id`  | `str` | Calling process identifier.   | `""`    |
+| Parameter     | Type  | Description                     | Default |
+| ------------- | ----- | ------------------------------- | ------- |
+| `module_name` | `str` | Name of the module to delete.   | –       |
+| `process_id`  | `str` | Generated process identifier.   | `""`    |
 
 **Returns** → `str` – process ID of this operation.
 
@@ -259,17 +283,19 @@ def delete_builder_file(
     self,
     builder_name: str,
     table_name: str,
-    version: str = constants.BASE_TABLE_VERSION,
+    version: str = "base",
     process_id: str = "",
 ) -> str:
 ```
 
-| Parameter      | Type  | Description                         | Default                        |
-| -------------- | ----- | ----------------------------------- | ------------------------------ |
-| `builder_name` | `str` | Name of the builder file to delete. | –                              |
-| `table_name`   | `str` | Owning table name.                  | –                              |
-| `version`      | `str` | Version of the table.               | `constants.BASE_TABLE_VERSION` |
-| `process_id`   | `str` | Calling process identifier.         | `""`                           |
+Delete a builder file from a temporary table instance.
+
+| Parameter      | Type  | Description                          | Default                        |
+| -------------- | ----- | ------------------------------------ | ------------------------------ |
+| `builder_name` | `str` | Name of the builder file to delete.  | –                              |
+| `table_name`   | `str` | Owning table name.                   | –                              |
+| `version`      | `str` | Version of the table.                | `"base"`                         |
+| `process_id`   | `str` | Generated process identifier.        | `""`                           |
 
 **Returns** → `str` – process ID of this operation.
 
@@ -284,7 +310,9 @@ def delete_builder_file(
 def generate_process_id(self) -> str:
 ```
 
-**Returns** → `str` – A new, unique process identifier.
+Generate and return a unique process ID. If a process ID is supplied to an operation, that operation persists on errors and can be restarted with the same ID
+
+**Returns** → `str` – A unique process identifier.
 
 ---
 
@@ -301,7 +329,6 @@ def stop_process(
 ) -> str:
 
 ```
-
 Stop an active process and optionally terminate it forcefully.
 
 | Parameter            | Type   | Description                                                   | Default |
@@ -309,7 +336,7 @@ Stop an active process and optionally terminate it forcefully.
 | `to_stop_process_id` | `str`  | ID of the process to stop.                                    | –       |
 | `force`              | `bool` | **True** ⇒ forcibly stop; **False** ⇒ raise if still running. | `False` |
 | `materialize`        | `bool` | **True** ⇒ materialise partial instances if relevant.         | `False` |
-| `process_id`         | `str`  | ID of the calling process (audit).                            | `""`    |
+| `process_id`         | `str`  | Generated process identifier.                                 | `""`    |
 
 **Returns** → `str` – process ID of this *stop\_process* call.
 
@@ -326,7 +353,7 @@ def get_dataframe(
     self,
     table_name: str,
     instance_id: str = "",
-    version: str = constants.BASE_TABLE_VERSION,
+    version: str = "base",
     active_only: bool = True,
     successful_only: bool = False,
     rows: Optional[int] = None,
@@ -334,11 +361,13 @@ def get_dataframe(
 ) -> tuple[pd.DataFrame, str]:
 ```
 
+Retrieve a pandas `DataFrame` for a table instance.
+
 | Parameter            | Type            | Description                                                            | Default                        |
 | -------------------- | --------------- | ---------------------------------------------------------------------- | ------------------------------ |
 | `table_name`         | `str`           | Name of the table.                                                     | –                              |
 | `instance_id`        | `str`           | Specific instance ID; empty ⇒ latest of *version*.                     | `""`                           |
-| `version`            | `str`           | Version when *instance\_id* omitted.                                   | `constants.BASE_TABLE_VERSION` |
+| `version`            | `str`           | Version when *instance\_id* omitted.                                   | `"base"`                         |
 | `active_only`        | `bool`          | **True** ⇒ consider only active instances.                             | `True`                         |
 | `successful_only`    | `bool`          | **True** ⇒ consider only *successful* runs.                            | `False`                        |
 | `rows`               | `Optional[int]` | Row limit (`None` = no limit).                                         | `None`                         |
@@ -351,6 +380,7 @@ def get_dataframe(
 
 ### `get_file_tree()`
 
+
 ```python
 def get_file_tree(
     self,
@@ -362,16 +392,15 @@ def get_file_tree(
     artifact_files: bool = False,
 ) -> rich.tree.Tree:
 ```
-
-Return a RichTree object of files contained in the target.
+Retrieves a RichTree object representation of the repository.
 
 | Parameter        | Type   | Description                                | Default |
 | ---------------- | ------ | ------------------------------------------ | ------- |
-| `instance_id`    | `str`  | Resolve a specific instance (else latest). | `""`    |
-| `table_name`     | `str`  | Limit to a table (optional).               | `""`    |
-| `code_files`     | `bool` | Include stored *code* modules.             | `True`  |
-| `builder_files`  | `bool` | Include builder scripts.                   | `True`  |
-| `metadata_files` | `bool` | Include JSON/YAML metadata.                | `False` |
+| `instance_id`    | `str`  | Retrieve partial instance tree.            | `""`    |
+| `table_name`     | `str`  | Retrieve partial table tree.               | `""`    |
+| `code_files`     | `bool` | Include stored Python modules.             | `True`  |
+| `builder_files`  | `bool` | Include builder files.                     | `True`  |
+| `metadata_files` | `bool` | Include metadata files.                    | `False` |
 | `artifact_files` | `bool` | Include artifact directory contents.       | `False` |
 
 **Returns** → `rich.tree.Tree` – printable file-tree representation.
@@ -384,18 +413,18 @@ Return a RichTree object of files contained in the target.
 def get_instances(
     self,
     table_name: str,
-    version: str = constants.BASE_TABLE_VERSION,
+    version: str = "base",
 ) -> list[str]:
 ```
 
-Return a list of materialised instance IDs for a specific table and version.
+Retrieves a list of instance IDs for a specific table and version.
 
 | Parameter    | Type  | Description           | Default                        |
 | ------------ | ----- | --------------------- | ------------------------------ |
 | `table_name` | `str` | Name of the table.    | –                              |
-| `version`    | `str` | Version of the table. | `constants.BASE_TABLE_VERSION` |
+| `version`    | `str` | Version of the table. | `"base"`                         |
 
-**Returns** → `list[str]` – materialised instance IDs for this table/version.
+**Returns** → `list[str]` – instance IDs for this table/version.
 
 ---
 
@@ -405,7 +434,7 @@ Return a list of materialised instance IDs for a specific table and version.
 def get_active_processes(self) -> ActiveProcessDict:
 ```
 
-Return a dictionary of currently active processes in the vault.
+Retrieves a dictionary of currently active processes in the vault.
 Each key is a process ID and each value is metadata about that process.
 
 **Returns** → `ActiveProcessDict` – alias `dict[str, Mapping[str, Any]]`.
@@ -419,7 +448,7 @@ Each key is a process ID and each value is metadata about that process.
 def get_process_completion(self, process_id: str) -> bool:
 ```
 
-Return the completion status of a specific process.
+Retrieves the completion status of a specific process.
 
 | Parameter    | Type  | Description                |
 | ------------ | ----- | -------------------------- |
@@ -439,7 +468,7 @@ def get_descriptions(
 ) -> dict:
 ```
 
-Fetch the stored description metadata.
+Retrieves the stored description metadata.
 
 | Parameter     | Type  | Description                                                          | Default |
 | ------------- | ----- | -------------------------------------------------------------------- | ------- |
@@ -457,19 +486,19 @@ def get_artifact_folder(
     self,
     table_name: str,
     instance_id: str = "",
-    version: str = constants.BASE_TABLE_VERSION,
+    version: str = "base",
     is_temp: bool = True,
 ) -> str:
 ```
 
-Return the path to the artifact folder for a given table instance.
-If `allow_multiple_artifacts` is **False** for the `Table` *and* the instance is not temporary, the folder for the whole table is returned.
+Retrieves the path to the artifact folder for a given table instance.
+If `allow_multiple_artifacts` is **False** for the table, the instance is not temporary, *and* the instance was successfully executed, the folder for the whole table is returned.
 
 | Parameter     | Type   | Description                                                                     | Default                        |
 | ------------- | ------ | ------------------------------------------------------------------------------- | ------------------------------ |
 | `table_name`  | `str`  | Name of the table.                                                              | –                              |
 | `instance_id` | `str`  | Table‑instance ID.                                                              | `""`                           |
-| `version`     | `str`  | Version string. When *instance\_id* is omitted, fetches latest of this version. | `constants.BASE_TABLE_VERSION` |
+| `version`     | `str`  | Version string. When *instance\_id* is omitted, fetches latest of this version. | `"base"`                         |
 | `is_temp`     | `bool` | **True** ⇒ path to temporary instance; **False** ⇒ last materialised instance.  | `True`                         |
 
 **Returns** → `str` – path to the requested artifact folder.
@@ -483,19 +512,18 @@ If `allow_multiple_artifacts` is **False** for the `Table` *and* the instance is
 def get_builders_list(
     self,
     table_name: str,
-    instance_id: str = "",
-    version: str = constants.BASE_TABLE_VERSION,
+    instance_id: str = '',
+    version: str = "base",
     is_temp: bool = True,
 ) -> list[str]:
 ```
-
-List builder scripts stored within a specific table instance.
+Retrieve a list of builder names contained in an instance.
 
 | Parameter     | Type   | Description                                                      | Default                        |
 | ------------- | ------ | ---------------------------------------------------------------- | ------------------------------ |
 | `table_name`  | `str`  | Target table name.                                               | –                              |
-| `instance_id` | `str`  | Specific instance (empty ⇒ latest of *version*).                 | `""`                           |
-| `version`     | `str`  | Version used when *instance\_id* omitted.                        | `constants.BASE_TABLE_VERSION` |
+| `instance_id` | `str`  | Specific instance (empty ⇒ latest of *version*).                 | `''`                           |
+| `version`     | `str`  | Version used when *instance\_id* omitted.                        | `"base"`                         |
 | `is_temp`     | `bool` | **True** ⇒ look at temporary instance; **False** ⇒ materialised. | `True`                         |
 
 **Returns** → `list[str]` – names of builder scripts in the instance.
@@ -510,19 +538,19 @@ def get_builder_str(
     table_name: str,
     builder_name: str = "",
     instance_id: str = "",
-    version: str = constants.BASE_TABLE_VERSION,
+    version: str = "base",
     is_temp: bool = True,
 ) -> str:
 ```
 
-Retrieve a stored builder script as plain text.
+Retrieve a builder file as plain text.
 
 | Parameter      | Type   | Description                                      | Default                          |
 | -------------- | ------ | ------------------------------------------------ | -------------------------------- |
 | `table_name`   | `str`  | Table that owns the builder.                     | –                                |
 | `builder_name` | `str`  | Name of the builder file (empty ⇒ inferred).     | `{table_name}_index` (converted) |
 | `instance_id`  | `str`  | Specific instance (empty ⇒ latest of *version*). | `""`                             |
-| `version`      | `str`  | Version used when *instance\_id* omitted.        | `constants.BASE_TABLE_VERSION`   |
+| `version`      | `str`  | Version used when *instance\_id* omitted.        | `"base"`                         |
 | `is_temp`      | `bool` | **True** ⇒ read from temporary instance.         | `True`                           |
 
 **Returns** → `str` – full source code of the builder.
@@ -536,7 +564,7 @@ Retrieve a stored builder script as plain text.
 def get_code_modules_list(self) -> list[str]:
 ```
 
-Return the names of code modules saved in the repository.
+Retrieves a list of module names contained in this repository.
 
 **Returns** → `list[str]` – Python module names.
 
@@ -548,7 +576,7 @@ Return the names of code modules saved in the repository.
 def get_code_module_str(self, module_name: str) -> str:
 ```
 
-Return the text of a stored code module.
+Retrieve a code module file as plain text.
 
 | Parameter     | Type  | Description                  |
 | ------------- | ----- | ---------------------------- |
@@ -559,7 +587,7 @@ Return the text of a stored code module.
 ---
 
 
-## Helper Functions
+## Utility Functions
 
 ---
 
@@ -586,8 +614,8 @@ def compress_vault(db_dir: str, preset: int = 6) -> None:
 def decompress_vault(db_dir: str) -> None:
 ```
 
-| Parameter | Type  | Description                                                                               |
-| --------- | ----- | ----------------------------------------------------------------------------------------- |
+| Parameter | Type  | Description                                                                                             |
+| --------- | ----- | ------------------------------------------------------------------------------------------------------- |
 | `db_dir`  | `str` | Path to the TableVault directory (without `.tar.xz` extension, e.g., `my_vault` for `my_vault.tar.xz`). |
 
 **Raises** → `FileNotFoundError` – If the expected archive file (`{db_dir}.tar.xz`) is missing.
@@ -600,6 +628,6 @@ def decompress_vault(db_dir: str) -> None:
 def delete_vault(db_dir: str) -> None:
 ```
 
-| Parameter | Type  | Description                             |
-| --------- | ----- | --------------------------------------- |
+| Parameter | Type  | Description                                 |
+| --------- | ----- | ------------------------------------------- |
 | `db_dir`  | `str` | Base directory of the TableVault to delete. |

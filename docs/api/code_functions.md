@@ -138,7 +138,6 @@ Load a CSV file into a new `DataFrame` and return a copy.
     ```yaml
     builder_type: IndexBuilder
     changed_columns: [str] # only single column
-    primary_key: [str]
     python_function: create_data_table_from_list
     code_module: table_generation
     arguments:    

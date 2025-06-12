@@ -2,7 +2,7 @@
 
 Table References provide a powerful way to dynamically fetch and use data from other table instances, or the current table instance, directly within most string-based fields of your builder YAML files. This allows for highly dynamic and data-driven configurations.
 
-The `<< ... >>` syntax can be applied to any singular string, boolean or numeric entry in your builder definition, such as values in the `arguments` block, items in the `changed_columns` list, or even the `python_function` and `code_module` names themselves. The primary exception is the `dependencies` field, which does not support this dynamic resolution.
+The `<< ... >>` syntax can be applied to any singular string, boolean or numeric entry in your builder definition, such as values in the `arguments` block, items in the `changed_columns` list, or even the `python_function` and `code_module` names themselves. The primary exception is the `dependencies` field, which does not support this dynamic resolution (since `dependencies` is generated from Table References themselves).
 
 ---
 
@@ -37,24 +37,22 @@ If a field value is entirely a table reference (e.g., `python_function: "<<confi
 
 ## Anatomy of a Table Reference String
 
-Inside the `<< ... >>` wrapper, a table reference string follows a specific structure to identify the table, an optional version, specific columns, and optional filtering conditions:
+Inside the `<< ... >>` wrapper, a table reference string follows a specific structure to identify the table, an optional instance_id, specific columns, and optional filtering conditions:
 
 ```
-tableName(version).{column1,column2,...}[condition1,condition2,...]
+tableName(instance_id).{column1,column2,...}[condition1,condition2,...]
 ```
 
-All parts (version, columns, conditions) are optional.
+All parts (instance_id, columns, conditions) are optional.
 
 ---
 
 **Components:**
 
 1.  **`tableName`**: The name of the table to query.
-2.  **`(version)`**: (Optional) Specifies a particular version of the table.
+2.  **`(instance_id)`**: (Optional) Specifies a particular instance of the table.
 3.  **`.{columns}` or `.COLUMN`**: (Optional) Selects specific columns.
 4.  **`[conditions]`**: (Optional) Filters the rows of the table.
-
-Let's break down each component:
 
 ---
 
@@ -72,10 +70,10 @@ Let's break down each component:
 
 ---
 
-### 2. Version (`(version)`)
+### 2. Version (`(instance_id)`)
 
-* **Syntax**: Enclosed in parentheses, e.g., `(v1.0.0)` or `(prod)`.
-* **Optional**: If omitted, TableVault will typically use the default or latest available version of the table based on its internal logic and cache.
+* **Syntax**: Instance in parentheses, e.g., `(base_1748113624_d049944b-8548-46d2-a247-bbf3769fbadc)`.
+* **Optional**: If omitted, TableVault will typically use the latest available instance of the table based on its internal logic and cache.
 * **Dynamic Version**: The version string can be a nested table reference.
     * Example reference string: `my_table(<<version_control_table.active_version[table_name::'my_table']>>)`
 
@@ -134,7 +132,7 @@ Let's break down each component:
 
 ## Nested References
 
-As shown in many examples above, any component of a table reference—the table name, version string, column names, condition keys, or condition values—can itself be another table reference enclosed in `<< ... >>`. TableVault will resolve the innermost references first and use their results to construct the outer reference before resolving it.
+As shown in examples above, any component of a table reference—the table name, version string, column names, condition keys, or condition values—can itself be another table reference enclosed in `<< ... >>`. TableVault will resolve the innermost references first and use their results to construct the outer reference before resolving it.
 
 **Complex Example (from code, used in an argument):**
 `<<stories.artifact_name[paper_name::<<self.paper_name[index]>>]>>`

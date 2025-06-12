@@ -50,8 +50,8 @@ class TableVault:
         verbose: bool = True,
         is_remote: bool = False,
     ) -> None:
-        self.db_dir = db_dir
         self.author = author
+        self.db_dir = db_dir
 
         if create:
             _vault_operations.setup_database(
@@ -78,7 +78,7 @@ class TableVault:
         set_tv_lock(table_name="", instance_id="", db_dir=db_dir)
 
     def get_process_completion(self, process_id: str) -> bool:
-        """Return the completion status of a specific process.
+        """Retrieves the completion status of a specific process.
 
         Parameters
         ----------
@@ -101,10 +101,10 @@ class TableVault:
         version: str = constants.BASE_TABLE_VERSION,
         is_temp: bool = True,
     ) -> str:
-        """Return the path to the artifact folder for a given table instance.
-
-        If `allow_multiple_artifacts` is `False` for `table_name` and the instance
-        is materialised, the folder for the whole table is returned.
+        """Retrieves the path to the artifact folder for a given table instance.
+        If `allow_multiple_artifacts` is **False** for the table, 
+        the instance is not temporary, *and* the instance was successfully executed, 
+        the folder for the whole table is returned.
 
         Parameters
         ----------
@@ -134,7 +134,7 @@ class TableVault:
         )
 
     def get_active_processes(self) -> ActiveProcessDict:
-        """Return a dictionary of currently active processes in this vault.
+        """Retrieves a dictionary of currently active processes in this vault.
 
         Each key is a process ID and each value is metadata about that process.
 
@@ -150,7 +150,7 @@ class TableVault:
         table_name: str,
         version: str = constants.BASE_TABLE_VERSION,
     ) -> list[str]:
-        """Return a list of materialised instance IDs for a specific table and version.
+        """Retrieves a list of instance IDs for a specific table and version.
 
         Parameters
         ----------
@@ -171,7 +171,7 @@ class TableVault:
         )
 
     def get_descriptions(self, instance_id: str = "", table_name: str = "") -> dict:
-        """Return description dictionary for specified item in the database.
+        """Retrieves description dictionary for specified item in the database.
 
         If no parameters are given, return the description for the database itself.
 
@@ -200,20 +200,21 @@ class TableVault:
         metadata_files: bool = False,
         artifact_files: bool = False,
     ) -> Tree:
-        """Return a RichTree object of files contained in the target.
-        Parameters
+        """Retrieves a RichTree object representation of the repository.
+
+        Parameters.
         ----------
         instance_id : str, optional
-            Resolve a specific instance. If empty, the latest instance is used.
+            Retrieve partial instance tree .
             Defaults to "".
         table_name : str, optional
-            Limit the file tree to a specific table. Defaults to "".
+             Retrieve partial table tree . Defaults to "".
         code_files : bool, optional
             If ``True``, include stored code modules in the tree. Defaults to ``True``.
         builder_files : bool, optional
-            If ``True``, include builder scripts in the tree. Defaults to ``True``.
+            If ``True``, include builder files in the tree. Defaults to ``True``.
         metadata_files : bool, optional
-            If ``True``, include JSON/YAML metadata files. Defaults to ``False``.
+            If ``True``, include metadata files. Defaults to ``False``.
         artifact_files : bool, optional
             If ``True``, include artifact directory contents. Defaults to ``False``.
 
@@ -233,7 +234,7 @@ class TableVault:
         )
 
     def get_code_modules_list(self) -> list[str]:
-        """Return a list of module names contained in this repository.
+        """Retrieves a list of module names contained in this repository.
 
         Returns
         -------
@@ -251,7 +252,7 @@ class TableVault:
         version: str = constants.BASE_TABLE_VERSION,
         is_temp: bool = True,
     ) -> list[str]:
-        """Return a list of builder names contained in an instance.
+        """Retrieve a list of builder names contained in an instance.
 
         Parameters
         ----------
@@ -288,7 +289,7 @@ class TableVault:
         version: str = constants.BASE_TABLE_VERSION,
         is_temp: bool = True,
     ) -> str:
-        """Retrieve the text of the stored builder as a string.
+        """Retrieve a stored builder script as plain text.
 
         Parameters
         ----------
@@ -322,7 +323,7 @@ class TableVault:
         )
 
     def get_code_module_str(self, module_name: str) -> str:
-        """Retrieve the text of the stored code module as a string.
+        """Retrieve a code module file as plain text.
 
         Parameters
         ----------
@@ -349,7 +350,7 @@ class TableVault:
         rows: Optional[int] = None,
         full_artifact_path: bool = True,
     ) -> tuple[pd.DataFrame, str]:
-        """Retrieve a pandas ``DataFrame`` for a table instance.
+        """Retrieve a pandas `DataFrame` for a table instance.
 
         Parameters
         ----------
@@ -407,7 +408,7 @@ class TableVault:
         materialize : bool, optional
             If ``True`` materialise partial instances if relevant. Defaults to ``False``.
         process_id : str, optional
-            ID of the calling process (for audit/logging). Defaults to "".
+            Author-generated identifier for the process. Defaults to "".
 
         Returns
         -------
@@ -430,7 +431,7 @@ class TableVault:
         text: str = "",
         process_id: str = "",
     ) -> str:
-        """Copy (or create) a code-module file or directory into the vault.
+        """Create or copy a Python module file into TableVault.
 
         Parameters
         ----------
@@ -445,7 +446,7 @@ class TableVault:
             Text string containing content of the module file to save.
             Is overridden by `copy_dir` if both are given. Defaults to "".
         process_id : str, optional
-            Identifier for the calling process (used for logging). Defaults to "".
+            Author-generated identifier for the process. Defaults to "".
 
         Returns
         -------
@@ -462,14 +463,14 @@ class TableVault:
         )
 
     def delete_code_module(self, module_name: str, process_id: str = "") -> str:
-        """Delete a code-module file from the vault.
+        """Delete a Python module file from the repository.
 
         Parameters
         ----------
         module_name : str
-            Name of the module to delete (file `{module_name}.py` is searched for).
+            Name of the module to delete (file `{module_name}.py`).
         process_id : str, optional
-            Identifier for the calling process. Defaults to "".
+            Author-generated identifier for the process. Defaults to "".
 
         Returns
         -------
@@ -492,10 +493,9 @@ class TableVault:
         text: str = "",
         process_id: str = "",
     ) -> str:
-        """Add or update a builder (YAML) file for a temporary table instance.
+        """Create or update a builder (YAML) file for a temporary table instance.
 
-        If the builder is new, its type is inferred from `builder_name`:
-        `{table_name}_index` ⇒ *IndexBuilder*; any other name ⇒ *ColumnBuilder*.
+        If the builder content is not specified, a template file will be created.
 
         Parameters
         ----------
@@ -512,7 +512,7 @@ class TableVault:
             Text string containing content of the builder file to save.
             Is overridden by `copy_dir` if both are given. Defaults to "".
         process_id : str, optional
-            Identifier for the calling process. Defaults to "".
+            Author-generated identifier for the process. Defaults to "".
 
         Returns
         -------
@@ -537,7 +537,7 @@ class TableVault:
         version: str = constants.BASE_TABLE_VERSION,
         process_id: str = "",
     ) -> str:
-        """Remove a builder file from a temporary table instance.
+        """Delete a builder file from a temporary table instance.
 
         Parameters
         ----------
@@ -548,7 +548,7 @@ class TableVault:
         version : str, optional
             Version of the table. Defaults to `BASE_TABLE_VERSION`.
         process_id : str, optional
-            Identifier for the calling process. Defaults to "".
+            Author-generated identifier for the process. Defaults to "".
 
         Returns
         -------
@@ -567,7 +567,7 @@ class TableVault:
     def rename_table(
         self, new_table_name: str, table_name: str, process_id: str = ""
     ) -> str:
-        """Rename an existing table within the vault.
+        """Rename an existing table within the TableVault repository.
 
         Parameters
         ----------
@@ -576,7 +576,7 @@ class TableVault:
         table_name : str
             Current name of the table to rename.
         process_id : str, optional
-            Identifier for the calling process. Defaults to "".
+            Author-generated identifier for the process. Defaults to "".
 
         Returns
         -------
@@ -592,16 +592,16 @@ class TableVault:
         )
 
     def delete_table(self, table_name: str, process_id: str = "") -> str:
-        """Permanently delete a table and all its instances from the vault.
+        """Permanently delete a table and all its instances from the repository.
 
-        Only the dataframes are removed; table metadata is retained.
+        Only the dataframes and artifacts are removed; table metadata is retained.
 
         Parameters
         ----------
         table_name : str
             Name of the table to delete.
         process_id : str, optional
-            Identifier for the calling process. Defaults to "".
+            Author-generated identifier for the process. Defaults to "".
 
         Returns
         -------
@@ -620,7 +620,7 @@ class TableVault:
     ) -> str:
         """Delete a materialised table instance from the vault.
 
-        Only the dataframe is removed; instance metadata is retained.
+        Only the dataframe is removed and artifacts; instance metadata is retained.
 
         Parameters
         ----------
@@ -629,7 +629,7 @@ class TableVault:
         table_name : str
             Name of the table that owns the instance.
         process_id : str, optional
-            Identifier for the calling process. Defaults to "".
+            Author-generated identifier for the process. Defaults to "".
 
         Returns
         -------
@@ -656,7 +656,7 @@ class TableVault:
         """Write `table_df` as a **materialized instance** of `table_name` and `version`.
 
         The table must already have a **temporary instance** of the same version that
-        is open for external edits (see :py:meth:`create_instance`).
+        is open for external edits (generated by `create_instance()`).
 
         Parameters
         ----------
@@ -673,7 +673,7 @@ class TableVault:
             `{column: pandas-dtype}`. `None` implies use of nullable defaults.
             Defaults to None.
         process_id : str, optional
-            Identifier for the calling process. Empty for default. Defaults to "".
+            Author-generated identifier for the process. Defaults to "".
 
         Returns
         -------
@@ -703,7 +703,8 @@ class TableVault:
         process_id: str = "",
         background: bool = False,
     ) -> str:
-        """Materialise an existing temporary table instance.
+        """Executes and materialise an existing temporary table instance
+        from builder files.
 
         Parameters
         ----------
@@ -715,9 +716,9 @@ class TableVault:
             If ``True`` force a full rebuild; if ``False`` attempt to reuse an
             origin instance when possible. Defaults to ``False``.
         process_id : str, optional
-            Identifier for the calling process. Defaults to "".
+            Author-generated identifier for the process. Defaults to "".
         background : bool, optional
-            If ``True`` run materialisation in a background process. Defaults to ``False``.
+            If ``True`` runs in a background process. Defaults to ``False``.
 
         Returns
         -------
@@ -743,12 +744,10 @@ class TableVault:
         external_edit: bool = False,
         copy: bool = False,
         builders: Optional[dict[str, str] | list[str]] = None,
-        process_id: str = "",
         description: str = "",
+        process_id: str = "",
     ) -> str:
         """Create a new temporary instance of a table.
-
-        At most one of `origin_id` or `builders` should be supplied.
 
         Parameters
         ----------
@@ -769,10 +768,10 @@ class TableVault:
             (if it exists). Defaults to ``False``.
         builders : Optional[list[str]], optional
             List of new builder names to generate. Defaults to None.
-        process_id : str, optional
-            Identifier for the calling process. Defaults to "".
         description : str, optional
             Description for this instance. Defaults to "".
+        process_id : str, optional
+            Author-generated identifier for the process. Defaults to "".
 
         Returns
         -------
@@ -800,8 +799,8 @@ class TableVault:
         table_name: str,
         allow_multiple_artifacts: bool = False,
         has_side_effects: bool = False,
-        process_id: str = "",
         description: str = "",
+        process_id: str = "",
     ) -> str:
         """Create a new table definition in the vault.
 
@@ -817,10 +816,10 @@ class TableVault:
             If ``True`` builder files have side effects (e.g. external API calls).
             When a new temporary instance starts executing, all other instances
             are marked inactive. Defaults to ``False``.
-        process_id : str, optional
-            Identifier for the calling process. Defaults to "".
         description : str, optional
             Description for the table, stored in metadata. Defaults to "".
+        process_id : str, optional
+            Author-generated identifier for the process. Defaults to "".
 
         Returns
         -------

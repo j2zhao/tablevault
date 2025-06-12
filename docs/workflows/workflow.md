@@ -1,13 +1,14 @@
 # Basic Workflow
 
-The TableVault API allows users to generate and execute instances of data tables through a straightforward workflow. The process begins with establishing a central repository, followed by defining the structure of a table, creating specific instances of that table, and then using builder files to populate and materialize the data.
+This is a basic sample workflow for a TableVault repository.
 
 ---
+
 ## 1. Make a Repository
 
 ```python
-tablevault = TableVault(db_dir = "test_tv", author = "kong", create = True,
-    description = "this is an example repository.")
+tablevault = TableVault(db_dir="test_tv", author="kong", create=True,
+    description="This is an example repository.")
 ```
 
 ---
@@ -15,8 +16,8 @@ tablevault = TableVault(db_dir = "test_tv", author = "kong", create = True,
 ## 2. Make a Table
 
 ```python
-tablevault.create_table(table_name = "fruits_table", 
-    description = "this is an example table.")
+tablevault.create_table(table_name="fruits_table", 
+    description="This is an example table.")
 ```
 
 ---
@@ -24,7 +25,7 @@ tablevault.create_table(table_name = "fruits_table",
 ## 3. Make a Table Instance
 
 ```python
-tablevault.create_instance(table_name = "fruits_table")
+tablevault.create_instance(table_name="fruits_table")
 ```
 
 ---
@@ -32,7 +33,7 @@ tablevault.create_instance(table_name = "fruits_table")
 ## 4. Write the Code Files
 
 ```python
-tablevault.create_code_module(module_name = "example_code")
+tablevault.create_code_module(module_name="example_code")
 ```
 
 **Example Code**
@@ -46,13 +47,13 @@ def create_data_table_from_list(vals: list[str]):
     return pd.DataFrame({"temp_name": vals})
 ```
 
-If you don't have direct access to a text editor on your platform, you can add the code as a string argument, `text`, in `create_code_module`.
+If you do not have direct access to a text editor on your platform, you can add the code as a string argument, `text`, in `create_code_module()`.
 
 
-## 4. Write the Builder Files
+## 5. Write the Builder Files
 
 ```python
-tablevault.create_builder_file(table_name = "fruits_table", builder_name = "fruits_table_index")
+tablevault.create_builder_file(table_name="fruits_table", builder_name="fruits_table_index")
 ```
 
 **Example Builder**
@@ -70,32 +71,32 @@ code_module: example_code                 # Module containing the function
 
 arguments:                               # Arguments passed to the function
     vals: ['pineapples', 'watermelons', 'coconuts']
-is_custom: true                         #using a user-supplied function in code_module
+is_custom: true                         # Using a user-supplied function in code_module
 
 ```
 
-If you don't have direct access to a text editor on your platform, you can add the code as a string argument, `text`, in `create_builder_file`.
+If you do not have direct access to a text editor on your platform, you can add the code as a string argument, `text`, in `create_builder_file()`.
 
 ---
 
-## 5. Materialize the Instance
+## 6. Materialize the Instance
 
 ```python
-tablevault.execute_instance(table_name = "fruits_table")
+tablevault.execute_instance(table_name="fruits_table")
 ```
 
 ---
 
-## 6. Create a Second Instance
+## 7. Create a Second Instance
 
-There are two different ways, you can create a second instance of the `fruits_table` table.
+You can create a second instance of the `fruits_table` table in two different ways.
 
-### 1. Copying Previous Instances
+### (V1) Copying Previous Instances 
 
 To make building the dataframe easier, you can copy the metadata of the last materialized instance:
 
 ```python
-tablevault.create_instance(table_name = "fruits_table", copy = True)
+tablevault.create_instance(table_name="fruits_table", copy=True)
 ```
 
 You simply need to change one line in the `fruits_table_index.YAML` file:
@@ -105,21 +106,21 @@ arguments:                               # Arguments passed to the function
     vals: ['bananas']
 ```
 
-You then can execute normally:
+You can then execute normally:
 
 ```python
-tablevault.execute_instance(table_name = "fruits_table")
+tablevault.execute_instance(table_name="fruits_table")
 ```
 
 ---
 
-### 2. Externally Writing Instances
+### (V2) Externally Writing Instances 
 
-If you want to edit the dataframe outside of the TableVault library (not generally recommended), you can explicitly declare this when generating the new instance: 
+If you want to edit the dataframe outside of the TableVault library, you can explicitly declare this when generating the new instance: 
 
 ```python
-tablevault.create_instance(table_name = "fruits_table", external_edit = True,
-    description="externally created dataframe")
+tablevault.create_instance(table_name="fruits_table", external_edit=True,
+    description="Externally created dataframe.")
 ```
 
 You can now write a new dataframe directly into our table:
@@ -129,22 +130,26 @@ import pandas as pd
 
 df = pd.DataFrame({'fruits': ['bananas']})
 
-tablevault.write_instance(df, table_name = "fruits_table")
+tablevault.write_instance(df, table_name="fruits_table")
 ```
+
+
+!!! note "External Execution is Untracked"
+    Edits to the dataframe made outside of the TableVault system are untracked. It is recommended that you fill out the `description` field in your instance to explain the edits, and keep your edits small and intuitive.
 
 ---
 
 
-## 7. Query for A Dataframe
+## 8. Query for a Dataframe
 
-You can easily retrieve the dataframe of both instances: 
+You can easily retrieve the dataframes of both instances: 
 
 ```python
 
-instances = tablevault.get_instances(table_name = "fruits_table")
+instances = tablevault.get_instances(table_name="fruits_table")
 
-df_1 = tablevault.get_dataframe(table_name = "fruits_table", instance_id = instances[0])
-df_2 = tablevault.get_dataframe(table_name = "fruits_table")
+df_1 = tablevault.get_dataframe(table_name="fruits_table", instance_id=instances[0])
+df_2 = tablevault.get_dataframe(table_name="fruits_table")
 
 ```
 

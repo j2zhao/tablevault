@@ -38,7 +38,7 @@ nav:
   - Core Concepts: 
     - Repository Structure: core_concepts/structure.md
     - Operations: core_concepts/operations.md
-    - Builders, Code Functions, Artifacts, TableReferences: core_concepts/execution.md
+    - Builders, Python Functions, TableReferences, Artifacts: core_concepts/execution.md
   - Basic Workflow: workflows/workflow.md
   - Handling Execution Errors: workflows/errors.md
   - Workflow with Artifacts: workflows/workflow_artifacts.md
