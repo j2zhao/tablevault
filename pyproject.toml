@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "tablevault"
 version = "0.0.1"
-description = "Table Configurationa and Versioning Tool. (OpenAI and CSV files right now.)"
+description = "Dataframe and File Transformation Execution and Versioning Tool."
 authors = [
     { name = "Jinjin Zhao", email = "j2zhao@uchicago.edu" }
 ]

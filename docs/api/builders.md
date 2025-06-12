@@ -1,4 +1,4 @@
-# Builders
+# Builders and Custom Python Functions
 
 ## Builder File Configuration
 
@@ -10,8 +10,6 @@ TableVault supports two built-in builder types:
 2.  **`ColumnBuilder`**: Generates or mutates individual columns within the DataFrame established by the `IndexBuilder`.
 
 Each table instance that is executed must contain exactly one `IndexBuilder`. Additional `ColumnBuilder` files can be included to perform subsequent modifications.
-
-See [Examples](https://www.google.com/search?q=) and [Typical Workflow](https://www.google.com/search?q=) for detailed descriptions of how to use builders.
 
 -----
 
@@ -107,6 +105,7 @@ dependencies: ['TABLE_NAME.COLUMNS']     # e.g., ['Products.price']
 
 -----
 
+
 ## Special Keywords
 
 TableVault builders support special keywords that are dynamically replaced with context-aware values at runtime. These keywords enable access to file paths and data from other tables, making configurations more powerful and flexible.
@@ -127,13 +126,73 @@ arguments:
   source_data_id: "<<config_table.source_id[region::'US']>>"
 ```
 
-## Function Return Types
+---
 
-- Explain function return types. You have to create your function to match the return signature. generator always yields a tuple with the physical row index and the row-wise column entries. row-wise always returns a tuple (or singular value) representing one row. dataframe always returns a pandas dataframe that contains all saved rows and all columns in `changed_columns`.
+## Creating New TableVault Builder Function
+
+
+Every builder YAML tells TableVault *how* to construct or modify the instance DataFrame. 
+The `return_type` field aligns your Python function’s output with the framework’s expectations:
+
+| `return_type`               | Type Use Pattern                                                 | Expected Return Output                                                                                      | What TableVault does                                                    |
+| --------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **`dataframe`** *(default)* | Create **whole table** in one function                           | Function returns **one `pd.DataFrame`** that already includes **every column in `changed_columns`**.        | Accepts the DataFrame as‑is and moves on.                               |
+| **`row‑wise`**              | Compute **each row independently**.”                             | Function is called **once per input row** and returns a scalar or tuple representing that row’s new values. | Writes each returned row immediately; can run with multiple threads     |
+| **`generator`**             | Generate **rows incrementally** in one function                  | Function yields **`(row_idx, row_tuple)`** pairs in any row order.                                          | Writes each yielded row immediately; skipped indices remain untouched.  |
+
+---
+
+**Important Notes**
+
+1. **Column order & count** must match `changed_columns`. One column → you may return/yield a scalar.
+2. All values must coerce cleanly to the dtypes you declare (e.g. `artifact_string`).
+3. If you write artefact files, return **relative paths** (`my_plot.png`), not absolute ones.
+4. For resuming interrupted runs, rely on the previously saved-instance (you can access it by assigning `<<self>>` as an argument). **Do not** look at artifact files, since they might not be saved to your dataframe.
+5. For `row-wise` functions that correspond to an IndexBuilder, the function is called for each row in the original copied table.
+6. Arguments to `row-wise` will automatically resolve the `index` key-word as the current row's index.
+
+---
+
+### Resume‑Safe Generator Template
+
+```python
+from typing import Iterator, Any, Tuple
+import pandas as pd
+
+def process_rows_generator(
+    input_df: pd.DataFrame,           # rows still to process
+    self_df: pd.DataFrame,            # <<self>> – current materialised table
+    batch_size: int = 512,
+    *args, **kwargs
+) -> Iterator[Tuple[int, Tuple[Any, ...]]]:
+    """Yield `(row_idx, row_tuple)` while skipping already‑done rows."""
+
+    processed = set(self_df.index)
+
+    for start in range(0, len(input_df), batch_size):
+        if start in processed:
+            continue  # resume logic
+        end = min(start + batch_size, len(input_df))
+
+        # ─── your expensive work here ───
+        batch   = input_df.iloc[start:end]
+        results = some_heavy_op(batch, *args, **kwargs)
+        row_val = tuple(results)       # aligns with `changed_columns`
+        # ───────────────────────────────
+
+        yield start, row_val
+```
+
+**Why this pattern matters**
+
+* **Atomic progress:** Each yielded row is immediately committed. If your job dies, rerunning the builder simply skips what’s already in `self_df`.
+* **Parallel‑friendly:** TableVault can run other builders while yours is streaming.
 
 ---
 
 ## Examples
+
+### Example 1
 
 **An `IndexBuilder` that converts a `list` to a `DataFrame`**
 
@@ -160,6 +219,7 @@ arguments:
 
 ---
 
+### Example 2
 
 **A `ColumnBuilder` that saves an `fruit_image` file for each `fruit` key**
 
@@ -202,6 +262,8 @@ arguments:
     ```
 
 ---
+
+### Example 3
 
 **An `IndexBuilder` that yields a batch of `GritLM` embedding to a new row**
 

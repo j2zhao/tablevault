@@ -482,9 +482,7 @@ def execute_instance_cmd(
 @click.option("--origin-id", default="")
 @click.option("--origin-table", default="")
 @click.option("--external-edit", is_flag=True)
-@click.option(
-    "--copy", is_flag=True, help="Copy from latest materialised instance"
-)
+@click.option("--copy", is_flag=True, help="Copy from latest materialised instance")
 @click.option("--builder", "builders", multiple=True, help="Add builder names (repeat)")
 @click.pass_context
 def create_instance_cmd(

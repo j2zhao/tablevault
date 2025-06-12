@@ -1,4 +1,4 @@
-# Builders and Execution
+# Builders, Code Functions, Artifacts, TableReferences
 
 Builders are YAML files that serve as blueprints for creating or modifying a table instance's DataFrame. They outline the steps for an instance's execution within TableVault. Unless the instance is written externally, it has a dedicated set of builders that can be created and modified while the instance is in a temporary state. This temporary state acts as a sandbox, allowing you to define and test your builders without affecting the final, materialized version of the table. These builders are then used to materialize the instance by applying the defined transformations.
 
@@ -100,9 +100,8 @@ The primary purpose of artifacts is to enrich your dataset and centralize all re
 
 When you retrieve data from a table using the TableVault API, you can also obtain a direct, usable file path to any associated artifact. This allows you to seamlessly load and work with these files in your code—for example, displaying an image, parsing a log, or loading a model for inference—without needing to manage file storage locations yourself.
 
-***
-*Just as Artifacts link external files to your data, TableReferences provide a dynamic way to link data from other tables directly into your builder configurations.*
-***
+!!! note
+    Just as Artifacts link external files to your data, TableReferences provide a dynamic way to link data from other tables directly into your builder configurations.
 
 ---
 

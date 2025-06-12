@@ -14,7 +14,7 @@ If an operation encounters an unexpected error, it is **safely reverted**. The s
 === "1. Initial Code"
 
     ```python
-        tablevault.execute_instance(table_name = 'openai_responses')
+    tablevault.execute_instance(table_name = 'openai_responses')
     ```
 
 === "2. Example Error"
@@ -30,9 +30,9 @@ If an operation encounters an unexpected error, it is **safely reverted**. The s
 === "3. Rerun Code"
 
     ```python
-        # re-execute the command
-        tablevault.execute_instance(table_name = 'openai_responses')
-        # restarts from beginning
+    # re-execute the command
+    tablevault.execute_instance(table_name = 'openai_responses')
+    # restarts from beginning
 
     ```
 
@@ -49,10 +49,10 @@ Note that the operation restarts from its last checkpoint, and its input argumen
 === "1. Initial Code"
 
     ```python
-        # generate process_id
-        process_id = tablevault.generate_process_id()
-        # execute process
-        tablevault.execute_instance(table_name = 'openai_responses', process_id = process_id)
+    # generate process_id
+    process_id = tablevault.generate_process_id()
+    # execute process
+    tablevault.execute_instance(table_name = 'openai_responses', process_id = process_id)
     ```
 
 === "2. Example Error"
@@ -68,9 +68,9 @@ Note that the operation restarts from its last checkpoint, and its input argumen
 === "3. Rerun Code"
 
     ```python
-        # re-execute the command with the SAME process_id
-        tablevault.execute_instance(table_name = 'openai_responses', process_id = process_id)
-        # restarts from checkpoint
+    # re-execute the command with the SAME process_id
+    tablevault.execute_instance(table_name = 'openai_responses', process_id = process_id)
+    # restarts from checkpoint
     ```
 
 ### Restart Process
@@ -80,7 +80,7 @@ You can restart the *exact same* operation by re-running the function call with 
 #### Example Code
 
 ```python
-    tablevault = TableVault(db_dir = 'stories_tv', restart = True)
+tablevault = TableVault(db_dir = 'stories_tv', restart = True)
 ```
 
 ### Stop Process
@@ -89,8 +89,8 @@ To explicitly stop and revert an active process, you can call the `stop_process`
 #### Example Code
 
 ```python
-    # materialize only applies to `execute_instance()` operations
-    tablevault.stop_process(process_id = process_id, materialize = True)
+# materialize only applies to `execute_instance()` operations
+tablevault.stop_process(process_id = process_id, materialize = True)
 ```
 
 
@@ -105,7 +105,7 @@ There are certain *keywords* that cannot be used for `table_name`:
 === "1. Initial Code"
 
     ```python
-        tablevault.make_table(table_name = 'artifacts')
+    tablevault.make_table(table_name = 'artifacts')
     ```
 
 === "2. Example Error"
@@ -117,7 +117,7 @@ There are certain *keywords* that cannot be used for `table_name`:
 === "3. Rerun Code"
 
     ```python
-        tablevault.make_table(table_name = 'short_stories_store')
+    tablevault.make_table(table_name = 'short_stories_store')
 
     ```
 

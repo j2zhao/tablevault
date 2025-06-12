@@ -730,8 +730,12 @@ def _get_file_tree(
     builder_files: bool,
     metadata_files: bool,
     artifact_files: bool,
+    db_dir: str,
 ) -> Tree:
-    file_names = list(os.listdir(path))
+    try:
+        file_names = list(os.listdir(path))
+    except Exception:
+        return
     file_names = sort_with_key(file_names)
     for name in file_names:
         full = os.path.join(path, name)
@@ -744,7 +748,6 @@ def _get_file_tree(
             constants.META_DESCRIPTION_FILE,
             constants.ARCHIVE_FOLDER,
             constants.DELETION_FOLDER,
-            constants.DTYPE_FILE,
             constants.TABLE_FILE,
         ]:
             continue
@@ -766,7 +769,13 @@ def _get_file_tree(
         elif name == constants.METADATA_FOLDER:
             branch = tree.add(f"[bold blue]{name}/")
             _get_file_tree(
-                full, branch, code_files, builder_files, metadata_files, artifact_files
+                full,
+                branch,
+                code_files,
+                builder_files,
+                metadata_files,
+                artifact_files,
+                db_dir,
             )
         elif name == constants.META_DESCRIPTION_FILE:
             tree.add(f"[cyan]{name}")
@@ -780,8 +789,25 @@ def _get_file_tree(
         elif os.path.isdir(full):
             branch = tree.add(f"[bold magenta]{name}/")
             _get_file_tree(
-                full, branch, code_files, builder_files, metadata_files, artifact_files
+                full,
+                branch,
+                code_files,
+                builder_files,
+                metadata_files,
+                artifact_files,
+                db_dir,
             )
+        elif name == constants.DTYPE_FILE:
+            try:
+                filewriter = CopyOnWriteFile(db_dir)
+                with filewriter.open(full, "r") as f:
+                    dtypes = json.load(f)
+                for column, type_ in dtypes.items():
+                    branch = tree.add(f"[bright_magenta]{column}({type_})")
+                if metadata_files:
+                    branch = tree.add(f"[green]{name}/")
+            except Exception:
+                pass
         else:
             tree.add(f"[green]{name}")
     return tree
@@ -803,5 +829,5 @@ def get_file_tree(
         full = os.path.join(full, instance_id)
     tree = Tree(f"[bold magenta]{full}/")
     return _get_file_tree(
-        full, tree, code_files, builder_files, metadata_files, artifact_files
+        full, tree, code_files, builder_files, metadata_files, artifact_files, db_dir
     )

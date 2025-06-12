@@ -38,7 +38,7 @@ nav:
   - Core Concepts: 
     - Repository Structure: core_concepts/structure.md
     - Operations: core_concepts/operations.md
-    - Builders and Execution: core_concepts/execution.md
+    - Builders, Code Functions, Artifacts, TableReferences: core_concepts/execution.md
   - Basic Workflow: workflows/workflow.md
   - Handling Execution Errors: workflows/errors.md
   - Workflow with Artifacts: workflows/workflow_artifacts.md
@@ -48,7 +48,7 @@ nav:
   - API:
     - TableVault Python Interface: api/core_api.md
     - TableVault Command Line Interface : api/core_cli_api.md
-    - Builders YAML Format: api/builders.md
+    - Builders and Custom Python Functions: api/builders.md
     - TableReference Strings: api/table_references.md
     - Default Code Functions: api/code_functions.md
   - Comparisons: auxillary/comparisons.md

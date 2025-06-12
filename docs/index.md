@@ -8,10 +8,12 @@ You can install the tool with:
 
 ``` unixconfig
 
-pip install [INSERT NAME]
+!pip install "git+https://github.com/j2zhao/tablevault.git"
 
 ```
 
 This library has been tested for `Python>=3.11`.
+
+**Note:** Will be uploaded to the Python Package Index officially in July 2025.
 
 ---

@@ -1,22 +1,22 @@
-# Package
+# Welcome to TableVault
 
-t.b.d.
+TableVault is a tool to manage data artifacts in **complex and dynamic data workflows**. It enables the **reusability of data** by ensuring that the complete context of data transformations is captured, and that data states are atomic and transactional (transformations clearly succeed or fail). Its designed to work well with various Python data science libraries and tools (Jupyter notebooks, Colab, Pandas, Numpy, transformers, and etc).
 
-# Setup
+TableVault is particularly suited to deal with workflows that deal with multiple dataframes, external artifacts (images, videos, documents, and etc), and **large language model executions**. Check out the [Examples]() section for more detailed applications.
 
-- download from github
-- pip install .
-- Add open_ai key to examples/open_ai_key (to test)
+Check out the full docs at: [Website]()
 
-# Example
+You can install the tool with:
 
-**LOOK HERE**: See examples/run_basic_script.ipynb and examples/run_basic_object.ipynb for a walkthrough of basic functionalities.
+``` unixconfig
 
-## COLAB TODOS
-- Add OPENAI example
-- MAKE THIS WORK SIGNIFICANTLY BETTER WITH COLAB
+!pip install "git+https://github.com/j2zhao/tablevault.git"
 
-## FOR CLEANUP
-- Add paper bibtext
-- add pip install
+```
 
+This library has been tested for `Python>=3.11`.
+
+
+**Note:** Will be uploaded to the Python Package Index officially in July 2025.
+
+---

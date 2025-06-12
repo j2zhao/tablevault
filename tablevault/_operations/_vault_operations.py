@@ -21,8 +21,8 @@ from typing import Optional, Any
 #         for process_id in active_processes:
 #             if active_processes[process_id].force_takedown:
 #                 print(active_processes)
-#                 stop_process(author, process_id, db_dir, 
-#                              force=False, 
+#                 stop_process(author, process_id, db_dir,
+#                              force=False,
 #                              materialize=False,
 #                              )
 #         result = func(*args, **kwargs)
