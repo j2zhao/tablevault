@@ -603,7 +603,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/api_call_example/" class="md-nav__link">
+      <a href="https://colab.research.google.com/drive/1vHg5Vb8r1Zax2pKLOX6phPEuIDVhFctC" class="md-nav__link">
         
   
   
@@ -626,7 +626,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../examples/local_embeddings_example/" class="md-nav__link">
+      <a href="https://colab.research.google.com/drive/1X4tFpPSfMnQ_Ch0nSNUTmiEcT0Eo40Uj" class="md-nav__link">
         
   
   
@@ -1037,6 +1037,7 @@
 
 <h1 id="builders-python-functions-tablereference-strings-and-artifacts">Builders, Python Functions, <code>TableReference</code> Strings, and Artifacts</h1>
 <p>For simple examples of how to use builders to generate an instance, check out <a href="../../workflows/workflow/">Basic Workflow</a> and <a href="../../workflows/workflow_artifacts/">Worflow with Artifacts</a>.</p>
+<hr />
 <h2 id="creating-instances-from-builders">Creating Instances From Builders</h2>
 <p>TableVault instances are typically constructed and modified through a series of orchestrated steps. At the heart of this process are builders files, which are configuration files that define the scope of data transformations, and Python files, which define the data transformation itself. This construction uses <code>TableReference</code> strings to link fetch data from previous instances, and can optionally generate TableVault artifacts to store arbitrary files. </p>
 <p>Execution of instances typically are initialized with the <code>execute_instance()</code> function. Alternatively, to bypass the process, you can also externally generate your dataframe and artifacts, and add them into your TableVault repository using the <code>write_instance()</code> function. This is not typically recommended since execution and data lineage information is lost. </p>
