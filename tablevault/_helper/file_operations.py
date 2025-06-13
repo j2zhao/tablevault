@@ -739,6 +739,8 @@ def _get_file_tree(
     file_names = sort_with_key(file_names)
     for name in file_names:
         full = os.path.join(path, name)
+        if name.startswith("tmp") and "." not in name:
+            continue
         if name == constants.TABLEVAULT_IDENTIFIER or name.endswith(".lock"):
             continue
         elif not metadata_files and name in [
