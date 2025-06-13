@@ -1,8 +1,8 @@
 # Builders, Python Functions, `TableReference` Strings, and Artifacts
 
-
-
 For simple examples of how to use builders to generate an instance, check out [Basic Workflow](../workflows/workflow.md) and [Worflow with Artifacts](../workflows/workflow_artifacts.md).
+
+---
 
 ## Creating Instances From Builders
 

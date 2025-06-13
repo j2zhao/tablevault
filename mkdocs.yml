@@ -44,8 +44,8 @@ nav:
     - Workflow with Artifacts: workflows/workflow_artifacts.md
     - Handling Execution Errors: workflows/errors.md
   - Colab Notebook Examples:
-    - OpenAI API Call: examples/api_call_example.md
-    - Local LLM Execution: examples/local_embeddings_example.md
+    - OpenAI API Call: https://colab.research.google.com/drive/1vHg5Vb8r1Zax2pKLOX6phPEuIDVhFctC
+    - Local LLM Execution: https://colab.research.google.com/drive/1X4tFpPSfMnQ_Ch0nSNUTmiEcT0Eo40Uj
   - API and Guides:
     - TableVault Python Interface API: api/core_api.md
     - TableVault Command Line Interface API: api/core_cli_api.md
