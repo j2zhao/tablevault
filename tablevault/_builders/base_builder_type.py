@@ -93,7 +93,11 @@ class TVBuilder(BaseModel):
             if attr != constants.BUILDER_DEPENDENCIES:
                 val_ = get_table_result(val, cache, index)
                 val_ = apply_artifact_path(val_, instance_id, table_name, db_dir)
-                setattr(self, attr, val_)
+                try:
+                    setattr(self, attr, val_)
+                except Exception as e:
+                    print(e)
+                    continue
 
 
 def _get_builder_dependencies(values) -> Optional[list[TableValue]]:

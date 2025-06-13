@@ -58,6 +58,7 @@ valid_nullable_dtypes = [
     "Period[A]",  # etc.
     "interval",
     "object",
+    "str",
     constants.ARTIFACT_DTYPE,
 ]
 
