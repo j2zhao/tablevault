@@ -10,25 +10,7 @@ from tablevault._helper.database_lock import DatabaseLock
 from tablevault._operations._takedown_operations import TAKEDOWN_MAP
 import pandas as pd
 from typing import Optional, Any
-
-
-# def stop_processes(func):
-#     def wrapper(*args, **kwargs):
-#         db_dir = kwargs["db_dir"]
-#         author = kwargs["author"]
-#         db_metadata = MetadataStore(db_dir)
-#         active_processes = db_metadata.get_active_processes()
-#         for process_id in active_processes:
-#             if active_processes[process_id].force_takedown:
-#                 print(active_processes)
-#                 stop_process(author, process_id, db_dir,
-#                              force=False,
-#                              materialize=False,
-#                              )
-#         result = func(*args, **kwargs)
-#         return result
-
-#     return wrapper
+from tablevault._helper.copy_write_file import CopyOnWriteFile
 
 
 def setup_database(db_dir: str, description: str, replace: bool = False) -> None:
@@ -36,10 +18,14 @@ def setup_database(db_dir: str, description: str, replace: bool = False) -> None
 
 
 def _create_code_module(
-    module_name: str, copy_dir: str, text: str, db_metadata: MetadataStore
+    module_name: str,
+    copy_dir: str,
+    text: str,
+    db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
 ):
     file_operations.create_copy_code_file(
-        db_metadata.db_dir, module_name, copy_dir, text
+        db_metadata.db_dir, module_name, copy_dir, text, file_writer=file_writer
     )
 
 
@@ -50,6 +36,7 @@ def create_code_module(
     text: str,
     process_id: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
 ):
     setup_kwargs = {"module_name": module_name, "copy_dir": copy_dir, "text": text}
     return tablevault_operation(
@@ -58,15 +45,26 @@ def create_code_module(
         _create_code_module,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs,
     )
 
 
-def _delete_code_module(module_name: str, db_metadata: MetadataStore):
-    file_operations.delete_code_file(module_name, db_metadata.db_dir)
+def _delete_code_module(
+    module_name: str,
+    db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
+):
+    file_operations.delete_code_file(module_name, db_metadata.db_dir, file_writer)
 
 
-def delete_code_module(author: str, module_name: str, process_id: str, db_dir: str):
+def delete_code_module(
+    author: str,
+    module_name: str,
+    process_id: str,
+    db_dir: str,
+    file_writer: CopyOnWriteFile,
+):
     setup_kwargs = {"module_name": module_name}
     return tablevault_operation(
         author,
@@ -74,6 +72,7 @@ def delete_code_module(author: str, module_name: str, process_id: str, db_dir: s
         _delete_code_module,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs,
     )
 
@@ -85,6 +84,7 @@ def _create_builder_file(
     copy_dir: str,
     text: str,
     db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
 ):
     file_operations.create_copy_builder_file(
         instance_id,
@@ -93,6 +93,7 @@ def _create_builder_file(
         builder_name,
         copy_dir,
         text,
+        file_writer,
     )
 
 
@@ -105,6 +106,7 @@ def create_builder_file(
     text: str,
     process_id: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
 ):
     setup_kwargs = {
         "builder_name": builder_name,
@@ -119,15 +121,20 @@ def create_builder_file(
         _create_builder_file,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs,
     )
 
 
 def _delete_builder_file(
-    builder_name: str, instance_id: str, table_name: str, db_metadata: MetadataStore
+    builder_name: str,
+    instance_id: str,
+    table_name: str,
+    db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
 ):
     file_operations.delete_builder_file(
-        builder_name, instance_id, table_name, db_metadata.db_dir
+        builder_name, instance_id, table_name, db_metadata.db_dir, file_writer
     )
 
 
@@ -138,6 +145,7 @@ def delete_builder_file(
     version: str,
     process_id: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
 ):
     setup_kwargs = {
         "builder_name": builder_name,
@@ -150,16 +158,29 @@ def delete_builder_file(
         _delete_builder_file,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs,
     )
 
 
-def _rename_table(new_table_name: str, table_name: str, db_metadata: MetadataStore):
-    file_operations.rename_table(new_table_name, table_name, db_metadata.db_dir)
+def _rename_table(
+    new_table_name: str,
+    table_name: str,
+    db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
+):
+    file_operations.rename_table(
+        new_table_name, table_name, db_metadata.db_dir, file_writer
+    )
 
 
 def rename_table(
-    author: str, new_table_name: str, table_name: str, process_id: str, db_dir: str
+    author: str,
+    new_table_name: str,
+    table_name: str,
+    process_id: str,
+    db_dir: str,
+    file_writer: CopyOnWriteFile,
 ):
     setup_kwargs = {
         "new_table_name": new_table_name,
@@ -171,15 +192,28 @@ def rename_table(
         _rename_table,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs,
     )
 
 
-def _delete_table(table_name: str, db_metadata: MetadataStore):
-    file_operations.delete_table_folder(table_name, db_metadata.db_dir)
+def _delete_table(
+    table_name: str,
+    db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
+):
+    file_operations.delete_table_folder(
+        table_name, db_metadata.db_dir, file_writer=file_writer
+    )
 
 
-def delete_table(author: str, table_name: str, process_id: str, db_dir: str):
+def delete_table(
+    author: str,
+    table_name: str,
+    process_id: str,
+    db_dir: str,
+    file_writer: CopyOnWriteFile,
+):
     setup_kwargs = {"table_name": table_name}
     return tablevault_operation(
         author,
@@ -187,16 +221,29 @@ def delete_table(author: str, table_name: str, process_id: str, db_dir: str):
         _delete_table,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs,
     )
 
 
-def _delete_instance(instance_id: str, table_name: str, db_metadata: MetadataStore):
-    file_operations.delete_table_folder(table_name, db_metadata.db_dir, instance_id)
+def _delete_instance(
+    instance_id: str,
+    table_name: str,
+    db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
+):
+    file_operations.delete_table_folder(
+        table_name, db_metadata.db_dir, instance_id, file_writer=file_writer
+    )
 
 
 def delete_instance(
-    author: str, table_name: str, instance_id: str, process_id: str, db_dir: str
+    author: str,
+    table_name: str,
+    instance_id: str,
+    process_id: str,
+    db_dir: str,
+    file_writer: CopyOnWriteFile,
 ):
     setup_kwargs = {"table_name": table_name, "instance_id": instance_id}
     return tablevault_operation(
@@ -205,6 +252,7 @@ def delete_instance(
         _delete_instance,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs,
     )
 
@@ -219,9 +267,12 @@ def _materialize_instance(
     success: bool,
     dependencies: list[tuple[str, str]],
     db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
 ):
     table_data = file_operations.get_description("", table_name, db_metadata.db_dir)
-    table_operations.update_dtypes(dtypes, instance_id, table_name, db_metadata.db_dir)
+    table_operations.update_dtypes(
+        dtypes, instance_id, table_name, db_metadata.db_dir, file_writer=file_writer
+    )
 
     if success:
         table_operations.check_table(
@@ -231,16 +282,17 @@ def _materialize_instance(
             origin_table,
             db_metadata.db_dir,
             not table_data[constants.TABLE_ALLOW_MARTIFACT],
+            file_writer=file_writer,
         )
 
     if not table_data[constants.TABLE_ALLOW_MARTIFACT] and success:
         file_operations.move_artifacts_to_table(
-            db_metadata.db_dir, table_name, instance_id
+            db_metadata.db_dir, table_name, instance_id, file_writer
         )
         table_data[constants.DESCRIPTION_ARTIFACT] = perm_instance_id
 
     file_operations.rename_table_instance(
-        perm_instance_id, instance_id, table_name, db_metadata.db_dir
+        perm_instance_id, instance_id, table_name, db_metadata.db_dir, file_writer
     )
 
     instance_descript = file_operations.get_description(
@@ -250,9 +302,11 @@ def _materialize_instance(
     instance_descript[constants.DESCRIPTION_DEPENDENCIES] = dependencies
 
     file_operations.write_description(
-        instance_descript, perm_instance_id, table_name, db_metadata.db_dir
+        instance_descript, perm_instance_id, table_name, db_metadata.db_dir, file_writer
     )
-    file_operations.write_description(table_data, "", table_name, db_metadata.db_dir)
+    file_operations.write_description(
+        table_data, "", table_name, db_metadata.db_dir, file_writer
+    )
 
 
 def materialize_instance(
@@ -267,9 +321,10 @@ def materialize_instance(
     changed_columns: list[str],
     all_columns: list[str],
     dependencies: list[tuple[str, str]],
+    success: bool,
     process_id: str,
     db_dir: str,
-    success: bool = True,
+    file_writer: CopyOnWriteFile,
 ):
     setup_kwargs = {
         "table_name": table_name,
@@ -290,6 +345,7 @@ def materialize_instance(
         _materialize_instance,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs,
     )
 
@@ -300,6 +356,7 @@ def _stop_process(
     step_ids: list[str],
     process_id: str,
     db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
 ):
     logs = db_metadata.get_active_processes()
     complete_steps = db_metadata.get_active_processes()[process_id].complete_steps
@@ -314,7 +371,7 @@ def _stop_process(
                 db_metadata.update_process_execution_status(process_id_, False, error)
             db_locks = DatabaseLock(process_id_, db_metadata.db_dir)
             TAKEDOWN_MAP[logs[process_id_].operation](
-                process_id_, db_metadata, db_locks
+                process_id_, db_metadata, db_locks, file_writer
             )
             db_metadata.write_process(process_id_)
         db_metadata.update_process_step(process_id, step_ids[0])
@@ -332,8 +389,10 @@ def _stop_process(
                 materialize_args["changed_columns"],
                 materialize_args["all_columns"],
                 materialize_args["dependencies"],
+                False,
                 step_ids[1],
                 db_metadata.db_dir,
+                file_writer,
             )
         finally:
             db_metadata.update_process_step(process_id, step_ids[1])
@@ -346,6 +405,7 @@ def stop_process(
     materialize: bool,
     process_id: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
 ):
     setup_kwargs = {
         "to_stop_process_id": to_stop_process_id,
@@ -358,6 +418,7 @@ def stop_process(
         _stop_process,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs,
     )
 
@@ -367,12 +428,19 @@ def _write_instance_inner(
     instance_id: str,
     table_name: str,
     db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
 ):
     if table_df is None:
         raise tv_errors.TVProcessError("Cannot Restart Write Table")
-    table_operations.write_table(table_df, instance_id, table_name, db_metadata.db_dir)
+    table_operations.write_table(
+        table_df, instance_id, table_name, db_metadata.db_dir, file_writer=file_writer
+    )
     table_operations.write_dtype(
-        table_df.dtypes, instance_id, table_name, db_metadata.db_dir
+        table_df.dtypes,
+        instance_id,
+        table_name,
+        db_metadata.db_dir,
+        file_writer=file_writer,
     )
 
 
@@ -383,6 +451,7 @@ def write_instance_inner(
     table_name: str,
     process_id: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
 ):
     setup_kwargs = {
         "table_df": table_df,
@@ -395,6 +464,7 @@ def write_instance_inner(
         _write_instance_inner,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs,
     )
 
@@ -411,6 +481,7 @@ def _write_instance(
     step_ids: list[str],
     process_id: str,
     db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
 ):
     complete_steps = db_metadata.get_active_processes()[process_id].complete_steps
     if step_ids[0] not in complete_steps:
@@ -421,6 +492,7 @@ def _write_instance(
             table_name,
             step_ids[0],
             db_metadata.db_dir,
+            file_writer,
         )
         db_metadata.update_process_step(process_id, step_ids[0])
 
@@ -437,8 +509,10 @@ def _write_instance(
             all_columns,
             changed_columns,
             dependencies,
+            True,
             step_ids[1],
             db_metadata.db_dir,
+            file_writer,
         )
         db_metadata.update_process_step(process_id, step_ids[1])
 
@@ -452,6 +526,7 @@ def write_instance(
     dependencies: list[tuple[str, str]],
     process_id: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
 ):
     setup_kwargs = {
         "table_df": table_df,
@@ -466,6 +541,7 @@ def write_instance(
         _write_instance,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs,
     )
 
@@ -482,6 +558,7 @@ def _execute_instance_inner(
     origin_table: str,
     process_id: str,
     db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
 ):
     _table_execution.execute_instance(
         table_name,
@@ -495,8 +572,8 @@ def _execute_instance_inner(
         origin_table,
         process_id,
         db_metadata,
+        file_writer=file_writer,
     )
-    #
 
 
 def execute_instance_inner(
@@ -512,6 +589,7 @@ def execute_instance_inner(
     origin_table: str,
     process_id: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
 ):
     setup_kwargs = {
         "instance_id": instance_id,
@@ -530,6 +608,7 @@ def execute_instance_inner(
         _execute_instance_inner,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs,
     )
 
@@ -548,6 +627,7 @@ def _execute_instance(
     step_ids: list[str],
     process_id: str,
     db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
 ):
     complete_steps = db_metadata.get_active_processes()[process_id].complete_steps
     if step_ids[0] not in complete_steps:
@@ -564,6 +644,7 @@ def _execute_instance(
             origin_table,
             step_ids[0],
             db_metadata.db_dir,
+            file_writer,
         )
         db_metadata.update_process_step(process_id, step_ids[0])
     if step_ids[1] not in complete_steps:
@@ -584,8 +665,10 @@ def _execute_instance(
             changed_columns,
             all_columns,
             dependencies,
+            True,
             step_ids[1],
             db_metadata.db_dir,
+            file_writer,
         )
         db_metadata.update_process_step(process_id, step_ids[1])
 
@@ -598,6 +681,7 @@ def execute_instance(
     process_id: str,
     db_dir: str,
     background: bool,
+    file_writer: CopyOnWriteFile,
 ):
     setup_kwargs = {
         "table_name": table_name,
@@ -610,6 +694,7 @@ def execute_instance(
         _execute_instance,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs,
         background,
     )
@@ -624,6 +709,7 @@ def _create_instance(
     builder_names: list[str],
     description: str,
     db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
 ):
     file_operations.setup_table_instance_folder(
         instance_id,
@@ -632,6 +718,7 @@ def _create_instance(
         external_edit,
         origin_id,
         origin_table,
+        file_writer,
     )
     for bn in builder_names:
         if bn.endswith(".yaml"):
@@ -640,6 +727,7 @@ def _create_instance(
                 table_name,
                 db_metadata.db_dir,
                 copy_dir=bn,
+                file_writer=file_writer,
             )
         else:
             file_operations.create_copy_builder_file(
@@ -647,6 +735,7 @@ def _create_instance(
                 table_name,
                 db_metadata.db_dir,
                 builder_name=bn,
+                file_writer=file_writer,
             )
     descript_yaml = {
         constants.DESCRIPTION_SUMMARY: description,
@@ -654,7 +743,7 @@ def _create_instance(
         constants.DESCRIPTION_EDIT: external_edit,
     }
     file_operations.write_description(
-        descript_yaml, instance_id, table_name, db_metadata.db_dir
+        descript_yaml, instance_id, table_name, db_metadata.db_dir, file_writer
     )
 
 
@@ -670,6 +759,7 @@ def create_instance(
     builder_names: list[str],
     process_id: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
 ):
     setup_kwargs = {
         "table_name": table_name,
@@ -687,6 +777,7 @@ def create_instance(
         _create_instance,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs,
     )
 
@@ -697,9 +788,12 @@ def _create_table(
     allow_multiple_artifacts: bool,
     has_side_effects: bool,
     db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
 ):
     make_artifacts = not allow_multiple_artifacts
-    file_operations.setup_table_folder(table_name, db_metadata.db_dir, make_artifacts)
+    file_operations.setup_table_folder(
+        table_name, db_metadata.db_dir, make_artifacts, file_writer
+    )
     descript_yaml = {
         constants.DESCRIPTION_SUMMARY: description,
         constants.TABLE_ALLOW_MARTIFACT: allow_multiple_artifacts,
@@ -710,6 +804,7 @@ def _create_table(
         instance_id="",
         table_name=table_name,
         db_dir=db_metadata.db_dir,
+        file_writer=file_writer,
     )
 
 
@@ -721,6 +816,7 @@ def create_table(
     description: str,
     process_id: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
 ):
     setup_kwargs = {
         "table_name": table_name,
@@ -734,6 +830,7 @@ def create_table(
         _create_table,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs,
     )
 
@@ -741,6 +838,7 @@ def create_table(
 def _restart_database(
     process_id: str,
     db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
 ):
     active_processes = db_metadata.get_active_processes()
     for prid in active_processes:
@@ -752,6 +850,7 @@ def _restart_database(
                 materialize=False,
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
+                file_writer=file_writer,
             )
 
     active_processes = db_metadata.get_active_processes()
@@ -770,6 +869,7 @@ def _restart_database(
                 process_id=prid,
                 text="",
                 db_dir=db_metadata.db_dir,
+                file_writer=file_writer,
             )
         if active_processes[prid].operation == constants.DELTE_CODE_MODULE_OP:
             delete_code_module(
@@ -777,6 +877,7 @@ def _restart_database(
                 module_name="",
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
+                file_writer=file_writer,
             )
         if active_processes[prid].operation == constants.CREATE_BUILDER_FILE_OP:
             create_builder_file(
@@ -788,6 +889,7 @@ def _restart_database(
                 text="",
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
+                file_writer=file_writer,
             )
         if active_processes[prid].operation == constants.DELETE_BUILDER_FILE_OP:
             delete_builder_file(
@@ -797,6 +899,7 @@ def _restart_database(
                 version="",
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
+                file_writer=file_writer,
             )
         elif active_processes[prid].operation == constants.RENAME_TABLE_OP:
             rename_table(
@@ -805,6 +908,7 @@ def _restart_database(
                 table_name="",
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
+                file_writer=file_writer,
             )
         elif active_processes[prid].operation == constants.DELETE_TABLE_OP:
             delete_table(
@@ -812,6 +916,7 @@ def _restart_database(
                 table_name="",
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
+                file_writer=file_writer,
             )
         elif active_processes[prid].operation == constants.DELETE_INSTANCE_OP:
             delete_instance(
@@ -820,6 +925,7 @@ def _restart_database(
                 instance_id="",
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
+                file_writer=file_writer,
             )
         elif active_processes[prid].operation == constants.WRITE_INSTANCE_OP:
             write_instance(
@@ -831,6 +937,7 @@ def _restart_database(
                 dependencies=[],
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
+                file_writer=file_writer,
             )
         elif active_processes[prid].operation == constants.EXECUTE_OP:
             execute_instance(
@@ -841,6 +948,7 @@ def _restart_database(
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
                 background=False,
+                file_writer=file_writer,
             )
         elif active_processes[prid].operation == constants.CREATE_INSTANCE_OP:
             create_instance(
@@ -855,6 +963,7 @@ def _restart_database(
                 builder_names=[],
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
+                file_writer=file_writer,
             )
         elif active_processes[prid].operation == constants.CREATE_TABLE_OP:
             create_table(
@@ -865,6 +974,7 @@ def _restart_database(
                 description="",
                 process_id=prid,
                 db_dir=db_metadata.db_dir,
+                file_writer=file_writer,
             )
 
         db_metadata.update_process_step(process_id, step=prid)
@@ -874,6 +984,7 @@ def restart_database(
     author: str,
     process_id: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
 ):
     return tablevault_operation(
         author,
@@ -881,5 +992,6 @@ def restart_database(
         _restart_database,
         db_dir,
         process_id,
+        file_writer,
         setup_kwargs={},
     )

@@ -8,6 +8,7 @@ from tablevault._table_reference.table_reference import (
 )
 from tablevault._defintions import constants, tv_errors, types
 from tablevault._dataframe_helper.artifact import apply_artifact_path
+from tablevault._helper.copy_write_file import CopyOnWriteFile
 
 
 class TVBuilder(BaseModel):
@@ -75,6 +76,7 @@ class TVBuilder(BaseModel):
         table_name: str,
         db_dir: str,
         process_id: str,
+        file_writer: CopyOnWriteFile,
     ) -> Optional[bool]:
         raise tv_errors.TVImplementationError("Not Implemented")
 

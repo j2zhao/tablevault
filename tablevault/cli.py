@@ -119,7 +119,9 @@ def get_process_completion_cmd(ctx: click.Context, process_id: str):
 
 @cli.command("get-artifact-folder")
 @click.argument("table_name")
-@click.option("--instance-id", default="", help="Specific instance ID (latest if omitted).")
+@click.option(
+    "--instance-id", default="", help="Specific instance ID (latest if omitted)."
+)
 @click.option("--version", default=constants.BASE_TABLE_VERSION, help="Table version.")
 @click.option(
     "--temp/--materialised",
@@ -174,10 +176,22 @@ def get_descriptions_cmd(ctx: click.Context, table_name: str, instance_id: str):
 @cli.command("get-file-tree")
 @click.option("--table-name", default="", help="Retrieve partial table tree.")
 @click.option("--instance-id", default="", help="Retrieve partial instance tree.")
-@click.option("--code-files/--no-code-files", default=True, help="Include code modules.")
-@click.option("--builder-files/--no-builder-files", default=True, help="Include builder files.")
-@click.option("--metadata-files/--no-metadata-files", default=False, help="Include metadata files.")
-@click.option("--artifact-files/--no-artifact-files", default=False, help="Include artifact files.")
+@click.option(
+    "--code-files/--no-code-files", default=True, help="Include code modules."
+)
+@click.option(
+    "--builder-files/--no-builder-files", default=True, help="Include builder files."
+)
+@click.option(
+    "--metadata-files/--no-metadata-files",
+    default=False,
+    help="Include metadata files.",
+)
+@click.option(
+    "--artifact-files/--no-artifact-files",
+    default=False,
+    help="Include artifact files.",
+)
 @click.pass_context
 def get_file_tree_cmd(
     ctx: click.Context,
@@ -212,7 +226,9 @@ def get_code_modules_list_cmd(ctx: click.Context):
 
 @cli.command("get-builders-list")
 @click.argument("table_name")
-@click.option("--instance-id", default="", help="Specific instance (latest if omitted).")
+@click.option(
+    "--instance-id", default="", help="Specific instance (latest if omitted)."
+)
 @click.option("--version", default=constants.BASE_TABLE_VERSION, help="Table version.")
 @click.option(
     "--temp/--materialised",
@@ -242,8 +258,12 @@ def get_builders_list_cmd(
 
 @cli.command("get-builder-str")
 @click.argument("table_name")
-@click.option("--builder-name", default="", help="Builder file name (inferred if omitted).")
-@click.option("--instance-id", default="", help="Specific instance (latest if omitted).")
+@click.option(
+    "--builder-name", default="", help="Builder file name (inferred if omitted)."
+)
+@click.option(
+    "--instance-id", default="", help="Specific instance (latest if omitted)."
+)
 @click.option("--version", default=constants.BASE_TABLE_VERSION, help="Table version.")
 @click.option(
     "--temp/--materialised",
@@ -294,7 +314,9 @@ def get_code_module_str_cmd(ctx: click.Context, module_name: str):
     type=click.Path(path_type=Path),
     help="Destination file path for the output CSV.",
 )
-@click.option("--instance-id", default="", help="Specific instance ID (latest if omitted).")
+@click.option(
+    "--instance-id", default="", help="Specific instance ID (latest if omitted)."
+)
 @click.option("--version", default=constants.BASE_TABLE_VERSION, help="Table version.")
 @click.option("--rows", type=int, default=None, help="Max number of rows to return.")
 @click.option("--include-inactive", is_flag=True, help="Consider non-active instances.")
@@ -352,7 +374,10 @@ def stop_process_cmd(
 @cli.command("create-code-module")
 @click.option("--module-name", default="", help="Name for the new module.")
 @click.option(
-    "--copy-dir", default="", type=click.Path(), help="File or directory to copy into the vault."
+    "--copy-dir",
+    default="",
+    type=click.Path(),
+    help="File or directory to copy into the vault.",
 )
 @click.pass_context
 def create_code_module_cmd(ctx: click.Context, module_name: str, copy_dir: str):
@@ -375,9 +400,16 @@ def delete_code_module_cmd(ctx: click.Context, module_name: str):
 
 @cli.command("create-builder-file")
 @click.argument("table_name")
-@click.option("--builder-name", default="", help="Name of builder (inferred if omitted).")
+@click.option(
+    "--builder-name", default="", help="Name of builder (inferred if omitted)."
+)
 @click.option("--version", default=constants.BASE_TABLE_VERSION, help="Table version.")
-@click.option("--copy-dir", default="", type=click.Path(), help="Directory containing builder file(s).")
+@click.option(
+    "--copy-dir",
+    default="",
+    type=click.Path(),
+    help="Directory containing builder file(s).",
+)
 @click.pass_context
 def create_builder_file_cmd(
     ctx: click.Context,
@@ -467,7 +499,9 @@ def write_instance_cmd(
 @click.argument("table_name")
 @click.option("--version", default=constants.BASE_TABLE_VERSION, help="Table version.")
 @click.option("--force", is_flag=True, help="Force a full rebuild of the instance.")
-@click.option("--background", is_flag=True, help="Run the materialisation in the background.")
+@click.option(
+    "--background", is_flag=True, help="Run the materialisation in the background."
+)
 @click.pass_context
 def execute_instance_cmd(
     ctx: click.Context, table_name: str, version: str, force: bool, background: bool
@@ -489,9 +523,20 @@ def execute_instance_cmd(
 @click.option("--version", default="", help="Table version.")
 @click.option("--origin-id", default="", help="Copy state from this instance ID.")
 @click.option("--origin-table", default="", help="Table for origin_id (if different).")
-@click.option("--external-edit", is_flag=True, help="Mark instance for external edit (no builders).")
-@click.option("--copy", is_flag=True, help="Use latest materialised instance as origin.")
-@click.option("--builder", "builders", multiple=True, help="Builder name to generate (can be used multiple times).")
+@click.option(
+    "--external-edit",
+    is_flag=True,
+    help="Mark instance for external edit (no builders).",
+)
+@click.option(
+    "--copy", is_flag=True, help="Use latest materialised instance as origin."
+)
+@click.option(
+    "--builder",
+    "builders",
+    multiple=True,
+    help="Builder name to generate (can be used multiple times).",
+)
 @click.pass_context
 def create_instance_cmd(
     ctx: click.Context,
@@ -520,8 +565,16 @@ def create_instance_cmd(
 
 @cli.command("create-table")
 @click.argument("table_name")
-@click.option("--multiple-artifacts", is_flag=True, help="Allow each instance to have its own artifact folder.")
-@click.option("--side-effects", is_flag=True, help="Mark builders as having side effects (e.g. API calls).")
+@click.option(
+    "--multiple-artifacts",
+    is_flag=True,
+    help="Allow each instance to have its own artifact folder.",
+)
+@click.option(
+    "--side-effects",
+    is_flag=True,
+    help="Mark builders as having side effects (e.g. API calls).",
+)
 @click.pass_context
 def create_table_cmd(
     ctx: click.Context, table_name: str, multiple_artifacts: bool, side_effects: bool

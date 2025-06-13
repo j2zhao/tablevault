@@ -4,6 +4,7 @@ from tablevault._helper.metadata_store import MetadataStore
 from tablevault._operations._takedown_operations import TAKEDOWN_MAP
 from tablevault._operations._setup_operations import SETUP_MAP
 from tablevault._operations._table_execution import execute_instance
+from tablevault._helper.copy_write_file import CopyOnWriteFile
 import inspect
 from tablevault._helper.utils import gen_tv_id
 from typing import Callable, Any
@@ -22,13 +23,17 @@ def filter_by_function_args(kwargs: dict, func: Callable) -> dict[str, Any]:
 
 
 def background_instance_execution(
-    process_id: str, db_dir: str, force_takedown: bool
+    process_id: str,
+    db_dir: str,
+    force_takedown: bool,
 ) -> None:
+    file_writer = CopyOnWriteFile(db_dir)  # TODO
     db_metadata = MetadataStore(db_dir)
     db_locks = DatabaseLock(process_id, db_dir)
     funct_kwargs = db_metadata.get_active_processes()[process_id].data
     funct_kwargs["db_metadata"] = db_metadata
     funct_kwargs["process_id"] = process_id
+    funct_kwargs["file_writer"] = file_writer
     funct_kwargs = filter_by_function_args(funct_kwargs, execute_instance)
     try:
         execute_instance(**funct_kwargs)
@@ -37,7 +42,9 @@ def background_instance_execution(
         db_metadata.update_process_execution_status(
             process_id, success=False, error=error
         )
-        TAKEDOWN_MAP[constants.EXECUTE_OP](process_id, db_metadata, db_locks)
+        TAKEDOWN_MAP[constants.EXECUTE_OP](
+            process_id, db_metadata, db_locks, file_writer
+        )
         db_metadata.write_process(process_id)
         raise
     except Exception as e:
@@ -46,11 +53,13 @@ def background_instance_execution(
             db_metadata.update_process_execution_status(
                 process_id, success=False, error=error
             )
-            TAKEDOWN_MAP[constants.EXECUTE_OP](process_id, db_metadata, db_locks)
+            TAKEDOWN_MAP[constants.EXECUTE_OP](
+                process_id, db_metadata, db_locks, file_writer
+            )
             db_metadata.write_process(process_id)
         raise
     db_metadata.update_process_execution_status(process_id, success=True)
-    TAKEDOWN_MAP[constants.EXECUTE_OP](process_id, db_metadata, db_locks)
+    TAKEDOWN_MAP[constants.EXECUTE_OP](process_id, db_metadata, db_locks, file_writer)
     db_metadata.write_process(process_id)
 
 
@@ -60,6 +69,7 @@ def tablevault_operation(
     op_funct: Callable,
     db_dir: str,
     process_id: str,
+    file_writer: CopyOnWriteFile,
     setup_kwargs: dict[str, Any],
     background: bool = False,
 ) -> str:
@@ -85,17 +95,17 @@ def tablevault_operation(
             background = log.data["background"]
         db_metadata.update_process_pid(process_id, os.getpid())
         if log.execution_success is False:
-            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
+            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks, file_writer)
             db_metadata.write_process(process_id)
             if log.error is not None:
                 err = getattr(tv_errors, log.error[0], RuntimeError)
                 raise err(log.error[1])
         elif log.execution_success is True:
-            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
+            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks, file_writer)
             db_metadata.write_process(process_id)
             return process_id
         elif log.start_success is False:
-            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
+            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks, file_writer)
             db_metadata.write_process(process_id)
             if log.error is not None:
                 err = getattr(tv_errors, log.error[0], RuntimeError)
@@ -116,6 +126,7 @@ def tablevault_operation(
             setup_kwargs["db_locks"] = db_locks
             setup_kwargs["db_metadata"] = db_metadata
             setup_kwargs["process_id"] = process_id
+            setup_kwargs["file_writer"] = file_writer
             setup_kwargs = filter_by_function_args(setup_kwargs, SETUP_MAP[op_name])
             funct_kwargs = SETUP_MAP[op_name](**setup_kwargs)
         except tv_errors.TableVaultError as e:
@@ -123,7 +134,7 @@ def tablevault_operation(
             db_metadata.update_process_start_status(
                 process_id, success=False, error=error
             )
-            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
+            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks, file_writer)
             db_metadata.write_process(process_id)
             raise
         except Exception as e:
@@ -132,7 +143,7 @@ def tablevault_operation(
                 db_metadata.update_process_start_status(
                     process_id, success=False, error=error
                 )
-                TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
+                TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks, file_writer)
                 db_metadata.write_process(process_id)
             raise
 
@@ -149,6 +160,7 @@ def tablevault_operation(
     else:
         funct_kwargs["db_metadata"] = db_metadata
         funct_kwargs["process_id"] = process_id
+        funct_kwargs["file_writer"] = file_writer
         funct_kwargs = filter_by_function_args(funct_kwargs, op_funct)
         logger.info(f"Start execution {op_name}: {process_id}")
         try:
@@ -158,7 +170,7 @@ def tablevault_operation(
             db_metadata.update_process_execution_status(
                 process_id, success=False, error=error
             )
-            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
+            TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks, file_writer)
             db_metadata.write_process(process_id)
             raise
         except Exception as e:
@@ -167,10 +179,10 @@ def tablevault_operation(
                 db_metadata.update_process_execution_status(
                     process_id, success=False, error=error
                 )
-                TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
+                TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks, file_writer)
                 db_metadata.write_process(process_id)
             raise
         db_metadata.update_process_execution_status(process_id, success=True)
-        TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks)
+        TAKEDOWN_MAP[op_name](process_id, db_metadata, db_locks, file_writer)
         db_metadata.write_process(process_id)
     return process_id

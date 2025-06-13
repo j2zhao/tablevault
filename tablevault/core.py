@@ -11,6 +11,7 @@ from tablevault._helper.user_lock import set_tv_lock, set_writable
 import logging
 import shutil
 from rich.tree import Tree
+from tablevault._helper.copy_write_file import CopyOnWriteFile
 
 
 class TableVault:
@@ -52,7 +53,6 @@ class TableVault:
     ) -> None:
         self.author = author
         self.db_dir = db_dir
-
         if create:
             _vault_operations.setup_database(
                 db_dir=db_dir, description=description, replace=True
@@ -68,10 +68,10 @@ class TableVault:
                     )
             else:
                 raise tv_errors.TVArgumentError(f"No folder found at {db_dir}")
-
+        self.file_writer = CopyOnWriteFile(db_dir)
         if restart:
             _vault_operations.restart_database(
-                author=self.author, db_dir=self.db_dir, process_id=""
+                author=self.author, db_dir=self.db_dir, process_id="", file_writer=self.file_writer
             )
         if verbose:
             logging.basicConfig(level=logging.INFO)
@@ -102,8 +102,8 @@ class TableVault:
         is_temp: bool = True,
     ) -> str:
         """Retrieves the path to the artifact folder for a given table instance.
-        If `allow_multiple_artifacts` is **False** for the table, 
-        the instance is not temporary, *and* the instance was successfully executed, 
+        If `allow_multiple_artifacts` is **False** for the table,
+        the instance is not temporary, *and* the instance was successfully executed,
         the folder for the whole table is returned.
 
         Parameters
@@ -422,6 +422,7 @@ class TableVault:
             materialize=materialize,
             db_dir=self.db_dir,
             process_id=process_id,
+            file_writer=self.file_writer,
         )
 
     def create_code_module(
@@ -460,6 +461,7 @@ class TableVault:
             text=text,
             process_id=process_id,
             db_dir=self.db_dir,
+            file_writer=self.file_writer,
         )
 
     def delete_code_module(self, module_name: str, process_id: str = "") -> str:
@@ -482,6 +484,7 @@ class TableVault:
             module_name=module_name,
             process_id=process_id,
             db_dir=self.db_dir,
+            file_writer=self.file_writer,
         )
 
     def create_builder_file(
@@ -528,6 +531,7 @@ class TableVault:
             text=text,
             process_id=process_id,
             db_dir=self.db_dir,
+            file_writer=self.file_writer,
         )
 
     def delete_builder_file(
@@ -562,6 +566,7 @@ class TableVault:
             version=version,
             process_id=process_id,
             db_dir=self.db_dir,
+            file_writer=self.file_writer,
         )
 
     def rename_table(
@@ -589,6 +594,7 @@ class TableVault:
             table_name=table_name,
             process_id=process_id,
             db_dir=self.db_dir,
+            file_writer=self.file_writer,
         )
 
     def delete_table(self, table_name: str, process_id: str = "") -> str:
@@ -613,6 +619,7 @@ class TableVault:
             table_name=table_name,
             process_id=process_id,
             db_dir=self.db_dir,
+            file_writer=self.file_writer,
         )
 
     def delete_instance(
@@ -642,6 +649,7 @@ class TableVault:
             instance_id=instance_id,
             process_id=process_id,
             db_dir=self.db_dir,
+            file_writer=self.file_writer,
         )
 
     def write_instance(
@@ -693,6 +701,7 @@ class TableVault:
             dtypes=dtypes,
             process_id=process_id,
             db_dir=self.db_dir,
+            file_writer=self.file_writer,
         )
 
     def execute_instance(
@@ -733,6 +742,7 @@ class TableVault:
             process_id=process_id,
             db_dir=self.db_dir,
             background=background,
+            file_writer=self.file_writer,
         )
 
     def create_instance(
@@ -792,6 +802,7 @@ class TableVault:
             builder_names=builders,
             process_id=process_id,
             db_dir=self.db_dir,
+            file_writer=self.file_writer,
         )
 
     def create_table(
@@ -834,6 +845,7 @@ class TableVault:
             process_id=process_id,
             db_dir=self.db_dir,
             description=description,
+            file_writer=self.file_writer,
         )
 
     def generate_process_id(self) -> str:

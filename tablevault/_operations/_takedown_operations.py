@@ -2,10 +2,14 @@ from tablevault._defintions import constants, tv_errors
 from tablevault._helper.database_lock import DatabaseLock
 from tablevault._helper.metadata_store import MetadataStore
 from tablevault._helper import file_operations
+from tablevault._helper.copy_write_file import CopyOnWriteFile
 
 
 def takedown_copy_files(
-    process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ):
     logs = db_metadata.get_active_processes()
     if process_id in logs:
@@ -14,13 +18,16 @@ def takedown_copy_files(
         db_locks.release_all_locks()
         return
     if log.execution_success is False:
-        file_operations.copy_temp_to_db(process_id, db_metadata.db_dir)
-    file_operations.delete_from_temp(process_id, db_metadata.db_dir)
+        file_operations.copy_temp_to_db(process_id, db_metadata.db_dir, file_writer)
+    file_operations.delete_from_temp(process_id, db_metadata.db_dir, file_writer)
     db_locks.release_all_locks()
 
 
 def takedown_rename_table(
-    process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ):
     logs = db_metadata.get_active_processes()
     if process_id in logs:
@@ -31,7 +38,10 @@ def takedown_rename_table(
     if log.execution_success is False:
         try:
             file_operations.rename_table(
-                log.data["table_name"], log.data["new_table_name"], db_metadata.db_dir
+                log.data["table_name"],
+                log.data["new_table_name"],
+                db_metadata.db_dir,
+                file_writer,
             )
         except tv_errors.TVFileError:
             pass
@@ -44,50 +54,61 @@ def takedown_rename_table(
 
 
 def takedown_delete_table(
-    process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ):
     logs = db_metadata.get_active_processes()
     if process_id in logs:
         log = db_metadata.get_active_processes()[process_id]
     else:
-        file_operations.delete_from_temp(process_id, db_metadata.db_dir)
+        file_operations.delete_from_temp(process_id, db_metadata.db_dir, file_writer)
         db_locks.release_all_locks()
         return
     if log.execution_success is False:
-        file_operations.copy_temp_to_db(process_id, db_metadata.db_dir)
+        file_operations.copy_temp_to_db(process_id, db_metadata.db_dir, file_writer)
     if log.execution_success is True:
         db_locks.delete_lock_path(log.data["table_name"])
-    file_operations.delete_from_temp(process_id, db_metadata.db_dir)
+    file_operations.delete_from_temp(process_id, db_metadata.db_dir, file_writer)
     db_locks.release_all_locks()
 
 
 def takedown_delete_instance(
-    process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ):
     logs = db_metadata.get_active_processes()
     if process_id in logs:
         log = db_metadata.get_active_processes()[process_id]
     else:
-        file_operations.delete_from_temp(process_id, db_metadata.db_dir)
+        file_operations.delete_from_temp(process_id, db_metadata.db_dir, file_writer)
         db_locks.release_all_locks()
         return
     if log.execution_success is False:
-        file_operations.copy_temp_to_db(process_id, db_metadata.db_dir)
+        file_operations.copy_temp_to_db(process_id, db_metadata.db_dir, file_writer)
         db_locks.make_lock_path(log.data["table_name"], log.data["instance_id"])
     if log.execution_success is True:
-        db_locks.delete_lock_path(log.data["table_name"], log.data["instance_id"])
-    file_operations.delete_from_temp(process_id, db_metadata.db_dir)
+        db_locks.delete_lock_path(
+            log.data["table_name"], log.data["instance_id"]
+        )
+    file_operations.delete_from_temp(process_id, db_metadata.db_dir, file_writer)
     db_locks.release_all_locks()
 
 
 def takedown_materialize_instance(
-    process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ):
     logs = db_metadata.get_active_processes()
     if process_id in logs:
         log = db_metadata.get_active_processes()[process_id]
     else:
-        file_operations.delete_from_temp(process_id, db_metadata.db_dir)
+        file_operations.delete_from_temp(process_id, db_metadata.db_dir, file_writer)
         db_locks.release_all_locks()
         return
     if log.execution_success is False:
@@ -97,10 +118,11 @@ def takedown_materialize_instance(
                 log.data["perm_instance_id"],
                 log.data["table_name"],
                 db_metadata.db_dir,
+                file_writer,
             )
         except tv_errors.TVFileError:
             pass
-        file_operations.copy_temp_to_db(process_id, db_metadata.db_dir)
+        file_operations.copy_temp_to_db(process_id, db_metadata.db_dir, file_writer)
     if log.start_success is False or log.execution_success is False:
         if (
             "table_name" in log.data and "perm_instance_id" in log.data
@@ -111,12 +133,15 @@ def takedown_materialize_instance(
             )
     if log.execution_success is True:
         db_locks.delete_lock_path(log.data["table_name"], log.data["instance_id"])
-    file_operations.delete_from_temp(process_id, db_metadata.db_dir)
+    file_operations.delete_from_temp(process_id, db_metadata.db_dir, file_writer)
     db_locks.release_all_locks()
 
 
 def takedown_write_instance_inner(
-    process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ):
     logs = db_metadata.get_active_processes()
     if process_id in logs:
@@ -125,13 +150,16 @@ def takedown_write_instance_inner(
         db_locks.release_all_locks()
         return
     if log.execution_success is False:
-        file_operations.copy_temp_to_db(process_id, db_metadata.db_dir)
-    file_operations.delete_from_temp(process_id, db_metadata.db_dir)
+        file_operations.copy_temp_to_db(process_id, db_metadata.db_dir, file_writer)
+    file_operations.delete_from_temp(process_id, db_metadata.db_dir, file_writer)
     db_locks.release_all_locks()
 
 
 def takedown_write_instance(
-    process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ):
     logs = db_metadata.get_active_processes()
     if process_id in logs:
@@ -150,13 +178,19 @@ def takedown_write_instance(
 
 
 def takedown_execute_instance_inner(
-    process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ):
     db_locks.release_all_locks()
 
 
 def takedown_execute_instance(
-    process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ):
     logs = db_metadata.get_active_processes()
     if process_id in logs:
@@ -175,7 +209,10 @@ def takedown_execute_instance(
 
 
 def takedown_create_instance(
-    process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ):
     logs = db_metadata.get_active_processes()
     if process_id in logs:
@@ -185,7 +222,10 @@ def takedown_create_instance(
         return
     if log.execution_success is False:
         file_operations.delete_table_folder_2(
-            log.data["table_name"], db_metadata.db_dir, log.data["instance_id"]
+            log.data["table_name"],
+            db_metadata.db_dir,
+            log.data["instance_id"],
+            file_writer,
         )
     if log.start_success is False or log.execution_success is False:
         if "table_name" in log.data and "instance_id" in log.data:
@@ -194,7 +234,10 @@ def takedown_create_instance(
 
 
 def takedown_create_table(
-    process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ):
     logs = db_metadata.get_active_processes()
     if process_id in logs:
@@ -205,7 +248,7 @@ def takedown_create_table(
     if log.execution_success is False:
         try:
             file_operations.delete_table_folder_2(
-                log.data["table_name"], db_metadata.db_dir
+                log.data["table_name"], db_metadata.db_dir, file_writer, file_writer
             )
         except FileNotFoundError:
             pass
@@ -216,13 +259,19 @@ def takedown_create_table(
 
 
 def takedown_restart_database(
-    process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ):
     db_locks.release_all_locks()
 
 
 def takedown_stop_process(
-    process_id: str, db_metadata: MetadataStore, db_locks: DatabaseLock
+    process_id: str,
+    db_metadata: MetadataStore,
+    db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ):
     pass
 

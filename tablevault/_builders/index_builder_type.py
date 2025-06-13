@@ -9,6 +9,7 @@ from tablevault._table_reference.table_reference import TableReference
 from tablevault._helper.file_operations import load_code_function, move_code_to_instance
 from concurrent.futures import ThreadPoolExecutor
 from tablevault._defintions import tv_errors
+from tablevault._helper.copy_write_file import CopyOnWriteFile
 
 
 class IndexBuilder(TVBuilder):
@@ -27,6 +28,7 @@ class IndexBuilder(TVBuilder):
         table_name: str,
         db_dir: str,
         process_id: str,
+        file_writer: CopyOnWriteFile,
     ) -> bool:
         diff_flag = None
         try:
@@ -42,13 +44,16 @@ class IndexBuilder(TVBuilder):
                     self.code_module, self.python_function
                 )
             else:
-                move_code_to_instance(self.code_module, instance_id, table_name, db_dir)
+                move_code_to_instance(
+                    self.code_module, instance_id, table_name, db_dir, file_writer
+                )
                 funct, _ = load_code_function(
                     self.python_function,
                     self.code_module,
                     db_dir,
                     instance_id,
                     table_name,
+                    file_writer,
                 )
             if (
                 self.return_type == constants.BUILDER_RTYPE_ROWWISE
@@ -59,7 +64,14 @@ class IndexBuilder(TVBuilder):
                     _ = list(
                         executor.map(
                             lambda i: _execute_code_from_builder(
-                                i, self, funct, cache, instance_id, table_name, db_dir
+                                i,
+                                self,
+                                funct,
+                                cache,
+                                instance_id,
+                                table_name,
+                                db_dir,
+                                file_writer,
                             ),
                             indices,
                         )
@@ -70,11 +82,11 @@ class IndexBuilder(TVBuilder):
             ):
                 for i in list(range(len(cache[constants.TABLE_SELF]))):
                     _execute_code_from_builder(
-                        i, self, funct, cache, instance_id, table_name, db_dir
+                        i, self, funct, cache, instance_id, table_name, db_dir, file_writer=file_writer
                     )
             else:
                 diff_flag = _execute_code_from_builder(
-                    None, self, funct, cache, instance_id, table_name, db_dir
+                    None, self, funct, cache, instance_id, table_name, db_dir, file_writer=file_writer
                 )
         finally:
             output = table_operations.make_df(
@@ -83,6 +95,7 @@ class IndexBuilder(TVBuilder):
                 db_dir,
                 primary_key=self.primary_key,
                 keep_old=self.keep_old,
+                file_writer=file_writer,
             )
             if diff_flag is None:
                 diff_flag = output
@@ -97,6 +110,7 @@ def _execute_code_from_builder(
     instance_id: str,
     table_name: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
 ) -> None:
     builder = builder.model_copy(deep=True)
     builder.transform_table_string(
@@ -114,6 +128,7 @@ def _execute_code_from_builder(
                 instance_id,
                 table_name,
                 db_dir,
+                file_writer,
             )
         else:
             for i, result in enumerate(results):
@@ -124,6 +139,7 @@ def _execute_code_from_builder(
                     instance_id,
                     table_name,
                     db_dir,
+                    file_writer,
                 )
     elif builder.return_type == constants.BUILDER_RTYPE_GENERATOR:
         for index, results_ in results:
@@ -135,6 +151,7 @@ def _execute_code_from_builder(
                     instance_id,
                     table_name,
                     db_dir,
+                    file_writer,
                 )
             else:
                 for i, result in enumerate(results_):
@@ -145,6 +162,7 @@ def _execute_code_from_builder(
                         instance_id,
                         table_name,
                         db_dir,
+                        file_writer,
                     )
     elif builder.return_type == constants.BUILDER_RTYPE_DATAFRAME:
         diff_flag = table_operations.save_new_columns(
@@ -155,6 +173,7 @@ def _execute_code_from_builder(
             db_dir,
             primary_key=builder.primary_key,
             keep_old=builder.keep_old,
+            file_writer=file_writer,
         )
         return diff_flag
     else:

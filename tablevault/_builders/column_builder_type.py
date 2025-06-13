@@ -6,6 +6,7 @@ from tablevault._defintions import constants, tv_errors
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, Optional
 from tablevault._helper.file_operations import load_code_function, move_code_to_instance
+from tablevault._helper.copy_write_file import CopyOnWriteFile
 
 
 class ColumnBuilder(TVBuilder):
@@ -16,6 +17,7 @@ class ColumnBuilder(TVBuilder):
         table_name: str,
         db_dir: str,
         process_id: str,
+        file_writer: CopyOnWriteFile,
     ) -> None:
         try:
             self.transform_table_string(
@@ -26,13 +28,16 @@ class ColumnBuilder(TVBuilder):
                     self.code_module, self.python_function
                 )
             else:
-                move_code_to_instance(self.code_module, instance_id, table_name, db_dir)
+                move_code_to_instance(
+                    self.code_module, instance_id, table_name, db_dir, file_writer
+                )
                 funct, _ = load_code_function(
                     self.python_function,
                     self.code_module,
                     db_dir,
                     instance_id,
                     table_name,
+                    file_writer,
                 )
             if (
                 self.return_type == constants.BUILDER_RTYPE_ROWWISE
@@ -43,7 +48,14 @@ class ColumnBuilder(TVBuilder):
                     _ = list(
                         executor.map(
                             lambda i: _execute_code_from_builder(
-                                i, self, funct, cache, instance_id, table_name, db_dir
+                                i,
+                                self,
+                                funct,
+                                cache,
+                                instance_id,
+                                table_name,
+                                db_dir,
+                                file_writer,
                             ),
                             indices,
                         )
@@ -54,14 +66,16 @@ class ColumnBuilder(TVBuilder):
             ):
                 for i in range(len(cache[constants.TABLE_SELF])):
                     _execute_code_from_builder(
-                        i, self, funct, cache, instance_id, table_name, db_dir
+                        i, self, funct, cache, instance_id, table_name, db_dir, file_writer=file_writer
                     )
             else:
                 _execute_code_from_builder(
-                    None, self, funct, cache, instance_id, table_name, db_dir
+                    None, self, funct, cache, instance_id, table_name, db_dir, file_writer=file_writer
                 )
         finally:
-            table_operations.make_df(instance_id, table_name, db_dir)
+            table_operations.make_df(
+                instance_id, table_name, db_dir, file_writer=file_writer
+            )
 
 
 def _execute_code_from_builder(
@@ -72,6 +86,7 @@ def _execute_code_from_builder(
     instance_id: str,
     table_name: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
 ) -> None:
     if index is not None:
         is_filled = table_operations.check_entry(
@@ -99,6 +114,7 @@ def _execute_code_from_builder(
                 instance_id,
                 table_name,
                 db_dir,
+                file_writer,
             )
             cache[constants.TABLE_SELF].at[index, builder.changed_columns[0]] = results
         else:
@@ -110,6 +126,7 @@ def _execute_code_from_builder(
                     instance_id,
                     table_name,
                     db_dir,
+                    file_writer,
                 )
                 cache[constants.TABLE_SELF].at[index, builder.changed_columns[i]] = (
                     result
@@ -124,6 +141,7 @@ def _execute_code_from_builder(
                     instance_id,
                     table_name,
                     db_dir,
+                    file_writer,
                 )
                 cache[constants.TABLE_SELF].at[index, builder.changed_columns[0]] = (
                     results_
@@ -137,13 +155,19 @@ def _execute_code_from_builder(
                         instance_id,
                         table_name,
                         db_dir,
+                        file_writer,
                     )
                     cache[constants.TABLE_SELF].at[
                         index, builder.changed_columns[i]
                     ] = result
     elif builder.return_type == constants.BUILDER_RTYPE_DATAFRAME:
         table_operations.save_new_columns(
-            results, builder.changed_columns, instance_id, table_name, db_dir
+            results,
+            builder.changed_columns,
+            instance_id,
+            table_name,
+            db_dir,
+            file_writer=file_writer,
         )
     else:
         raise tv_errors.TVBuilderError("return_type not recognized")

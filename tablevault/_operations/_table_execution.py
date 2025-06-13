@@ -4,6 +4,7 @@ from tablevault._defintions.types import ExternalDeps, InternalDeps
 from tablevault._dataframe_helper import table_operations
 from tablevault._defintions import constants
 from tablevault._builders.load_builder import load_builder
+from tablevault._helper.copy_write_file import CopyOnWriteFile
 
 
 def execute_instance(
@@ -18,6 +19,7 @@ def execute_instance(
     origin_table: str,
     process_id: str,
     db_metadata: MetadataStore,
+    file_writer: CopyOnWriteFile,
 ):
     log = db_metadata.get_active_processes()[process_id]
     prev_completed_steps = log.complete_steps
@@ -39,6 +41,7 @@ def execute_instance(
             table_name,
             db_metadata,
             cache,
+            file_writer=file_writer,
         )
     for builder_name in top_builder_names:
         builders[builder_name].transform_table_string(
@@ -48,12 +51,17 @@ def execute_instance(
         column_dtypes.update(builders[builder_name].dtypes)
 
     column_dtypes = table_operations.write_dtype(
-        column_dtypes, instance_id, table_name, db_metadata.db_dir
+        column_dtypes, instance_id, table_name, db_metadata.db_dir, file_writer=file_writer
     )
     if constants.EX_CLEAR_TABLE not in prev_completed_steps:
         if origin_id != "":
             file_operations.copy_table(
-                instance_id, table_name, origin_id, origin_table, db_metadata.db_dir
+                instance_id,
+                table_name,
+                origin_id,
+                origin_table,
+                db_metadata.db_dir,
+                file_writer,
             )
 
         table_operations.update_table_columns(
@@ -63,6 +71,7 @@ def execute_instance(
             instance_id,
             table_name,
             db_metadata.db_dir,
+            file_writer=file_writer,
         )
         db_metadata.update_process_step(process_id, constants.EX_CLEAR_TABLE)
     for i, builder_name in enumerate(top_builder_names):
@@ -75,10 +84,16 @@ def execute_instance(
             table_name,
             db_metadata,
             cache,
+            file_writer=file_writer,
         )
         if i == 0:
             update_rows = builders[builder_name].execute(
-                cache, instance_id, table_name, db_metadata.db_dir, process_id
+                cache,
+                instance_id,
+                table_name,
+                db_metadata.db_dir,
+                process_id,
+                file_writer,
             )
             db_metadata.update_process_data(process_id, {"update_rows": update_rows})
         else:
@@ -86,6 +101,11 @@ def execute_instance(
                 changed_columns
             ):
                 builders[builder_name].execute(
-                    cache, instance_id, table_name, db_metadata.db_dir, process_id
+                    cache,
+                    instance_id,
+                    table_name,
+                    db_metadata.db_dir,
+                    process_id,
+                    file_writer,
                 )
         db_metadata.update_process_step(process_id, builder_name)

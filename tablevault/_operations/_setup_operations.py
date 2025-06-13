@@ -9,6 +9,7 @@ from tablevault._builders.base_builder_type import TVBuilder
 from tablevault._builders.load_builder import load_builder
 from tablevault._helper.utils import topological_sort
 from tablevault._dataframe_helper import table_operations
+from tablevault._helper.copy_write_file import CopyOnWriteFile
 import pandas as pd
 from typing import Optional
 
@@ -20,6 +21,7 @@ def setup_create_code_module(
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
     if module_name == "" and copy_dir == "":
         raise tv_errors.TVArgumentError(
@@ -28,7 +30,9 @@ def setup_create_code_module(
     funct_kwargs = {"module_name": module_name, "copy_dir": copy_dir, "text": text}
     db_locks.acquire_exclusive_lock(constants.CODE_FOLDER)
     file_operations.copy_folder_to_temp(
-        process_id, db_metadata.db_dir, subfolder=constants.CODE_FOLDER
+        process_id,
+        db_metadata.db_dir,
+        subfolder=constants.CODE_FOLDER,
     )
     db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
@@ -39,11 +43,14 @@ def setup_delete_code_module(
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
     funct_kwargs = {"module_name": module_name}
     db_locks.acquire_exclusive_lock(constants.CODE_FOLDER)
     file_operations.copy_folder_to_temp(
-        process_id, db_metadata.db_dir, subfolder=constants.CODE_FOLDER
+        process_id,
+        db_metadata.db_dir,
+        subfolder=constants.CODE_FOLDER,
     )
     db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
@@ -58,6 +65,7 @@ def setup_create_builder_file(
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
     instance_id = constants.TEMP_INSTANCE + version
     if builder_name == "" and copy_dir == "":
@@ -95,6 +103,7 @@ def setup_delete_builder_file(
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
     instance_id = constants.TEMP_INSTANCE + version
     existance = db_metadata.get_table_instances(table_name, "", include_temp=True)
@@ -126,6 +135,7 @@ def setup_rename_table(
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
@@ -154,6 +164,7 @@ def setup_delete_table(
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
@@ -175,6 +186,7 @@ def setup_delete_instance(
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
@@ -207,6 +219,7 @@ def setup_materialize_instance(
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
@@ -241,7 +254,7 @@ def setup_materialize_instance(
         if constants.DESCRIPTION_ORIGIN in instance_data:
             origin_id, origin_table = instance_data[constants.DESCRIPTION_ORIGIN]
         table_df = table_operations.get_table(
-            instance_id, table_name, db_metadata.db_dir
+            instance_id, table_name, db_metadata.db_dir, file_writer=file_writer
         )
 
         all_columns = list(table_df.columns)
@@ -252,7 +265,11 @@ def setup_materialize_instance(
             try:
                 temp_lock = db_locks.acquire_shared_lock(origin_table, origin_id)
                 changed_columns = table_operations.check_changed_columns(
-                    table_df, origin_id, origin_table, db_metadata.db_dir
+                    table_df,
+                    origin_id,
+                    origin_table,
+                    db_metadata.db_dir,
+                    file_writer,
                 )
                 db_locks.release_lock(temp_lock)
             except tv_errors.TVLockError:
@@ -290,6 +307,7 @@ def setup_stop_process(
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ):
     if "_" in to_stop_process_id:
         raise tv_errors.TVArgumentError("Only can stop top-level processes.")
@@ -411,6 +429,7 @@ def setup_write_instance_inner(
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     funct_kwargs = {
@@ -432,6 +451,7 @@ def setup_write_instance(
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
     step_ids = []
     if table_name in constants.ILLEGAL_TABLE_NAMES:
@@ -477,7 +497,7 @@ def setup_write_instance(
         try:
             temp_lock = db_locks.acquire_shared_lock(origin_table, origin_id)
             changed_columns = table_operations.check_changed_columns(
-                table_df, origin_id, origin_table, db_metadata.db_dir
+                table_df, origin_id, origin_table, db_metadata.db_dir, file_writer
             )
             db_locks.release_lock(temp_lock)
         except tv_errors.TVLockError:
@@ -526,6 +546,7 @@ def setup_execute_instance_inner(
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
     funct_kwargs = {
         "table_name": table_name,
@@ -559,6 +580,7 @@ def setup_execute_instance(
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
@@ -635,6 +657,7 @@ def setup_execute_instance(
         table_name,
         origin_id,
         origin_table,
+        file_writer=file_writer
     )
     if custom_code:
         db_locks.acquire_shared_lock(constants.CODE_FOLDER)
@@ -679,6 +702,7 @@ def setup_create_instance(
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
     if table_name in constants.ILLEGAL_TABLE_NAMES:
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
@@ -732,6 +756,7 @@ def setup_create_table(
     process_id: str,
     db_metadata: MetadataStore,
     db_locks: DatabaseLock,
+    file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
     if table_name in constants.ILLEGAL_TABLE_NAMES or table_name.startswith("."):
         raise tv_errors.TVArgumentError("Forbidden Table Name: {table_name}")
@@ -908,6 +933,7 @@ def parse_builders(
     table_name: str,
     origin_id: str,
     origin_table: str,
+    file_writer: CopyOnWriteFile,
 ) -> tuple[
     list[str], list[str], list[str], types.InternalDeps, types.ExternalDeps, bool
 ]:

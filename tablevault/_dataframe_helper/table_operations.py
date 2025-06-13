@@ -31,6 +31,7 @@ nullable_map = {
     "float32": "Float64",
     "float64": "Float64",
     "float": "Float64",
+    "str": "string",
 }
 
 valid_nullable_dtypes = [
@@ -64,11 +65,14 @@ valid_nullable_dtypes = [
 
 
 def update_dtypes(
-    dtypes: dict[str, str], instance_id: str, table_name: str, db_dir: str
+    dtypes: dict[str, str],
+    instance_id: str,
+    table_name: str,
+    db_dir: str,
+    file_writer: CopyOnWriteFile,
 ) -> dict[str, str]:
-    filewriter = CopyOnWriteFile(db_dir)
     type_path = os.path.join(db_dir, table_name, instance_id, constants.DTYPE_FILE)
-    with filewriter.open(type_path, "r") as f:
+    with file_writer.open(type_path, "r") as f:
         dtypes_ = json.load(f)
     for col_name, dtype in dtypes:
         if dtype in nullable_map:
@@ -78,13 +82,14 @@ def update_dtypes(
                 "Currently only support select nullable data types"
             )
         dtypes_[col_name] = dtype
-    with filewriter.open(type_path, "w") as f:
+    with file_writer.open(type_path, "w") as f:
         json.dump(dtypes_, f)
     return dtypes
 
 
-def write_dtype(dtypes, instance_id, table_name, db_dir) -> dict[str, str]:
-    filewriter = CopyOnWriteFile(db_dir)
+def write_dtype(
+    dtypes, instance_id, table_name, db_dir, file_writer: CopyOnWriteFile
+) -> dict[str, str]:
     table_dir = os.path.join(db_dir, table_name, instance_id)
     dtypes = {col: str(dtype) for col, dtype in dtypes.items()}
     for col_name, dtype in dtypes.items():
@@ -96,21 +101,24 @@ def write_dtype(dtypes, instance_id, table_name, db_dir) -> dict[str, str]:
             )
         dtypes[col_name] = dtype
     type_path = os.path.join(table_dir, constants.DTYPE_FILE)
-    with filewriter.open(type_path, "w") as f:
+    with file_writer.open(type_path, "w") as f:
         json.dump(dtypes, f)
     return dtypes
 
 
 def write_table(
-    df: pd.DataFrame, instance_id: str, table_name: str, db_dir: str
+    df: pd.DataFrame,
+    instance_id: str,
+    table_name: str,
+    db_dir: str,
+    file_writer: CopyOnWriteFile,
 ) -> None:
     if constants.TABLE_INDEX in df.columns:
         df.drop(columns=constants.TABLE_INDEX, inplace=True)
     table_dir = os.path.join(db_dir, table_name)
     table_dir = os.path.join(table_dir, instance_id)
     table_path = os.path.join(table_dir, constants.TABLE_FILE)
-    filewriter = CopyOnWriteFile(db_dir)
-    filewriter.write_csv(table_path, df)
+    file_writer.write_csv(table_path, df)
 
 
 def get_table(
@@ -121,8 +129,10 @@ def get_table(
     artifact_dir: bool = False,
     get_index: bool = True,
     try_make_df: bool = True,
+    file_writer: CopyOnWriteFile = None,
 ) -> pd.DataFrame:
-    file_writer = CopyOnWriteFile(db_dir=db_dir)
+    if file_writer is None:
+        file_writer = CopyOnWriteFile(db_dir=db_dir)
 
     table_dir = os.path.join(db_dir, table_name)
     table_dir = os.path.join(table_dir, instance_id)
@@ -137,7 +147,7 @@ def get_table(
         else:
             dtypes = json.loads(content)
     if try_make_df:
-        make_df(instance_id, table_name, db_dir)
+        make_df(instance_id, table_name, db_dir, file_writer=file_writer)
     try:
         df = file_writer.read_csv(table_path, nrows=rows, dtype=dtypes)
     except pd.errors.EmptyDataError:
@@ -162,16 +172,25 @@ def fetch_table_cache(
     table_name: str,
     db_metadata: MetadataStore,
     cache: Cache,
+    file_writer: CopyOnWriteFile,
 ) -> Cache:
     if len(internal_dependencies) > 0:
         cache[constants.TABLE_SELF] = get_table(
-            instance_id, table_name, db_metadata.db_dir, artifact_dir=True
+            instance_id,
+            table_name,
+            db_metadata.db_dir,
+            artifact_dir=True,
+            file_writer=file_writer,
         )
     for dep in external_dependencies:
         table, _, instance, _, version = dep
         if (table, version) not in cache and (table, instance) not in cache:
             cache[(table, version)] = get_table(
-                instance, table, db_metadata.db_dir, artifact_dir=True
+                instance,
+                table,
+                db_metadata.db_dir,
+                artifact_dir=True,
+                file_writer=file_writer,
             )
         elif (table, instance) in cache:
             cache[(table, version)] = cache[(table, instance)]
@@ -185,8 +204,9 @@ def update_table_columns(
     instance_id: str,
     table_name: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
 ) -> None:
-    df = get_table(instance_id, table_name, db_dir)
+    df = get_table(instance_id, table_name, db_dir, file_writer=file_writer)
     columns = list(dict.fromkeys(df.columns).keys()) + [
         col for col in all_columns if col not in df.columns
     ]
@@ -201,8 +221,8 @@ def update_table_columns(
             df[col] = df[col].astype(dtypes[col])
         else:
             df[col] = df[col].astype("string")
-    write_table(df, instance_id, table_name, db_dir)
-    write_dtype(df.dtypes, instance_id, table_name, db_dir)
+    write_table(df, instance_id, table_name, db_dir, file_writer)
+    write_dtype(df.dtypes, instance_id, table_name, db_dir, file_writer)
 
 
 def save_new_columns(
@@ -213,8 +233,18 @@ def save_new_columns(
     db_dir: str,
     primary_key: Optional[list[str]] = None,
     keep_old: bool = False,
+    file_writer: CopyOnWriteFile = None,
 ) -> bool:
-    df = get_table(instance_id, table_name, db_dir, get_index=False, try_make_df=False)
+    if file_writer is None:
+        file_writer = CopyOnWriteFile(db_dir)
+    df = get_table(
+        instance_id,
+        table_name,
+        db_dir,
+        get_index=False,
+        try_make_df=False,
+        file_writer=file_writer,
+    )
     new_df.columns = col_names
     for col in col_names:
         new_df[col] = new_df[col].astype(df[col].dtype)
@@ -256,7 +286,7 @@ def save_new_columns(
         df_combined = df_combined[df.columns]
         diff_flag = df.equals(df_combined)
         df = df_combined
-    write_table(df, instance_id, table_name, db_dir)
+    write_table(df, instance_id, table_name, db_dir, file_writer=file_writer)
     return not diff_flag
 
 
@@ -307,8 +337,11 @@ def check_table(
     origin_table: str,
     db_dir: str,
     table_artifact: bool,
+    file_writer: CopyOnWriteFile,
 ) -> None:
-    df = get_table(instance_id, table_name, db_dir, artifact_dir=False)
+    df = get_table(
+        instance_id, table_name, db_dir, artifact_dir=False, file_writer=file_writer
+    )
     cols = [col for col, dt in df.dtypes.items() if dt.name == constants.ARTIFACT_DTYPE]
     df_custom = df[cols]
     if df_custom.shape[1] == 0:
@@ -328,7 +361,6 @@ def check_table(
         artifact_dirs.append(
             os.path.join(db_dir, table_name, constants.ARTIFACT_FOLDER)
         )
-    filewriter = CopyOnWriteFile(db_dir)
     for _, row in df_custom.iterrows():
         for _, val in row.items():
             if not pd.isna(val) and val != "":
@@ -338,7 +370,7 @@ def check_table(
                     artifact_temp_path = os.path.join(dir, val)
                     if os.path.exists(artifact_temp_path):
                         if artifact_temp_path != artifact_path:
-                            filewriter.linkfile(artifact_temp_path, artifact_path)
+                            file_writer.linkfile(artifact_temp_path, artifact_path)
                         artifact_exists = True
                         artifact_paths.append(artifact_temp_path)
                         break
@@ -354,10 +386,16 @@ def check_table(
 
 
 def check_changed_columns(
-    y: pd.DataFrame, instance_id: str, table_name, db_dir
+    y: pd.DataFrame,
+    instance_id: str,
+    table_name,
+    db_dir,
+    file_writer,
 ) -> list[str]:
     try:
-        x = get_table(instance_id, table_name, db_dir, get_index=False)
+        x = get_table(
+            instance_id, table_name, db_dir, get_index=False, file_writer=file_writer
+        )
     except tv_errors.TVTableError:
         return list(y.columns)
 
@@ -377,12 +415,12 @@ def write_df_entry(
     instance_id: str,
     table_name: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
 ):
     file_name = gen_tv_id() + ".df.pkl"
     file_name = os.path.join(db_dir, table_name, instance_id, file_name)
     pkf = {"value": value, "index": index, "col_name": col_name}
-    filewriter = CopyOnWriteFile(db_dir)
-    with filewriter.open(file_name, "wb") as f:
+    with file_writer.open(file_name, "wb") as f:
         pickle.dump(pkf, f)
 
 
@@ -392,18 +430,20 @@ def make_df(
     db_dir: str,
     primary_key: Optional[list[str]] = None,
     keep_old: bool = False,
+    file_writer: CopyOnWriteFile = None,
 ) -> bool:
+    if file_writer is None:
+        file_writer = CopyOnWriteFile(db_dir)
     file_dir = os.path.join(db_dir, table_name, instance_id)
     pkl_files = [f for f in os.listdir(file_dir) if f.endswith(".df.pkl")]
     if not pkl_files:
         return False
-    filewriter = CopyOnWriteFile(db_dir)
 
     df = pd.DataFrame()
     records = []
     for file_name in pkl_files:
         file_path = os.path.join(file_dir, file_name)
-        with filewriter.open(file_path, "rb") as f:
+        with file_writer.open(file_path, "rb") as f:
             pkf = pickle.load(f)
             records.append(
                 {"index": pkf["index"], "col": pkf["col_name"], "val": pkf["value"]}
@@ -418,9 +458,10 @@ def make_df(
         db_dir=db_dir,
         primary_key=primary_key,
         keep_old=keep_old,
+        file_writer=file_writer,
     )
 
     for file_name in pkl_files:
         file_path = os.path.join(file_dir, file_name)
-        filewriter.remove(file_path)
+        file_writer.remove(file_path)
     return diff_flag

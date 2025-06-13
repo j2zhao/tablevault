@@ -1,6 +1,7 @@
 from tablevault.core import TableVault
 from rich import print as rprint
 
+
 def basic_function():
     tv = TableVault("example_tv", author="jinjin", create=True)
     ids = []
@@ -47,6 +48,7 @@ def basic_function():
     id = tv.execute_instance("llm_questions")
     ids.append(id)
     return ids
+
 
 if __name__ == "__main__":
     basic_function()

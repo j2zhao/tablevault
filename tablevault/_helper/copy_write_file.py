@@ -18,7 +18,7 @@ from tablevault._defintions import constants
 # ----------------------------------------------------------------------
 class CopyOnWriteFile:
     """
-    Hard‑link‑aware I/O helpers for a single repository directory.
+    Hardlink aware I/O helpers for a single repository directory.
     """
 
     _WRITE_FLAGS = set("wax+")
