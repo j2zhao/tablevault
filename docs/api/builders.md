@@ -1,4 +1,4 @@
-# Builders and Custom Functions Guide
+# Builder and Custom Function Guide
 
 Builders inform TableVault how to build a DataFrame upon instance execution. Builder files are YAML specifications that define how a table instance is constructed or modified.
 

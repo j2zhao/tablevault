@@ -1,4 +1,4 @@
-# TableReference
+# `TableReference` String Guide
 
 `TableReference` strings provide a powerful way to dynamically fetch and use data from other table instances, or the current table instance, directly within most string-based fields of your builder YAML files. This allows for highly dynamic and data-driven configurations.
 

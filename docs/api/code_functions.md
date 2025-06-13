@@ -1,4 +1,4 @@
-# Default Code Functions
+# Default Code Functions API
 
 There are several simple code functions included with the `tablevault` library. You can execute them by specifying the right parameters in a YAML `Builder` file.
 

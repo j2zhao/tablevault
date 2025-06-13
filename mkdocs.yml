@@ -49,8 +49,8 @@ nav:
   - API and Guides:
     - TableVault Python Interface API: api/core_api.md
     - TableVault Command Line Interface API: api/core_cli_api.md
-    - Builders and Python Functions Guide: api/builders.md
-    - TableReference Strings Guide: api/table_references.md
+    - Builder and Python Function Guide: api/builders.md
+    - TableReference String Guide: api/table_references.md
     - Default Code Functions API: api/code_functions.md
   - Advanced:
     - Metadata Documentation: advanced/metadata.md
