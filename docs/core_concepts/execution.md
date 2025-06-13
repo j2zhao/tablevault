@@ -1,5 +1,11 @@
 # Builders, Python Functions, `TableReference` Strings, and Artifacts
 
+
+
+For simple examples of how to use builders to generate an instance, check out [Basic Workflow](../workflows/workflow.md) and [Worflow with Artifacts](../workflows/workflow_artifacts.md).
+
+## Creating Instances From Builders
+
 TableVault instances are typically constructed and modified through a series of orchestrated steps. At the heart of this process are builders files, which are configuration files that define the scope of data transformations, and Python files, which define the data transformation itself. This construction uses `TableReference` strings to link fetch data from previous instances, and can optionally generate TableVault artifacts to store arbitrary files. 
 
 Execution of instances typically are initialized with the `execute_instance()` function. Alternatively, to bypass the process, you can also externally generate your dataframe and artifacts, and add them into your TableVault repository using the `write_instance()` function. This is not typically recommended since execution and data lineage information is lost. 
@@ -8,7 +14,7 @@ Execution of instances typically are initialized with the `execute_instance()` f
 
 ## Builders
 
-Every table instance executed by TableVault possesses its own set of builder files. You can add builders to a temporary instance by copying them from a previous origin instance, specifying builder names during `create_instance()`, or using the `create_builder_file()` function. Each builder uniquely modifies a set of specified columns in the resulting dataframe. This is specified by the mandatory `changed_columns` field.
+Every table instance executed by TableVault possesses its own set of builder files. You can add builders to a temporary instance by copying them from a previous origin instance, specifying builder names during `create_instance()`, or using the `create_builder_file()` function. Each builder uniquely modifies a set of specified columns in the resulting dataframe. This is specified by the mandatory `changed_columns` field. For a full list of builder fields, please read the [Builders Guide](../api/builders.md).
 
 Builders do not contain the data transformation logic themselves. Instead, they point to the Python functions that perform the actual work. This connection is established through the `python_function` and `code_module` fields in the builder's YAML file.
 
@@ -42,6 +48,7 @@ Functions must adhere to specific contracts:
 
 For successful execution, all required input arguments for the Python function must be defined in the builder file.
 
+For a list of default Python functions that come with TableVault, please visit the [Default Code Function API](../api/code_functions.md).
 
 **Physical Location**
 
@@ -64,6 +71,8 @@ Instead of hard-coding values in the file, you can use a special `<< ... >>` syn
 
 You can specify which table to query, filter for specific rows, and select the exact columns you need. References can even be nested to handle complex, multi-step lookups. The system automatically retrieves the data—whether it's a single value, a number, or a list—and inserts it into your configuration where the reference was placed.
 
+For the full document on `TableReference` strings, read the [TableReference Guide](../api/table_references.md).
+
 **Examples**
 
 Here is a simple example showing a `TableReference` string within a builder's arguments:
@@ -82,6 +91,8 @@ arguments:
 In TableVault, an artifact is any non-dataframe file, such as an image, log, or serialized model, that is linked to a specific value in a table dataframe. This creates an organized and powerful connection between structured data and related unstructured files.
 
 Artifacts are linked to specific instance or table folders. Temporary instances always contain its own isolated artifact folder; this folder is moved to a materalized location after the library validates that each artifact storied has a reference in its corresponding dataframe.
+
+Check out [Worflow with Artifacts](../workflows/workflow_artifacts.md) to see an exmple of artifacts being linked in TableVault. 
 
 **Use Cases**
 

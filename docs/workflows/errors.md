@@ -1,6 +1,6 @@
 # Handling Execution Errors
 
-This document explains the typical procedure when TableVault encounters execution errors.
+This document explains the typical procedure when TableVault encounters execution errors. To understands processes in TableVault in general, please visit [Core Concepts: Operations](../core_concepts/operations.md).
 
 ---
 

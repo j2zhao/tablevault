@@ -1,5 +1,9 @@
 # Comparisons
 
+To understand the use cases of TableVault further, we compare it to some popular data science tools.
+
+---
+
 ## TableVault vs. SQLite
 
 ### Key Differences

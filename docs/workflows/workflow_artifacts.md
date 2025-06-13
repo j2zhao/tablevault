@@ -1,6 +1,6 @@
 # Workflow with Artifacts
 
-This is a basic workflow for handling artifacts in TableVault.
+This is a basic workflow for handling artifacts in TableVault. To understand the basics of builders and artifacts, please read [Core Concepts: Artifacts](../core_concepts/execution.md#artifacts) and the [Builders Guide](../api/builders.md).
 
 ---
 

@@ -39,20 +39,22 @@ nav:
     - Repository Structure: core_concepts/structure.md
     - Operations: core_concepts/operations.md
     - Builders, Python Functions, TableReferences, Artifacts: core_concepts/execution.md
-  - Basic Workflow: workflows/workflow.md
-  - Handling Execution Errors: workflows/errors.md
-  - Workflow with Artifacts: workflows/workflow_artifacts.md
+  - Concrete Workflows:
+    - Basic Workflow: workflows/workflow.md
+    - Workflow with Artifacts: workflows/workflow_artifacts.md
+    - Handling Execution Errors: workflows/errors.md
   - Colab Notebook Examples:
     - OpenAI API Call: examples/api_call_example.md
     - Local LLM Execution: examples/local_embeddings_example.md
-  - API:
-    - TableVault Python Interface: api/core_api.md
-    - TableVault Command Line Interface : api/core_cli_api.md
-    - Builders and Custom Python Functions: api/builders.md
-    - TableReference Strings: api/table_references.md
-    - Default Code Functions: api/code_functions.md
-  - Comparisons: auxillary/comparisons.md
+  - API and Guides:
+    - TableVault Python Interface API: api/core_api.md
+    - TableVault Command Line Interface API: api/core_cli_api.md
+    - Builders and Python Functions Guide: api/builders.md
+    - TableReference Strings Guide: api/table_references.md
+    - Default Code Functions API: api/code_functions.md
   - Advanced:
     - Metadata Documentation: advanced/metadata.md
     - Operating System Differences: advanced/os.md
+    - Comparisons: advanced/comparisons.md
+
   - About TableVault: auxillary/about.md

@@ -1,12 +1,12 @@
-Of course. Here is the updated CLI documentation with minimal edits to reflect the provided Python script.
-
-# TableVault Command Line Interface
+# TableVault Command Line Interface API
 
 A convenient command-line interface for *TableVault* operations.
 
-Most sub-commands require a *TableVault* instance. You can provide the `--db-dir` and `--author` global options once, and they will be reused by every command invoked.
+Most sub-commands require a `TableVault` instance. You can provide the `--db-dir` and `--author` global options once, and they will be reused by every command invoked.
 
-**Global Options:**
+---
+
+## Global Options
 
 These options can be used before any subcommand.
 

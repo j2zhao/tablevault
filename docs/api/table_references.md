@@ -1,14 +1,17 @@
-# Using Table References in Builder Files
+# TableReference
 
-Table References provide a powerful way to dynamically fetch and use data from other table instances, or the current table instance, directly within most string-based fields of your builder YAML files. This allows for highly dynamic and data-driven configurations.
-
-The `<< ... >>` syntax can be applied to any singular string, boolean or numeric entry in your builder definition, such as values in the `arguments` block, items in the `changed_columns` list, or even the `python_function` and `code_module` names themselves. The primary exception is the `dependencies` field, which does not support this dynamic resolution (since `dependencies` is generated from Table References themselves).
+`TableReference` strings provide a powerful way to dynamically fetch and use data from other table instances, or the current table instance, directly within most string-based fields of your builder YAML files. This allows for highly dynamic and data-driven configurations.
 
 ---
 
 ## Core Concept: The `<< ... >>` Wrapper
 
-The fundamental syntax for a table reference is to enclose the reference string within double angle brackets: `<< ... >>`.
+The fundamental syntax for a `TableReference` string is to enclose the reference string within double angle brackets: `<< ... >>`.
+
+The `<< ... >>` syntax can be applied to any singular string, boolean or numeric entry in your builder definition, such as values in the `arguments` block, items in the `changed_columns` list, or even the `python_function` and `code_module` names themselves. 
+
+The primary exception is the `dependencies` field, which does not support this dynamic resolution (`dependencies` inform the system which tables are loaded and must be resolved before `TableReference` strings are parsed).
+
 
 ---
 
@@ -31,13 +34,13 @@ arguments:
   static_text_with_ref: "Report for ID: <<self.id[index]>>"
 ```
 
-If a field value is entirely a table reference (e.g., `python_function: "<<config.func_name>>"`), the resolved value of the reference will be used directly. If the reference is part of a larger string (e.g., in `arguments`), the resolved value will be converted to a string and substituted into place.
+If a field value is entirely a `TableReference` string (e.g., `python_function: "<<config.func_name>>"`), the resolved value of the reference will be used directly. If the reference is part of a larger string (e.g., in `arguments`), the resolved value will be converted to a string and substituted into place.
 
 ---
 
-## Anatomy of a Table Reference String
+## Anatomy of a `TableReference` String
 
-Inside the `<< ... >>` wrapper, a table reference string follows a specific structure to identify the table, an optional instance_id, specific columns, and optional filtering conditions:
+Inside the `<< ... >>` wrapper, a `TableReference` string follows a specific structure to identify the table, an optional instance_id, specific columns, and optional filtering conditions:
 
 ```
 tableName(instance_id).{column1,column2,...}[condition1,condition2,...]
@@ -64,7 +67,7 @@ All parts (instance_id, columns, conditions) are optional.
 !!! note "`self` Keyword"
     The `self` keyword cannot be be used in the `dtypes` field of a builder. The `dtypes` keyword is used when the
 
-* **Dynamic Table Name**: The table name itself can be a nested table reference.
+* **Dynamic Table Name**: The table name itself can be a nested `TableReference` string.
     * Example in a field: `code_module: "<< <<table_map.module_column[type::'etl']>> >>"`
     * Reference string example: `<< <<another_table.config_key[type::'source']>>.data_column >>`
 
@@ -74,7 +77,7 @@ All parts (instance_id, columns, conditions) are optional.
 
 * **Syntax**: Instance in parentheses, e.g., `(base_1748113624_d049944b-8548-46d2-a247-bbf3769fbadc)`.
 * **Optional**: If omitted, TableVault will typically use the latest available instance of the table based on its internal logic and cache.
-* **Dynamic Version**: The version string can be a nested table reference.
+* **Dynamic Version**: The version string can be a nested `TableReference`.
     * Example reference string: `my_table(<<version_control_table.active_version[table_name::'my_table']>>)`
 
 ---
@@ -87,7 +90,7 @@ All parts (instance_id, columns, conditions) are optional.
 * **Optional**:
     * If omitted, and conditions are present, all columns are available for filtering, and the selected columns depend on the output simplification (see below).
     * If omitted, and no conditions are present, the entire DataFrame (or its simplified form) is returned.
-* **Dynamic Column Names**: Column names within the list (or the single column name) can be nested table references. This is highly relevant for fields like `changed_columns` or `primary_key`.
+* **Dynamic Column Names**: Column names within the list (or the single column name) can be nested `TableReferences`. This is highly relevant for fields like `changed_columns` or `primary_key`.
     * Example in `changed_columns`: `changed_columns: ["id", "<<config_table.main_data_field_name>>"]`
     * Example reference string for a column name: `my_table.<<config.target_column>>`
     * Example reference string with multiple dynamic columns: `my_table.{id,<<audit_table.tracked_field[user::'admin']>>,status}`
@@ -108,12 +111,12 @@ All parts (instance_id, columns, conditions) are optional.
     * Filters rows where `columnName` equals `value`.
     * Example reference string: `orders.product_id[customer_id::'cust123',status::'shipped']`
     * The `value` is automatically quoted for string comparisons if not already quoted (e.g., `status::shipped` becomes `status == 'shipped'`). Numerical values are used directly.
-    * `value` can be a nested table reference: `orders.items[user_id::<<user_table.id[username::'jdoe']>>]`
+    * `value` can be a nested a `TableReference` string: `orders.items[user_id::<<user_table.id[username::'jdoe']>>]`
 
 2.  **Range (`columnName::start_value:end_value`)**:
     * Filters rows where `columnName` is greater than or equal to `start_value` AND less than `end_value`.
     * Example reference string: `events.timestamp[timestamp::'2023-01-01T00:00:00':'2023-01-01T23:59:59']`
-    * `start_value` and `end_value` can be literals or nested table references. Values are formatted appropriately for comparison based on the column's data type.
+    * `start_value` and `end_value` can be literals or nested `TableReference` strings. Values are formatted appropriately for comparison based on the column's data type.
 
 3.  **Implicit Index/Contextual Value (`columnName`)**:
     * Filters rows where `columnName` equals a contextually provided `index` value (the index of the row currently being processed by the builder).
@@ -125,20 +128,24 @@ All parts (instance_id, columns, conditions) are optional.
 
     The `index` keyword can only be used in the `arguments` key of a row-wise function (when `row-wise` is set to `true`).
 
-* **Dynamic Keys and Values**: All parts of a condition (the column name, the value, start/end values) can be nested table references.
+* **Dynamic Keys and Values**: All parts of a condition (the column name, the value, start/end values) can be nested `TableReference` strings.
     * Example reference string: `my_table[<<config.filter_column>>::<<config.filter_value>>]`
 
 ---
 
 ## Nested References
 
-As shown in examples above, any component of a table reference—the table name, version string, column names, condition keys, or condition values—can itself be another table reference enclosed in `<< ... >>`. TableVault will resolve the innermost references first and use their results to construct the outer reference before resolving it.
+As shown in examples above, any component of a `TableReference` string —the table name, version string, column names, condition keys, or condition values—can itself be another `TableReference` stringenclosed in `<< ... >>`. TableVault will resolve the innermost references first and use their results to construct the outer reference before resolving it.
 
 **Complex Example (from code, used in an argument):**
 `<<stories.artifact_name[paper_name::<<self.paper_name[index]>>]>>`
+
 1.  `<<self.paper_name[index]>>`: Resolves first. It fetches the `paper_name` from the current row (`index`) of the `self` table.
+
 2.  Let's say the above yields `'my_research_paper'`.
+
 3.  The outer reference becomes: `<<stories.artifact_name[paper_name::'my_research_paper']>>`.
+
 4.  This then fetches `artifact_name` from the `stories` table where `paper_name` is `'my_research_paper'`.
 
 ---
@@ -181,6 +188,6 @@ These examples illustrate the reference string syntax itself. These strings woul
 
 ## Error Handling
 
-If a table reference string is malformed (e.g., unbalanced brackets, illegal characters) or if a reference cannot be resolved at runtime (e.g., table not found, column missing, nested reference fails), a `TableReferenceError` will typically be raised, halting the builder process. Ensure your references are correct and the data they point to exists.
+If a `TableReference` string is malformed (e.g., unbalanced brackets, illegal characters) or if a reference cannot be resolved at runtime (e.g., table not found, column missing, nested reference fails), a `TableReferenceError` will typically be raised, halting the builder process. Ensure your references are correct and the data they point to exists.
 
 ---

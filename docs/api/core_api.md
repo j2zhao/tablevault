@@ -1,4 +1,10 @@
-# TableVault Python Interface
+# TableVault Python Interface API
+
+The core way to interact with the TableVault repository is through `TableVault` instance. Here, you can find the full API for the Python interface.
+
+Read [Basic Workflow](../workflows/workflow.md) for an example of how to use this API.
+
+---
 
 ## Class `TableVault`
 

@@ -2,6 +2,8 @@
 
 This is a basic sample workflow for a TableVault repository.
 
+The full function API can be found in [Core API](../api/core_api.md). To understand the structures and files being created, please read through [Core Concepts: Repository](../core_concepts/structure.md)  and [Core Concepts: Builders](../core_concepts/builders.md)
+
 ---
 
 ## 1. Make a Repository

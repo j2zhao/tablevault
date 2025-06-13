@@ -2,6 +2,11 @@
 
 TableVault manages every write operation through a multi-step process designed for safety and recoverability. This process involves distinct **setup**, **execution**, and **takedown** phases to ensure the repository remains in a consistent state, even if an operation is interrupted.
 
+For simple examples of how to use operations, check out [Basic Workflow](../workflows/workflow.md) and [Worflow with Artifacts](../workflows/workflow_artifacts.md).
+
+For a detailed list of available operations, please read the [Core API](../api/core_api.md).
+
+
 ---
 
 ## Process IDs, Pauses, and Restarts
@@ -12,6 +17,8 @@ Operations can include an optional `process_id`:
 * **With a provided `process_id`**: Interruptions pause the operation, maintaining locks. Users can restart exactly where paused by reusing the same `process_id` or setting `restart` to `True`.
 
 Explicitly stopping active processes uses `stop_process()`. Logs of operations reside in `TABLEVAULT_NAME/metadata/logs.txt`.
+
+For detailed use scenarios of `process_id` and basic error handling procedures, check ou [Handling Execution Errors](../workflows/errors.md).
 
 ---
 
@@ -28,6 +35,8 @@ Each write operation follows a series of universal, transactional steps:
 4.  **Takedown Phase**: After execution, a takedown function cleans up the process. On success, it removes the temporary backup and releases locks. On failure, it uses the backup to **restore the original data**, effectively rolling back any changes before releasing locks.
 
 5.  **Logging**: The operation's status is logged to persistent storage throughout the entire process to ensure system resiliency.
+
+For a list of available operations, please read our [core API](../api/core_api.md).
 
 ---
 

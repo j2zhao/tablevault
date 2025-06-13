@@ -1,8 +1,10 @@
 # Repository Structure
 
-## TableVault Repository
+The TableVault repository stores and organizes all data and code transparently within your local file system. This design allows you to view files directly and simpy transfer in-progress workflows across devices.
 
-The TableVault repository stores and organizes all data and code transparently within your local file system. This design allows you to view files directly and transfer a workflow to a new device by copying the repository folder. It is crucial, however, that most write operations are performed through the TableVault API to maintain system integrity.
+---
+
+## TableVault Repository
 
 
 The following diagram illustrates the internal storage structure of a TableVault repository:
@@ -13,7 +15,7 @@ The following diagram illustrates the internal storage structure of a TableVault
 ///
 
 !!! note "Direct File Edits"
-    Directly editing files is generally discouraged, with two exceptions: Builder (YAML) and Python code files may be modified using an external editor. To help prevent accidental modifications on Unix systems, TableVault sets certain files to read-only. While this does not stop intentional changes, it serves as a safeguard against common mistakes.
+    While the files are transparently exposed, directly editing files is generally discouraged - with two exceptions: Builder (YAML) and Python code files may be modified using an external editor. To help prevent accidental modifications on Unix systems, TableVault sets certain files to read-only. While this does not stop intentional changes, it serves as a safeguard against common mistakes.
 
 
 ---
