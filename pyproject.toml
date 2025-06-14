@@ -42,3 +42,7 @@ tablevault = ["col_builders/examples/*.yaml", "helper/examples/example.py"]
 [tool.pytest.ini_options]
 testpaths = ["tests/api_tests"]
 python_files = ["test_*.py"]
+markers = [
+    "basic: marks barebone test",
+    "remote: marks remote dir tests"
+]

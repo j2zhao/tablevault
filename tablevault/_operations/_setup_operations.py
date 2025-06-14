@@ -32,6 +32,7 @@ def setup_create_code_module(
     file_operations.copy_folder_to_temp(
         process_id,
         db_metadata.db_dir,
+        file_writer,
         subfolder=constants.CODE_FOLDER,
     )
     db_metadata.update_process_data(process_id, funct_kwargs)
@@ -50,6 +51,7 @@ def setup_delete_code_module(
     file_operations.copy_folder_to_temp(
         process_id,
         db_metadata.db_dir,
+        file_writer,
         subfolder=constants.CODE_FOLDER,
     )
     db_metadata.update_process_data(process_id, funct_kwargs)
@@ -80,8 +82,9 @@ def setup_create_builder_file(
     file_operations.copy_folder_to_temp(
         process_id,
         db_metadata.db_dir,
-        table_name=table_name,
+        file_writer,
         instance_id=instance_id,
+        table_name=table_name,
         subfolder=constants.BUILDER_FOLDER,
     )
     funct_kwargs = {
@@ -115,6 +118,7 @@ def setup_delete_builder_file(
     file_operations.copy_folder_to_temp(
         process_id,
         db_metadata.db_dir,
+        file_writer,
         table_name=table_name,
         instance_id=instance_id,
         subfolder=constants.BUILDER_FOLDER,
@@ -173,7 +177,7 @@ def setup_delete_table(
         raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
     db_locks.acquire_exclusive_lock(table_name)
     file_operations.copy_folder_to_temp(
-        process_id, db_metadata.db_dir, table_name=table_name
+        process_id, db_metadata.db_dir, file_writer, table_name=table_name
     )
     funct_kwargs = {"table_name": table_name}
     db_metadata.update_process_data(process_id, funct_kwargs)
@@ -197,7 +201,11 @@ def setup_delete_instance(
         raise tv_errors.TVArgumentError("instance doesn't exist")
     db_locks.acquire_exclusive_lock(table_name, instance_id)
     file_operations.copy_folder_to_temp(
-        process_id, db_metadata.db_dir, instance_id=instance_id, table_name=table_name
+        process_id,
+        db_metadata.db_dir,
+        file_writer,
+        instance_id=instance_id,
+        table_name=table_name,
     )
     funct_kwargs = {"table_name": table_name, "instance_id": instance_id}
     db_metadata.update_process_data(process_id, funct_kwargs)
@@ -280,6 +288,7 @@ def setup_materialize_instance(
         file_operations.copy_folder_to_temp(
             process_id,
             db_metadata.db_dir,
+            file_writer,
             table_name=table_name,
             subfolder=constants.ARTIFACT_FOLDER,
         )
@@ -309,8 +318,6 @@ def setup_stop_process(
     db_locks: DatabaseLock,
     file_writer: CopyOnWriteFile,
 ):
-    if "_" in to_stop_process_id:
-        raise tv_errors.TVArgumentError("Only can stop top-level processes.")
     logs, process_ids_ = db_metadata.stop_operation(to_stop_process_id, force)
     step_ids = []
     step_ids.append(process_id + "_" + gen_tv_id())
@@ -529,7 +536,6 @@ def setup_write_instance(
         else:
             raise tv_errors.TVArgumentError("Artifact column not in Dataframe")
     funct_kwargs["table_df"] = table_df
-
     return funct_kwargs
 
 
@@ -657,7 +663,7 @@ def setup_execute_instance(
         table_name,
         origin_id,
         origin_table,
-        file_writer=file_writer
+        file_writer=file_writer,
     )
     if custom_code:
         db_locks.acquire_shared_lock(constants.CODE_FOLDER)
@@ -968,6 +974,7 @@ def parse_builders(
                         origin_id,
                         origin_table,
                         db_metadata.db_dir,
+                        file_writer,
                     )
                     if not code_function_eq:
                         execute = True

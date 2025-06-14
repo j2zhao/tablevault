@@ -1,18 +1,38 @@
 import pytest
 from tablevault.core import TableVault, delete_vault
+from tablevault._helper.user_lock import set_writable
+from tablevault._defintions import constants
 import shutil
 import os
 
 
 @pytest.fixture
 def tablevault():
-    tv = TableVault("example_tv", author="jinjin", create=True)
-
-    yield tv
-    if os.path.isdir("example_tv"):
-        delete_vault("example_tv")
     if os.path.isdir("example_tv_copy"):
-        delete_vault("example_tv_copy")
+        set_writable("example_tv_copy")
+        shutil.rmtree("example_tv_copy")
+    if os.path.isdir("remote_tv"):
+        set_writable("remote_tv")
+        shutil.rmtree("remote_tv")
+    if os.path.isdir("example_tv"):
+        set_writable("example_tv")
+        shutil.rmtree("example_tv")
+    if os.path.exists(constants.REMOTE_LOG_FILE):
+        os.remove(constants.REMOTE_LOG_FILE)
+    tv = TableVault("example_tv", author="jinjin", create=True)
+    yield tv
+    if os.path.isdir("example_tv_copy"):
+        set_writable("example_tv_copy")
+        shutil.rmtree("example_tv_copy")
+    if os.path.isdir("remote_tv"):
+        set_writable("remote_tv")
+        shutil.rmtree("remote_tv")
+    if os.path.isdir("example_tv"):
+        set_writable("example_tv")
+        shutil.rmtree("example_tv")
+    if os.path.exists(constants.REMOTE_LOG_FILE):
+        os.remove(constants.REMOTE_LOG_FILE)
+
 
 
 @pytest.fixture
@@ -27,3 +47,59 @@ def add_story():
 
     if os.path.isfile(new_path):
         os.remove(new_path)
+
+@pytest.fixture
+def remote_tablevault():
+    if os.path.isdir("example_tv_copy"):
+        set_writable("example_tv_copy")
+        shutil.rmtree("example_tv_copy",ignore_errors=True)
+    if os.path.isdir("remote_tv"):
+        set_writable("remote_tv")
+        shutil.rmtree("remote_tv",ignore_errors=True)
+    if os.path.isdir("example_tv"):
+        set_writable("example_tv")
+        shutil.rmtree("example_tv",ignore_errors=True)
+    if os.path.exists(constants.REMOTE_LOG_FILE):
+        os.remove(constants.REMOTE_LOG_FILE)
+    os.mkdir("remote_tv")
+    tv = TableVault("remote_tv/example_tv", author="jinjin", create=True)
+    yield tv
+    if os.path.isdir("example_tv_copy"):
+        set_writable("example_tv_copy")
+        shutil.rmtree("example_tv_copy",ignore_errors=True)
+    if os.path.isdir("remote_tv"):
+        set_writable("remote_tv")
+        shutil.rmtree("remote_tv",ignore_errors=True)
+    if os.path.isdir("example_tv"):
+        set_writable("example_tv")
+        shutil.rmtree("example_tv", ignore_errors=True)
+    if os.path.exists(constants.REMOTE_LOG_FILE):
+        os.remove(constants.REMOTE_LOG_FILE)
+
+@pytest.fixture
+def local_tablevault():
+    if os.path.isdir("example_tv_copy"):
+        set_writable("example_tv_copy")
+        shutil.rmtree("example_tv_copy",ignore_errors=True)
+    if os.path.isdir("remote_tv"):
+        set_writable("remote_tv")
+        shutil.rmtree("remote_tv",ignore_errors=True)
+    if os.path.isdir("example_tv"):
+        set_writable("example_tv")
+        shutil.rmtree("example_tv", ignore_errors=True)
+    if os.path.exists(constants.REMOTE_LOG_FILE):
+        os.remove(constants.REMOTE_LOG_FILE)
+    os.mkdir("remote_tv")
+    tv = TableVault("example_tv", author="jinjin", create=True, remote_dir="remote_tv/example_tv", copy_interval=30)
+    yield tv
+    if os.path.isdir("example_tv_copy"):
+        set_writable("example_tv_copy")
+        shutil.rmtree("example_tv_copy", ignore_errors=True)
+    if os.path.isdir("remote_tv"):
+        set_writable("remote_tv")
+        shutil.rmtree("remote_tv", ignore_errors=True)
+    if os.path.isdir("example_tv"):
+        set_writable("example_tv")
+        shutil.rmtree("example_tv", ignore_errors=True)
+    if os.path.exists(constants.REMOTE_LOG_FILE):
+        os.remove(constants.REMOTE_LOG_FILE)

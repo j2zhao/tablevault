@@ -2,8 +2,9 @@ from . import helper
 from tablevault.core import TableVault
 
 from .base_execution_helper import basic_function
+import pytest
 
-
+@pytest.mark.basic
 def test_basic_function(tablevault):
     ids = basic_function(tablevault)
     helper.evaluate_operation_logging(ids)

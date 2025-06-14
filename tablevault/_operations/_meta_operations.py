@@ -1,6 +1,6 @@
 from tablevault._defintions import tv_errors, constants
 from tablevault._helper.database_lock import DatabaseLock
-from tablevault._helper.metadata_store import MetadataStore
+from tablevault._helper.metadata_store import MetadataStore, check_top_process
 from tablevault._operations._takedown_operations import TAKEDOWN_MAP
 from tablevault._operations._setup_operations import SETUP_MAP
 from tablevault._operations._table_execution import execute_instance
@@ -23,11 +23,9 @@ def filter_by_function_args(kwargs: dict, func: Callable) -> dict[str, Any]:
 
 
 def background_instance_execution(
-    process_id: str,
-    db_dir: str,
-    force_takedown: bool,
+    process_id: str, db_dir: str, force_takedown: bool, has_hardlink: bool
 ) -> None:
-    file_writer = CopyOnWriteFile(db_dir)  # TODO
+    file_writer = CopyOnWriteFile(db_dir, has_hardlink=has_hardlink)  # TODO
     db_metadata = MetadataStore(db_dir)
     db_locks = DatabaseLock(process_id, db_dir)
     funct_kwargs = db_metadata.get_active_processes()[process_id].data
@@ -71,26 +69,44 @@ def tablevault_operation(
     process_id: str,
     file_writer: CopyOnWriteFile,
     setup_kwargs: dict[str, Any],
+    parent_id: str,
     background: bool = False,
 ) -> str:
     db_metadata = MetadataStore(db_dir)
     logs = db_metadata.get_active_processes()
-    if "_" not in process_id:
-        if process_id in logs:
-            force_takedown = logs[process_id].force_takedown
-        elif process_id != "":
-            process_id = process_id
-            force_takedown = False
+    if process_id == "":
+        process_id = gen_tv_id()
+        if parent_id != "":
+            process_id = parent_id + "_" + process_id
+            force_takedown = logs[parent_id].force_takedown
         else:
-            process_id = gen_tv_id()
             force_takedown = True
     else:
-        parent_id = process_id.split("_")[0]
-        force_takedown = logs[parent_id].force_takedown
+        active_ids = list(logs.keys())
+        if process_id in active_ids:
+            _, top_parent_id = check_top_process(process_id, active_ids)
+            if parent_id != "" and not process_id.startswith(parent_id):
+                if top_parent_id != process_id:
+                    raise tv_errors.TVProcessError(
+                        "Can only modify/run subprocesses or top-level processes"
+                    )
+            force_takedown = logs[top_parent_id].force_takedown
+        else:
+            if parent_id != "" and not process_id.startswith(parent_id + "_"):
+                process_id = parent_id + "_" + process_id
+            _, top_parent_id = check_top_process(process_id, active_ids)
+            if top_parent_id in active_ids:
+                force_takedown = logs[top_parent_id].force_takedown
+            else:
+                force_takedown = False
     db_locks = DatabaseLock(process_id, db_metadata.db_dir)
     funct_kwargs = None
     if process_id in logs:
         log = logs[process_id]
+        logging.info(f"Start acquiring remote lock for {process_id}")
+        db_locks.acquire_shared_lock(constants.REMOTE_LOCK, timeout=None)
+        logging.info(f"Acquired remote lock for {process_id}")
+        db_locks.acquire_shared_lock(constants.REMOTE_LOCK, timeout=None)
         if "background" in log.data:
             background = log.data["background"]
         db_metadata.update_process_pid(process_id, os.getpid())
@@ -118,6 +134,9 @@ def tablevault_operation(
         start_time = db_metadata.start_new_process(
             process_id, author, op_name, os.getpid(), force_takedown
         )
+        logging.info(f"Start acquiring remote lock for {process_id}")
+        db_locks.acquire_shared_lock(constants.REMOTE_LOCK, timeout=None)
+        logging.info(f"Acquired remote lock for {process_id}")
     if background:
         db_metadata.update_process_data(process_id, {"background": background})
     if funct_kwargs is None:
@@ -152,7 +171,12 @@ def tablevault_operation(
     if op_name == constants.EXECUTE_OP and background:
         p = multiprocessing.Process(
             target=background_instance_execution,
-            args=(process_id, db_metadata.db_dir, force_takedown),
+            args=(
+                process_id,
+                db_metadata.db_dir,
+                force_takedown,
+                file_writer._hardlink_supported,
+            ),
         )
         p.start()
         db_metadata.update_process_pid(process_id, p.pid, force=True)

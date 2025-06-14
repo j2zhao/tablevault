@@ -10,6 +10,7 @@ import pandas as pd
 from tablevault._defintions import constants
 from tablevault._helper.file_operations import get_description
 from typing import Any
+import logging
 
 
 def join_path(artifact: str, path_dir: str) -> str:
@@ -49,31 +50,44 @@ def get_artifact_folder(
 
 
 def apply_artifact_path(
-    arg: Any, instance_id: str, table_name: str, db_dir: str
+    arg: Any,
+    instance_id: str,
+    table_name: str,
+    db_dir: str,
+    process_id: str,
 ) -> Any:
     artifact_path = get_artifact_folder(instance_id, table_name, db_dir)
     if isinstance(arg, str):
         arg = arg.replace(constants.ARTIFACT_REFERENCE, artifact_path)
+        arg = arg.replace(constants.PROCESS_ID_REFERENCE, process_id)
         return arg
     elif isinstance(arg, list):
         return [
-            apply_artifact_path(item, instance_id, table_name, db_dir) for item in arg
+            apply_artifact_path(item, instance_id, table_name, db_dir, process_id)
+            for item in arg
         ]
     elif isinstance(arg, set):
         return set(
-            [apply_artifact_path(item, instance_id, table_name, db_dir) for item in arg]
+            [
+                apply_artifact_path(item, instance_id, table_name, db_dir, process_id)
+                for item in arg
+            ]
         )
     elif isinstance(arg, dict):
         return {
             apply_artifact_path(
-                k, instance_id, table_name, db_dir
-            ): apply_artifact_path(v, instance_id, table_name, db_dir)
+                k, instance_id, table_name, db_dir, process_id
+            ): apply_artifact_path(v, instance_id, table_name, db_dir, process_id)
             for k, v in arg.items()
         }
     elif hasattr(arg, "__dict__"):
         for attr, val in vars(arg).items():
-            val_ = apply_artifact_path(val, instance_id, table_name, db_dir)
-            setattr(arg, attr, val_)
+            val_ = apply_artifact_path(val, instance_id, table_name, db_dir, process_id)
+            try:
+                setattr(arg, attr, val_)
+            except Exception as e:
+                logger = logging.getLogger(__name__)
+                logger.info(f"Immutable Object {e}")
         return arg
     else:
         return arg

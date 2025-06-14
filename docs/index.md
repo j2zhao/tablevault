@@ -16,7 +16,7 @@ This library is fully compatible with `Python>=3.11`.
 
 ## Quick Start
 
-Check out [Basic Workflow](./workflows/workflow.md) for a simple generic setup, and our CoLab examples [(1) Short Stories Q&A with OpenAI](https://colab.research.google.com/drive/1vHg5Vb8r1Zax2pKLOX6phPEuIDVhFctC?usp=sharing) and  [(2) GritLM Embeddings from Scientific Abstracts](https://colab.research.google.com/drive/1X4tFpPSfMnQ_Ch0nSNUTmiEcT0Eo40Uj?usp=sharing) for concrete use cases.
+Check out [Basic Workflow](./workflows/workflow.md) for a simple generic setup, and our Colab examples [(1) Short Stories Q&A with OpenAI](https://colab.research.google.com/drive/1vHg5Vb8r1Zax2pKLOX6phPEuIDVhFctC?usp=sharing) and  [(2) GritLM Embeddings from Scientific Abstracts](https://colab.research.google.com/drive/1X4tFpPSfMnQ_Ch0nSNUTmiEcT0Eo40Uj?usp=sharing) for concrete use cases.
 
 To understand the basics of TableVault, read through the [Core Concepts](./core_concepts/structure.md)
 

@@ -26,14 +26,25 @@ class CopyOnWriteFile:
     _DELETE_SLEEP: float = 0.2  # seconds between retries
 
     # ─────────────── construction ───────────────
-    def __init__(self, db_dir: str, lock_timeout: float = constants.TIMEOUT):
+    def __init__(
+        self,
+        db_dir: str,
+        check_hardlink: bool = True,
+        has_hardlink: bool = None,
+        lock_timeout: float = constants.TIMEOUT,
+    ):
         self.db_dir = os.fspath(db_dir)
         lock_path = os.path.join(
             self.db_dir, constants.METADATA_FOLDER, constants.META_FILE_LOCK_FILE
         )
         os.makedirs(os.path.dirname(lock_path), exist_ok=True)
         self._lock = FileLock(lock_path, timeout=lock_timeout)
-        self._hardlink_supported = self._detect_hardlink_support(self.db_dir)
+        if has_hardlink is not None:
+            self._hardlink_supported = has_hardlink
+        elif check_hardlink:
+            self._hardlink_supported = self._detect_hardlink_support(self.db_dir)
+        else:
+            check_hardlink = False
 
     # ───── platform / capability helpers ──────
     @staticmethod

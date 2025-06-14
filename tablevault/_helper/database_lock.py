@@ -192,6 +192,7 @@ class DatabaseLock:
 
     def release_lock(self, lock_id: tuple[str, str, str]) -> None:
         table_name, instance_id, lid = lock_id
+        lock_path = self.lock_path
         if table_name != "":
             lock_path = os.path.join(self.lock_path, table_name)
         if instance_id != "":
@@ -200,8 +201,13 @@ class DatabaseLock:
             _release_lock(lock_path, lid)
             set_tv_lock(instance_id, table_name, self.db_dir)
 
-    def release_all_locks(self) -> None:
-        _release_all_lock(self.process_id, self.lock_path)
+    def release_all_locks(self, table_name="", instance_id="") -> None:
+        lock_path = self.lock_path
+        if table_name != "":
+            lock_path = os.path.join(self.lock_path, table_name)
+        if instance_id != "":
+            lock_path = os.path.join(lock_path, instance_id)
+        _release_all_lock(self.process_id, lock_path)
         set_tv_lock("", "", self.db_dir)
 
     def make_lock_path(self, table_name: str = "", instance_id: str = ""):

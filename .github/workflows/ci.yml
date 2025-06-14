@@ -27,7 +27,7 @@ jobs:
           # Run Ruff in “check” mode (exit code != 0 if any issues are found)
           ruff check tablevault
       - name: Tests
-        run: pytest -q
+        run: pytest -q -m "not remote"
 
   deploy-docs:
     name: Deploy MkDocs to GitHub Pages

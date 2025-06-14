@@ -12,6 +12,8 @@ import logging
 import shutil
 from rich.tree import Tree
 from tablevault._helper.copy_write_file import CopyOnWriteFile
+from tablevault._remote_helper import remote_save_process
+import multiprocessing
 
 
 class TableVault:
@@ -49,32 +51,61 @@ class TableVault:
         create: bool = False,
         restart: bool = False,
         verbose: bool = True,
-        is_remote: bool = False,
+        remote_dir: str = "",
+        remote_log: str = constants.REMOTE_LOG_FILE,
+        copy_interval: int = None,
+        parent_id: str = "",
     ) -> None:
         self.author = author
         self.db_dir = db_dir
+        self.parent_id = parent_id
+        self.remote_log = remote_log
+        self.copy_interval = copy_interval
+        self.remote_dir = remote_dir
         if create:
             _vault_operations.setup_database(
                 db_dir=db_dir, description=description, replace=True
             )
+        elif os.path.exists(db_dir):
+            if not os.path.isfile(
+                os.path.join(db_dir, constants.TABLEVAULT_IDENTIFIER)
+            ):
+                raise tv_errors.TVArgumentError(
+                    f"Path at {db_dir} is not a TableVault Repository"
+                )
         else:
-            # Ensure the directory exists and is writable by this user
-            if os.path.isdir(db_dir):
+            if remote_dir != "":
                 if not os.path.isfile(
-                    os.path.join(db_dir, constants.TABLEVAULT_IDENTIFIER)
+                    os.path.join(remote_dir, constants.TABLEVAULT_IDENTIFIER)
                 ):
                     raise tv_errors.TVArgumentError(
-                        f"Folder at {db_dir} is not a TableVault Repository"
+                        f"Path at {remote_dir} is not a TableVault Repository"
                     )
+                remote_save_process.initialize_local_from_remote(
+                    db_dir, remote_dir, remote_log
+                )
             else:
                 raise tv_errors.TVArgumentError(f"No folder found at {db_dir}")
+
         self.file_writer = CopyOnWriteFile(db_dir)
         if restart:
             _vault_operations.restart_database(
-                author=self.author, db_dir=self.db_dir, process_id="", file_writer=self.file_writer
+                author=self.author,
+                db_dir=self.db_dir,
+                process_id="",
+                file_writer=self.file_writer,
+                parent_id=parent_id,
             )
         if verbose:
             logging.basicConfig(level=logging.INFO)
+        if copy_interval is not None:
+            remote_save_process.setup_initial_backup(db_dir, remote_dir, remote_log)
+            pid = os.getpid()
+            process = multiprocessing.Process(
+                target=remote_save_process.run_backup_process,
+                args=(db_dir, remote_dir, remote_log, copy_interval, pid),
+            )
+            process.start()
         set_tv_lock(table_name="", instance_id="", db_dir=db_dir)
 
     def get_process_completion(self, process_id: str) -> bool:
@@ -423,6 +454,7 @@ class TableVault:
             db_dir=self.db_dir,
             process_id=process_id,
             file_writer=self.file_writer,
+            parent_id=self.parent_id,
         )
 
     def create_code_module(
@@ -462,6 +494,7 @@ class TableVault:
             process_id=process_id,
             db_dir=self.db_dir,
             file_writer=self.file_writer,
+            parent_id=self.parent_id,
         )
 
     def delete_code_module(self, module_name: str, process_id: str = "") -> str:
@@ -485,6 +518,7 @@ class TableVault:
             process_id=process_id,
             db_dir=self.db_dir,
             file_writer=self.file_writer,
+            parent_id=self.parent_id,
         )
 
     def create_builder_file(
@@ -532,6 +566,7 @@ class TableVault:
             process_id=process_id,
             db_dir=self.db_dir,
             file_writer=self.file_writer,
+            parent_id=self.parent_id,
         )
 
     def delete_builder_file(
@@ -567,6 +602,7 @@ class TableVault:
             process_id=process_id,
             db_dir=self.db_dir,
             file_writer=self.file_writer,
+            parent_id=self.parent_id,
         )
 
     def rename_table(
@@ -595,6 +631,7 @@ class TableVault:
             process_id=process_id,
             db_dir=self.db_dir,
             file_writer=self.file_writer,
+            parent_id=self.parent_id,
         )
 
     def delete_table(self, table_name: str, process_id: str = "") -> str:
@@ -620,6 +657,7 @@ class TableVault:
             process_id=process_id,
             db_dir=self.db_dir,
             file_writer=self.file_writer,
+            parent_id=self.parent_id,
         )
 
     def delete_instance(
@@ -650,6 +688,7 @@ class TableVault:
             process_id=process_id,
             db_dir=self.db_dir,
             file_writer=self.file_writer,
+            parent_id=self.parent_id,
         )
 
     def write_instance(
@@ -702,6 +741,7 @@ class TableVault:
             process_id=process_id,
             db_dir=self.db_dir,
             file_writer=self.file_writer,
+            parent_id=self.parent_id,
         )
 
     def execute_instance(
@@ -743,6 +783,7 @@ class TableVault:
             db_dir=self.db_dir,
             background=background,
             file_writer=self.file_writer,
+            parent_id=self.parent_id,
         )
 
     def create_instance(
@@ -803,6 +844,7 @@ class TableVault:
             process_id=process_id,
             db_dir=self.db_dir,
             file_writer=self.file_writer,
+            parent_id=self.parent_id,
         )
 
     def create_table(
@@ -846,6 +888,7 @@ class TableVault:
             db_dir=self.db_dir,
             description=description,
             file_writer=self.file_writer,
+            parent_id=self.parent_id,
         )
 
     def generate_process_id(self) -> str:

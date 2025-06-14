@@ -9,6 +9,7 @@ from tablevault._table_reference.table_reference import (
 from tablevault._defintions import constants, tv_errors, types
 from tablevault._dataframe_helper.artifact import apply_artifact_path
 from tablevault._helper.copy_write_file import CopyOnWriteFile
+import logging
 
 
 class TVBuilder(BaseModel):
@@ -86,6 +87,7 @@ class TVBuilder(BaseModel):
         instance_id: str,
         table_name: str,
         db_dir: str,
+        process_id: str,
         index: Optional[int] = None,
         arguments: bool = False,
     ) -> None:
@@ -94,11 +96,14 @@ class TVBuilder(BaseModel):
                 continue
             if attr != constants.BUILDER_DEPENDENCIES:
                 val_ = get_table_result(val, cache, index)
-                val_ = apply_artifact_path(val_, instance_id, table_name, db_dir)
+                val_ = apply_artifact_path(
+                    val_, instance_id, table_name, db_dir, process_id
+                )
                 try:
                     setattr(self, attr, val_)
                 except Exception as e:
-                    print(e)
+                    logger = logging.getLogger(__name__)
+                    logger.info(f"Immutable Object {e}")
                     continue
 
 

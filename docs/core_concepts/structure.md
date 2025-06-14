@@ -1,6 +1,6 @@
 # Repository Structure
 
-The TableVault repository stores and organizes all data and code transparently within your local file system. This design allows you to view files directly and simpy transfer in-progress workflows across devices.
+The TableVault repository stores and organizes all data and code transparently within your local file system. This design allows you to view files directly and simply transfer in-progress workflows across devices.
 
 ---
 

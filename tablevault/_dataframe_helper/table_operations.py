@@ -132,7 +132,7 @@ def get_table(
     file_writer: CopyOnWriteFile = None,
 ) -> pd.DataFrame:
     if file_writer is None:
-        file_writer = CopyOnWriteFile(db_dir=db_dir)
+        file_writer = CopyOnWriteFile(db_dir=db_dir, check_hardlink=False)
 
     table_dir = os.path.join(db_dir, table_name)
     table_dir = os.path.join(table_dir, instance_id)
@@ -231,12 +231,10 @@ def save_new_columns(
     instance_id: str,
     table_name: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
     primary_key: Optional[list[str]] = None,
     keep_old: bool = False,
-    file_writer: CopyOnWriteFile = None,
 ) -> bool:
-    if file_writer is None:
-        file_writer = CopyOnWriteFile(db_dir)
     df = get_table(
         instance_id,
         table_name,
@@ -428,12 +426,10 @@ def make_df(
     instance_id: str,
     table_name: str,
     db_dir: str,
+    file_writer: CopyOnWriteFile,
     primary_key: Optional[list[str]] = None,
     keep_old: bool = False,
-    file_writer: CopyOnWriteFile = None,
 ) -> bool:
-    if file_writer is None:
-        file_writer = CopyOnWriteFile(db_dir)
     file_dir = os.path.join(db_dir, table_name, instance_id)
     pkl_files = [f for f in os.listdir(file_dir) if f.endswith(".df.pkl")]
     if not pkl_files:

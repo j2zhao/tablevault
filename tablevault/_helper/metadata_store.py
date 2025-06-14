@@ -48,6 +48,34 @@ def _is_string_in_file(filepath, search_string):
             return mm.find(search_bytes) != -1
 
 
+def check_top_process(process_id, active_ids) -> tuple[bool, str]:
+    string_set = set(active_ids)
+    parts = process_id.split("_")
+    if len(parts) <= 1:
+        return True, process_id
+    for i in range(1, len(parts)):
+        prefix = "_".join(parts[:i])
+        if prefix in string_set:
+            return False, prefix
+    return True, process_id
+
+
+def get_top_level_proccesses(active_ids) -> list[str]:
+    string_set = set(active_ids)
+    result = []
+    for s in active_ids:
+        parts = s.split("_")
+        is_shortest_prefix = True
+        for i in range(1, len(parts)):
+            prefix = "_".join(parts[:i])
+            if prefix in string_set:
+                is_shortest_prefix = False
+                break
+        if is_shortest_prefix:
+            result.append(s)
+    return result
+
+
 class MetadataStore:
     def _save_active_logs(self, logs: ActiveProcessDict) -> None:
         logs = _serialize_active_logs(logs)
@@ -531,7 +559,12 @@ class MetadataStore:
             if process_id not in logs:
                 raise TVProcessError("Process not currently active.")
             if logs[process_id].operation == constants.STOP_PROCESS_OP:
-                raise TVArgumentError("Cannot stop another stop_process operation")
+                raise TVArgumentError(
+                    f"Cannot stop another stop_process operation. Instead rerun it with its process_id ({process_id})"
+                )
+            check, _ = check_top_process(process_id, list(logs.keys()))
+            if not check:
+                raise TVArgumentError("Only can stop top-level processes.")
             old_pid = logs[process_id].pid
             if old_pid != pid:
                 try:

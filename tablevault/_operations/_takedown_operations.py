@@ -91,9 +91,7 @@ def takedown_delete_instance(
         file_operations.copy_temp_to_db(process_id, db_metadata.db_dir, file_writer)
         db_locks.make_lock_path(log.data["table_name"], log.data["instance_id"])
     if log.execution_success is True:
-        db_locks.delete_lock_path(
-            log.data["table_name"], log.data["instance_id"]
-        )
+        db_locks.delete_lock_path(log.data["table_name"], log.data["instance_id"])
     file_operations.delete_from_temp(process_id, db_metadata.db_dir, file_writer)
     db_locks.release_all_locks()
 
@@ -224,8 +222,8 @@ def takedown_create_instance(
         file_operations.delete_table_folder_2(
             log.data["table_name"],
             db_metadata.db_dir,
-            log.data["instance_id"],
             file_writer,
+            log.data["instance_id"],
         )
     if log.start_success is False or log.execution_success is False:
         if "table_name" in log.data and "instance_id" in log.data:
@@ -248,7 +246,7 @@ def takedown_create_table(
     if log.execution_success is False:
         try:
             file_operations.delete_table_folder_2(
-                log.data["table_name"], db_metadata.db_dir, file_writer, file_writer
+                log.data["table_name"], db_metadata.db_dir, file_writer
             )
         except FileNotFoundError:
             pass
@@ -273,7 +271,7 @@ def takedown_stop_process(
     db_locks: DatabaseLock,
     file_writer: CopyOnWriteFile,
 ):
-    pass
+    db_locks.release_all_locks()
 
 
 TAKEDOWN_MAP = {

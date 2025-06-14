@@ -21,7 +21,7 @@ class ColumnBuilder(TVBuilder):
     ) -> None:
         try:
             self.transform_table_string(
-                cache, instance_id, table_name, db_dir, index=None
+                cache, instance_id, table_name, db_dir, process_id, index=None
             )
             if not self.is_custom:
                 funct = utils.get_function_from_module(
@@ -35,9 +35,9 @@ class ColumnBuilder(TVBuilder):
                     self.python_function,
                     self.code_module,
                     db_dir,
+                    file_writer,
                     instance_id,
                     table_name,
-                    file_writer,
                 )
             if (
                 self.return_type == constants.BUILDER_RTYPE_ROWWISE
@@ -55,6 +55,7 @@ class ColumnBuilder(TVBuilder):
                                 instance_id,
                                 table_name,
                                 db_dir,
+                                process_id,
                                 file_writer,
                             ),
                             indices,
@@ -66,11 +67,27 @@ class ColumnBuilder(TVBuilder):
             ):
                 for i in range(len(cache[constants.TABLE_SELF])):
                     _execute_code_from_builder(
-                        i, self, funct, cache, instance_id, table_name, db_dir, file_writer=file_writer
+                        i,
+                        self,
+                        funct,
+                        cache,
+                        instance_id,
+                        table_name,
+                        db_dir,
+                        process_id,
+                        file_writer=file_writer,
                     )
             else:
                 _execute_code_from_builder(
-                    None, self, funct, cache, instance_id, table_name, db_dir, file_writer=file_writer
+                    None,
+                    self,
+                    funct,
+                    cache,
+                    instance_id,
+                    table_name,
+                    db_dir,
+                    process_id,
+                    file_writer=file_writer,
                 )
         finally:
             table_operations.make_df(
@@ -86,6 +103,7 @@ def _execute_code_from_builder(
     instance_id: str,
     table_name: str,
     db_dir: str,
+    process_id: str,
     file_writer: CopyOnWriteFile,
 ) -> None:
     if index is not None:
@@ -102,7 +120,7 @@ def _execute_code_from_builder(
             return
     builder = builder.model_copy(deep=True)
     builder.transform_table_string(
-        cache, instance_id, table_name, db_dir, index, arguments=True
+        cache, instance_id, table_name, db_dir, process_id, index, arguments=True
     )
     results = funct(**builder.arguments)
     if index is not None and builder.return_type == constants.BUILDER_RTYPE_ROWWISE:

@@ -10,6 +10,7 @@ from tablevault._helper.file_operations import load_code_function, move_code_to_
 from concurrent.futures import ThreadPoolExecutor
 from tablevault._defintions import tv_errors
 from tablevault._helper.copy_write_file import CopyOnWriteFile
+from tablevault._helper.database_lock import DatabaseLock
 
 
 class IndexBuilder(TVBuilder):
@@ -32,8 +33,10 @@ class IndexBuilder(TVBuilder):
     ) -> bool:
         diff_flag = None
         try:
+            db_lock = DatabaseLock(process_id, db_dir)
+            db_lock.release_all_locks(constants.REMOTE_LOCK)
             self.transform_table_string(
-                cache, instance_id, table_name, db_dir, index=None
+                cache, instance_id, table_name, db_dir, process_id, index=None
             )
             if not set(self.primary_key).issubset(self.changed_columns):
                 raise tv_errors.TVArgumentError(
@@ -51,9 +54,9 @@ class IndexBuilder(TVBuilder):
                     self.python_function,
                     self.code_module,
                     db_dir,
+                    file_writer,
                     instance_id,
                     table_name,
-                    file_writer,
                 )
             if (
                 self.return_type == constants.BUILDER_RTYPE_ROWWISE
@@ -71,6 +74,7 @@ class IndexBuilder(TVBuilder):
                                 instance_id,
                                 table_name,
                                 db_dir,
+                                process_id,
                                 file_writer,
                             ),
                             indices,
@@ -82,20 +86,41 @@ class IndexBuilder(TVBuilder):
             ):
                 for i in list(range(len(cache[constants.TABLE_SELF]))):
                     _execute_code_from_builder(
-                        i, self, funct, cache, instance_id, table_name, db_dir, file_writer=file_writer
+                        i,
+                        self,
+                        funct,
+                        cache,
+                        instance_id,
+                        table_name,
+                        db_dir,
+                        process_id,
+                        file_writer=file_writer,
                     )
             else:
                 diff_flag = _execute_code_from_builder(
-                    None, self, funct, cache, instance_id, table_name, db_dir, file_writer=file_writer
+                    None,
+                    self,
+                    funct,
+                    cache,
+                    instance_id,
+                    table_name,
+                    db_dir,
+                    process_id,
+                    file_writer=file_writer,
                 )
         finally:
+            db_lock.acquire_shared_lock(
+                constants.REMOTE_LOCK,
+                timeout=None,
+                check_interval=constants.REMOTE_CHECK_INTERVAL,
+            )
             output = table_operations.make_df(
                 instance_id,
                 table_name,
                 db_dir,
+                file_writer=file_writer,
                 primary_key=self.primary_key,
                 keep_old=self.keep_old,
-                file_writer=file_writer,
             )
             if diff_flag is None:
                 diff_flag = output
@@ -110,15 +135,20 @@ def _execute_code_from_builder(
     instance_id: str,
     table_name: str,
     db_dir: str,
+    process_id: str,
     file_writer: CopyOnWriteFile,
 ) -> None:
     builder = builder.model_copy(deep=True)
     builder.transform_table_string(
-        cache, instance_id, table_name, db_dir, index, arguments=True
+        cache, instance_id, table_name, db_dir, process_id, index, arguments=True
     )
-
     results = funct(**builder.arguments)
-
+    db_lock = DatabaseLock(process_id, db_dir)
+    lock = db_lock.acquire_shared_lock(
+        constants.REMOTE_LOCK,
+        timeout=None,
+        check_interval=constants.REMOTE_CHECK_INTERVAL,
+    )
     if index is not None and builder.return_type == constants.BUILDER_RTYPE_ROWWISE:
         if len(builder.changed_columns) == 1:
             table_operations.write_df_entry(
@@ -141,6 +171,7 @@ def _execute_code_from_builder(
                     db_dir,
                     file_writer,
                 )
+        db_lock.release_lock(lock)
     elif builder.return_type == constants.BUILDER_RTYPE_GENERATOR:
         for index, results_ in results:
             if len(builder.changed_columns) == 1:
@@ -164,6 +195,7 @@ def _execute_code_from_builder(
                         db_dir,
                         file_writer,
                     )
+        db_lock.release_lock(lock)
     elif builder.return_type == constants.BUILDER_RTYPE_DATAFRAME:
         diff_flag = table_operations.save_new_columns(
             results,
@@ -171,10 +203,12 @@ def _execute_code_from_builder(
             instance_id,
             table_name,
             db_dir,
+            file_writer=file_writer,
             primary_key=builder.primary_key,
             keep_old=builder.keep_old,
-            file_writer=file_writer,
         )
+        db_lock.release_lock(lock)
         return diff_flag
     else:
+        db_lock.release_lock(lock)
         raise tv_errors.TVBuilderError("return_type not recognized")
