@@ -44,7 +44,6 @@ nav:
     - Workflow with Artifacts: workflows/workflow_artifacts.md
     - Handling Execution Errors: workflows/errors.md
     - Workflow with Agents [Future]: workflows/agents.md
-    - TableVault on Google Colab [Future]: workflows/colab.md
   - Colab Notebook Examples:
     - OpenAI API Call: https://colab.research.google.com/drive/1vHg5Vb8r1Zax2pKLOX6phPEuIDVhFctC
     - Local LLM Execution: https://colab.research.google.com/drive/1X4tFpPSfMnQ_Ch0nSNUTmiEcT0Eo40Uj
