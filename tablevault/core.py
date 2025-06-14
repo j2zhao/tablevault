@@ -54,6 +54,7 @@ class TableVault:
         remote_dir: str = "",
         remote_log: str = constants.REMOTE_LOG_FILE,
         copy_interval: int = None,
+        init_from_remote: bool = False,
         remote_compress: bool = False,
         parent_id: str = "",
     ) -> None:
@@ -67,7 +68,7 @@ class TableVault:
             _vault_operations.setup_database(
                 db_dir=db_dir, description=description, replace=True
             )
-        elif os.path.exists(db_dir):
+        elif os.path.exists(db_dir) and not init_from_remote:
             if not os.path.isfile(
                 os.path.join(db_dir, constants.TABLEVAULT_IDENTIFIER)
             ):
@@ -75,7 +76,7 @@ class TableVault:
                     f"Path at {db_dir} is not a TableVault Repository"
                 )
         else:
-            if remote_dir != "":
+            if remote_dir != "" and init_from_remote:
                 if not os.path.isfile(
                     os.path.join(remote_dir, constants.TABLEVAULT_IDENTIFIER)
                 ):
@@ -87,8 +88,10 @@ class TableVault:
                 )
             else:
                 raise tv_errors.TVArgumentError(f"No folder found at {db_dir}")
-
-        self.file_writer = CopyOnWriteFile(db_dir)
+        if remote_dir == "":
+            self.file_writer = CopyOnWriteFile(db_dir)
+        else:
+            self.file_writer = CopyOnWriteFile(db_dir, has_hardlink=False)
         if restart:
             _vault_operations.restart_database(
                 author=self.author,
