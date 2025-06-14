@@ -8,19 +8,25 @@ from tablevault._helper.utils import gen_tv_id
 from pathlib import Path
 
 
-def initialize_local_from_remote(local_db_dir, remote_db_dir, log_file_path):
-    _remote_save_helper.compress_and_copy(remote_db_dir, local_db_dir, log_file_path)
+def initialize_local_from_remote(local_db_dir, remote_db_dir, log_file, compress=True):
+    if compress:
+        _remote_save_helper.compress_and_copy(remote_db_dir, local_db_dir, log_file)
+    else:
+        _remote_save_helper.rsync_to_drive(remote_db_dir, local_db_dir, log_file)
 
 
-def setup_initial_backup(local_db_dir, remote_db_dir, log_file):
+def setup_initial_backup(local_db_dir, remote_db_dir, log_file, compress):
     logger = _remote_save_helper.configure_file_logger(Path(log_file))
     logger.info("===== STARTING BACKUP PROCESS =====")
-    _remote_save_helper.compress_and_copy(local_db_dir, remote_db_dir, log_file)
+    if compress:
+        _remote_save_helper.compress_and_copy(local_db_dir, remote_db_dir, log_file)
+    else:
+        _remote_save_helper.rsync_to_drive(local_db_dir, remote_db_dir, log_file)
     logger.info("===== FINISHED INITIAL BACKUP =====")
 
 
 def run_backup_process(
-    db_dir, drive_parent_dir, log_file, interval_seconds, parent_pid
+    local_db_dir, remote_db_dir, log_file, interval_seconds, parent_pid
 ):
     logger = _remote_save_helper.configure_file_logger(Path(log_file))
     logger.info("===== STARTING RECURRING BACKUP =====")
@@ -33,14 +39,14 @@ def run_backup_process(
         time.sleep(interval_seconds)
         logger.info("Sync Check Heartbeat...")
         process_id = gen_tv_id()
-        db_locks = DatabaseLock(process_id, db_dir)
+        db_locks = DatabaseLock(process_id, local_db_dir)
         try:
             db_locks.acquire_exclusive_lock(
                 constants.REMOTE_LOCK,
                 timeout=interval_seconds // 4,
                 check_interval=constants.REMOTE_CHECK_INTERVAL,
             )
-            _remote_save_helper.rsync_to_drive(db_dir, drive_parent_dir, log_file)
+            _remote_save_helper.rsync_to_drive(local_db_dir, remote_db_dir, log_file)
         except tv_errors.TVLockError:
             logger.info("Couldn't get remote lock - passing this save.")
         finally:

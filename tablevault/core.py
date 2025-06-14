@@ -54,6 +54,7 @@ class TableVault:
         remote_dir: str = "",
         remote_log: str = constants.REMOTE_LOG_FILE,
         copy_interval: int = None,
+        remote_compress: bool = False,
         parent_id: str = "",
     ) -> None:
         self.author = author
@@ -82,7 +83,7 @@ class TableVault:
                         f"Path at {remote_dir} is not a TableVault Repository"
                     )
                 remote_save_process.initialize_local_from_remote(
-                    db_dir, remote_dir, remote_log
+                    db_dir, remote_dir, remote_log, remote_compress
                 )
             else:
                 raise tv_errors.TVArgumentError(f"No folder found at {db_dir}")
@@ -99,7 +100,9 @@ class TableVault:
         if verbose:
             logging.basicConfig(level=logging.INFO)
         if copy_interval is not None:
-            remote_save_process.setup_initial_backup(db_dir, remote_dir, remote_log)
+            remote_save_process.setup_initial_backup(
+                db_dir, remote_dir, remote_log, remote_compress
+            )
             pid = os.getpid()
             process = multiprocessing.Process(
                 target=remote_save_process.run_backup_process,
