@@ -146,6 +146,7 @@ def tablevault_operation(
             setup_kwargs["db_metadata"] = db_metadata
             setup_kwargs["process_id"] = process_id
             setup_kwargs["file_writer"] = file_writer
+            setup_kwargs["author"] = author
             setup_kwargs = filter_by_function_args(setup_kwargs, SETUP_MAP[op_name])
             funct_kwargs = SETUP_MAP[op_name](**setup_kwargs)
         except tv_errors.TableVaultError as e:

@@ -440,13 +440,13 @@ Prints a JSON dictionary of active processes.
 
 -----
 
-### `get-instances`
+### `get-table-instances`
 
 ```bash
-tablevault get-instances <TABLE_NAME> [OPTIONS]
+tablevault get-table-instances <TABLE_NAME> [OPTIONS]
 ```
 
-List instance IDs for a specific table and version.
+List table names or instance IDs for a specific table and version.
 
 | Argument | Type | Description |
 | :--- | :--- | :--- |
@@ -455,6 +455,7 @@ List instance IDs for a specific table and version.
 | Option | Type | Description | Default |
 | :--- | :--- | :--- | :--- |
 | `--version` | `TEXT` | Version of the table. | `base` |
+| `--temp / --temp` | | Include non-materialized instances. | `--code-files` |
 | `-h, --help`| | Show this message and exit. | |
 
 **Output:**

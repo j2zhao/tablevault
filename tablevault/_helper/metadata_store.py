@@ -500,6 +500,8 @@ class MetadataStore:
     ) -> None | list[str]:
         with self.lock:
             table_history = self._get_table_history()
+            if table_name == "":
+                return list(table_history.keys())
             if table_name not in table_history:
                 return None
             instances = list(table_history[table_name].keys())

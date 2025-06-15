@@ -283,6 +283,7 @@ def _materialize_instance(
     dtypes: dict[str, str],
     success: bool,
     dependencies: list[tuple[str, str]],
+    author: str,
     db_metadata: MetadataStore,
     file_writer: CopyOnWriteFile,
 ):
@@ -317,7 +318,7 @@ def _materialize_instance(
     )
     instance_descript[constants.DESCRIPTION_SUCCESS] = success
     instance_descript[constants.DESCRIPTION_DEPENDENCIES] = dependencies
-
+    instance_descript[constants.DESCRIPTION_AUTHOR] = author
     file_operations.write_description(
         instance_descript, perm_instance_id, table_name, db_metadata.db_dir, file_writer
     )

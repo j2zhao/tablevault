@@ -413,24 +413,25 @@ Retrieves a RichTree object representation of the repository.
 
 ---
 
-### `get_instances()`
+### `get_table_instances()`
 
 ```python
-def get_instances(
+def get_table_instances(
     self,
     table_name: str,
     version: str = "base",
 ) -> list[str]:
 ```
 
-Retrieves a list of instance IDs for a specific table and version.
+Retrieves a list of table names, or instance IDs for a specific table and version.
 
-| Parameter    | Type  | Description           | Default                        |
-| ------------ | ----- | --------------------- | ------------------------------ |
-| `table_name` | `str` | Name of the table.    | –                              |
-| `version`    | `str` | Version of the table. | `"base"`                         |
+| Parameter    | Type  | Description                         | Default                        |
+| ------------ | ----- | ----------------------------------- | ------------------------------ |
+| `table_name` | `str` | Name of the table.                  | –                              |
+| `version`    | `str` | Version of the table.               | `"base"`                       |
+| `version`    | `str` | Include non-materialized instances. | `False`                        |
 
-**Returns** → `list[str]` – instance IDs for this table/version.
+**Returns** → `list[str]` – instance IDs or table names.
 
 ---
 

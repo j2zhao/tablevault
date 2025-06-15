@@ -98,6 +98,7 @@ TABLE_SIDE_EFFECTS = "side_effects"
 DESCRIPTION_SUMMARY = "summary"
 DESCRIPTION_ORIGIN = "origin"
 DESCRIPTION_EDIT = "external_edit"
+DESCRIPTION_AUTHOR = "author"
 
 DESCRIPTION_DEPENDENCIES = "dependencies"
 DESCRIPTION_FUTURE = "future_version"

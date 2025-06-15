@@ -148,30 +148,34 @@ class TableVault:
         """
         return _get_operations.get_active_processes(db_dir=self.db_dir)
 
-    def get_instances(
+    def get_table_instances(
         self,
-        table_name: str,
+        table_name: str = "",
         version: str = constants.BASE_TABLE_VERSION,
+        include_temp:bool = False
     ) -> list[str]:
-        """Retrieves a list of instance IDs for a specific table and version.
+        """Retrieves a list of table names, or instance IDs for a specific table and version.
 
         Parameters
         ----------
         table_name : str
-            Name of the table whose instances are requested.
+            Name of the table whose instances are requested. If 
         version : str, optional
-            Version of the table. Defaults to `BASE_TABLE_VERSION`.
-
+            Version of the table. Defaults to `base` if table name is given
+        include_temp : bool
+            Include non-materialized instances. Defaults to False.
         Returns
         -------
         list[str]
-            Instance IDs that have been materialised for this table/version.
+            List of Instance IDs or table names.
         """
-        return _get_operations.get_instances(
+        return _get_operations.get_table_instances(
             table_name=table_name,
             version=version,
             db_dir=self.db_dir,
+            include_temp=include_temp,
         )
+    
 
     def get_descriptions(self, instance_id: str = "", table_name: str = "") -> dict:
         """Retrieves description dictionary for specified item in the database.

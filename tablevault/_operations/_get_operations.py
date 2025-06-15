@@ -38,13 +38,14 @@ def get_active_processes(db_dir: str):
     return db_metadata.get_active_processes()
 
 
-def get_instances(
+def get_table_instances(
     table_name: str,
     version: str,
     db_dir: str,
+    include_temp:bool,
 ):
     db_metadata = MetadataStore(db_dir)
-    return db_metadata.get_table_instances(table_name, version, include_temp=False)
+    return db_metadata.get_table_instances(table_name, version, include_temp)
 
 
 def get_descriptions(

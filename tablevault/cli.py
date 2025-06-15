@@ -150,14 +150,16 @@ def get_active_processes_cmd(ctx: click.Context):
     _echo(vault.get_active_processes())
 
 
-@cli.command("get-instances")
-@click.argument("table_name")
+@cli.command("get-table-instances")
+@click.argument("--table_name", default="", help="Table name.")
 @click.option("--version", default=constants.BASE_TABLE_VERSION, help="Table version.")
-@click.pass_context
-def get_instances_cmd(ctx: click.Context, table_name: str, version: str):
-    """List instance IDs for a specific table and version."""
+@click.option(
+    "--temp/--no-temp", default=False, help="Include temp instances."
+)@click.pass_context
+def get_instances_cmd(ctx: click.Context, table_name: str, version: str, temp: bool):
+    """List table name or instance IDs for a specific table and version."""
     vault = _get_vault(ctx)
-    _echo(vault.get_instances(table_name=table_name, version=version))
+    _echo(vault.get_table_instances(table_name=table_name, version=version, include_temp=temp))
 
 
 # --- Metadata helpers ----------------------------------------------------------
