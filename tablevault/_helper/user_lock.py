@@ -3,37 +3,20 @@ import stat
 from tablevault._defintions import constants
 from typing import Optional
 from tablevault._defintions import tv_errors
-from tablevault._helper.external_drive_check import is_on_separate_mount
+# from tablevault._helper.external_drive_check import is_on_separate_mount
 
 
 def _can_program_modify_permissions(filepath: str) -> bool:
     if os.name == "nt":
         return False
-    if is_on_separate_mount(filepath):
-        return False
+    # if is_on_separate_mount(filepath):
+    #     return False
     current_euid = os.geteuid()
     if current_euid == 0:
         return True
     file_stat = os.stat(filepath)
     file_owner_uid = file_stat.st_uid
     return current_euid == file_owner_uid
-
-
-def _check_all_open(path: str, require_exec: bool = True) -> bool:
-    failures: list[str] = []
-    want = os.R_OK | os.W_OK | (os.X_OK if require_exec else 0)
-
-    for root, dirs, files in os.walk(path):
-        # Include the directory itself, subdirs, and files
-        for entry in [
-            root,
-            *[os.path.join(root, d) for d in dirs],
-            *[os.path.join(root, f) for f in files],
-        ]:
-            if not os.access(entry, want):
-                failures.append(entry)
-
-    return len(failures) == 0
 
 
 def _set_not_writable(

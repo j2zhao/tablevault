@@ -12,8 +12,8 @@ import logging
 import shutil
 from rich.tree import Tree
 from tablevault._helper.copy_write_file import CopyOnWriteFile
-from tablevault._remote_helper import remote_save_process
-import multiprocessing
+# from tablevault._remote_helper import remote_save_process
+# import multiprocessing
 
 
 class TableVault:
@@ -39,8 +39,6 @@ class TableVault:
         Defaults to ``False``.
     verbose : bool, optional
         If ``True``, prints detailed logs of every operation. Defaults to ``True``.
-    is_remote : bool, optional
-        If ``True``, does not lock Files. Defaults to ``False``.
     """
 
     def __init__(
@@ -51,24 +49,16 @@ class TableVault:
         create: bool = False,
         restart: bool = False,
         verbose: bool = True,
-        remote_dir: str = "",
-        remote_log: str = constants.REMOTE_LOG_FILE,
-        copy_interval: int = None,
-        init_from_remote: bool = False,
-        remote_compress: bool = False,
         parent_id: str = "",
     ) -> None:
         self.author = author
         self.db_dir = db_dir
         self.parent_id = parent_id
-        self.remote_log = remote_log
-        self.copy_interval = copy_interval
-        self.remote_dir = remote_dir
         if create:
             _vault_operations.setup_database(
                 db_dir=db_dir, description=description, replace=True
             )
-        elif os.path.exists(db_dir) and not init_from_remote:
+        elif os.path.exists(db_dir):
             if not os.path.isfile(
                 os.path.join(db_dir, constants.TABLEVAULT_IDENTIFIER)
             ):
@@ -76,22 +66,8 @@ class TableVault:
                     f"Path at {db_dir} is not a TableVault Repository"
                 )
         else:
-            if remote_dir != "" and init_from_remote:
-                if not os.path.isfile(
-                    os.path.join(remote_dir, constants.TABLEVAULT_IDENTIFIER)
-                ):
-                    raise tv_errors.TVArgumentError(
-                        f"Path at {remote_dir} is not a TableVault Repository"
-                    )
-                remote_save_process.initialize_local_from_remote(
-                    db_dir, remote_dir, remote_log, remote_compress
-                )
-            else:
-                raise tv_errors.TVArgumentError(f"No folder found at {db_dir}")
-        if remote_dir == "":
-            self.file_writer = CopyOnWriteFile(db_dir)
-        else:
-            self.file_writer = CopyOnWriteFile(db_dir, has_hardlink=False)
+            raise tv_errors.TVArgumentError(f"No folder found at {db_dir}")
+        self.file_writer = CopyOnWriteFile(db_dir)
         if restart:
             _vault_operations.restart_database(
                 author=self.author,
@@ -102,16 +78,6 @@ class TableVault:
             )
         if verbose:
             logging.basicConfig(level=logging.INFO)
-        if copy_interval is not None:
-            remote_save_process.setup_initial_backup(
-                db_dir, remote_dir, remote_log, remote_compress
-            )
-            pid = os.getpid()
-            process = multiprocessing.Process(
-                target=remote_save_process.run_backup_process,
-                args=(db_dir, remote_dir, remote_log, copy_interval, pid),
-            )
-            process.start()
         set_tv_lock(table_name="", instance_id="", db_dir=db_dir)
 
     def get_process_completion(self, process_id: str) -> bool:
