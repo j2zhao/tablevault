@@ -894,9 +894,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#get_instances" class="md-nav__link">
+  <a href="#get_table_instances" class="md-nav__link">
     <span class="md-ellipsis">
-      get_instances()
+      get_table_instances()
     </span>
   </a>
   
@@ -1506,9 +1506,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#get_instances" class="md-nav__link">
+  <a href="#get_table_instances" class="md-nav__link">
     <span class="md-ellipsis">
-      get_instances()
+      get_table_instances()
     </span>
   </a>
   
@@ -1704,7 +1704,7 @@
 <td><code>verbose</code></td>
 <td><code>bool</code></td>
 <td>If <strong>True</strong>, prints detailed logs of every operation.</td>
-<td><code>True</code></td>
+<td><code>False</code></td>
 </tr>
 </tbody>
 </table>
@@ -2438,14 +2438,14 @@ Retrieves a RichTree object representation of the repository.</p>
 </table>
 <p><strong>Returns</strong> → <code>rich.tree.Tree</code> – printable file-tree representation.</p>
 <hr />
-<h3 id="get_instances"><code>get_instances()</code></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_instances</span><span class="p">(</span>
+<h3 id="get_table_instances"><code>get_table_instances()</code></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_table_instances</span><span class="p">(</span>
 </span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    <span class="bp">self</span><span class="p">,</span>
 </span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    <span class="n">table_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
 </span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span>
 </span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
 </span></code></pre></div>
-<p>Retrieves a list of instance IDs for a specific table and version.</p>
+<p>Retrieves a list of table names, or instance IDs for a specific table and version.</p>
 <table>
 <thead>
 <tr>
@@ -2468,9 +2468,15 @@ Retrieves a RichTree object representation of the repository.</p>
 <td>Version of the table.</td>
 <td><code>"base"</code></td>
 </tr>
+<tr>
+<td><code>version</code></td>
+<td><code>str</code></td>
+<td>Include non-materialized instances.</td>
+<td><code>False</code></td>
+</tr>
 </tbody>
 </table>
-<p><strong>Returns</strong> → <code>list[str]</code> – instance IDs for this table/version.</p>
+<p><strong>Returns</strong> → <code>list[str]</code> – instance IDs or table names.</p>
 <hr />
 <h3 id="get_active_processes"><code>get_active_processes()</code></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_active_processes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ActiveProcessDict</span><span class="p">:</span>

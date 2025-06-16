@@ -926,9 +926,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#get-instances" class="md-nav__link">
+  <a href="#get-table-instances" class="md-nav__link">
     <span class="md-ellipsis">
-      get-instances
+      get-table-instances
     </span>
   </a>
   
@@ -1515,9 +1515,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#get-instances" class="md-nav__link">
+  <a href="#get-table-instances" class="md-nav__link">
     <span class="md-ellipsis">
-      get-instances
+      get-table-instances
     </span>
   </a>
   
@@ -2460,10 +2460,10 @@ Prints <code>True</code> or <code>False</code>.</p>
 <p><strong>Output:</strong>
 Prints a JSON dictionary of active processes.</p>
 <hr />
-<h3 id="get-instances"><code>get-instances</code></h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>tablevault<span class="w"> </span>get-instances<span class="w"> </span>&lt;TABLE_NAME&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
+<h3 id="get-table-instances"><code>get-table-instances</code></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>tablevault<span class="w"> </span>get-table-instances<span class="w"> </span>&lt;TABLE_NAME&gt;<span class="w"> </span><span class="o">[</span>OPTIONS<span class="o">]</span>
 </span></code></pre></div>
-<p>List instance IDs for a specific table and version.</p>
+<p>List table names or instance IDs for a specific table and version.</p>
 <table>
 <thead>
 <tr>
@@ -2495,6 +2495,12 @@ Prints a JSON dictionary of active processes.</p>
 <td style="text-align: left;"><code>TEXT</code></td>
 <td style="text-align: left;">Version of the table.</td>
 <td style="text-align: left;"><code>base</code></td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>--temp / --temp</code></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">Include non-materialized instances.</td>
+<td style="text-align: left;"><code>--code-files</code></td>
 </tr>
 <tr>
 <td style="text-align: left;"><code>-h, --help</code></td>
