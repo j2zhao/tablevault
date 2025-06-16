@@ -14,7 +14,7 @@ from tablevault._helper.database_lock import DatabaseLock
 
 
 class IndexBuilder(TVBuilder):
-    primary_key: list[Union[str, TableReference]] = Field(
+    primary_key: Union[TableReference, list[Union[str, TableReference]]] = Field(
         default=[],
         description="Specifies the output column names that index the table.",
     )
@@ -120,7 +120,6 @@ class IndexBuilder(TVBuilder):
                 db_dir,
                 file_writer=file_writer,
                 primary_key=self.primary_key,
-                keep_old=self.keep_old,
             )
             if diff_flag is None:
                 diff_flag = output
@@ -173,28 +172,31 @@ def _execute_code_from_builder(
                 )
         db_lock.release_lock(lock)
     elif builder.return_type == constants.BUILDER_RTYPE_GENERATOR:
-        for index, results_ in results:
-            if len(builder.changed_columns) == 1:
-                table_operations.write_df_entry(
-                    results_,
-                    index,
-                    builder.changed_columns[0],
-                    instance_id,
-                    table_name,
-                    db_dir,
-                    file_writer,
-                )
-            else:
-                for i, result in enumerate(results_):
+        try:
+            for index, results_ in enumerate(results):
+                if len(builder.changed_columns) == 1:
                     table_operations.write_df_entry(
-                        result,
+                        results_,
                         index,
-                        builder.changed_columns[i],
+                        builder.changed_columns[0],
                         instance_id,
                         table_name,
                         db_dir,
                         file_writer,
                     )
+                else:
+                    for i, result in enumerate(results_):
+                        table_operations.write_df_entry(
+                            result,
+                            index,
+                            builder.changed_columns[i],
+                            instance_id,
+                            table_name,
+                            db_dir,
+                            file_writer,
+                        )
+        except ValueError as e:
+            raise tv_errors.TVBuilderError(f"Function Error: likely no output: {e}")
         db_lock.release_lock(lock)
     elif builder.return_type == constants.BUILDER_RTYPE_DATAFRAME:
         diff_flag = table_operations.save_new_columns(
@@ -205,7 +207,6 @@ def _execute_code_from_builder(
             db_dir,
             file_writer=file_writer,
             primary_key=builder.primary_key,
-            keep_old=builder.keep_old,
         )
         db_lock.release_lock(lock)
         return diff_flag

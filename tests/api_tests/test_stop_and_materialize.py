@@ -17,7 +17,7 @@ def evaluate_stop_materialize(process_id: str):
     tablevault = TableVault("example_tv", "jinjin")
     process_id_ = tablevault.stop_process(process_id, force=True, materialize=True)
     evaluate_operation_logging([process_id, process_id_])
-    instances = tablevault.get_instances("stories")
+    instances = tablevault.get_table_instances("stories")
     assert len(instances) == 1
 
 

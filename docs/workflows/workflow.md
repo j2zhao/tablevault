@@ -148,7 +148,7 @@ You can easily retrieve the dataframes of both instances:
 
 ```python
 
-instances = tablevault.get_instances(table_name="fruits_table")
+instances = tablevault.get_table_instances(table_name="fruits_table")
 
 df_1 = tablevault.get_dataframe(table_name="fruits_table", instance_id=instances[0])
 df_2 = tablevault.get_dataframe(table_name="fruits_table")

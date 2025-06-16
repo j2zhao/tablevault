@@ -48,7 +48,7 @@ def evaluate_deletion():
     entries = os.listdir(temp_dir)
     assert "table.csv" not in entries
     tablevault = TableVault("example_tv", "jinjin")
-    instances = tablevault.get_instances("stories")
+    instances = tablevault.get_table_instances("stories")
     assert len(instances) == 0
     temp_dir = "example_tv/metadata/ARCHIVED_TRASH/stories"
     assert os.path.exists(temp_dir)

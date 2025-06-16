@@ -93,4 +93,4 @@ def random_gen_string(column_names, df, **kwargs):
                 row.append(val)
         else:
             row = "".join(random.choices(characters, k=20))
-        yield (i, row)
+        yield row

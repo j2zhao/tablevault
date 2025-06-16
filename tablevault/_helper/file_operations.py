@@ -101,7 +101,10 @@ def setup_table_instance_folder(
         if origin_id != "":
             prev_dir = os.path.join(db_dir, origin_table, str(origin_id))
             prev_builder_dir = os.path.join(prev_dir, constants.BUILDER_FOLDER)
-            file_writer.copytree(prev_builder_dir, builder_dir)
+            if os.path.isdir(prev_builder_dir):
+                file_writer.copytree(prev_builder_dir, builder_dir)
+            else:
+                file_writer.makedirs(builder_dir)
             file_writer.makedirs(artifact_dir)
         else:
             file_writer.makedirs(builder_dir)
@@ -368,6 +371,10 @@ def check_builder_equality(
         constants.BUILDER_FOLDER,
         f"{builder_name}.yaml",
     )
+    if not os.path.exists(builder_dir_1):
+        return False
+    if not os.path.exists(builder_dir_2):
+        return False
     with open(builder_dir_1, "r") as file:
         builder1 = yaml.safe_load(file)
         if constants.BUILDER_NAME in builder1:

@@ -30,7 +30,7 @@ def multiprocessing_execute(tablevault: TableVault):
 
 def multiprocessing_other_table():
     tablevault = TableVault("example_tv", "jinjin2")
-    tablevault.get_instances(table_name="stories")
+    tablevault.get_table_instances(table_name="stories")
     tablevault.create_table("llm_storage", has_side_effects=True)
 
 

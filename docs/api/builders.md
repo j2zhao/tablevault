@@ -111,6 +111,7 @@ TableVault builders support special keywords that are dynamically replaced with 
 | Keyword | Syntax | Scope | Description |
 | :--- | :--- | :--- | :--- |
 | **Artifact Folder** | `~ARTIFACT_FOLDER~` | `arguments` | A placeholder that resolves to the absolute path of the artifact folder for the current instance run. It is essential for any function that needs to save or load artifact files. |
+| **Process ID** | `~PROCESS_ID~` | `arguments` | A placeholder that resolves to the string identifier of the current instance run. It is strongly recommended for any function interacts with the TableVault API internally. Best practice is to set `author` to the value of `~PROCESS_ID~` when creating a `TableVault()` object within an executing instance. |
 | **Table Reference** | `<<...>>` | Most string fields | A dynamic reference used to fetch data from other tables or the current table instance (`self`). The expression within the `<<...>>` is resolved and its value is substituted into the field. |
 
 **Example Usage in `arguments`:**
@@ -136,7 +137,7 @@ The `return_type` field aligns your Python function’s output with the framewor
 | --------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
 | **`dataframe`** *(default)* | Create **whole table** in one function                           | Function returns **one `pd.DataFrame`** that already includes **every column in `changed_columns`**.        | Accepts the DataFrame as‑is and moves on.                               |
 | **`row‑wise`**              | Compute **each row independently**.”                             | Function is called **once per input row** and returns a scalar or tuple representing that row’s new values. | Writes each returned row immediately; can run with multiple threads     |
-| **`generator`**             | Generate **rows incrementally** in one function                  | Function yields **`(row_idx, row_tuple)`** pairs in any row order.                                          | Writes each yielded row immediately; skipped indices remain untouched.  |
+| **`generator`**             | Generate **rows incrementally** in one function                  | Function yields **`row_tuple`** in order.                                                                   | Writes each yielded row immediately; skipped indices remain untouched.  |
 
 ---
 
@@ -257,22 +258,22 @@ The `return_type` field aligns your Python function’s output with the framewor
             model = GritLM("GritLM/GritLM-7B", torch_dtype="auto", device_map="auto", mode="embedding")
 
             for index, start_index in enumerate(tqdm(range(0, len(df), batch_size), desc="Batches")):
-            start_time = time.time()
-            end_index = start_index + batch_size
-            artifact_name_ = artifact_name + f"_{start_index}_{end_index}.npy"
-            artifact_dir = os.path.join(artifact_folder, artifact_name_)
-            if start_index in self_df['start_index']:
-                continue
-            batch_df = df.iloc[start_index:end_index][artifact_column]
-            batch_texts = []
-            for file_path in batch_df:
-                with open(file_path, 'r') as f:
-                    batch_texts.append(f.read())
-            ndarr = model.encode(batch_texts, batch_size=batch_size,
-                                    instruction=raw_instruction).astype(np.float16)
-            end_time = time.time()
-            np.save(artifact_dir, ndarr)
-            yield (index, (start_index, artifact_name_, end_time - start_time))
+                start_time = time.time()
+                end_index = start_index + batch_size
+                artifact_name_ = artifact_name + f"_{start_index}_{end_index}.npy"
+                artifact_dir = os.path.join(artifact_folder, artifact_name_)
+                if start_index in self_df['start_index']:
+                    continue
+                batch_df = df.iloc[start_index:end_index][artifact_column]
+                batch_texts = []
+                for file_path in batch_df:
+                    with open(file_path, 'r') as f:
+                        batch_texts.append(f.read())
+                ndarr = model.encode(batch_texts, batch_size=batch_size,
+                                        instruction=raw_instruction).astype(np.float16)
+                end_time = time.time()
+                np.save(artifact_dir, ndarr)
+                yield start_index, artifact_name_, end_time - start_time
     ```
 
 === "Example YAML Builder"

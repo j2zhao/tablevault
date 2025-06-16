@@ -67,7 +67,6 @@ def execute_instance(
                 db_metadata.db_dir,
                 file_writer,
             )
-
         table_operations.update_table_columns(
             changed_columns,
             all_columns,
@@ -113,3 +112,16 @@ def execute_instance(
                     file_writer,
                 )
         db_metadata.update_process_step(process_id, builder_name)
+
+    index_name = table_name + constants.INDEX_BUILDER_SUFFIX
+    primary_key = builders[index_name].primary_key
+    if origin_id != "" and builders[index_name].keep_old:
+        table_operations.append_old_df(
+            primary_key,
+            instance_id,
+            table_name,
+            origin_id,
+            origin_table,
+            db_metadata.db_dir,
+            file_writer,
+        )

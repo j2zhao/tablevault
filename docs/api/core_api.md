@@ -22,7 +22,7 @@ Interface with a TableVault repository. Initialisation can create a new vault re
 | `description` | `str`  | Description for the vault creation (used only when *create* is **True**). | `""`    |
 | `create`      | `bool` | If **True**, initialise a new vault at *db\_dir*.                         | `False` |
 | `restart`     | `bool` | If **True**, restart any processes previously active in this vault.       | `False` |
-| `verbose`     | `bool` | If **True**, prints detailed logs of every operation.                     | `True`  |
+| `verbose`     | `bool` | If **True**, prints detailed logs of every operation.                     | `False` |
 
 ---
 

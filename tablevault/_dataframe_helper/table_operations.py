@@ -139,7 +139,7 @@ def get_table(
     table_path = os.path.join(table_dir, constants.TABLE_FILE)
     type_path = os.path.join(table_dir, constants.DTYPE_FILE)
     if not os.path.exists(table_path):
-        raise tv_errors.TVTableError("Table doesn't exist")
+        raise tv_errors.TVTableError(f"Table {table_name}: {instance_id} doesn't exist")
     with file_writer.open(type_path, "r") as f:
         content = f.read().strip()
         if not content:
@@ -233,7 +233,6 @@ def save_new_columns(
     db_dir: str,
     file_writer: CopyOnWriteFile,
     primary_key: Optional[list[str]] = None,
-    keep_old: bool = False,
 ) -> bool:
     df = get_table(
         instance_id,
@@ -253,8 +252,7 @@ def save_new_columns(
     elif len(primary_key) == 0:
         df_combined = new_df.combine_first(df)
         df_combined = df_combined[df.columns]
-        if not keep_old:
-            df_combined = df_combined.loc[new_df.index]
+        df_combined = df_combined.loc[new_df.index]
         diff_flag = df_combined.equals(df)
         df = df_combined
     else:
@@ -263,29 +261,62 @@ def save_new_columns(
                 raise tv_errors.TVBuilderError(
                     "Primary key cannot be an artifact_string"
                 )
-        if not keep_old:
-            new_df.index.name = constants.TABLE_INDEX
-            new_df = new_df.reset_index()
-            df_ = df.copy()
-        else:
-            df.index.name = constants.TABLE_INDEX
-            df_ = df.reset_index()
+        if new_df[primary_key].isnull().values.any():
+            raise tv_errors.TVTableError("Primary key cannot have null value")
+        new_df.index.name = constants.TABLE_INDEX
+        new_df = new_df.reset_index()
+        df_ = df.copy()
         df_ = df_.set_index(primary_key)
         new_df = new_df.set_index(primary_key)
         df_combined = new_df.combine_first(df_)
         df_combined = df_combined.reset_index()
         df_combined = df_combined.set_index([constants.TABLE_INDEX])
 
-        if not keep_old:
-            df_combined = df_combined[df_combined.index.notna()]
-            df_combined = df_combined.sort_index()
-        else:
-            df_combined = df_combined.sort_index(ignore_index=True)
+        df_combined = df_combined[df_combined.index.notna()]
+        df_combined = df_combined.sort_index()
         df_combined = df_combined[df.columns]
         diff_flag = df.equals(df_combined)
         df = df_combined
     write_table(df, instance_id, table_name, db_dir, file_writer=file_writer)
     return not diff_flag
+
+
+def append_old_df(
+    primary_keys: list[str],
+    instance_id: str,
+    table_name: str,
+    origin_id: str,
+    origin_table: str,
+    db_dir: str,
+    file_writer: CopyOnWriteFile,
+):
+    df = get_table(
+        instance_id,
+        table_name,
+        db_dir,
+        get_index=False,
+        try_make_df=False,
+        file_writer=file_writer,
+    )
+    old_df = get_table(
+        origin_id,
+        origin_table,
+        db_dir,
+        get_index=False,
+        try_make_df=False,
+        file_writer=file_writer,
+    )
+    if primary_keys != []:
+        mask = (
+            old_df[primary_keys]
+            .apply(tuple, axis=1)
+            .isin(df[primary_keys].apply(tuple, axis=1))
+        )
+        diff = old_df.loc[~mask]
+        df = pd.concat([diff, df], axis=0).reset_index(drop=True)
+    else:
+        df = pd.concat([old_df, df], axis=0).reset_index(drop=True)
+    write_table(df, instance_id, table_name, db_dir, file_writer=file_writer)
 
 
 def check_entry(
@@ -428,7 +459,6 @@ def make_df(
     db_dir: str,
     file_writer: CopyOnWriteFile,
     primary_key: Optional[list[str]] = None,
-    keep_old: bool = False,
 ) -> bool:
     file_dir = os.path.join(db_dir, table_name, instance_id)
     pkl_files = [f for f in os.listdir(file_dir) if f.endswith(".df.pkl")]
@@ -453,7 +483,6 @@ def make_df(
         table_name=table_name,
         db_dir=db_dir,
         primary_key=primary_key,
-        keep_old=keep_old,
         file_writer=file_writer,
     )
 

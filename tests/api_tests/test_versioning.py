@@ -18,12 +18,12 @@ def test_copy_instance_no_change(tablevault: TableVault):
     ids.append(id)
     id = tablevault.execute_instance("llm_storage")
     ids.append(id)
-    instances = tablevault.get_instances("llm_questions")
+    instances = tablevault.get_table_instances("llm_questions")
     assert len(instances) == 2
     df1, _ = tablevault.get_dataframe("llm_questions", instances[0])
     df2, _ = tablevault.get_dataframe("llm_questions", instances[1])
     assert df1.equals(df2)
-    instances = tablevault.get_instances("llm_storage")
+    instances = tablevault.get_table_instances("llm_storage")
     assert len(instances) == 2
     df1, _ = tablevault.get_dataframe("llm_storage", instances[0])
     df2, _ = tablevault.get_dataframe("llm_storage", instances[1])
@@ -48,7 +48,7 @@ def test_copy_instance_builder_change(tablevault: TableVault, add_story):
     id = tablevault.execute_instance("llm_questions")
     ids.append(id)
     evaluate_operation_logging(ids)
-    instances = tablevault.get_instances("llm_questions")
+    instances = tablevault.get_table_instances("llm_questions")
     assert len(instances) == 2
     df1, _ = tablevault.get_dataframe("llm_questions", instances[0])
     df2, _ = tablevault.get_dataframe("llm_questions", instances[1])
@@ -71,7 +71,7 @@ def test_copy_dep_change(tablevault: TableVault):
     id = tablevault.execute_instance("llm_questions")
     ids.append(id)
     evaluate_operation_logging(ids)
-    instances = tablevault.get_instances("llm_questions")
+    instances = tablevault.get_table_instances("llm_questions")
     assert len(instances) == 2
     df1, _ = tablevault.get_dataframe("llm_questions", instances[0])
     df2, _ = tablevault.get_dataframe("llm_questions", instances[1])

@@ -42,7 +42,7 @@ def get_table_instances(
     table_name: str,
     version: str,
     db_dir: str,
-    include_temp:bool,
+    include_temp: bool,
 ):
     db_metadata = MetadataStore(db_dir)
     return db_metadata.get_table_instances(table_name, version, include_temp)

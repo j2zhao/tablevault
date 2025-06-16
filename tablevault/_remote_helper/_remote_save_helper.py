@@ -11,7 +11,6 @@ _LOG_DATEFMT = "%Y-%m-%d %H:%M:%S"
 def configure_file_logger(log_file: Path) -> logging.Logger:
     log_file.parent.mkdir(parents=True, exist_ok=True)
     logger = logging.getLogger(str(log_file))
-    logger.setLevel(logging.INFO)
     if not logger.handlers:
         fh = logging.FileHandler(log_file, encoding="utf-8")
         fh.setFormatter(logging.Formatter(_LOG_FORMAT, datefmt=_LOG_DATEFMT))

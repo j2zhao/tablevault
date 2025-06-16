@@ -21,7 +21,7 @@ def test_deletion(tablevault):
     ids.append(id)
     id = tablevault.delete_builder_file("test_builder", "stories")
     ids.append(id)
-    instances = tablevault.get_instances("stories")
+    instances = tablevault.get_table_instances("stories")
     id = tablevault.delete_instance(instances[0], "stories")
     ids.append(id)
     id = tablevault.delete_table("llm_storage")

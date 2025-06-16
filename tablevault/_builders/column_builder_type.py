@@ -150,7 +150,7 @@ def _execute_code_from_builder(
                     result
                 )
     elif builder.return_type == constants.BUILDER_RTYPE_GENERATOR:
-        for index, results_ in results:
+        for index, results_ in enumerate(results):
             if len(builder.changed_columns) == 1:
                 table_operations.write_df_entry(
                     results_,

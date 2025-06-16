@@ -12,7 +12,6 @@ import os
 import logging
 import multiprocessing
 
-# logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -186,6 +185,7 @@ def tablevault_operation(
         funct_kwargs["db_metadata"] = db_metadata
         funct_kwargs["process_id"] = process_id
         funct_kwargs["file_writer"] = file_writer
+        funct_kwargs["author"] = author
         funct_kwargs = filter_by_function_args(funct_kwargs, op_funct)
         logger.info(f"Start execution {op_name}: {process_id}")
         try:

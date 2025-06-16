@@ -38,7 +38,7 @@ class TableVault:
         If ``True``, restart any processes previously active in this vault.
         Defaults to ``False``.
     verbose : bool, optional
-        If ``True``, prints detailed logs of every operation. Defaults to ``True``.
+        If ``True``, prints detailed logs of every operation. Defaults to ``False``.
     """
 
     def __init__(
@@ -48,7 +48,7 @@ class TableVault:
         description: str = "",
         create: bool = False,
         restart: bool = False,
-        verbose: bool = True,
+        verbose: bool = False,
         parent_id: str = "",
     ) -> None:
         self.author = author
@@ -152,14 +152,14 @@ class TableVault:
         self,
         table_name: str = "",
         version: str = constants.BASE_TABLE_VERSION,
-        include_temp:bool = False
+        include_temp: bool = False,
     ) -> list[str]:
         """Retrieves a list of table names, or instance IDs for a specific table and version.
 
         Parameters
         ----------
         table_name : str
-            Name of the table whose instances are requested. If 
+            Name of the table whose instances are requested. If
         version : str, optional
             Version of the table. Defaults to `base` if table name is given
         include_temp : bool
@@ -175,7 +175,6 @@ class TableVault:
             db_dir=self.db_dir,
             include_temp=include_temp,
         )
-    
 
     def get_descriptions(self, instance_id: str = "", table_name: str = "") -> dict:
         """Retrieves description dictionary for specified item in the database.

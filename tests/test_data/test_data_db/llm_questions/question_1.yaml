@@ -4,6 +4,7 @@ python_function: random_row_string
 code_module: random_string
 is_custom: false
 return_type: row-wise
+n_threads: 5
 arguments:
   column_names: [q1]
   upload_files:
