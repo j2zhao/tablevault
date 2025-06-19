@@ -64,12 +64,13 @@ All parts (instance_id, columns, conditions) are optional.
 * **Syntax**: A string of alphanumeric characters, underscores (`_`), or hyphens (`-`).
 * **Special Keyword `self`**: The keyword `self` refers to the current table instance being processed by the builder.
 
-!!! note "`self` Keyword Restrictions"
-    The `self` keyword can only be used in the `argument` field.
-
 * **Dynamic Table Name**: The table name itself can be a nested `TableReference` string.
     * Example in a field: `code_module: "<< <<table_map.module_column[type::'etl']>> >>"`
     * Reference string example: `<< <<another_table.config_key[type::'source']>>.data_column >>`
+
+
+!!! note "`self` Keyword Restrictions"
+    The `self` keyword can only be used in the `argument` field.
 
 ---
 
@@ -95,7 +96,7 @@ All parts (instance_id, columns, conditions) are optional.
     * Example reference string for a column name: `my_table.<<config.target_column>>`
     * Example reference string with multiple dynamic columns: `my_table.{id,<<audit_table.tracked_field[user::'admin']>>,status}`
 * **Special Case: `self.index`**:
-    If you use `<<self.index>>` (assuming `index` is the name of the designated index column/concept in your TableVault constants), this specifically resolves to the current row's index value during row-wise operations or when an `index` context is available.
+    If you use `<<self.index>>` this specifically resolves to the current row's physical index value during row-wise operations.
 
 ---
 
@@ -119,17 +120,17 @@ All parts (instance_id, columns, conditions) are optional.
     * `start_value` and `end_value` can be literals or nested `TableReference` strings. Values are formatted appropriately for comparison based on the column's data type.
 
 3.  **Implicit Index/Contextual Value (`columnName`)**:
-    * Filters rows where `columnName` equals a contextually provided `index` value (the index of the row currently being processed by the builder).
+    * Filters rows where `columnName` equals a contextually provided `index` value (the physical index of the row currently being processed by the builder).
     * Example: If processing row `101` of `self`, then the reference `<<other_table.data_column[join_key_in_other_table]>>` (within an argument) would attempt to find rows in `other_table` where `join_key_in_other_table == 101`.
     * This is particularly useful for lookups related to the current item in `self`.
     * If `self.some_column[key_column]` is used, and `index` is defined, it implies `self.some_column` where `key_column == index`.
-   
-!!! note "`index` Condition"
-
-    The `index` keyword can only be used in the `arguments` key of a row-wise function (when `row-wise` is set to `true`).
 
 * **Dynamic Keys and Values**: All parts of a condition (the column name, the value, start/end values) can be nested `TableReference` strings.
     * Example reference string: `my_table[<<config.filter_column>>::<<config.filter_value>>]`
+
+!!! note "`index` Condition"
+
+    The `index` keyword can only be used in the `arguments` key of a row-wise function (when `row-wise` is set to `true`).
 
 ---
 
@@ -155,7 +156,7 @@ As shown in examples above, any component of a `TableReference` string —the ta
 * When a builder is executed, TableVault parses these reference strings from the relevant YAML fields.
 * It uses an internal cache of DataFrames (for already loaded tables and versions) to retrieve data efficiently.
 * For references involving `self` or implicit index conditions, the context of the current row being processed (often an integer `index`) is crucial for resolving the correct data.
-* The recursive parsing handles references within lists, dictionaries (values, and potentially keys if supported by the structure and parser), and other nested structures in the YAML, as long as they ultimately resolve to strings or collections of strings where references are found.
+* The recursive parsing handles references within lists, dictionaries, and other nested structures in the YAML, as long as they ultimately resolve to strings or collections of strings where references are found.
 
 ---
 
@@ -165,11 +166,11 @@ These examples illustrate the reference string syntax itself. These strings woul
 
 1.  **Fetch a single column from another table:**
     `my_data_table.user_email`
-    *(When used as `"<<my_data_table.user_email>>"`, result: A list of all user emails from `my_data_table`, or a simplified form)*
+    *When used as `"<<my_data_table.user_email>>"`, results: a dataframe with a single `user_email` column (might be converted to a list contextually)*
 
 2.  **Get a specific value using a filter:**
     `users_table.full_name[user_id::'user-007']`
-    *(When used as `"<<users_table.full_name[user_id::'user-007']>>"`, result: The `full_name` for `user_id` 'user-007', likely a single string)*
+    *(When used as `"<<users_table.full_name[user_id::'user-007']>>"`, result: The `full_name` for `user_id` 'user-007': likely a single string)*
 
 3.  **Get a value from `self` based on the current row's context (implicit index):**
     `self.status[id_column_of_self]`
@@ -179,7 +180,7 @@ These examples illustrate the reference string syntax itself. These strings woul
     `app_settings(base_1748275064_5782ef5b-4023-4618-a419-cf921c365c64).timeout_ms`
 
 5.  **Using a range condition:**
-    `transactions.amount[transaction_date::'2024-01-01':'2024-01-31']`
+    `transactions.amount[transaction_date::'2024-01-01':'2024-01-31']` *, the range is resolved by the physical index.*
 
 6.  **Nested reference for dynamic filtering:**
     `preferences.setting_value[user_id::<<self.user_identifier[index]>>, setting_key::'theme']`
