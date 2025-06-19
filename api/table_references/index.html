@@ -1203,19 +1203,21 @@
 <h3 id="1-table-name-tablename">1. Table Name (<code>tableName</code>)</h3>
 <ul>
 <li><strong>Syntax</strong>: A string of alphanumeric characters, underscores (<code>_</code>), or hyphens (<code>-</code>).</li>
-<li><strong>Special Keyword <code>self</code></strong>: The keyword <code>self</code> refers to the current table instance being processed by the builder.</li>
-</ul>
-<div class="admonition note">
-<p class="admonition-title"><code>self</code> Keyword Restrictions</p>
-<p>The <code>self</code> keyword can only be used in the <code>argument</code> field.</p>
-</div>
+<li>
+<p><strong>Special Keyword <code>self</code></strong>: The keyword <code>self</code> refers to the current table instance being processed by the builder.</p>
+</li>
+<li>
+<p><strong>Dynamic Table Name</strong>: The table name itself can be a nested <code>TableReference</code> string.</p>
 <ul>
-<li><strong>Dynamic Table Name</strong>: The table name itself can be a nested <code>TableReference</code> string.<ul>
 <li>Example in a field: <code>code_module: "&lt;&lt; &lt;&lt;table_map.module_column[type::'etl']&gt;&gt; &gt;&gt;"</code></li>
 <li>Reference string example: <code>&lt;&lt; &lt;&lt;another_table.config_key[type::'source']&gt;&gt;.data_column &gt;&gt;</code></li>
 </ul>
 </li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title"><code>self</code> Keyword Restrictions</p>
+<p>The <code>self</code> keyword can only be used in the <code>argument</code> field.</p>
+</div>
 <hr />
 <h3 id="2-version-instance_id">2. Version (<code>(instance_id)</code>)</h3>
 <ul>
@@ -1246,7 +1248,7 @@
 </ul>
 </li>
 <li><strong>Special Case: <code>self.index</code></strong>:
-    If you use <code>&lt;&lt;self.index&gt;&gt;</code> (assuming <code>index</code> is the name of the designated index column/concept in your TableVault constants), this specifically resolves to the current row's index value during row-wise operations or when an <code>index</code> context is available.</li>
+    If you use <code>&lt;&lt;self.index&gt;&gt;</code> this specifically resolves to the current row's physical index value during row-wise operations.</li>
 </ul>
 <hr />
 <h3 id="4-conditions-conditions">4. Conditions (<code>[conditions]</code>)</h3>
@@ -1277,10 +1279,16 @@
 <li>
 <p><strong>Implicit Index/Contextual Value (<code>columnName</code>)</strong>:</p>
 <ul>
-<li>Filters rows where <code>columnName</code> equals a contextually provided <code>index</code> value (the index of the row currently being processed by the builder).</li>
+<li>Filters rows where <code>columnName</code> equals a contextually provided <code>index</code> value (the physical index of the row currently being processed by the builder).</li>
 <li>Example: If processing row <code>101</code> of <code>self</code>, then the reference <code>&lt;&lt;other_table.data_column[join_key_in_other_table]&gt;&gt;</code> (within an argument) would attempt to find rows in <code>other_table</code> where <code>join_key_in_other_table == 101</code>.</li>
 <li>This is particularly useful for lookups related to the current item in <code>self</code>.</li>
 <li>If <code>self.some_column[key_column]</code> is used, and <code>index</code> is defined, it implies <code>self.some_column</code> where <code>key_column == index</code>.</li>
+</ul>
+</li>
+<li>
+<p><strong>Dynamic Keys and Values</strong>: All parts of a condition (the column name, the value, start/end values) can be nested <code>TableReference</code> strings.</p>
+<ul>
+<li>Example reference string: <code>my_table[&lt;&lt;config.filter_column&gt;&gt;::&lt;&lt;config.filter_value&gt;&gt;]</code></li>
 </ul>
 </li>
 </ol>
@@ -1288,12 +1296,6 @@
 <p class="admonition-title"><code>index</code> Condition</p>
 <p>The <code>index</code> keyword can only be used in the <code>arguments</code> key of a row-wise function (when <code>row-wise</code> is set to <code>true</code>).</p>
 </div>
-<ul>
-<li><strong>Dynamic Keys and Values</strong>: All parts of a condition (the column name, the value, start/end values) can be nested <code>TableReference</code> strings.<ul>
-<li>Example reference string: <code>my_table[&lt;&lt;config.filter_column&gt;&gt;::&lt;&lt;config.filter_value&gt;&gt;]</code></li>
-</ul>
-</li>
-</ul>
 <hr />
 <h2 id="nested-references">Nested References</h2>
 <p>As shown in examples above, any component of a <code>TableReference</code> string —the table name, version string, column names, condition keys, or condition values—can itself be another <code>TableReference</code> stringenclosed in <code>&lt;&lt; ... &gt;&gt;</code>. TableVault will resolve the innermost references first and use their results to construct the outer reference before resolving it.</p>
@@ -1319,7 +1321,7 @@
 <li>When a builder is executed, TableVault parses these reference strings from the relevant YAML fields.</li>
 <li>It uses an internal cache of DataFrames (for already loaded tables and versions) to retrieve data efficiently.</li>
 <li>For references involving <code>self</code> or implicit index conditions, the context of the current row being processed (often an integer <code>index</code>) is crucial for resolving the correct data.</li>
-<li>The recursive parsing handles references within lists, dictionaries (values, and potentially keys if supported by the structure and parser), and other nested structures in the YAML, as long as they ultimately resolve to strings or collections of strings where references are found.</li>
+<li>The recursive parsing handles references within lists, dictionaries, and other nested structures in the YAML, as long as they ultimately resolve to strings or collections of strings where references are found.</li>
 </ul>
 <hr />
 <h2 id="examples-of-reference-strings">Examples of Reference Strings</h2>
@@ -1328,12 +1330,12 @@
 <li>
 <p><strong>Fetch a single column from another table:</strong>
     <code>my_data_table.user_email</code>
-    <em>(When used as <code>"&lt;&lt;my_data_table.user_email&gt;&gt;"</code>, result: A list of all user emails from <code>my_data_table</code>, or a simplified form)</em></p>
+    <em>When used as <code>"&lt;&lt;my_data_table.user_email&gt;&gt;"</code>, results: a dataframe with a single <code>user_email</code> column (might be converted to a list contextually)</em></p>
 </li>
 <li>
 <p><strong>Get a specific value using a filter:</strong>
     <code>users_table.full_name[user_id::'user-007']</code>
-    <em>(When used as <code>"&lt;&lt;users_table.full_name[user_id::'user-007']&gt;&gt;"</code>, result: The <code>full_name</code> for <code>user_id</code> 'user-007', likely a single string)</em></p>
+    <em>(When used as <code>"&lt;&lt;users_table.full_name[user_id::'user-007']&gt;&gt;"</code>, result: The <code>full_name</code> for <code>user_id</code> 'user-007': likely a single string)</em></p>
 </li>
 <li>
 <p><strong>Get a value from <code>self</code> based on the current row's context (implicit index):</strong>
@@ -1346,7 +1348,7 @@
 </li>
 <li>
 <p><strong>Using a range condition:</strong>
-    <code>transactions.amount[transaction_date::'2024-01-01':'2024-01-31']</code></p>
+    <code>transactions.amount[transaction_date::'2024-01-01':'2024-01-31']</code> <em>, the range is resolved by the physical index.</em></p>
 </li>
 <li>
 <p><strong>Nested reference for dynamic filtering:</strong>
