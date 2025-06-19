@@ -1354,19 +1354,19 @@ The <code>return_type</code> field aligns your Python function’s output with t
 <tr>
 <td><strong><code>dataframe</code></strong> <em>(default)</em></td>
 <td>Create <strong>whole table</strong> in one function</td>
-<td>Function returns <strong>one <code>pd.DataFrame</code></strong> that already includes <strong>every column in <code>changed_columns</code></strong>.</td>
+<td>Function is called once and returns <strong>one <code>pd.DataFrame</code></strong> that includes <strong>every column in <code>changed_columns</code></strong>.</td>
 <td>Writes output columns (<code>ColumnBuilder</code>) directly or joins with origin table on primary key (<code>IndexBuilder</code>)</td>
 </tr>
 <tr>
 <td><strong><code>row‑wise</code></strong></td>
 <td>Compute <strong>each row independently</strong>.”</td>
-<td>Function is called <strong>once per input row</strong> and returns a scalar or tuple representing that row’s new values.</td>
+<td>Function is called <strong>once per input row</strong> and returns a scalar or tuple representing that row’s new values in <code>changed_columns</code>.</td>
 <td>Writes each returned row immediately; can run with multiple threads</td>
 </tr>
 <tr>
 <td><strong><code>generator</code></strong></td>
 <td>Generate <strong>rows incrementally</strong> in one function</td>
-<td>Function yields <strong><code>row_tuple</code></strong> in order.</td>
+<td>Function yields a scalar or tuple, representing the next row’s new values in <code>changed_columns</code> in physical index order.</td>
 <td>Writes each yielded row immediately</td>
 </tr>
 </tbody>
