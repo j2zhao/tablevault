@@ -110,7 +110,7 @@ TableVault builders support special keywords that are dynamically replaced with 
 
 | Keyword | Syntax | Scope | Description |
 | :--- | :--- | :--- | :--- |
-| **Artifact Folder** | `~ARTIFACT_FOLDER~` | `arguments` | A placeholder that resolves to the absolute path of the artifact folder for the current instance run. It is essential for any function that needs to save or load artifact files. |
+| **Artifact Folder** | `~ARTIFACT_FOLDER~` | `arguments` | A placeholder that resolves to the absolute path of the artifact folder for the current instance run. It is essential for any function that needs to save artifact files. |
 | **Process ID** | `~PROCESS_ID~` | `arguments` | A placeholder that resolves to the string identifier of the current instance run. It is strongly recommended for any function interacts with the TableVault API internally. Best practice is to set `author` to the value of `~PROCESS_ID~` when creating a `TableVault()` object within an executing instance. |
 | **Table Reference** | `<<...>>` | Most string fields | A dynamic reference used to fetch data from other tables or the current table instance (`self`). The expression within the `<<...>>` is resolved and its value is substituted into the field. |
 
