@@ -2,7 +2,7 @@ from tablevault.core import TableVault
 from .helper import copy_example_tv
 
 
-def basic_function(tv: TableVault):
+def basic_function(tv: TableVault, empty = False):
     ids = []
     id = tv.create_code_module("test")
     ids.append(id)
@@ -22,11 +22,16 @@ def basic_function(tv: TableVault):
     id = tv.create_instance(
         "llm_questions", builders=["question_1", "question_2", "question_3"]
     )
-
-    id = tv.create_builder_file(
-        copy_dir="./tests/test_data/test_data_db/stories/stories_index.yaml",
-        table_name="stories",
-    )
+    if not empty:
+        id = tv.create_builder_file(
+            copy_dir="./tests/test_data/test_data_db/stories/stories_index.yaml",
+            table_name="stories",
+        )
+    else:
+        id = tv.create_builder_file(
+            copy_dir="./tests/test_data/test_empty_db/stories/stories_index.yaml",
+            table_name="stories",
+        )
     ids.append(id)
 
     id = tv.create_builder_file(

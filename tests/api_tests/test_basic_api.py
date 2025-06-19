@@ -10,6 +10,10 @@ def test_basic_function(tablevault):
     helper.evaluate_operation_logging(ids)
     helper.evaluate_full_tables()
 
+def test_empty(tablevault):
+    ids = basic_function(tablevault, empty=True)
+    helper.evaluate_operation_logging(ids)
+    helper.evaluate_empty_tables()
 
 def test_deletion(tablevault):
     ids = []

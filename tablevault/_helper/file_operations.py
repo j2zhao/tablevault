@@ -549,6 +549,28 @@ def move_artifacts_to_table(
     )
 
 
+def move_artifacts_from_table(
+    instance_id: str, table_name: str, db_dir: str, file_writer: CopyOnWriteFile
+) -> None:
+    old_artifact_dir = os.path.join(db_dir, table_name, constants.ARTIFACT_FOLDER)
+    new_artifact_dir = os.path.join(
+        db_dir, table_name, instance_id, constants.ARTIFACT_FOLDER
+    )
+    if not old_artifact_dir:
+        return
+    new_artifact_dir.mkdir(parents=True, exist_ok=True)
+
+    for path in old_artifact_dir.rglob("*"):
+        rel_path = path.relative_to(old_artifact_dir)  # e.g. sub/dir/file.txt
+        target = new_artifact_dir / rel_path
+        if path.is_dir():
+            target.mkdir(exist_ok=True)
+        else:
+            if target.exists():
+                continue
+            file_writer.copy2(path, target)
+
+
 def copy_folder_to_temp(
     process_id: str,
     db_dir: str,

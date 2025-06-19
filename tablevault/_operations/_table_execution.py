@@ -50,14 +50,14 @@ def execute_instance(
     for builder_name in top_builder_names:
         column_dtypes.update(builders[builder_name].dtypes)
 
-    column_dtypes = table_operations.write_dtype(
-        column_dtypes,
-        instance_id,
-        table_name,
-        db_metadata.db_dir,
-        file_writer=file_writer,
-    )
     if constants.EX_CLEAR_TABLE not in prev_completed_steps:
+        column_dtypes = table_operations.write_dtype(
+            column_dtypes,
+            instance_id,
+            table_name,
+            db_metadata.db_dir,
+            file_writer=file_writer,
+        )
         if origin_id != "":
             file_operations.copy_table(
                 instance_id,

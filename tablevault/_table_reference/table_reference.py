@@ -470,6 +470,4 @@ def _read_table_reference(ref: TableValue, cache: Cache, index: Optional[int]) -
 
 
 if __name__ == "__main__":
-    tv = TableReference.from_string(
-        "<<stories.artifact_name[paper_name::<<self.paper_name[index]>>]>>"
-    )
+    tv = TableReference.from_string("<<openai_store.paperId[index::0:10]>> ")

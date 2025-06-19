@@ -1009,7 +1009,6 @@ def parse_builders(
                 if builder_name in code_dependencies:
                     custom_code = True
             changed_columns += builders[builder_name].changed_columns
-
     return (
         top_builder_names,
         changed_columns,

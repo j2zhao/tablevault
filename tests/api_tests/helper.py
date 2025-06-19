@@ -32,6 +32,15 @@ def evaluate_operation_logging(ids):
         assert entry.startswith(".")
 
 
+def evaluate_empty_tables(
+    tables=["stories", "llm_storage", "llm_questions"]
+):
+    tablevault = TableVault("example_tv", "jinjin")
+    for table_name in tables:
+        df, _ = tablevault.get_dataframe(table_name)
+        df = df.dropna()
+        assert len(df) == 0
+
 def evaluate_full_tables(
     tables=["stories", "llm_storage", "llm_questions"], num_entries: int = 1
 ):

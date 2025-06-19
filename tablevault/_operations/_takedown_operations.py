@@ -3,6 +3,7 @@ from tablevault._helper.database_lock import DatabaseLock
 from tablevault._helper.metadata_store import MetadataStore
 from tablevault._helper import file_operations
 from tablevault._helper.copy_write_file import CopyOnWriteFile
+from tablevault._dataframe_helper import table_operations
 
 
 def takedown_copy_files(
@@ -118,7 +119,17 @@ def takedown_materialize_instance(
                 db_metadata.db_dir,
                 file_writer,
             )
-        except tv_errors.TVFileError:
+        except Exception:
+            pass
+        try:
+            file_operations.move_artifacts_from_table(
+                log.data["instance_id"],
+                log.data["perm_instance_id"],
+                log.data["table_name"],
+                db_metadata.db_dir,
+                file_writer,
+            )
+        except Exception:
             pass
         file_operations.copy_temp_to_db(process_id, db_metadata.db_dir, file_writer)
     if log.start_success is False or log.execution_success is False:
@@ -181,6 +192,17 @@ def takedown_execute_instance_inner(
     db_locks: DatabaseLock,
     file_writer: CopyOnWriteFile,
 ):
+    logs = db_metadata.get_active_processes()
+    if process_id in logs:
+        log = logs[process_id]
+        if log.start_success is True and log.execution_success is False:
+            log = db_metadata.get_active_processes()[process_id]
+            table_operations.make_df(
+                log.data["instance_id"],
+                log.data["table_name"],
+                db_metadata.db_dir,
+                file_writer=file_writer,
+            )
     db_locks.release_all_locks()
 
 
@@ -219,12 +241,15 @@ def takedown_create_instance(
         db_locks.release_all_locks()
         return
     if log.execution_success is False:
-        file_operations.delete_table_folder_2(
-            log.data["table_name"],
-            db_metadata.db_dir,
-            file_writer,
-            log.data["instance_id"],
-        )
+        try:
+            file_operations.delete_table_folder_2(
+                log.data["table_name"],
+                db_metadata.db_dir,
+                file_writer,
+                log.data["instance_id"],
+            )
+        except Exception:
+            pass
     if log.start_success is False or log.execution_success is False:
         if "table_name" in log.data and "instance_id" in log.data:
             db_locks.delete_lock_path(log.data["table_name"], log.data["instance_id"])

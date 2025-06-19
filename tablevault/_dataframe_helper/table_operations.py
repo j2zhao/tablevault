@@ -207,9 +207,7 @@ def update_table_columns(
     file_writer: CopyOnWriteFile,
 ) -> None:
     df = get_table(instance_id, table_name, db_dir, file_writer=file_writer)
-    columns = list(dict.fromkeys(df.columns).keys()) + [
-        col for col in all_columns if col not in df.columns
-    ]
+    columns = all_columns
     for col in columns:
         if col not in all_columns:
             df.drop(col, axis=1)
@@ -248,7 +246,9 @@ def save_new_columns(
     if primary_key is None:
         diff_flag = not df[col_names].equals(new_df)
         if diff_flag:
-            df.loc[:, col_names] = new_df
+            df_ = new_df.combine_first(df)
+            df_ = df_[df.columns]
+            df = df_
     elif len(primary_key) == 0:
         df_combined = new_df.combine_first(df)
         df_combined = df_combined[df.columns]

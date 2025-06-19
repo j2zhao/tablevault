@@ -31,9 +31,8 @@ def test_copy_instance_no_change(tablevault: TableVault):
     evaluate_operation_logging(ids)
 
 
-def test_copy_instance_builder_change(tablevault: TableVault, add_story):
+def test_copy_instance_builder_change(tablevault: TableVault):
     basic_function(tablevault)
-    add_story
     ids = []
     tablevault = TableVault("example_tv", "jinjin2")
     id = tablevault.create_instance("llm_questions")
@@ -84,6 +83,7 @@ def test_copy_dep_change(tablevault: TableVault):
 def test_new_row_change(tablevault: TableVault, add_story):
     ids = []
     basic_function(tablevault)
+    add_story
     tablevault = TableVault("example_tv", "jinjin2")
     id = tablevault.create_instance("stories", copy=True)
     ids.append(id)

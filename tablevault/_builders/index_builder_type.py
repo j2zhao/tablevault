@@ -62,6 +62,9 @@ class IndexBuilder(TVBuilder):
                 self.return_type == constants.BUILDER_RTYPE_ROWWISE
                 and self.n_threads != 1
             ):
+                # temp = cache[constants.TABLE_SELF].dropna(subset=self.changed_columns, how='all')
+                # if len(temp) == 0:
+                #     return False
                 indices = list(range(len(cache[constants.TABLE_SELF])))
                 with ThreadPoolExecutor(max_workers=self.n_threads) as executor:
                     _ = list(
@@ -84,6 +87,9 @@ class IndexBuilder(TVBuilder):
                 self.return_type == constants.BUILDER_RTYPE_ROWWISE
                 and self.n_threads == 1
             ):
+                # temp = cache[constants.TABLE_SELF].dropna(subset=self.changed_columns, how='all')
+                # if len(temp) == 0:
+                #     return False
                 for i in list(range(len(cache[constants.TABLE_SELF]))):
                     _execute_code_from_builder(
                         i,
@@ -172,33 +178,36 @@ def _execute_code_from_builder(
                 )
         db_lock.release_lock(lock)
     elif builder.return_type == constants.BUILDER_RTYPE_GENERATOR:
-        try:
-            for index, results_ in enumerate(results):
-                if len(builder.changed_columns) == 1:
+        count = 0
+        for index, results_ in enumerate(results):
+            count += 1
+            if len(builder.changed_columns) == 1:
+                table_operations.write_df_entry(
+                    results_,
+                    index,
+                    builder.changed_columns[0],
+                    instance_id,
+                    table_name,
+                    db_dir,
+                    file_writer,
+                )
+            else:
+                for i, result in enumerate(results_):
                     table_operations.write_df_entry(
-                        results_,
+                        result,
                         index,
-                        builder.changed_columns[0],
+                        builder.changed_columns[i],
                         instance_id,
                         table_name,
                         db_dir,
                         file_writer,
                     )
-                else:
-                    for i, result in enumerate(results_):
-                        table_operations.write_df_entry(
-                            result,
-                            index,
-                            builder.changed_columns[i],
-                            instance_id,
-                            table_name,
-                            db_dir,
-                            file_writer,
-                        )
-        except ValueError as e:
-            raise tv_errors.TVBuilderError(f"Function Error: likely no output: {e}")
+        # if count == 0:
+        #     return False
         db_lock.release_lock(lock)
     elif builder.return_type == constants.BUILDER_RTYPE_DATAFRAME:
+        # if len(results) == 0:
+        #     return False
         diff_flag = table_operations.save_new_columns(
             results,
             builder.changed_columns,
