@@ -1447,8 +1447,7 @@ The <code>return_type</code> field aligns your Python function’s output with t
 <hr />
 <h3 id="custom-generator-function">Custom <code>generator</code> Function</h3>
 <p><strong>An <code>IndexBuilder</code> that yields a batch of <code>GritLM</code> embedding to a new row</strong></p>
-<p><strong>Why this custom code pattern matters</strong></p>
-<p>Each yielded row is immediately committed. If your job dies, rerunning the builder simply skips what’s already in <code>self_df</code>.</p>
+<p><strong>Why this custom code pattern matters:</strong> each yielded row is immediately committed. If your job dies, rerunning the builder simply skips what’s already in <code>self_df</code>.</p>
 <div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Python Code</label><label for="__tabbed_4_2">Example YAML Builder</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
