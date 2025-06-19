@@ -65,7 +65,7 @@ All parts (instance_id, columns, conditions) are optional.
 * **Special Keyword `self`**: The keyword `self` refers to the current table instance being processed by the builder.
 
 !!! note "`self` Keyword"
-    The `self` keyword cannot be be used in the `dtypes` field of a builder. The `dtypes` keyword is used when the
+    The `self` keyword can only be used in the `argument` field.
 
 * **Dynamic Table Name**: The table name itself can be a nested `TableReference` string.
     * Example in a field: `code_module: "<< <<table_map.module_column[type::'etl']>> >>"`
