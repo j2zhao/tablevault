@@ -1366,7 +1366,7 @@ The <code>return_type</code> field aligns your Python function’s output with t
 <tr>
 <td><strong><code>generator</code></strong></td>
 <td>Generate <strong>rows incrementally</strong> in one function</td>
-<td>Function yields a scalar or tuple, representing the next row’s new values in <code>changed_columns</code> in physical index order.</td>
+<td>Function is called once abd yields a scalar or tuple, representing the next row’s new values in <code>changed_columns</code> in physical index order.</td>
 <td>Writes each yielded row immediately</td>
 </tr>
 </tbody>
