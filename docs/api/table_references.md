@@ -64,7 +64,7 @@ All parts (instance_id, columns, conditions) are optional.
 * **Syntax**: A string of alphanumeric characters, underscores (`_`), or hyphens (`-`).
 * **Special Keyword `self`**: The keyword `self` refers to the current table instance being processed by the builder.
 
-!!! note "`self` Keyword"
+!!! note "`self` Keyword Restrictions"
     The `self` keyword can only be used in the `argument` field.
 
 * **Dynamic Table Name**: The table name itself can be a nested `TableReference` string.
