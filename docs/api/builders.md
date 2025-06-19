@@ -229,9 +229,9 @@ The `return_type` field aligns your Python function’s output with the framewor
 
 **An `IndexBuilder` that yields a batch of `GritLM` embedding to a new row**
 
-**Why this pattern matters**
+**Why this custom code pattern matters**
 
-* **Atomic progress:** Each yielded row is immediately committed. If your job dies, rerunning the builder simply skips what’s already in `self_df`.
+Each yielded row is immediately committed. If your job dies, rerunning the builder simply skips what’s already in `self_df`.
 
 === "Python Code"
 
