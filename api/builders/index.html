@@ -1355,7 +1355,7 @@ The <code>return_type</code> field aligns your Python function’s output with t
 <td><strong><code>dataframe</code></strong> <em>(default)</em></td>
 <td>Create <strong>whole table</strong> in one function</td>
 <td>Function returns <strong>one <code>pd.DataFrame</code></strong> that already includes <strong>every column in <code>changed_columns</code></strong>.</td>
-<td>Accepts the DataFrame as‑is and moves on.</td>
+<td>Writes output columns (<code>ColumnBuilder</code>) directly or joins with origin table on primary key (<code>IndexBuilder</code>)</td>
 </tr>
 <tr>
 <td><strong><code>row‑wise</code></strong></td>
@@ -1367,7 +1367,7 @@ The <code>return_type</code> field aligns your Python function’s output with t
 <td><strong><code>generator</code></strong></td>
 <td>Generate <strong>rows incrementally</strong> in one function</td>
 <td>Function yields <strong><code>row_tuple</code></strong> in order.</td>
-<td>Writes each yielded row immediately; skipped indices remain untouched.</td>
+<td>Writes each yielded row immediately</td>
 </tr>
 </tbody>
 </table>
