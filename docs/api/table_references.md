@@ -76,7 +76,7 @@ All parts (instance_id, columns, conditions) are optional.
 ### 2. Version (`(instance_id)`)
 
 * **Syntax**: Instance in parentheses, e.g., `(base_1748113624_d049944b-8548-46d2-a247-bbf3769fbadc)`.
-* **Optional**: If omitted, TableVault will typically use the latest available instance of the table based on its internal logic and cache.
+* **Optional**: If omitted, TableVault will typically use the latest available instance of the table based on its internal logic.
 * **Dynamic Version**: The version string can be a nested `TableReference`.
     * Example reference string: `my_table(<<version_control_table.active_version[table_name::'my_table']>>)`
 
