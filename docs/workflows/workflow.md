@@ -2,7 +2,7 @@
 
 This is a basic sample workflow for a TableVault repository.
 
-The full function API can be found in [Core API](../api/core_api.md). To understand the structures and files being created, please read through [Core Concepts: Repository](../core_concepts/structure.md)  and [Core Concepts: Builders](../core_concepts/execution.md)
+The full function API can be found in [Core API](../api/core_api.md). To understand the structures and files being created, please read through [Core Concepts: Repository](../core_concepts/structure.md)  and [Core Concepts: Builders](../core_concepts/execution.md).
 
 ---
 
@@ -65,15 +65,15 @@ You can fill out the builder file with the following text:
 ```yaml
 builder_type: IndexBuilder
 
-changed_columns: ['fruits']        # Output columns
-primary_key: ['fruits']            # DataFrame primary key (optional)
+changed_columns: ['fruits']        
+primary_key: ['fruits']            
 
-python_function: create_data_table_from_list       # Function to execute
-code_module: example_code                 # Module containing the function
+python_function: create_data_table_from_list       
+code_module: example_code                
 
-arguments:                               # Arguments passed to the function
+arguments:                               
     vals: ['pineapples', 'watermelons', 'coconuts']
-is_custom: true                         # Using a user-supplied function in code_module
+is_custom: true                         
 
 ```
 
@@ -104,7 +104,7 @@ tablevault.create_instance(table_name="fruits_table", copy=True)
 You simply need to change one line in the `fruits_table_index.YAML` file:
 
 ```yaml
-arguments:                               # Arguments passed to the function
+arguments:                              
     vals: ['bananas']
 ```
 

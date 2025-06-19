@@ -45,7 +45,7 @@ This directory temporarily stores previous file states during active operations.
 Upon deletion of tables and instances, their dataframes and artifacts are removed, but the associated metadata is archived in this folder. This feature preserves historical context.
 
 !!! note
-Files within this folder can safely be deleted if storage space is limited. Typically, these files occupy minimal space.
+    Files within this folder can safely be deleted if storage space is limited. Typically, these files occupy minimal space.
 
 
 ### `lock.LOCK` file

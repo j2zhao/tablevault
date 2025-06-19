@@ -49,35 +49,38 @@ tablevault.create_builder_file("fetch_image_artifact")
 ```
 
 === "fruit_images_index.yaml"
+
     ```yaml
     builder_type: IndexBuilder
 
-    changed_columns: ['fruits']        # Output columns
-    primary_key: ['fruits']            # DataFrame primary key (optional)
+    changed_columns: ['fruits']        
+    primary_key: ['fruits']           
 
-    python_function: create_data_table_from_table           # Function to execute
-    code_module: table_generation                 # Module containing the function
+    python_function: create_data_table_from_table       
+    code_module: table_generation                 
 
-    arguments:                               # Arguments passed to the function
+    arguments:                               
         df: <<fruit_table.fruits>>                  
     ```
+
 === "fetch_image_artifact.yaml"
+
     ```yaml
     builder_type: ColumnBuilder
 
-    changed_columns: ['fruit_image']                        # Output columns
+    changed_columns: ['fruit_image']                      
 
-    python_function: create_data_table_from_table           # Function to execute
-    code_module: table_generation                           # Module containing the function
+    python_function: create_data_table_from_table      
+    code_module: table_generation                          
     
-    is_custom: true                  # Mark as user-supplied (searches in code_functions)
-    return_type: row-wise            # Specifies if the function processes row by row
+    is_custom: true                  
+    return_type: row-wise            
     
-    arguments:                                 # Arguments passed to the function
+    arguments:                                 
         fruit: <<self.fruits[index]>> 
         artifact_dir: ~ARTIFACT_FOLDER~ 
 
-    dtypes:                           # Column Data Types 
+    dtypes:                           
         fruit_image: artifact_string            
     ```
 
