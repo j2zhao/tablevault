@@ -1329,30 +1329,46 @@
 <ol>
 <li>
 <p><strong>Fetch a single column from another table:</strong>
-    <code>my_data_table.user_email</code>
-    <em>When used as <code>"&lt;&lt;my_data_table.user_email&gt;&gt;"</code>, results: a dataframe with a single <code>user_email</code> column (might be converted to a list contextually)</em></p>
+    <code>my_data_table.user_email</code></p>
+<ul>
+<li><strong>Result:</strong> A dataframe with a single <code>user_email</code> column <em>(might be converted to a list contextually)</em>.</li>
+</ul>
 </li>
 <li>
 <p><strong>Get a specific value using a filter:</strong>
-    <code>users_table.full_name[user_id::'user-007']</code>
-    <em>(When used as <code>"&lt;&lt;users_table.full_name[user_id::'user-007']&gt;&gt;"</code>, result: The <code>full_name</code> for <code>user_id</code> 'user-007': likely a single string)</em></p>
+    <code>users_table.full_name[user_id::'user-007']</code></p>
+<ul>
+<li><strong>Result:</strong> A single string representing <code>full_name</code> for <code>user_id</code>.</li>
+</ul>
 </li>
 <li>
 <p><strong>Get a value from <code>self</code> based on the current row's context (implicit index):</strong>
-    <code>self.status[id_column_of_self]</code>
-    <em>(When used as <code>"&lt;&lt;self.status[id_column_of_self]&gt;&gt;"</code>, and the current processing index is, e.g., <code>101</code>, this effectively becomes <code>self.status</code> where <code>id_column_of_self == 101</code>)</em></p>
+    <code>self.status[id_column_of_self]</code></p>
+<ul>
+<li><strong>Result:</strong> A single boolean representing <code>self.status</code> where <code>id_column_of_self == index</code>.</li>
+</ul>
 </li>
 <li>
 <p><strong>Reference with a specific version:</strong>
     <code>app_settings(base_1748275064_5782ef5b-4023-4618-a419-cf921c365c64).timeout_ms</code></p>
+<ul>
+<li><strong>Result:</strong> A dataframe with a single <code>user_email</code> column that is from  the <code>base_1748275064_5782ef5b-4023-4618-a419-cf921c365c64</code> instance.</li>
+</ul>
 </li>
 <li>
 <p><strong>Using a range condition:</strong>
-    <code>transactions.amount[transaction_date::'2024-01-01':'2024-01-31']</code> <em>, the range is resolved by the physical index.</em></p>
+    <code>transactions.amount[transaction_date::'2024-01-01':'2024-01-31']</code> </p>
+<ul>
+<li><strong>Result:</strong> A dataframe with a single <code>amount</code> column with transactions between <code>2024-01-01</code> and <code>2024-01-31</code> (if properly sorted).</li>
+<li><strong>Note</strong> the range is calculated by the physical index.</li>
+</ul>
 </li>
 <li>
 <p><strong>Nested reference for dynamic filtering:</strong>
     <code>preferences.setting_value[user_id::&lt;&lt;self.user_identifier[index]&gt;&gt;, setting_key::'theme']</code></p>
+<ul>
+<li><strong>Result:</strong> A single string representing <code>setting_value</code> for <code>user_id</code> at current index with the <code>theme</code> key.</li>
+</ul>
 </li>
 </ol>
 <hr />

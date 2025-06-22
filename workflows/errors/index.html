@@ -1231,7 +1231,6 @@
 <hr />
 <h2 id="2-external-errors-with-process_id-and-system-interrupts">2. External Errors with <code>process_id</code> and System Interrupts</h2>
 <p>With a user-provided <code>process_id</code>, an error only <strong>pauses</strong> the operation. It maintains its system locks, preventing other operations from accessing the same resources. This is especially useful for long-running <code>execute_instance()</code> operations that might be stopped.</p>
-<p>This is also true if the program is externally interrupted (e.g., by killing a Jupyter Notebook cell).</p>
 <p>Note that the operation restarts from its last checkpoint, and its input arguments cannot be changed.</p>
 <h4 id="example-code">Example Code</h4>
 <div class="tabbed-set tabbed-alternate" data-tabs="3:3"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><input id="__tabbed_3_3" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">1. Initial Code</label><label for="__tabbed_3_2">2. Example Error</label><label for="__tabbed_3_3">3. Rerun Code</label></div>
