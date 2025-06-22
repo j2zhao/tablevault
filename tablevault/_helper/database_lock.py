@@ -9,7 +9,8 @@ from tablevault._helper.utils import gen_tv_id
 from tablevault._helper.user_lock import set_tv_lock
 
 
-def _check_locks(process_id: str, lock_path: str, exclusive: bool) -> bool:
+def _check_locks(process_id: str, lock_path: str, exclusive: bool) -> list[str]:
+    conflicting_processes = []
     for _, _, filenames in os.walk(lock_path):
         for filename in filenames:
             if filename.endswith(".exlock") or filename.endswith(".shlock"):
@@ -17,35 +18,37 @@ def _check_locks(process_id: str, lock_path: str, exclusive: bool) -> bool:
                 process_name = lock_name.split("__")[0]
                 if filename.endswith(".exlock"):
                     if not process_id.startswith(process_name):
-                        return False
+                        conflicting_processes.append(process_name)
+                        # return False
                 elif filename.endswith(".shlock") and exclusive:
                     if not process_id.startswith(process_name):
-                        return False
-    return True
+                        conflicting_processes.append(process_name)
+                        # return False
+    return conflicting_processes
 
 
-def _acquire_exclusive(process_id: str, lock_path: str) -> str:
+def _acquire_exclusive(process_id: str, lock_path: str) -> tuple[str | list[str], bool]:
     lid = gen_tv_id()
-    legal = _check_locks(process_id, lock_path, exclusive=True)
-    if not legal:
-        return ""
+    conflicting_processes = _check_locks(process_id, lock_path, exclusive=True)
+    if len(conflicting_processes) > 0:
+        return conflicting_processes, False
     for dirpath, _, _ in os.walk(lock_path):
         lock_file = os.path.join(dirpath, f"{process_id}__{lid}.exlock")
         with open(lock_file, "w"):
             pass
-    return lid
+    return lid, True
 
 
-def _acquire_shared(process_id: str, lock_path: str) -> str:
+def _acquire_shared(process_id: str, lock_path: str) -> tuple[str | list[str], bool]:
     lid = gen_tv_id()
-    legal = _check_locks(process_id, lock_path, exclusive=False)
-    if not legal:
-        return ""
+    conflicting_processes = _check_locks(process_id, lock_path, exclusive=False)
+    if len(conflicting_processes) > 0:
+        return conflicting_processes, False
     for dirpath, _, _ in os.walk(lock_path):
         lock_file = os.path.join(dirpath, f"{process_id}__{lid}.shlock")
         with open(lock_file, "w"):
             pass
-    return lid
+    return lid, True
 
 
 def _acquire_lock(
@@ -54,19 +57,20 @@ def _acquire_lock(
     lock_type: str,
     timeout: Optional[float],
     check_interval: float,
-) -> str:
+) -> tuple[str | list[str], bool]:
     if not os.path.exists(lock_path):
         raise TVLockError(f"lockpath {lock_path} does not exist")
     start_time = time.time()
     while True:
         if lock_type == "shared":
-            lid = _acquire_shared(process_id, lock_path)
+            lid, success = _acquire_shared(process_id, lock_path)
         elif lock_type == "exclusive":
-            lid = _acquire_exclusive(process_id, lock_path)
-        if lid != "":
-            return lid
+            lid, success = _acquire_exclusive(process_id, lock_path)
+        if success:
+            return lid, success
         if timeout is not None and (time.time() - start_time) >= timeout:
-            raise TVLockError("Timeout while trying to acquire lock.")
+            return lid, success
+            # raise TVLockError("Timeout while trying to acquire lock.")
         time.sleep(check_interval)
 
 
@@ -150,7 +154,7 @@ class DatabaseLock:
         instance_id: str = "",
         timeout: Optional[float] = constants.TIMEOUT,
         check_interval: float = constants.CHECK_INTERVAL,
-    ) -> tuple[str, str, str]:
+    ) -> tuple[tuple[str, str, str] | list[str], bool]:
         lock_path = self.lock_path
         if table_name != "":
             lock_path = os.path.join(lock_path, table_name)
@@ -158,14 +162,17 @@ class DatabaseLock:
             lock_path = os.path.join(lock_path, instance_id)
 
         with self.meta_lock:
-            lid = _acquire_lock(
+            lid, success = _acquire_lock(
                 self.process_id,
                 lock_path,
                 lock_type="shared",
                 timeout=timeout,
                 check_interval=check_interval,
             )
-            return (table_name, instance_id, lid)
+            if success:
+                return (table_name, instance_id, lid), success
+            else:
+                return lid, success
 
     def acquire_exclusive_lock(
         self,
@@ -173,22 +180,25 @@ class DatabaseLock:
         instance_id: str = "",
         timeout: Optional[float] = constants.TIMEOUT,
         check_interval: float = constants.CHECK_INTERVAL,
-    ) -> tuple[str, str, str]:
+    ) -> tuple[tuple[str, str, str] | list[str], bool]:
         lock_path = self.lock_path
         with self.meta_lock:
             if table_name != "":
                 lock_path = os.path.join(self.lock_path, table_name)
             if instance_id != "":
                 lock_path = os.path.join(lock_path, instance_id)
-            lid = _acquire_lock(
+            lid, success = _acquire_lock(
                 self.process_id,
                 lock_path,
                 lock_type="exclusive",
                 timeout=timeout,
                 check_interval=check_interval,
             )
-            set_tv_lock(instance_id, table_name, self.db_dir)
-            return (table_name, instance_id, lid)
+            if success:
+                set_tv_lock(instance_id, table_name, self.db_dir)
+                return (table_name, instance_id, lid), success
+            else:
+                return lid, success
 
     def release_lock(self, lock_id: tuple[str, str, str]) -> None:
         table_name, instance_id, lid = lock_id

@@ -60,7 +60,6 @@ def setup_database_folder(db_dir: str, description: str, replace: bool = False) 
     db_lock = DatabaseLock("", db_dir)
     db_lock.make_lock_path(constants.RESTART_LOCK)
     db_lock.make_lock_path(constants.CODE_FOLDER)
-    db_lock.make_lock_path(constants.REMOTE_LOCK)
     meta_lock = os.path.join(meta_dir, "LOG.lock")
     with open(meta_lock, "w"):
         pass

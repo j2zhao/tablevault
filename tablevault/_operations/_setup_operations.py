@@ -1,4 +1,4 @@
-from tablevault._helper.metadata_store import MetadataStore
+from tablevault._helper.metadata_store import MetadataStore, check_top_process
 from tablevault._defintions import tv_errors
 from tablevault._helper.database_lock import DatabaseLock
 from tablevault._helper import file_operations
@@ -12,6 +12,69 @@ from tablevault._dataframe_helper import table_operations
 from tablevault._helper.copy_write_file import CopyOnWriteFile
 import pandas as pd
 from typing import Optional
+from tablevault._operations._takedown_operations import TAKEDOWN_MAP
+
+
+def _process_lock_results(
+    results: list[str],
+    process_id: str,
+    db_locks: DatabaseLock,
+    db_metadata: MetadataStore,
+):
+    for pid in results:
+        logs = db_metadata.get_active_processes()
+        active_pids = logs.keys()
+        if pid in logs:
+            _, parent_pid = check_top_process(pid, active_pids)
+            if parent_pid in logs and logs[parent_pid].force_takedown:
+                try:
+                    db_metadata.stop_operation(parent_pid, force=False)
+                    error = (
+                        tv_errors.TVLockError.__name__,
+                        str(f"stopped by {process_id}"),
+                    )
+                    if logs[parent_pid].start_success is None:
+                        db_metadata.update_process_start_status(
+                            parent_pid, False, error
+                        )
+                    elif logs[parent_pid].execution_success is None:
+                        db_metadata.update_process_execution_status(
+                            parent_pid, False, error
+                        )
+                    TAKEDOWN_MAP[logs[parent_pid].operation](
+                        parent_pid, db_metadata, db_locks, parent_pid
+                    )
+                except Exception:
+                    raise tv_errors.TVLockError(
+                        f"Unable to acquire lock because of {pid}."
+                    )
+
+
+def _acquire_lock(
+    acquire_type: str,
+    process_id: str,
+    db_locks: DatabaseLock,
+    db_metadata: MetadataStore,
+    table_name: str = "",
+    instance_id: str = "",
+) -> tuple[str, str, str]:
+    if acquire_type == "exclusive":
+        output, success = db_locks.acquire_exclusive_lock(table_name, instance_id)
+    elif acquire_type == "shared":
+        output, success = db_locks.acquire_shared_lock(table_name, instance_id)
+    if success:
+        return output
+    else:
+        _process_lock_results(output, process_id, db_locks, db_metadata)
+        if acquire_type == "exclusive":
+            output, success = db_locks.acquire_exclusive_lock(table_name, instance_id)
+        elif acquire_type == "shared":
+            output, success = db_locks.acquire_shared_lock(table_name, instance_id)
+        if not success:
+            raise tv_errors.TVLockError(
+                f"Unable to acquire lock {table_name} {instance_id}."
+            )
+        return output
 
 
 def setup_create_code_module(
@@ -28,7 +91,9 @@ def setup_create_code_module(
             "One of module_name and copy_dir needs to be filled"
         )
     funct_kwargs = {"module_name": module_name, "copy_dir": copy_dir, "text": text}
-    db_locks.acquire_exclusive_lock(constants.CODE_FOLDER)
+    _acquire_lock(
+        "exclusive", process_id, db_locks, db_metadata, table_name=constants.CODE_FOLDER
+    )
     file_operations.copy_folder_to_temp(
         process_id,
         db_metadata.db_dir,
@@ -47,7 +112,7 @@ def setup_delete_code_module(
     file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
     funct_kwargs = {"module_name": module_name}
-    db_locks.acquire_exclusive_lock(constants.CODE_FOLDER)
+    _acquire_lock("exclusive", process_id, db_locks, db_metadata, constants.CODE_FOLDER)
     file_operations.copy_folder_to_temp(
         process_id,
         db_metadata.db_dir,
@@ -78,7 +143,9 @@ def setup_create_builder_file(
         raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
     if instance_id not in existance:
         raise tv_errors.TVArgumentError("instance doesn't exist")
-    db_locks.acquire_exclusive_lock(table_name, instance_id)
+    _acquire_lock(
+        "exclusive", process_id, db_locks, db_metadata, table_name, instance_id
+    )
     file_operations.copy_folder_to_temp(
         process_id,
         db_metadata.db_dir,
@@ -114,7 +181,9 @@ def setup_delete_builder_file(
         raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
     if instance_id not in existance:
         raise tv_errors.TVArgumentError("instance doesn't exist")
-    db_locks.acquire_exclusive_lock(table_name, instance_id)
+    _acquire_lock(
+        "exclusive", process_id, db_locks, db_metadata, table_name, instance_id
+    )
     file_operations.copy_folder_to_temp(
         process_id,
         db_metadata.db_dir,
@@ -151,13 +220,13 @@ def setup_rename_table(
     existance = db_metadata.get_table_instances(new_table_name, "")
     if existance is not None:
         raise tv_errors.TVArgumentError(f"{new_table_name} exist")
-    db_locks.acquire_exclusive_lock(table_name)
+    _acquire_lock("exclusive", process_id, db_locks, db_metadata, table_name)
     db_locks.make_lock_path(new_table_name)
     db_locks.make_lock_path(new_table_name, constants.ARTIFACT_FOLDER)
     instance_ids = db_metadata.get_table_instances(table_name, "")
     for id in instance_ids:
         db_locks.make_lock_path(new_table_name, id)
-    db_locks.acquire_exclusive_lock(new_table_name)
+    _acquire_lock("exclusive", process_id, db_locks, db_metadata, new_table_name)
     funct_kwargs = {"new_table_name": new_table_name, "table_name": table_name}
     db_metadata.update_process_data(process_id, funct_kwargs)
     return funct_kwargs
@@ -175,7 +244,7 @@ def setup_delete_table(
     existance = db_metadata.get_table_instances(table_name, "")
     if existance is None:
         raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
-    db_locks.acquire_exclusive_lock(table_name)
+    _acquire_lock("exclusive", process_id, db_locks, db_metadata, table_name)
     file_operations.copy_folder_to_temp(
         process_id, db_metadata.db_dir, file_writer, table_name=table_name
     )
@@ -199,7 +268,9 @@ def setup_delete_instance(
         raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
     if instance_id not in existance:
         raise tv_errors.TVArgumentError("instance doesn't exist")
-    db_locks.acquire_exclusive_lock(table_name, instance_id)
+    _acquire_lock(
+        "exclusive", process_id, db_locks, db_metadata, table_name, instance_id
+    )
     file_operations.copy_folder_to_temp(
         process_id,
         db_metadata.db_dir,
@@ -244,9 +315,13 @@ def setup_materialize_instance(
     if instance_id not in existance:
         raise tv_errors.TVArgumentError("instance doesn't exist")
     # db_metadata.update_process_data(process_id, funct_kwargs)
-    db_locks.acquire_exclusive_lock(table_name, instance_id)
+    _acquire_lock(
+        "exclusive", process_id, db_locks, db_metadata, table_name, instance_id
+    )
     db_locks.make_lock_path(table_name, perm_instance_id)
-    db_locks.acquire_exclusive_lock(table_name, perm_instance_id)
+    _acquire_lock(
+        "exclusive", process_id, db_locks, db_metadata, table_name, perm_instance_id
+    )
     table_data = file_operations.get_description(
         instance_id="", table_name=table_name, db_dir=db_metadata.db_dir
     )
@@ -271,7 +346,9 @@ def setup_materialize_instance(
         changed_columns = all_columns
         if origin_id != "":
             try:
-                temp_lock = db_locks.acquire_shared_lock(origin_table, origin_id)
+                temp_lock = _acquire_lock(
+                    "shared", process_id, db_locks, db_metadata, origin_table, origin_id
+                )
                 changed_columns = table_operations.check_changed_columns(
                     table_df,
                     origin_id,
@@ -284,7 +361,14 @@ def setup_materialize_instance(
                 pass
 
     if not table_data[constants.TABLE_ALLOW_MARTIFACT] and success:
-        db_locks.acquire_exclusive_lock(table_name, constants.ARTIFACT_FOLDER)
+        _acquire_lock(
+            "exclusive",
+            process_id,
+            db_locks,
+            db_metadata,
+            table_name,
+            constants.ARTIFACT_FOLDER,
+        )
         file_operations.copy_folder_to_temp(
             process_id,
             db_metadata.db_dir,
@@ -438,7 +522,9 @@ def setup_write_instance_inner(
     db_locks: DatabaseLock,
     file_writer: CopyOnWriteFile,
 ) -> SETUP_OUTPUT:
-    db_locks.acquire_exclusive_lock(table_name, instance_id)
+    _acquire_lock(
+        "exclusive", process_id, db_locks, db_metadata, table_name, instance_id
+    )
     funct_kwargs = {
         "instance_id": instance_id,
         "table_name": table_name,
@@ -475,7 +561,9 @@ def setup_write_instance(
         raise tv_errors.TVArgumentError(f"{table_name} doesn't exist")
     if instance_id not in existance:
         raise tv_errors.TVArgumentError("instance doesn't exist")
-    db_locks.acquire_exclusive_lock(table_name, instance_id)
+    _acquire_lock(
+        "exclusive", process_id, db_locks, db_metadata, table_name, instance_id
+    )
     instance_data = file_operations.get_description(
         instance_id, table_name, db_metadata.db_dir
     )
@@ -490,9 +578,18 @@ def setup_write_instance(
     perm_instance_id = "_" + str(int(start_time)) + "_" + gen_tv_id()
     perm_instance_id = version + perm_instance_id
     db_locks.make_lock_path(table_name, perm_instance_id)
-    db_locks.acquire_exclusive_lock(table_name, perm_instance_id)
+    _acquire_lock(
+        "exclusive", process_id, db_locks, db_metadata, table_name, perm_instance_id
+    )
     if not table_data[constants.TABLE_ALLOW_MARTIFACT]:
-        db_locks.acquire_exclusive_lock(table_name, constants.ARTIFACT_FOLDER)
+        _acquire_lock(
+            "exclusive",
+            process_id,
+            db_locks,
+            db_metadata,
+            table_name,
+            constants.ARTIFACT_FOLDER,
+        )
     step_ids.append(process_id + "_" + gen_tv_id())
 
     all_columns = list(table_df.columns)
@@ -502,7 +599,9 @@ def setup_write_instance(
     origin_id, origin_table = instance_data[constants.DESCRIPTION_ORIGIN]
     if origin_id != "":
         try:
-            temp_lock = db_locks.acquire_shared_lock(origin_table, origin_id)
+            temp_lock = _acquire_lock(
+                "shared", process_id, db_locks, db_metadata, origin_table, origin_id
+            )
             changed_columns = table_operations.check_changed_columns(
                 table_df, origin_id, origin_table, db_metadata.db_dir, file_writer
             )
@@ -566,12 +665,16 @@ def setup_execute_instance_inner(
         "origin_table": origin_table,
         "update_rows": True,
     }
-    db_locks.acquire_exclusive_lock(table_name, instance_id)
+    _acquire_lock(
+        "exclusive", process_id, db_locks, db_metadata, table_name, instance_id
+    )
     if origin_id != "":
-        db_locks.acquire_shared_lock(origin_table, origin_id)
+        _acquire_lock(
+            "shared", process_id, db_locks, db_metadata, origin_table, origin_id
+        )
     for builder_name in external_deps:
         for table, _, instance, _, _ in external_deps[builder_name]:
-            db_locks.acquire_shared_lock(table_name=table, instance_id=instance)
+            _acquire_lock("shared", process_id, db_locks, db_metadata, table, instance)
             table_data = file_operations.get_description("", table, db_metadata.db_dir)
             if not table_data[constants.TABLE_ALLOW_MARTIFACT]:
                 db_locks.acquire_shared_lock(table, constants.ARTIFACT_FOLDER)
@@ -609,13 +712,24 @@ def setup_execute_instance(
     table_data = file_operations.get_description("", table_name, db_metadata.db_dir)
     db_locks.make_lock_path(table_name, perm_instance_id)
     if not table_data[constants.TABLE_SIDE_EFFECTS]:
-        db_locks.acquire_exclusive_lock(table_name, instance_id)
-        db_locks.acquire_exclusive_lock(table_name, perm_instance_id)
+        _acquire_lock(
+            "exclusive", process_id, db_locks, db_metadata, table_name, instance_id
+        )
+        _acquire_lock(
+            "exclusive", process_id, db_locks, db_metadata, table_name, perm_instance_id
+        )
         if not table_data[constants.TABLE_ALLOW_MARTIFACT]:
             db_locks.make_lock_path(table_name, perm_instance_id)
-            db_locks.acquire_exclusive_lock(table_name, constants.ARTIFACT_FOLDER)
+            _acquire_lock(
+                "exclusive",
+                process_id,
+                db_locks,
+                db_metadata,
+                table_name,
+                constants.ARTIFACT_FOLDER,
+            )
     else:
-        db_locks.acquire_exclusive_lock(table_name)
+        _acquire_lock("exclusive", process_id, db_locks, db_metadata, table_name)
 
     yaml_builders = file_operations.get_yaml_builders(
         instance_id, table_name, db_metadata.db_dir
@@ -643,7 +757,9 @@ def setup_execute_instance(
             origin_table = table_name
 
         if origin_id != "":
-            db_locks.acquire_shared_lock(origin_table, origin_id)
+            _acquire_lock(
+                "shared", process_id, db_locks, db_metadata, origin_table, origin_id
+            )
     else:
         origin_id = ""
         origin_table = ""
@@ -666,7 +782,9 @@ def setup_execute_instance(
         file_writer=file_writer,
     )
     if custom_code:
-        db_locks.acquire_shared_lock(constants.CODE_FOLDER)
+        _acquire_lock(
+            "shared", process_id, db_locks, db_metadata, constants.CODE_FOLDER
+        )
     funct_kwargs = {
         "table_name": table_name,
         "instance_id": instance_id,
@@ -686,9 +804,16 @@ def setup_execute_instance(
 
     for builder_name in external_deps:
         for table, _, instance, _, _ in external_deps[builder_name]:
-            db_locks.acquire_shared_lock(table_name=table, instance_id=instance)
+            _acquire_lock("shared", process_id, db_locks, db_metadata, table, instance)
             try:
-                db_locks.acquire_shared_lock(table, constants.ARTIFACT_FOLDER)
+                _acquire_lock(
+                    "shared",
+                    process_id,
+                    db_locks,
+                    db_metadata,
+                    table,
+                    constants.ARTIFACT_FOLDER,
+                )
             except tv_errors.TVLockError:
                 pass
 
@@ -724,14 +849,18 @@ def setup_create_instance(
     if origin_id != "":
         if origin_table == "":
             origin_table = table_name
-        db_locks.acquire_shared_lock(origin_table, origin_id)
+        _acquire_lock(
+            "shared", process_id, db_locks, db_metadata, origin_table, origin_id
+        )
     elif copy:
         try:
             _, _, origin_id = db_metadata.get_last_table_update(
                 table_name, "", before_time=start_time
             )
             origin_table = table_name
-            db_locks.acquire_shared_lock(table_name, origin_id)
+            _acquire_lock(
+                "shared", process_id, db_locks, db_metadata, origin_table, origin_id
+            )
         except tv_errors.TVArgumentError:
             origin_id = ""
             origin_table = ""
@@ -750,7 +879,9 @@ def setup_create_instance(
     }
     db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.make_lock_path(table_name, instance_id)
-    db_locks.acquire_exclusive_lock(table_name, instance_id)
+    _acquire_lock(
+        "exclusive", process_id, db_locks, db_metadata, table_name, instance_id
+    )
     return funct_kwargs
 
 
@@ -778,12 +909,18 @@ def setup_create_table(
     db_metadata.update_process_data(process_id, funct_kwargs)
     db_locks.make_lock_path(table_name)
     db_locks.make_lock_path(table_name, constants.ARTIFACT_FOLDER)
-    db_locks.acquire_exclusive_lock(table_name)
+    _acquire_lock("exclusive", process_id, db_locks, db_metadata, table_name)
     return funct_kwargs
 
 
-def setup_restart_database(db_locks: DatabaseLock) -> SETUP_OUTPUT:
-    db_locks.acquire_exclusive_lock(constants.RESTART_LOCK)
+def setup_restart_database(
+    process_id: str,
+    db_locks: DatabaseLock,
+    db_metadata: MetadataStore,
+) -> SETUP_OUTPUT:
+    _acquire_lock(
+        "exclusive", process_id, db_locks, db_metadata, constants.RESTART_LOCK
+    )
     return {}
 
 

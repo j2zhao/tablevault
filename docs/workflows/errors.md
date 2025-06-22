@@ -67,8 +67,6 @@ Internal TableVault-generated errors, regardless of `process_id` status, will al
 
 With a user-provided `process_id`, an error only **pauses** the operation. It maintains its system locks, preventing other operations from accessing the same resources. This is especially useful for long-running `execute_instance()` operations that might be stopped.
 
-This is also true if the program is externally interrupted (e.g., by killing a Jupyter Notebook cell).
-
 Note that the operation restarts from its last checkpoint, and its input arguments cannot be changed.
 
 #### Example Code

@@ -102,10 +102,6 @@ def tablevault_operation(
     funct_kwargs = None
     if process_id in logs:
         log = logs[process_id]
-        logging.info(f"Start acquiring remote lock for {process_id}")
-        db_locks.acquire_shared_lock(constants.REMOTE_LOCK, timeout=None)
-        logging.info(f"Acquired remote lock for {process_id}")
-        db_locks.acquire_shared_lock(constants.REMOTE_LOCK, timeout=None)
         if "background" in log.data:
             background = log.data["background"]
         db_metadata.update_process_pid(process_id, os.getpid())
@@ -133,9 +129,6 @@ def tablevault_operation(
         start_time = db_metadata.start_new_process(
             process_id, author, op_name, os.getpid(), force_takedown
         )
-        logging.info(f"Start acquiring remote lock for {process_id}")
-        db_locks.acquire_shared_lock(constants.REMOTE_LOCK, timeout=None)
-        logging.info(f"Acquired remote lock for {process_id}")
     if background:
         db_metadata.update_process_data(process_id, {"background": background})
     if funct_kwargs is None:

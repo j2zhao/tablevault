@@ -166,25 +166,29 @@ These examples illustrate the reference string syntax itself. These strings woul
 
 1.  **Fetch a single column from another table:**
     `my_data_table.user_email`
-    *When used as `"<<my_data_table.user_email>>"`, results: a dataframe with a single `user_email` column (might be converted to a list contextually)*
+    - **Result:** A dataframe with a single `user_email` column *(might be converted to a list contextually)*.
 
 2.  **Get a specific value using a filter:**
     `users_table.full_name[user_id::'user-007']`
-    *(When used as `"<<users_table.full_name[user_id::'user-007']>>"`, result: The `full_name` for `user_id` 'user-007': likely a single string)*
+    - **Result:** A single string representing `full_name` for `user_id`.
 
 3.  **Get a value from `self` based on the current row's context (implicit index):**
     `self.status[id_column_of_self]`
-    *(When used as `"<<self.status[id_column_of_self]>>"`, and the current processing index is, e.g., `101`, this effectively becomes `self.status` where `id_column_of_self == 101`)*
+    - **Result:** A single boolean representing `self.status` where `id_column_of_self == index`.
 
 4.  **Reference with a specific version:**
     `app_settings(base_1748275064_5782ef5b-4023-4618-a419-cf921c365c64).timeout_ms`
+    - **Result:** A dataframe with a single `user_email` column that is from  the `base_1748275064_5782ef5b-4023-4618-a419-cf921c365c64` instance.
+
 
 5.  **Using a range condition:**
-    `transactions.amount[transaction_date::'2024-01-01':'2024-01-31']` *, the range is resolved by the physical index.*
+    `transactions.amount[transaction_date::'2024-01-01':'2024-01-31']` 
+    -  **Result:** A dataframe with a single `amount` column with transactions between `2024-01-01` and `2024-01-31` (if properly sorted).
+    -  **Note** the range is calculated by the physical index.
 
 6.  **Nested reference for dynamic filtering:**
     `preferences.setting_value[user_id::<<self.user_identifier[index]>>, setting_key::'theme']`
-
+    - **Result:** A single string representing `setting_value` for `user_id` at current index with the `theme` key.
 ---
 
 ## Error Handling

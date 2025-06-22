@@ -10,7 +10,6 @@ from tablevault._helper.file_operations import load_code_function, move_code_to_
 from concurrent.futures import ThreadPoolExecutor
 from tablevault._defintions import tv_errors
 from tablevault._helper.copy_write_file import CopyOnWriteFile
-from tablevault._helper.database_lock import DatabaseLock
 
 
 class IndexBuilder(TVBuilder):
@@ -33,8 +32,6 @@ class IndexBuilder(TVBuilder):
     ) -> bool:
         diff_flag = None
         try:
-            db_lock = DatabaseLock(process_id, db_dir)
-            db_lock.release_all_locks(constants.REMOTE_LOCK)
             self.transform_table_string(
                 cache, instance_id, table_name, db_dir, process_id, index=None
             )
@@ -115,11 +112,6 @@ class IndexBuilder(TVBuilder):
                     file_writer=file_writer,
                 )
         finally:
-            db_lock.acquire_shared_lock(
-                constants.REMOTE_LOCK,
-                timeout=None,
-                check_interval=constants.REMOTE_CHECK_INTERVAL,
-            )
             output = table_operations.make_df(
                 instance_id,
                 table_name,
@@ -148,12 +140,6 @@ def _execute_code_from_builder(
         cache, instance_id, table_name, db_dir, process_id, index, arguments=True
     )
     results = funct(**builder.arguments)
-    db_lock = DatabaseLock(process_id, db_dir)
-    lock = db_lock.acquire_shared_lock(
-        constants.REMOTE_LOCK,
-        timeout=None,
-        check_interval=constants.REMOTE_CHECK_INTERVAL,
-    )
     if index is not None and builder.return_type == constants.BUILDER_RTYPE_ROWWISE:
         if len(builder.changed_columns) == 1:
             table_operations.write_df_entry(
@@ -176,7 +162,6 @@ def _execute_code_from_builder(
                     db_dir,
                     file_writer,
                 )
-        db_lock.release_lock(lock)
     elif builder.return_type == constants.BUILDER_RTYPE_GENERATOR:
         count = 0
         for index, results_ in enumerate(results):
@@ -204,7 +189,6 @@ def _execute_code_from_builder(
                     )
         # if count == 0:
         #     return False
-        db_lock.release_lock(lock)
     elif builder.return_type == constants.BUILDER_RTYPE_DATAFRAME:
         # if len(results) == 0:
         #     return False
@@ -217,8 +201,6 @@ def _execute_code_from_builder(
             file_writer=file_writer,
             primary_key=builder.primary_key,
         )
-        db_lock.release_lock(lock)
         return diff_flag
     else:
-        db_lock.release_lock(lock)
         raise tv_errors.TVBuilderError("return_type not recognized")

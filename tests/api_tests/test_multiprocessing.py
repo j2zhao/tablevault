@@ -11,6 +11,7 @@ finish_evt = Event()
 
 def fake_execution():
     started_evt.set()
+    print("Execution Faked")
     finish_evt.wait()
     return 0
 
@@ -25,7 +26,8 @@ def multiprocessing_execute(tablevault: TableVault):
             copy_dir="./tests/test_data/test_data_db_selected/stories",
             table_name="stories",
         )
-        tablevault.execute_instance("stories")
+        process_id = tablevault.generate_process_id()
+        tablevault.execute_instance("stories", process_id=process_id)
 
 
 def multiprocessing_other_table():

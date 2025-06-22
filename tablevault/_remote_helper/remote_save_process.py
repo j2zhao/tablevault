@@ -2,7 +2,7 @@ import os
 import time
 
 from tablevault._remote_helper import _remote_save_helper
-from tablevault._defintions import constants, tv_errors
+from tablevault._defintions import tv_errors
 from tablevault._helper.database_lock import DatabaseLock
 from tablevault._helper.utils import gen_tv_id
 from pathlib import Path
@@ -41,11 +41,6 @@ def run_backup_process(
         process_id = gen_tv_id()
         db_locks = DatabaseLock(process_id, local_db_dir)
         try:
-            db_locks.acquire_exclusive_lock(
-                constants.REMOTE_LOCK,
-                timeout=interval_seconds // 4,
-                check_interval=constants.REMOTE_CHECK_INTERVAL,
-            )
             _remote_save_helper.rsync_to_drive(local_db_dir, remote_db_dir, log_file)
         except tv_errors.TVLockError:
             logger.info("Couldn't get remote lock - passing this save.")
