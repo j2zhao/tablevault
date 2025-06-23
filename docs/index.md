@@ -7,12 +7,11 @@ TableVault integrates with Python and can be used with popular data science libr
 Installation via pip:
 
 ```bash
-pip install "git+https://github.com/j2zhao/tablevault.git"
+pip install tablevault
 ```
 
 This library is fully compatible with `Python>=3.11`.
 
-**Note:** An official release to the Python Package Index is scheduled for July 2025.
 
 ## Quick Start
 
