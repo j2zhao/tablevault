@@ -1,6 +1,7 @@
 
 from ml_vault.database import create_ml_vault_db, get_arango_db
 
+
 class Vault():
     def __init__(self, 
             user_id,
@@ -58,18 +59,21 @@ class Vault():
     def resume_execution(self, session_name):
         pass
 
-    def search_experiments(self, query, input_names, output_names, user_names):
+    def new_query(self):
         pass
 
-    def search_file_list(self, query, experiment_names, child_names, parent_names):
+    def search_experiments(self, properties, input_names, output_names, user_names, descriptions):
         pass
 
-    def search_embeddings(self, query, experiment_names, child_names, parent_names):
+    def search_file_list(self, properties, descriptions, read_experiments, write_experiments):
         pass
 
-    def search_document(self, query, experiment_names, child_names, parent_names):
+    def search_embeddings(self, properties, experiment_names, child_names, parent_names):
         pass
 
-    def search_record_list(self, query, experiment_names, child_names, parent_names):
+    def search_document(self, properties, experiment_names, child_names, parent_names):
+        pass
+
+    def search_record_list(self, properties, experiment_names, child_names, parent_names):
         pass
 

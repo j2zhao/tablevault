@@ -132,3 +132,100 @@ def create_table(db):
         metric="cosine",  # or "l2" (Euclidean)
         dimension=1536      # Must match your vector size
     )
+
+
+    # create_collection_safe(db, "user_session", edge=True, schema={
+    #     "rule": {
+    #         "properties": {
+    #             "timestamp": {"type": "number"},
+    #         },
+    #         "required": ["timestamp"],
+    #         "additionalProperties": False
+    #     },
+    #     "level": "strict",
+    # })
+    
+    # create_collection_safe(db, "write_artifact", edge=True, schema={
+    #     "rule": {
+    #         "properties": {
+    #             "timestamp": {"type": "number"},
+    #             "code_index": {"type": "number"},
+    #             "line_num": {"type": "number"},
+    #             "create": {"type": "boolean"},
+    #         },
+    #         "required": ["timestamp", "line_num", "create"],
+    #         "additionalProperties": False
+    #     },
+    #     "level": "strict",
+    # })
+    
+    # create_collection_safe(db, "read_artifact", edge=True, schema={
+    #     "rule": {
+    #         "properties": {
+    #             "timestamp": {"type": "number"},
+    #             "code_index": {"type": "number"},
+    #             "line_num": {"type": "number"}
+    #         },
+    #         "required": ["timestamp", "line_num"],
+    #         "additionalProperties": False
+    #     },
+    #     "level": "strict",
+    # })
+
+    # create_collection_safe(db, "session_edge", edge=True, schema={
+    #     "rule": {
+    #         "properties": {"index": {"type": "number"},
+    #             "start_position": {"type": "number"},
+    #             "end_position": {"type": "number"},},
+    #         "required": ["index", "start_position", "end_position"],
+    #         "additionalProperties": False
+    #     },
+    #     "level": "strict",
+    # })
+
+
+    # create_collection_safe(db, "file_edge", edge=True, schema={
+    #     "rule": {
+    #         "properties": {"index": {"type": "number"},
+    #             "start_position": {"type": "number"},
+    #             "end_position": {"type": "number"},},
+    #         "required": ["index", "start_position", "end_position"],
+    #         "additionalProperties": False
+    #     },
+    #     "level": "strict",
+    # })
+
+    # create_collection_safe(db, "embedding_edge", edge=True, schema={
+    #     "rule": {
+    #         "properties": {"index": {"type": "number"},
+    #             "start_position": {"type": "number"},
+    #             "end_position": {"type": "number"},},
+    #         "required": ["index", "start_position", "end_position"],
+    #         "additionalProperties": False
+    #     },
+    #     "level": "strict",
+    # })
+    
+
+    # create_collection_safe(db, "document_edge", edge=True, schema={
+    #     "rule": {
+    #         "properties": {"index": {"type": "number"},
+    #             "start_position": {"type": "number"},
+    #             "end_position": {"type": "number"},},
+    #         "required": ["index", "start_position", "end_position"],
+    #         "additionalProperties": False
+    #     },
+    #     "level": "strict",
+    # })
+
+
+    # create_collection_safe(db, "record_edge", edge=True, schema={
+    #     "rule": {
+    #         "properties": {"index": {"type": "number"},
+    #             "start_position": {"type": "number"},
+    #             "end_position": {"type": "number"},},
+    #         "required": ["index", "start_position", "end_position"],
+    #         "additionalProperties": False
+    #     },
+    #     "level": "strict",
+    # })
