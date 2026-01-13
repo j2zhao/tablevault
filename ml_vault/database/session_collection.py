@@ -14,7 +14,6 @@ def create_session(db: StandardDatabase, name, timestamp, last_pid, user_id):
         "_key": name,
         "name": name,
         "timestamp": timestamp,
-        "last_timestamp": timestamp,
         "interupt_request": "",
         "interupt_action": "",
         "execution_type": 'notebook',  # e.g. "notebook", "script", "batch"
@@ -27,6 +26,7 @@ def create_session(db: StandardDatabase, name, timestamp, last_pid, user_id):
         meta = session.insert(doc)  # meta contains _id, _key, _rev
     except DocumentInsertError as e:
         if session.has(name):
+            timestamp_utils.commit_new_timestamp(timestamp)
             raise ValueError(f"{name} already exists as session")
     timestamp_utils.commit_new_timestamp(timestamp)
     return meta
@@ -126,14 +126,6 @@ def session_add_code_start(db:StandardDatabase, name, code):
         "error": "",
     }
     session_code.insert(code_doc)
-
-    # edge_doc = {
-    #     "index": start_index,
-    #     "start_position": start_position,
-    #     "end_position": end_position,
-    #     "_from": f"session_code/{name}_{start_index}",
-    #     "_to": f"session/{name}"
-    # }
     helper.add_parent_edge(db, f"{name}_{start_index}", "session", start_position, end_position, name, "session_list", timestamp, True)
     doc["last_timestamp"] = timestamp
     doc["length"] = start_position + len(code)

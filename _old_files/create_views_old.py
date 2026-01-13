@@ -65,13 +65,13 @@ def create_session_views(db: StandardDatabase, d_embedding_size: int) -> None:
                 "fields": {
                     "name": {"analyzers": ["identity"]},
                     "index": {"analyzers": ["identity"]},
-                    "text": {"analyzers": ["text_en"]},
-                    "status": {"analyzers": ["identity"]},
-                    "error": {"analyzers": ["identity"]},
                     "timestamp": {"analyzers": ["identity"]},
                     "last_timestamp": {"analyzers": ["identity"]},
                     "position_start": {"analyzers": ["identity"]},
                     "position_end": {"analyzers": ["identity"]},
+                    "text": {"analyzers": ["text_en"]},
+                    "status": {"analyzers": ["identity"]},
+                    "error": {"analyzers": ["identity"]},    
                 }
             }
         },
@@ -91,20 +91,16 @@ def create_session_views(db: StandardDatabase, d_embedding_size: int) -> None:
                 "includeAllFields": False,
                 "fields": {
                     "name": {"analyzers": ["identity"]},
-                    #"session_name": {"analyzers": ["identity"]},
                     "index": {"analyzers": ["identity"]},
+                    "session_name": {"analyzers": ["identity"]},
+                    "line_num": {"analyzers": ["identity"]},
                     "timestamp": {"analyzers": ["identity"]},
                     "position_start": {"analyzers": ["identity"]},
                     "position_end": {"analyzers": ["identity"]},
-                    "parents": {
-                        "includeAllFields": True,
-                        "analyzers": ["identity"]
-                    },
                 }
             }
         },
         "primarySort": [
-            {"field": "session_name", "direction": "asc"},
             {"field": "name", "direction": "asc"},
             {"field": "index", "direction": "asc"}
         ],
@@ -121,13 +117,11 @@ def create_session_views(db: StandardDatabase, d_embedding_size: int) -> None:
                 "fields": {
                     "name": {"analyzers": ["identity"]},
                     "index": {"analyzers": ["identity"]},
+                    "session_name": {"analyzers": ["identity"]},
+                    "line_num": {"analyzers": ["identity"]},
                     "timestamp": {"analyzers": ["identity"]},
                     "position_start": {"analyzers": ["identity"]},
                     "position_end": {"analyzers": ["identity"]},
-                    "parents": {
-                        "includeAllFields": True,
-                        "analyzers": ["identity"]
-                    },
                 }
             }
         },
@@ -148,14 +142,12 @@ def create_session_views(db: StandardDatabase, d_embedding_size: int) -> None:
                 "fields": {
                     "name": {"analyzers": ["identity"]},
                     "index": {"analyzers": ["identity"]},
+                    "session_name": {"analyzers": ["identity"]},
+                    "line_num": {"analyzers": ["identity"]},
                     "timestamp": {"analyzers": ["identity"]},
                     "start_position": {"analyzers": ["identity"]},
                     "end_position": {"analyzers": ["identity"]},
                     "text": {"analyzers": ["text_en"]},
-                    "parents": {
-                        "includeAllFields": True,
-                        "analyzers": ["identity"]
-                    },
                 }
             }
         },
@@ -176,17 +168,19 @@ def create_session_views(db: StandardDatabase, d_embedding_size: int) -> None:
                 "fields": {
                     "name": {"analyzers": ["identity"]},
                     "index": {"analyzers": ["identity"]},
+                    "session_name": {"analyzers": ["identity"]},
+                    "line_num": {"analyzers": ["identity"]},
                     "timestamp": {"analyzers": ["identity"]},
+                    "start_position": {"analyzers": ["identity"]},
+                    "end_position": {"analyzers": ["identity"]},
                     "data_text": {"analyzers": ["text_en"]},
                     "data": {
                         "includeAllFields": True,
                         "analyzers": ["identity"]
                     },
-                    "parents": {
+                    "column_names": {
                         "includeAllFields": True,
-                        "analyzers": ["identity"]
-                    },
-                    "column_names": {"analyzers": ["identity"]}
+                        "analyzers": ["identity"]}
                 }
             }
         },
@@ -195,20 +189,17 @@ def create_session_views(db: StandardDatabase, d_embedding_size: int) -> None:
             {"field": "index", "direction": "asc"}
         ],
         "storedValues": [
-            {"fields": ["timestamp"]}
+            {"fields": ["timestamp", "start_position", "end_position"]}
         ]
     })
 
-    # Description view - for semantic search with embeddings
     _create_view_safe(db, "description_view", {
         "links": {
             "description": {
                 "includeAllFields": False,
                 "fields": {
-                    "session_name": {"analyzers": ["identity"]},
-                    "item_name": {"analyzers": ["identity"]},
-                    "collection": {"analyzers": ["identity"]},
-                    "type": {"analyzers": ["identity"]},
+                    "artifact_name": {"analyzers": ["identity"]},
+                    "artifact_collection": {"analyzers": ["identity"]},
                     "timestamp": {"analyzers": ["identity"]},
                     "text": {"analyzers": ["text_en"]},
                     "embedding": {
@@ -223,10 +214,10 @@ def create_session_views(db: StandardDatabase, d_embedding_size: int) -> None:
             }
         },
         "primarySort": [
-            {"field": "item_name", "direction": "asc"},
-            {"field": "session_name", "direction": "asc"}
+            {"field": "artifact_name", "direction": "asc"},
+            {"field": "timestamp", "direction": "asc"}
         ],
         "storedValues": [
-            {"fields": ["collection", "timestamp"]}
+            {"fields": ["artifact_name", "artifact_collection", "timestamp"]}
         ]
     })

@@ -10,26 +10,31 @@ from ml_vault.database import artifact_collection_helper as helper
 
 
 def create_file_list(db, name, session_name, line_num): 
-    timestamp = timestamp_utils.get_new_timestamp(db)
-    creation = helper.add_artifact_name(db, name, "file_list", timestamp) # assume success
+    timestamp = timestamp_utils.get_new_timestamp(db, ["create_file_list", name, session])
+    creation = helper.add_artifact_name(db, name, "file_list", timestamp)
     if creation:
         collection =  db.collection("file_list")
         doc = {
             "_key": name,
             "name": name,
             "timestamp": timestamp,
-            "last_timestamp": timestamp,
             "n_items": 0,
             "length": 0,
-            "locked": False
+            "locked": -1
         }
-        collection.insert(doc)
-
-    helper.add_write_artifact_edge(db, name, "file_list", session_name, timestamp, line_num)    
+        try:
+            collection.insert(doc)
+        except Exception as e:
+            helper.delete_artifact_name(db, name)
+            timestamp_utils.commit_new_timestamp(db, timestamp)
+            raise e
+    else:
+        timestamp_utils.commit_new_timestamp(db, timestamp)
+        return False
     timestamp_utils.commit_new_timestamp(db, timestamp)
 
 def create_document_list(db, name, session_name, line_num):
-    timestamp = timestamp_utils.get_new_timestamp(db)
+    timestamp = timestamp_utils.get_new_timestamp(db, ["create_document_list", name, session_name, line_num])
     creation = helper.add_artifact_name(db, name, "document_list", timestamp) # assume success
     if creation:
         collection =  db.collection("document_list")
@@ -37,18 +42,20 @@ def create_document_list(db, name, session_name, line_num):
             "_key": name,
             "name": name,
             "timestamp": timestamp,
-            "last_timestamp": timestamp,
             "n_items": 0,
             "length": 0,
-            "locked": False
+            "locked": -1
         }
-        collection.insert(doc)
-
-    helper.add_write_artifact_edge(db, name, "document_list", session_name, timestamp, line_num)    
+        try:
+            collection.insert(doc)
+        except Exception as e:
+            helper.delete_artifact_name(db, name)
+            timestamp_utils.commit_new_timestamp(db, timestamp)
+            raise e
     timestamp_utils.commit_new_timestamp(db, timestamp)
    
 def create_embedding_list(db, name, session_name, line_num, n_dim = None, view = True):
-    timestamp = timestamp_utils.get_new_timestamp(db)
+    timestamp = timestamp_utils.get_new_timestamp(db, ["create_embedding_list", name, session_name, line_num])
     creation = helper.add_artifact_name(db, name, "embedding_list", timestamp) # assume success
     if creation:
         collection =  db.collection("embedding_list")
@@ -56,11 +63,10 @@ def create_embedding_list(db, name, session_name, line_num, n_dim = None, view =
             "_key": name,
             "name": name,
             "timestamp": timestamp,
-            "last_timestamp": timestamp,
             "n_dim": n_dim,
             "n_items": 0,
             "length": 0,
-            "locked": False
+            "locked": -1
         }
         collection.insert(doc)
         if view:
@@ -68,10 +74,9 @@ def create_embedding_list(db, name, session_name, line_num, n_dim = None, view =
     if not creation and n_dim != None:
         timestamp_utils.commit_new_timestamp(db, timestamp)
         raise ValueError("Can only vector dimension at collection creation time. Consider using a new collection.")
-    helper.add_write_artifact_edge(db, name, "embedding_list", session_name, timestamp, line_num)    
     timestamp_utils.commit_new_timestamp(db, timestamp)
 
-def create_record_list(db, name, session_name, line_num, column_names):
+def create_record_list(db, name, session_name, line_num, column_name):
     timestamp = timestamp_utils.get_new_timestamp(db)
     creation = helper.add_artifact_name(db, name, "record_list", timestamp) # assume success
     if creation:
@@ -83,207 +88,206 @@ def create_record_list(db, name, session_name, line_num, column_names):
             "_key": name,
             "name": name,
             "timestamp": timestamp,
-            "last_timestamp": timestamp,
             "n_items": 0,
             "length": 0,
-            "column_names": column_names,
-            "locked": False,
+            "column_name": column_name,
+            "locked": -1,
         }
         collection.insert(doc)
 
     if not creation and len(parents) != 0:
         raise ValueError("Can only define parents at collection creation time. Consider using a new collection.")
-    helper.add_write_artifact_edge(db, name, "record_list", session_name, timestamp, line_num)    
     timestamp_utils.commit_new_timestamp(db, timestamp)
 
 
-def append_file(db, 
+def _append_artifact(
+    db,
+    name,
+    session_name,
+    parents,
+    artifact,
+    dtype,
+    length,
+    index = None,
+    position_start = None,
+    position_end = None,
+    timeout = 60, 
+    wait_time = 0.1):
+    timestamp = timestamp_utils.get_new_timestamp(db, [f"append_{dtype}", name, session_name, parents])
+    doc = helper.lock_artifact(db, name, f"{dtype}_list", timestamp, timeout, wait_time)
+    if doc == None:
+        timestamp_utils.commit_new_timestamp(db, timestamp)
+        raise ValueError("Could not append item.")
+    if index == None:
+        index = doc["n_items"]
+    if position_start == None:
+        position_start = doc["length"]
+        position_end = doc["length"] + length
+    artifact["index"] = index
+    artifact["position_start"] = position_start
+    artifact["position_end"] = position_end
+    artifact["_key"] = f"{name}_{index}"
+    artifact["name"] = name
+    artifact["session_name"] = session_name
+    artifact["timestamp"] = timestamp
+    try:
+        collection = db.collection(dtype)
+        collection.insert(artifact)
+    except DocumentInsertError:
+        helper.unlock_artifact(db, name, f"{dtype}_list")
+        timestamp_utils.commit_new_timestamp(db, timestamp)
+        raise ValueError("Could not append item. Possible index error if specified.")
+    success = helper.add_parent_edge(db, f"{name}_{index}", dtype, name, f"{dtype}_list", position_start, position_end,  True, timestamp)
+    if not success:
+        collection.delete(f"{name}_{index}", ignore_missing=True)
+        helper.unlock_artifact(db, name, f"{dtype}_list")
+        timestamp_utils.commit_new_timestamp(db, timestamp)
+        raise ValueError("Could not add base parent edge.")
+    success = helper.add_session_parent_edge(db, f"{name}_{index}", dtype, session_name, timestamp)
+    if not success:
+        collection.delete(f"{name}_{index}", ignore_missing=True)
+        helper.delete_parent_edge(db, f"{name}_{index}", name, f"{dtype}_list", position_start, position_end)
+        helper.unlock_artifact(db, name, f"{dtype}_list")
+        timestamp_utils.commit_new_timestamp(db, timestamp)
+        raise ValueError("Could not add base parent edge.")
+    parents_success = True
+    for parent in parents:
+        success = helper.add_parent_edge(db, f"{name}_{index}", dtype, parent, "", parents['parent']['start_position'], parents['parent']['end_position'], False, timestamp)
+        if not success:
+            parents_sucess = False
+            break
+    if not parents_sucess:
+        collection.delete(f"{name}_{index}", ignore_missing=True)
+        helper.delete_parent_edge(db, f"{name}_{index}", name, f"{dtype}_list", start_position, end_position)
+        helper.delete_session_parent_edge(db, f"{name}_{index}")
+        for parent in parents:
+            helper.delete_parent_edge(db, f"{name}_{index}", parent, "",  parents['parent']['start_position'], parents['parent']['end_position'])
+        helper.unlock_artifact(db, name, f"{dtype}_list")
+        timestamp_utils.commit_new_timestamp(db, timestamp)
+        raise ValueError("Could not add parent edge. Possible name error.")
+    helper.unlock_artifact(db, name, f"{dtype}_list", index, end_position)
+    timestamp_utils.commit_new_timestamp(db, timestamp)
+        
+def append_file(db:StandardDatabase, 
     name,
     location,
     session_name,
-    line,
     index = None, 
+    position_start = None,
+    position_end = None,
     parents = {},
     timeout = 60, 
     wait_time = 0.1):
     
-    timestamp = timestamp_utils.get_new_timestamp(db)
-    check = helper.validate_parent_value(db, parents, timestamp)
-    if not check:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Parents field issue. Format needs to be in dictionary: {PARENT_NAME: 'start': INDEX, 'end':INDEX}.")
+    artifact = {
+        "location": location,
+    }
+    _append_artifact(
+        db,
+        name,
+        session_name,
+        parents,
+        artifact,
+        "file",
+        1,
+        index,
+        position_start,
+        position_end,
+        timeout, 
+        wait_time)
     
-    doc = helper.lock_artifact(db, name, "file_list", timeout, wait_time)
-    if doc == None:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Could not append file.")
-    if index == None:
-        index = n_items
-    try:
-        collection = db.collection("file")
-        artifact = {
-            "_key": f"{name}_{index}",
-            "name": name,
-            "index": index,
-            "session_name": session_name,
-            "line_num": line_num,
-            "timestamp": timestamp,
-            "position_start": index,
-            "position_end": index + 1,
-            "location": location,
-        }
-        collection.insert(artifact)
-    except DocumentInsertError:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Could not append file. Possible index error if specified.")
-    for parent in parents:
-        parent_edge = helper.add_parent_edge(db, name, "file", parents['parent']['start_position'], parents['parent']['end_position'], parent, timestamp)
-        if false:
-            raise ValueError("Could not add parrent edge. Possible name error.")
-    timestamp_utils.commit_new_timestamp(db, timestamp)
 
-    
-    
 def append_document(
+    db,
     name, 
     text,
     session_name,
-    line_num,
     index = None, 
+    position_start = None,
+    position_end = None,
     parents = {},
     timeout = 60, 
     wait_time = 0.1):
-    timestamp = timestamp_utils.get_new_timestamp(db)
-    check = helper.validate_parent_value(db, parents, timestamp)
-    if not check:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Parents field issue. Format needs to be in dictionary: {PARENT_NAME: 'start': INDEX, 'end':INDEX}.")
-    
-    doc = helper.lock_artifact(db, name, "document_list", timeout, wait_time)
-    if doc == None:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Could not append document.")
-    if index == None:
-        index = n_items
-    try:
-        collection = db.collection("document")
-        artifact = {
-            "_key": f"{name}_{index}",
-            "name": name,
-            "index": index,
-            "session_name": session_name,
-            "line_num": line_num,
-            "timestamp": timestamp,
-            "position_start": index,
-            "position_end": index + 1,
-            "text": text,
-        }
-        collection.insert(artifact)
-    except DocumentInsertError:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Could not append document. Possible index error if specified.")
-    for parent in parents:
-        parent_edge = helper.add_parent_edge(db, name, "document", parents['parent']['start_position'], parents['parent']['end_position'], parent, timestamp)
-        if false:
-            raise ValueError("Could not add parrent edge. Possible name error.")
-    timestamp_utils.commit_new_timestamp(db, timestamp)
 
+
+    artifact = {
+        "text": text,
+    }
+    _append_artifact(
+        db,
+        name,
+        session_name,
+        parents,
+        artifact,
+        "document",
+        len(text),
+        index,
+        position_start,
+        position_end,
+        timeout, 
+        wait_time)
+    
 def append_embedding(
+    db,
     name, 
     embedding,
     session_name,
-    line_num,
     index = None, 
+    position_start = None,
+    position_end = None,
     parents = {},
     timeout = 60, 
     wait_time = 0.1):
-    timestamp = timestamp_utils.get_new_timestamp(db)
-    check = helper.validate_parent_value(db, parents, timestamp)
-    if not check:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Parents field issue. Format needs to be in dictionary: {PARENT_NAME: 'start': INDEX, 'end':INDEX}.")
-    
-    doc = helper.lock_artifact(db, name, "embedding_list", timeout, wait_time)
-    if doc == None:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Could not append embedding.")
-    if len(embedding) != doc["n_dim"]:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Embedding length doesn't match collection.")
-    
-    embedding_name = "embedding_" + str(doc["n_dim"])
-    if index == None:
-        index = n_items
-    try:
-        collection = db.collection("embedding")
-        artifact = {
-            "_key": f"{name}_{index}",
-            "name": name,
-            "index": index,
-            "session_name": session_name,
-            "line_num": line_num,
-            "timestamp": timestamp,
-            "position_start": index,
-            "position_end": index + 1,
-            embedding_name: embedding,
-        }
-        collection.insert(artifact)
-    except DocumentInsertError:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Could not append embedding. Possible index error if specified.")
-    for parent in parents:
-        parent_edge = helper.add_parent_edge(db, name, "document", parents['parent']['start_position'], parents['parent']['end_position'], parent, timestamp)
-        if false:
-            raise ValueError("Could not add parrent edge. Possible name error.")
-    timestamp_utils.commit_new_timestamp(db, timestamp)
+    embedding_name = "embedding_" + str(len(embedding))
+
+    artifact = {
+        embedding_name: embedding,
+    }
+    _append_artifact(
+        db,
+        name,
+        session_name,
+        parents,
+        artifact,
+        "embedding",
+        1,
+        index,
+        position_start,
+        position_end,
+        timeout, 
+        wait_time)
+
+    # TODO: ADD EMBEDDING VIEW
 
 def append_record(
+    db,
     name, 
     record,
     session_name,
-    line_num,
     index = None, 
     parents = {},
     timeout = 60, 
     wait_time = 0.1):
-    timestamp = timestamp_utils.get_new_timestamp(db)
-    check = helper.validate_parent_value(db, parents, timestamp)
-    if not check:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Parents field issue. Format needs to be in dictionary: {PARENT_NAME: 'start': INDEX, 'end':INDEX}.")
-    
-    doc = helper.lock_artifact(db, name, "document_list", timeout, wait_time)
-    if doc == None:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Could not append document.")
-    check = helper.validate_record(record, doc["column_names"])
-    if not check:
+
+    doc = db.collection("record_list").get(name)
+    if not isinstance(record, dict) or set(doc["column_names"]) != set(record.keys()):
         raise ValueError("Record not in correct format.")
-    if index == None:
-        index = n_items
-    try:
-        collection = db.collection("document")
-        artifact = {
-            "_key": f"{name}_{index}",
-            "name": name,
-            "index": index,
-            "session_name": session_name,
-            "line_num": line_num,
-            "timestamp": timestamp,
-            "position_start": index,
-            "position_end": index + 1,
-            "data": record,
-            "data_text": str(record),
-        }
-        collection.insert(artifact)
-    except DocumentInsertError:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Could not append document. Possible index error if specified.")
-    for parent in parents:
-        parent_edge = helper.add_parent_edge(db, name, "document", parents['parent']['start_position'], parents['parent']['end_position'], parent, timestamp)
-        if false:
-            raise ValueError("Could not add parrent edge. Possible name error.")
-    timestamp_utils.commit_new_timestamp(db, timestamp)
 
-
-
+    artifact = {
+        "data": record,
+        "data_text": str(record),
+        "column_names": list(record.keys()),
+    }
+    _append_artifact(
+        db,
+        name,
+        session_name,
+        parents,
+        artifact,
+        "record",
+        1,
+        index,
+        position_start,
+        position_end,
+        timeout, 
+        wait_time)

@@ -24,10 +24,12 @@ def add_description_edge(db:StandardDatabase, description_id, artifact_name, art
             raise
 
 
-def add_description(db, description, embedding, artifact_name, artifact_collection, start_position, end_position):
+def add_description(db, description, embedding, artifact_name, artifact_collection, session_name):
     description = db.collection("description")
     timestamp = timestamp_utils.get_new_timestamp(db)
     doc = {
+        "artifact_name": artifact_name, 
+        "artifact_collection": artifact_collection,
         "timestamp": timestamp,
         "text": description,
         "embedding": embedding,

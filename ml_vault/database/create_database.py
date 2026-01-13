@@ -81,7 +81,6 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
             "properties": {
                 "name": {"type": "string"},
                 "timestamp": {"type": "number"},
-                "last_timestamp": {"type": "number"},
                 "interupt_request": {"type": "string"},
                 "interupt_action": {"type": "string"},
                 "execution_type": {"type": "string"}, 
@@ -90,11 +89,16 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
                 "pid": {"type": "number"},
                 "creator_user_id": {"type": "str"},
             },
-            "required": ["name", "timestamp", 
-                "last_timestamp", "interupt_action", 
-                "interupt_request", "execution_type",
-                "n_items", "length", 
-                "pid", "creator_user_id"],
+            "required": ["name", 
+                "timestamp", 
+                "last_timestamp", 
+                "interupt_request", 
+                "interupt_action",
+                "execution_type",
+                "length", 
+                "n_items", 
+                "pid", 
+                "creator_user_id"],
             "additionalProperties": False
         },
         "level": "strict",
@@ -106,14 +110,13 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
                 "name": {"type": "string"},
                 "index": {"type": "number"},
                 "timestamp": {"type": "number"},
-                "last_timestamp": {"type": "number"},
                 "position_start": {"type": "number"},
                 "position_end": {"type": "number"},
                 "text": {"type": "string"},
                 "status": {"type": "string"},
                 "error": {"type": "string"},
             },
-            "required": ["index", "timestamp", "last_timestamp", "position_start", "position_end", "text", "status", "error"],
+            "required": ["name", "index", "timestamp", "last_timestamp", "position_start", "position_end", "text", "status", "error"],
             "additionalProperties": False
         },
         "level": "strict",
@@ -124,10 +127,9 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
             "properties": {
                 "name": {"type": "string"},
                 "timestamp": {"type": "number"},
-                "last_timestamp": {"type": "number"},
                 "n_items": {"type": "number"},
                 "length": {"type": "number"},
-                "locked": {"type": "bool"}
+                "locked": {"type": "number"}
             },
             "required": ["name", "timestamp", "last_timestamp", "n_items", "length", "locked"],
             "additionalProperties": False
@@ -142,7 +144,6 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
                 "name": {"type": "string"},
                 "index": {"type": "number"},
                 "session_name": {"type": "string"},
-                "line_num": {"type": "number"},
                 "timestamp": {"type": "number"},
                 "position_start": {"type": "number"},
                 "position_end": {"type": "number"},
@@ -167,11 +168,10 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
             "properties": {
                 "name": {"type": "string"},
                 "timestamp": {"type": "number"},
-                "last_timestamp": {"type": "number"},
                 "n_items": {"type": "number"},
                 "length": {"type": "number"},
                 "n_dim": {"type": "number"},
-                "locked": {"type": "bool"}
+                "locked": {"type": "number"}
 
             },
             "required": ["name", "timestamp", "last_timestamp", "n_items", "length", "n_dim", "locked"],
@@ -187,7 +187,6 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
                 "name": {"type": "string"},
                 "index": {"type": "number"},
                 "session_name": {"type": "string"},
-                "line_num": {"type": "number"},
                 "timestamp": {"type": "number"},
                 "position_start": {"type": "number"},
                 "position_end": {"type": "number"},
@@ -198,7 +197,7 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
                     "items": {"type": "number"}
                 }
             },
-            "required": ["name", "index", "timestamp", "position_start", "position_end", "parents"],
+            "required": ["name", "index", "session_name", "line_num","timestamp", "position_start", "position_end"],
             "additionalProperties": True
         },
         "level": "strict"
@@ -210,31 +209,27 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
             "properties": {
                 "name": {"type": "string"},
                 "timestamp": {"type": "number"},
-                "last_timestamp": {"type": "number"},
                 "n_items": {"type": "number"},
                 "length": {"type": "number"},
-                "locked": {"type": "bool"},
+                "locked": {"type": "number"},
             },
             "required": ["name", "timestamp", "last_timestamp", "n_items", "length", "locked"],
             "additionalProperties": False
         },
         "level": "strict"
     })
-   
-
     create_collection_safe(db, "document", {
         "rule": {
             "properties": {
                 "name": {"type": "string"},
                 "index": {"type": "number"},
                 "session_name": {"type": "string"},
-                "line_num": {"type": "number"},
                 "timestamp": {"type": "number"},
                 "start_position": {"type": "number"},
                 "end_position": {"type": "number"},
                 "text": {"type": "string"},
             },
-            "required": ["name", "index", "timestamp","start_position", "end_position", "text", "parents"],
+            "required": ["name", "index", "session_name", "line_num", "timestamp","start_position", "end_position", "text"],
             "additionalProperties": False
         },
         "level": "strict"
@@ -246,11 +241,10 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
             "properties": {
                 "name": {"type": "string"},
                 "timestamp": {"type": "number"},
-                "last_timestamp": {"type": "number"},
                 "n_items": {"type": "number"},
                 "length": {"type": "number"},
-                "column_name": {"type": "string"},
-                "locked": {"type": "bool"}
+                "column_names": {"type": "array", "items": {"type": "string"}},
+                "locked": {"type": "number"}
             },
             "required": ["name", "timestamp", "last_timestamp", "n_items", "length", "column_names", "locked"],
             "additionalProperties": False
@@ -264,14 +258,14 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
                 "name": {"type": "string"},
                 "index": {"type": "number"},
                 "session_name": {"type": "string"},
-                "line_num": {"type": "number"},
                 "timestamp": {"type": "number"},
+                "start_position": {"type": "number"},
+                "end_position": {"type": "number"},
+                "data": {"type": ["object", "null"]},
                 "data_text": {"type": ["string", "null"]},
-                "data_numeric": {"type": ["number", "null"]},
-                "data_bool": {"type": ["boolean", "null"]},
-                "column_name": {"type": "string"},
+                "column_names": {"type": "array", "items": {"type": "string"}},
             },
-            "required": ["name", "index", "timestamp", "data", "data_text", "column_names", "parents"],
+            "required": ["name", "index", "timestamp", "session_name", "timestamp", "start_position", "end_position", "data", "data_text", "column_names"],
             "additionalProperties": False
         },
         "level": "strict"
@@ -281,120 +275,88 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
     create_collection_safe(db, "description", {
         "rule": {
             "properties": {
-                # "session_name": {"type": "string"},
-                # "name": {"type": "string"},
+                "artifact_name": {"type": "string"},
+                "artifact_collection": {"type": "string"},
                 "timestamp": {"type": "number"},
-                # "collection": {"type": "string"},
                 "text": {"type": "string"},
-                "type":  {"type": "string"},
-                # "start_position": {"type": "number"},
-                # "end_position": {"type": "number"},
                 "embedding": {"type": "array", "items": {"type": "number"}},
             },
-            "required": ["session_name", "item_name", "timestamp", "collection", "text", "type", "start_position", "end_position", "embedding"],
+            "required": ["artifact_name", "artifact_collection", "timestamp", "text", "embedding"],
             "additionalProperties": False
         },
         "level": "strict"
     })
-    # db.collection("description").add_hash_index(fields=["name", "index"], unique=True)
+    description = db.collection("description")
 
-    # create_collection_safe(db, "user_session", edge=True, schema={
-    #     "rule": {
-    #         "properties": {
-    #             "timestamp": {"type": "number"},
-    #         },
-    #         "required": ["timestamp"],
-    #         "additionalProperties": False
-    #     },
-    #     "level": "strict",
-    # })
-    
-    # create_collection_safe(db, "write_artifact", edge=True, schema={
-    #     "rule": {
-    #         "properties": {
-    #             "timestamp": {"type": "number"},
-    #             "code_index": {"type": "number"},
-    #             "line_num": {"type": "number"},
-    #             "create": {"type": "boolean"},
-    #         },
-    #         "required": ["timestamp", "line_num", "create"],
-    #         "additionalProperties": False
-    #     },
-    #     "level": "strict",
-    # })
-    
-    # create_collection_safe(db, "read_artifact", edge=True, schema={
-    #     "rule": {
-    #         "properties": {
-    #             "timestamp": {"type": "number"},
-    #             "code_index": {"type": "number"},
-    #             "line_num": {"type": "number"}
-    #         },
-    #         "required": ["timestamp", "line_num"],
-    #         "additionalProperties": False
-    #     },
-    #     "level": "strict",
-    # })
+    description.add_index(
+        type="vector",
+        fields=["embedding"],
+        dimension=1536,  # <--- UPDATE THIS VALUE
+        metric="cosine"  # Options: "cosine", "l2" (Euclidean), "ip" (Inner Product)
+    )
 
-    # create_collection_safe(db, "session_edge", edge=True, schema={
-    #     "rule": {
-    #         "properties": {"index": {"type": "number"},
-    #             "start_position": {"type": "number"},
-    #             "end_position": {"type": "number"},},
-    #         "required": ["index", "start_position", "end_position"],
-    #         "additionalProperties": False
-    #     },
-    #     "level": "strict",
-    # })
+    description.add_index(
+        type="inverted",
+        name="description_text_idx",
+        fields=["text"]
+    )
+
+    create_collection_safe(db, "write_artifact", edge=True, schema={
+        "rule": {
+            "properties": {
+                "timestamp": {"type": "number"},
+                "start_position": {"type": "number"},
+                "end_position": {"type": "number"},
+            },
+            "required": ["timestamp", "start_position", "end_position"],
+            "additionalProperties": False
+        },
+        "level": "strict",
+    })
 
 
-    # create_collection_safe(db, "file_edge", edge=True, schema={
-    #     "rule": {
-    #         "properties": {"index": {"type": "number"},
-    #             "start_position": {"type": "number"},
-    #             "end_position": {"type": "number"},},
-    #         "required": ["index", "start_position", "end_position"],
-    #         "additionalProperties": False
-    #     },
-    #     "level": "strict",
-    # })
+    create_collection_safe(db, "file_parent_edge", edge=True, schema={
+        "rule": {
+            "properties": {
+                "timestamp": {"type": "number"},
+                "start_position": {"type": "number"},
+                "end_position": {"type": "number"},
+                "base_artifact": {"type": "boolean"},
+            },
+            "required": ["timestamp", "start_position", "end_position", "type"],
+            "additionalProperties": False
+        },
+        "level": "strict",
+    })
+    create_collection_safe(db, "document_parent_edge", edge=True, schema={
+        "rule": {
+            "properties": {
+                "timestamp": {"type": "number"},
+                "start_position": {"type": "number"},
+                "end_position": {"type": "number"},
+                "base_artifact": {"type": "boolean"},
+            },
+            "required": ["timestamp", "start_position", "end_position", "type"],
+            "additionalProperties": False
+        },
+        "level": "strict",
+    })
 
-    # create_collection_safe(db, "embedding_edge", edge=True, schema={
-    #     "rule": {
-    #         "properties": {"index": {"type": "number"},
-    #             "start_position": {"type": "number"},
-    #             "end_position": {"type": "number"},},
-    #         "required": ["index", "start_position", "end_position"],
-    #         "additionalProperties": False
-    #     },
-    #     "level": "strict",
-    # })
-    
+    create_collection_safe(db, "embedding_parent_edge", edge=True, schema={
+        "rule": {
+            "properties": {
+                "timestamp": {"type": "number"},
+                "start_position": {"type": "number"},
+                "end_position": {"type": "number"},
+                "base_artifact": {"type": "boolean"},
+            },
+            "required": ["timestamp", "start_position", "end_position", "type"],
+            "additionalProperties": False
+        },
+        "level": "strict",
+    })
 
-    # create_collection_safe(db, "document_edge", edge=True, schema={
-    #     "rule": {
-    #         "properties": {"index": {"type": "number"},
-    #             "start_position": {"type": "number"},
-    #             "end_position": {"type": "number"},},
-    #         "required": ["index", "start_position", "end_position"],
-    #         "additionalProperties": False
-    #     },
-    #     "level": "strict",
-    # })
-
-
-    # create_collection_safe(db, "record_edge", edge=True, schema={
-    #     "rule": {
-    #         "properties": {"index": {"type": "number"},
-    #             "start_position": {"type": "number"},
-    #             "end_position": {"type": "number"},},
-    #         "required": ["index", "start_position", "end_position"],
-    #         "additionalProperties": False
-    #     },
-    #     "level": "strict",
-    # })
-
-    create_collection_safe(db, "parent_edge", edge=True, schema={
+    create_collection_safe(db, "record_parent_edge", edge=True, schema={
         "rule": {
             "properties": {
                 "timestamp": {"type": "number"},
@@ -419,13 +381,13 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
         "level": "strict",
     })
     
-    create_collection_safe(db, "session_edge", edge=True, schema={
+    create_collection_safe(db, "session_parent_edge", edge=True, schema={
         "rule": {
             "properties": {
                 "timestamp": {"type": "number"},
-                "type": {"type": "string"},
+                "base_artifact": {"type": "boolean"},
             },
-            "required": ["timestamp", "type"],
+            "required": ["timestamp", "base_artifact"],
             "additionalProperties": False
         },
         "level": "strict",
@@ -442,14 +404,9 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
                 to_vertex_collections=to_cols
             )
 
-    # add_edge_def("write_artifact", ["session"], DESCRIPTION_COLLECTIONS)
-    # add_edge_def("read_artifact", DESCRIPTION_COLLECTIONS, ["session"])
-    # add_edge_def("session_edge", ["session"], ["session_code"])
-    # add_edge_def("file_edge", ["file_list"], ["file"])
-    # add_edge_def("embedding_edge", ["embedding_list"], ["embedding"])
-    # add_edge_def("document_edge", ["document_list"], ["document"])
-    # add_edge_def("record_edge", ["record_list"], ["record"])
-    add_edge_def("parent_edge", VIEW_COLLECTIONS,  DESCRIPTION_COLLECTIONS)
-    add_edge_def("session_edge", "session",  DESCRIPTION_COLLECTIONS)
-    add_edge_def("description_edge", "desciption",  DESCRIPTION_COLLECTIONS)
-
+    add_edge_def("file_parent_edge", "file_list",  VIEW_COLLECTIONS)
+    add_edge_def("document_parent_edge", "document_list",  VIEW_COLLECTIONS)
+    add_edge_def("embedding_parent_edge", "embedding_list",  VIEW_COLLECTIONS)
+    add_edge_def("record_parent_edge", "record_list",  VIEW_COLLECTIONS)
+    add_edge_def("session_parent_edge",  "session_list", VIEW_COLLECTIONS)
+    add_edge_def("description_edge",  DESCRIPTION_COLLECTIONS, "desciption")
