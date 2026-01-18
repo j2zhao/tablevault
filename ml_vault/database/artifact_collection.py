@@ -7,7 +7,7 @@ import os
 import signal
 import time
 from ml_vault.database import artifact_collection_helper as helper
-
+from ml_vault.database import database_vector_indices as vector_helper
 
 def create_file_list(db, name, session_name, line_num): 
     timestamp = timestamp_utils.get_new_timestamp(db, ["create_file_list", name, session])
@@ -137,7 +137,7 @@ def _append_artifact(
         helper.unlock_artifact(db, name, f"{dtype}_list")
         timestamp_utils.commit_new_timestamp(db, timestamp)
         raise ValueError("Could not append item. Possible index error if specified.")
-    success = helper.add_parent_edge(db, f"{name}_{index}", dtype, name, f"{dtype}_list", position_start, position_end,  True, timestamp)
+    success = helper.add_parent_edge(db, f"{name}_{index}", name,  dtype, position_start, position_end, timestamp)
     if not success:
         collection.delete(f"{name}_{index}", ignore_missing=True)
         helper.unlock_artifact(db, name, f"{dtype}_list")
@@ -146,22 +146,22 @@ def _append_artifact(
     success = helper.add_session_parent_edge(db, f"{name}_{index}", dtype, session_name, timestamp)
     if not success:
         collection.delete(f"{name}_{index}", ignore_missing=True)
-        helper.delete_parent_edge(db, f"{name}_{index}", name, f"{dtype}_list", position_start, position_end)
+        helper.delete_parent_edge(db, f"{name}_{index}", name, position_start, position_end)
         helper.unlock_artifact(db, name, f"{dtype}_list")
         timestamp_utils.commit_new_timestamp(db, timestamp)
         raise ValueError("Could not add base parent edge.")
     parents_success = True
     for parent in parents:
-        success = helper.add_parent_edge(db, f"{name}_{index}", dtype, parent, "", parents['parent']['start_position'], parents['parent']['end_position'], False, timestamp)
+        success = helper.add_dependency_edge(db, f"{name}_{index}", dtype, parent, "", parents['parent']['start_position'], parents['parent']['end_position'], timestamp)
         if not success:
             parents_sucess = False
             break
     if not parents_sucess:
         collection.delete(f"{name}_{index}", ignore_missing=True)
-        helper.delete_parent_edge(db, f"{name}_{index}", name, f"{dtype}_list", start_position, end_position)
+        helper.delete_parent_edge(db, f"{name}_{index}", name, start_position, end_position)
         helper.delete_session_parent_edge(db, f"{name}_{index}")
         for parent in parents:
-            helper.delete_parent_edge(db, f"{name}_{index}", parent, "",  parents['parent']['start_position'], parents['parent']['end_position'])
+            helper.delete_dependency_edge(db, f"{name}_{index}", parent, parents['parent']['start_position'], parents['parent']['end_position'])
         helper.unlock_artifact(db, name, f"{dtype}_list")
         timestamp_utils.commit_new_timestamp(db, timestamp)
         raise ValueError("Could not add parent edge. Possible name error.")
@@ -236,6 +236,7 @@ def append_embedding(
     position_start = None,
     position_end = None,
     parents = {},
+    build_idx=True, 
     timeout = 60, 
     wait_time = 0.1):
     embedding_name = "embedding_" + str(len(embedding))
@@ -256,8 +257,12 @@ def append_embedding(
         position_end,
         timeout, 
         wait_time)
-
-    # TODO: ADD EMBEDDING VIEW
+    if build_idx:
+        total_count, index_count = vector_helper.add_one_vector_count(db, embedding_name)
+        if total_count - index_count > 10000:
+            vector_helper.build_vector_idx(db, embedding_name, len(embedding))
+            vector_helper.update_vector_idx(db, embedding_name)
+        
 
 def append_record(
     db,

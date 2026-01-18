@@ -59,9 +59,6 @@ class Vault():
     def resume_execution(self, session_name):
         pass
 
-    def new_query(self):
-        pass
-
     def search_experiments(self, properties, input_names, output_names, user_names, descriptions):
         pass
 

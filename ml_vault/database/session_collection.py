@@ -7,7 +7,7 @@ import os
 import signal
 import time
 
-def create_session(db: StandardDatabase, name, timestamp, last_pid, user_id):
+def create_session(db: StandardDatabase, name, user_id):
     session = db.collection("session_list")
     timestamp = timestamp_utils.get_new_timestamp(db)
     doc = {
@@ -126,7 +126,7 @@ def session_add_code_start(db:StandardDatabase, name, code):
         "error": "",
     }
     session_code.insert(code_doc)
-    helper.add_parent_edge(db, f"{name}_{start_index}", "session", start_position, end_position, name, "session_list", timestamp, True)
+    helper.add_parent_edge(db, f"{name}_{start_index}", name, "session", start_position, end_position, timestamp)
     doc["last_timestamp"] = timestamp
     doc["length"] = start_position + len(code)
     doc["n_items"] = start_index + 1

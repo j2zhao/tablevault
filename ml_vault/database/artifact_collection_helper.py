@@ -50,23 +50,16 @@ def unlock_artifact(db:StandardDatabase, name, collection_name, index = None, le
     collection.update(doc)
 
 
-def add_parent_edge(db:StandardDatabase, artifact_key, artifact_collection, parent_name, parent_collection, start_position, end_position, base_artifact, timestamp):
-    artifacts = db.collection("artifacts")
-    if parent_collection == "":
-        parent = artifacts.get({"_key": parent_name})
-        parent_collection = parent["collection"]
-    
-    edge_name = parent_collection.split('_')[0] + "_parent_edge"
-    edge = db.collection(edge_name)
+def add_parent_edge(db:StandardDatabase, artifact_key, parent_name, collection, start_position, end_position, timestamp):
+    edge = db.collection("parent_edge")
     name_key = f"{artifact_key}_{parent_name}_{start_position}_{end_position}"
     doc = {
         "_key": name_key,
         "timestamp": timestamp, 
         "start_postiion": start_position,
         "end_position": end_position,
-        "base_artifact": base_artifact,
-        "_from": f"{parent_collection}/{parent_name}",
-        "_to": f"{artifact_collection}/{artifact_key}"
+        "_from": f"{collection}_list/{parent_name}",
+        "_to": f"{collection}/{artifact_key}"
     }
     try: 
         edge.insert(doc)
@@ -74,12 +67,8 @@ def add_parent_edge(db:StandardDatabase, artifact_key, artifact_collection, pare
     except DocumentInsertError as e:
         return False
 
-def delete_parent_edge(db, artifact_key, parent_name, parent_collection, start_position, end_position):
-    if parent_collection == "":
-        parent = artifacts.get({"_key": parent_name})
-        parent_collection = parent["collection"]
-    edge_name = parent_collection.split('_')[0] + "_parent_edge"
-    edge = db.collection(edge_name)
+def delete_parent_edge(db, artifact_key, parent_name, start_position, end_position):
+    edge = db.collection("parent_edge")
     name_key = f"{artifact_key}_{parent_name}_{start_position}_{end_position}"
     edge.delete(name_key, ignore_missing=True)
 
@@ -100,3 +89,31 @@ def add_session_parent_edge(db, artifact_key, artifact_collection, parent_name, 
 def delete_session_parent_edge(db, artifact_key):
     edge = db.collection("session_parent_edge")
     edge.delete(artifact_key, ignore_missing=True)
+
+
+def add_dependency_edge(db:StandardDatabase, artifact_key, artifact_collection, parent_name, parent_collection, start_position, end_position, timestamp):
+    artifacts = db.collection("artifacts")
+    if parent_collection == "":
+        parent = artifacts.get({"_key": parent_name})
+        parent_collection = parent["collection"]
+    
+    edge = db.collection("dependency_edge")
+    name_key = f"{artifact_key}_{parent_name}_{start_position}_{end_position}"
+    doc = {
+        "_key": name_key,
+        "timestamp": timestamp, 
+        "start_postiion": start_position,
+        "end_position": end_position,
+        "_from": f"{parent_collection}/{parent_name}",
+        "_to": f"{artifact_collection}/{artifact_key}"
+    }
+    try: 
+        edge.insert(doc)
+        return True
+    except DocumentInsertError as e:
+        return False
+
+def delete_dependency_edge(db, artifact_key, parent_name, start_position, end_position):
+    edge = db.collection("parent_edge")
+    name_key = f"{artifact_key}_{parent_name}_{start_position}_{end_position}"
+    edge.delete(name_key, ignore_missing=True)

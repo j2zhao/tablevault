@@ -59,7 +59,7 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
         "openai_key": openai_key,
         "active_timestamps": {},
         "new_timestamp": 1,
-        "vector_indices": [],
+        "vector_indices": {},
     }
     col.insert(doc)
 
@@ -288,19 +288,6 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
     })
     description = db.collection("description")
 
-    description.add_index(
-        type="vector",
-        fields=["embedding"],
-        dimension=1536,  # <--- UPDATE THIS VALUE
-        metric="cosine"  # Options: "cosine", "l2" (Euclidean), "ip" (Inner Product)
-    )
-
-    description.add_index(
-        type="inverted",
-        name="description_text_idx",
-        fields=["text"]
-    )
-
     create_collection_safe(db, "write_artifact", edge=True, schema={
         "rule": {
             "properties": {
@@ -314,57 +301,27 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
         "level": "strict",
     })
 
-
-    create_collection_safe(db, "file_parent_edge", edge=True, schema={
+    create_collection_safe(db, "parent_edge", edge=True, schema={
         "rule": {
             "properties": {
                 "timestamp": {"type": "number"},
                 "start_position": {"type": "number"},
                 "end_position": {"type": "number"},
-                "base_artifact": {"type": "boolean"},
             },
-            "required": ["timestamp", "start_position", "end_position", "type"],
-            "additionalProperties": False
-        },
-        "level": "strict",
-    })
-    create_collection_safe(db, "document_parent_edge", edge=True, schema={
-        "rule": {
-            "properties": {
-                "timestamp": {"type": "number"},
-                "start_position": {"type": "number"},
-                "end_position": {"type": "number"},
-                "base_artifact": {"type": "boolean"},
-            },
-            "required": ["timestamp", "start_position", "end_position", "type"],
+            "required": ["timestamp", "start_position", "end_position"],
             "additionalProperties": False
         },
         "level": "strict",
     })
 
-    create_collection_safe(db, "embedding_parent_edge", edge=True, schema={
+    create_collection_safe(db, "dependency_edge", edge=True, schema={
         "rule": {
             "properties": {
                 "timestamp": {"type": "number"},
                 "start_position": {"type": "number"},
                 "end_position": {"type": "number"},
-                "base_artifact": {"type": "boolean"},
             },
-            "required": ["timestamp", "start_position", "end_position", "type"],
-            "additionalProperties": False
-        },
-        "level": "strict",
-    })
-
-    create_collection_safe(db, "record_parent_edge", edge=True, schema={
-        "rule": {
-            "properties": {
-                "timestamp": {"type": "number"},
-                "start_position": {"type": "number"},
-                "end_position": {"type": "number"},
-                "base_artifact": {"type": "boolean"},
-            },
-            "required": ["timestamp", "start_position", "end_position", "type"],
+            "required": ["timestamp", "start_position", "end_position"],
             "additionalProperties": False
         },
         "level": "strict",
@@ -404,9 +361,7 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
                 to_vertex_collections=to_cols
             )
 
-    add_edge_def("file_parent_edge", "file_list",  VIEW_COLLECTIONS)
-    add_edge_def("document_parent_edge", "document_list",  VIEW_COLLECTIONS)
-    add_edge_def("embedding_parent_edge", "embedding_list",  VIEW_COLLECTIONS)
-    add_edge_def("record_parent_edge", "record_list",  VIEW_COLLECTIONS)
+    add_edge_def("dependency_edge", DESCRIPTION_COLLECTIONS,  VIEW_COLLECTIONS)
     add_edge_def("session_parent_edge",  "session_list", VIEW_COLLECTIONS)
     add_edge_def("description_edge",  DESCRIPTION_COLLECTIONS, "desciption")
+    add_edge_def("parent_edge",  DESCRIPTION_COLLECTIONS, VIEW_COLLECTIONS)
