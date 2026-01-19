@@ -9,7 +9,7 @@ import time
 from ml_vault.database import artifact_collection_helper as helper
 from ml_vault.database import database_vector_indices as vector_helper
 
-def create_file_list(db, name, session_name, line_num): 
+def create_file_list(db, name, session_name): 
     timestamp = timestamp_utils.get_new_timestamp(db, ["create_file_list", name, session])
     creation = helper.add_artifact_name(db, name, "file_list", timestamp)
     if creation:
@@ -33,7 +33,7 @@ def create_file_list(db, name, session_name, line_num):
         return False
     timestamp_utils.commit_new_timestamp(db, timestamp)
 
-def create_document_list(db, name, session_name, line_num):
+def create_document_list(db, name, session_name):
     timestamp = timestamp_utils.get_new_timestamp(db, ["create_document_list", name, session_name, line_num])
     creation = helper.add_artifact_name(db, name, "document_list", timestamp) # assume success
     if creation:
@@ -54,7 +54,7 @@ def create_document_list(db, name, session_name, line_num):
             raise e
     timestamp_utils.commit_new_timestamp(db, timestamp)
    
-def create_embedding_list(db, name, session_name, line_num, n_dim = None, view = True):
+def create_embedding_list(db, name, session_name, n_dim, view = True):
     timestamp = timestamp_utils.get_new_timestamp(db, ["create_embedding_list", name, session_name, line_num])
     creation = helper.add_artifact_name(db, name, "embedding_list", timestamp) # assume success
     if creation:
@@ -76,7 +76,7 @@ def create_embedding_list(db, name, session_name, line_num, n_dim = None, view =
         raise ValueError("Can only vector dimension at collection creation time. Consider using a new collection.")
     timestamp_utils.commit_new_timestamp(db, timestamp)
 
-def create_record_list(db, name, session_name, line_num, column_name):
+def create_record_list(db, name, session_name, column_names):
     timestamp = timestamp_utils.get_new_timestamp(db)
     creation = helper.add_artifact_name(db, name, "record_list", timestamp) # assume success
     if creation:
@@ -104,28 +104,28 @@ def _append_artifact(
     db,
     name,
     session_name,
-    parents,
+    input_artifacts,
     artifact,
     dtype,
     length,
     index = None,
-    position_start = None,
-    position_end = None,
+    start_position = None,
+    end_position = None,
     timeout = 60, 
     wait_time = 0.1):
-    timestamp = timestamp_utils.get_new_timestamp(db, [f"append_{dtype}", name, session_name, parents])
+    timestamp = timestamp_utils.get_new_timestamp(db, [f"append_{dtype}", name, session_name, input_artifacts])
     doc = helper.lock_artifact(db, name, f"{dtype}_list", timestamp, timeout, wait_time)
     if doc == None:
         timestamp_utils.commit_new_timestamp(db, timestamp)
         raise ValueError("Could not append item.")
     if index == None:
         index = doc["n_items"]
-    if position_start == None:
-        position_start = doc["length"]
-        position_end = doc["length"] + length
+    if start_position == None:
+        start_position = doc["length"]
+        end_position = doc["length"] + length
     artifact["index"] = index
-    artifact["position_start"] = position_start
-    artifact["position_end"] = position_end
+    artifact["start_position"] = start_position
+    artifact["start_position"] = end_position
     artifact["_key"] = f"{name}_{index}"
     artifact["name"] = name
     artifact["session_name"] = session_name
@@ -137,7 +137,7 @@ def _append_artifact(
         helper.unlock_artifact(db, name, f"{dtype}_list")
         timestamp_utils.commit_new_timestamp(db, timestamp)
         raise ValueError("Could not append item. Possible index error if specified.")
-    success = helper.add_parent_edge(db, f"{name}_{index}", name,  dtype, position_start, position_end, timestamp)
+    success = helper.add_parent_edge(db, f"{name}_{index}", name,  dtype, start_position, end_position, timestamp)
     if not success:
         collection.delete(f"{name}_{index}", ignore_missing=True)
         helper.unlock_artifact(db, name, f"{dtype}_list")
@@ -146,22 +146,22 @@ def _append_artifact(
     success = helper.add_session_parent_edge(db, f"{name}_{index}", dtype, session_name, timestamp)
     if not success:
         collection.delete(f"{name}_{index}", ignore_missing=True)
-        helper.delete_parent_edge(db, f"{name}_{index}", name, position_start, position_end)
+        helper.delete_parent_edge(db, f"{name}_{index}", name, start_position, end_position)
         helper.unlock_artifact(db, name, f"{dtype}_list")
         timestamp_utils.commit_new_timestamp(db, timestamp)
         raise ValueError("Could not add base parent edge.")
-    parents_success = True
-    for parent in parents:
-        success = helper.add_dependency_edge(db, f"{name}_{index}", dtype, parent, "", parents['parent']['start_position'], parents['parent']['end_position'], timestamp)
+    inputs_success = True
+    for parent in input_artifacts:
+        success = helper.add_dependency_edge(db, f"{name}_{index}", dtype, parent, "", input_artifacts['parent']['start_position'], input_artifacts['parent']['end_position'], timestamp)
         if not success:
-            parents_sucess = False
+            inputs_sucess = False
             break
-    if not parents_sucess:
+    if not inputs_sucess:
         collection.delete(f"{name}_{index}", ignore_missing=True)
         helper.delete_parent_edge(db, f"{name}_{index}", name, start_position, end_position)
         helper.delete_session_parent_edge(db, f"{name}_{index}")
-        for parent in parents:
-            helper.delete_dependency_edge(db, f"{name}_{index}", parent, parents['parent']['start_position'], parents['parent']['end_position'])
+        for parent in input_artifacts:
+            helper.delete_dependency_edge(db, f"{name}_{index}", parent, input_artifacts['parent']['start_position'], input_artifacts['parent']['end_position'])
         helper.unlock_artifact(db, name, f"{dtype}_list")
         timestamp_utils.commit_new_timestamp(db, timestamp)
         raise ValueError("Could not add parent edge. Possible name error.")
@@ -173,9 +173,9 @@ def append_file(db:StandardDatabase,
     location,
     session_name,
     index = None, 
-    position_start = None,
-    position_end = None,
-    parents = {},
+    start_position = None,
+    end_position = None,
+    input_artifacts = {},
     timeout = 60, 
     wait_time = 0.1):
     
@@ -186,13 +186,13 @@ def append_file(db:StandardDatabase,
         db,
         name,
         session_name,
-        parents,
+        input_artifacts,
         artifact,
         "file",
         1,
         index,
-        position_start,
-        position_end,
+        start_position,
+        end_position,
         timeout, 
         wait_time)
     
@@ -203,9 +203,9 @@ def append_document(
     text,
     session_name,
     index = None, 
-    position_start = None,
-    position_end = None,
-    parents = {},
+    start_position = None,
+    end_position = None,
+    input_artifacts = {},
     timeout = 60, 
     wait_time = 0.1):
 
@@ -217,13 +217,13 @@ def append_document(
         db,
         name,
         session_name,
-        parents,
+        input_artifacts,
         artifact,
         "document",
         len(text),
         index,
-        position_start,
-        position_end,
+        start_position,
+        end_position,
         timeout, 
         wait_time)
     
@@ -233,9 +233,9 @@ def append_embedding(
     embedding,
     session_name,
     index = None, 
-    position_start = None,
-    position_end = None,
-    parents = {},
+    start_position = None,
+    end_position = None,
+    input_artifacts = {},
     build_idx=True, 
     timeout = 60, 
     wait_time = 0.1):
@@ -248,13 +248,13 @@ def append_embedding(
         db,
         name,
         session_name,
-        parents,
+        input_artifacts,
         artifact,
         "embedding",
         1,
         index,
-        position_start,
-        position_end,
+        start_position,
+        end_position,
         timeout, 
         wait_time)
     if build_idx:
@@ -270,7 +270,7 @@ def append_record(
     record,
     session_name,
     index = None, 
-    parents = {},
+    input_artifacts = {},
     timeout = 60, 
     wait_time = 0.1):
 
@@ -287,12 +287,12 @@ def append_record(
         db,
         name,
         session_name,
-        parents,
+        input_artifacts,
         artifact,
         "record",
         1,
         index,
-        position_start,
-        position_end,
+        start_position,
+        end_position,
         timeout, 
         wait_time)

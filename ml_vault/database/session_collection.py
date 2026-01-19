@@ -54,9 +54,7 @@ def session_stop_pause_request(db: StandardDatabase, name, action, session_name,
         return False
     return True
 
-def session_resume_request(db: StandardDatabase, name, action, session_name, session_pid, timeout = 5, wait_time = 0.1):
-    if action != "resume":
-        raise ValueError("Only support resume events.")
+def session_resume_request(db: StandardDatabase, name, session_name, session_pid, timeout = 5, wait_time = 0.1):
     session = db.collection("session_list")
     doc = session.get({"_key":name})   # or session.get({"_key": key})
     if doc is None:
@@ -119,8 +117,8 @@ def session_add_code_start(db:StandardDatabase, name, code):
         "index": start_index,
         "timestamp": timestamp,
         "last_timestamp": timestamp,
-        "position_start": start_position,
-        "position_end":end_position,
+        "start_position": start_position,
+        "end_position":end_position,
         "text": code,
         "status": "start",
         "error": "",

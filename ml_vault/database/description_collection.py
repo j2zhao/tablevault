@@ -7,35 +7,32 @@ import os
 import signal
 import time
 
-def add_description_edge(db:StandardDatabase, description_id, artifact_name, artifact_collection, timestamp):
+def add_description_edge(db:StandardDatabase, description_key, artifact_name, artifact_collection, timestamp):
     edge = db.collection("description_edge")
     doc = {
         "timestamp": timestamp, 
         "_from": f"{artifact_collection}/{artifact_name}",
-        "_to": description_id
+        "_to": description_key
     }
-    try: 
-        d_edge.insert(doc)
-        return True
-    except DocumentInsertError as e:
-        if d_edge.has(description_id):
-            return False
-        else:
-            raise
+    d_edge.insert(doc)
 
 
-def add_description(db, description, embedding, artifact_name, artifact_collection, session_name):
+def add_description(db, artifact_name, session_name,  description, embedding):
+    artifacts = db.collection("artifacts")
+    art = artifacts.get({"_key": artifact_name})
+    artifact_collection = art["collection"]
+    
     description = db.collection("description")
     timestamp = timestamp_utils.get_new_timestamp(db)
     doc = {
         "artifact_name": artifact_name, 
-        "artifact_collection": artifact_collection,
+        "collection": artifact_collection,
         "timestamp": timestamp,
         "text": description,
         "embedding": embedding,
     }
     meta = description.insert(doc)
-    add_description_edge(db, meta["_id"], artifact_name, artifact_collection, timestamp)
+    add_description_edge(db, meta["_key"], artifact_name, artifact_collection, timestamp)
     timestamp_utils.commit_new_timestamp(db, timestamp)
     
 

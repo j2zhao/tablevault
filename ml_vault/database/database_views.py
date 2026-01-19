@@ -25,7 +25,7 @@ def create_description_view(
                 "trackListPositions": False,
                 "fields": {
                     "artifact_name": {"analyzers": ["identity"]},
-                    "artifact_collection": {"analyzers": ["identity"]},
+                    "collection": {"analyzers": ["identity"]},
                     "timestamp": {"analyzers": ["identity"]},
                     "text": {"analyzers": [text_analyzer]},
                 },
@@ -33,7 +33,7 @@ def create_description_view(
         },
         # Optional but often helpful for deterministic paging/sorting on attributes
         "primarySort": [
-            {"field": "artifact_collection", "direction": "asc"},
+            {"field": "collection", "direction": "asc"},
             {"field": "artifact_name", "direction": "asc"},
             {"field": "timestamp", "direction": "asc"},
         ],

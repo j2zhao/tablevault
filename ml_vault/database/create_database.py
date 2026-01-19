@@ -1,7 +1,7 @@
 from arango import ArangoClient
 from arango.database import StandardDatabase
 from arango.exceptions import ArangoError
-
+from ml_vault.database.database_views import create_ml_vault_query_views
 ALL_ARTIFACT_COLLECTIONS = [
     "session", "file_list", "file", "embedding_list", "embedding", "document_list", "document",
     "record_list", "record", "description"
@@ -45,7 +45,7 @@ def get_arango_db(database_id:str,
     return db
 
     
-def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embedding_size: int, openai_key: str):
+def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embedding_size: int):
     if db.has_graph("lineage_graph"):
         graph = db.graph("lineage_graph")
     else:
@@ -110,13 +110,13 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
                 "name": {"type": "string"},
                 "index": {"type": "number"},
                 "timestamp": {"type": "number"},
-                "position_start": {"type": "number"},
-                "position_end": {"type": "number"},
+                "start_position": {"type": "number"},
+                "end_position": {"type": "number"},
                 "text": {"type": "string"},
                 "status": {"type": "string"},
                 "error": {"type": "string"},
             },
-            "required": ["name", "index", "timestamp", "last_timestamp", "position_start", "position_end", "text", "status", "error"],
+            "required": ["name", "index", "timestamp", "last_timestamp", "start_position", "end_position", "text", "status", "error"],
             "additionalProperties": False
         },
         "level": "strict",
@@ -145,8 +145,8 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
                 "index": {"type": "number"},
                 "session_name": {"type": "string"},
                 "timestamp": {"type": "number"},
-                "position_start": {"type": "number"},
-                "position_end": {"type": "number"},
+                "start_position": {"type": "number"},
+                "end_position": {"type": "number"},
                 "location": {"type": "string"},
             },
             "required": ["name", 
@@ -154,8 +154,8 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
                         "session_name",
                         "line_num"
                         "timestamp",  
-                        "position_start", 
-                        "position_end", 
+                        "start_position", 
+                        "end_position", 
                         "location",
                         ],
             "additionalProperties": False
@@ -188,8 +188,8 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
                 "index": {"type": "number"},
                 "session_name": {"type": "string"},
                 "timestamp": {"type": "number"},
-                "position_start": {"type": "number"},
-                "position_end": {"type": "number"},
+                "start_position": {"type": "number"},
+                "end_position": {"type": "number"},
             },
             "patternProperties": {
                 "^embedding_\d+$": {
@@ -197,7 +197,7 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
                     "items": {"type": "number"}
                 }
             },
-            "required": ["name", "index", "session_name", "line_num","timestamp", "position_start", "position_end"],
+            "required": ["name", "index", "session_name", "line_num","timestamp", "start_position", "end_position"],
             "additionalProperties": True
         },
         "level": "strict"
@@ -276,12 +276,12 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
         "rule": {
             "properties": {
                 "artifact_name": {"type": "string"},
-                "artifact_collection": {"type": "string"},
+                "collection": {"type": "string"},
                 "timestamp": {"type": "number"},
                 "text": {"type": "string"},
                 "embedding": {"type": "array", "items": {"type": "number"}},
             },
-            "required": ["artifact_name", "artifact_collection", "timestamp", "text", "embedding"],
+            "required": ["artifact_name", "collection", "timestamp", "text", "embedding"],
             "additionalProperties": False
         },
         "level": "strict"
@@ -342,9 +342,8 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
         "rule": {
             "properties": {
                 "timestamp": {"type": "number"},
-                "base_artifact": {"type": "boolean"},
             },
-            "required": ["timestamp", "base_artifact"],
+            "required": ["timestamp"],
             "additionalProperties": False
         },
         "level": "strict",
@@ -361,7 +360,9 @@ def create_ml_vault_db(db: StandardDatabase, file_location:str, description_embe
                 to_vertex_collections=to_cols
             )
 
-    add_edge_def("dependency_edge", DESCRIPTION_COLLECTIONS,  VIEW_COLLECTIONS)
-    add_edge_def("session_parent_edge",  "session_list", VIEW_COLLECTIONS)
-    add_edge_def("description_edge",  DESCRIPTION_COLLECTIONS, "desciption")
-    add_edge_def("parent_edge",  DESCRIPTION_COLLECTIONS, VIEW_COLLECTIONS)
+    add_edge_def("dependency_edge", DESCRIPTION_COLLECTIONS,  VIEW_COLLECTIONS) # input_list -> artifact (checked)
+    add_edge_def("session_parent_edge",  "session_list", VIEW_COLLECTIONS) # session_list -> artifact (checked)
+    add_edge_def("description_edge",  "desciption", DESCRIPTION_COLLECTIONS) # artifact_list -> description (checked)
+    add_edge_def("parent_edge",  DESCRIPTION_COLLECTIONS, VIEW_COLLECTIONS) # artifact_list -> artifact (checked)
+
+    create_ml_vault_query_views(db, description_embedding_size)
