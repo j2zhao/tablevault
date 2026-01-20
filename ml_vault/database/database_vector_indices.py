@@ -9,33 +9,41 @@ def _get_index_by_name(db: StandardDatabase, collection: str, index_name: str):
     return None
 
 def add_one_vector_count(db, embedding_name, tries = 5, wait_time=0.1):
+    coll = db.collection("metadata")
     for i in range(5):
-        meta = db.collection("metadata").get("global")
-        meta["vector_indices"][embedding_name]["total_count"] += 1
-        try:
-            collection.update(meta, check_rev=True)
-            return meta["vector_indices"][embedding_name]["total_count"], meta["vector_indices"][embedding_name]["idx_count"]
-        except:
-            continue
-        time.sleep(wait_time)
-    return None, None
-
-
-def update_vector_idx(db, embedding_name, tries = 5,  wait_time=0.1):
-    for i in range(5):
-        meta = db.collection("metadata").get("global")
+        meta = coll.get("global")
         if embedding_name in meta["vector_indices"]:
-            meta["vector_indices"][embedding_name]["idx_count"] = meta["vector_indices"][embedding_name]["total_count"]
+            meta["vector_indices"][embedding_name]["total_count"] += 1
         else:
+            meta["vector_indices"][embedding_name] = {}
             meta["vector_indices"][embedding_name]["idx_count"] = 0
             meta["vector_indices"][embedding_name]["total_count"] = 1
         try:
-            collection.update(meta, check_rev=True)
-            return meta["vector_indices"][embedding_name]["total_count"]
-        except:
+            coll.update(meta, check_rev=True,  merge = False)
+            return meta["vector_indices"][embedding_name]["total_count"], meta["vector_indices"][embedding_name]["idx_count"]
+        except Exception:
             continue
         time.sleep(wait_time)
-    return None
+    raise ValueError("Vector Update Failed")
+
+
+def update_vector_idx(db, embedding_name, tries = 5,  wait_time=0.1):
+    coll = db.collection("metadata")
+    for i in range(5):
+        meta = coll.get("global")
+        if embedding_name in meta["vector_indices"]:
+            meta["vector_indices"][embedding_name]["idx_count"] = meta["vector_indices"][embedding_name]["total_count"]
+        else:
+            meta["vector_indices"][embedding_name] = {}
+            meta["vector_indices"][embedding_name]["idx_count"] = 0
+            meta["vector_indices"][embedding_name]["total_count"] = 1
+        try:
+            coll.update(meta, check_rev=True,  merge = False)
+            return meta["vector_indices"][embedding_name]["total_count"]
+        except Exception:
+            continue
+        time.sleep(wait_time)
+    raise ValueError("Vector Update Failed")
 
 def build_vector_idx(db, embedding_name, dim, parallelism = 2, n_lists = 50, default_n_probe= 2, training_iterations = 25):
     col = db.collection("embedding")

@@ -1,13 +1,13 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 from arango.database import StandardDatabase
+from arango.exceptions import ViewGetError
 
 def _create_or_replace_view(db: StandardDatabase, name: str, properties: Dict[str, Any]) -> None:
-    if db.has_view(name):
-        v = db.view(name)
-        v.replace_properties(properties)
-    else:
+    try:
+        v = db.view(name)                 # fetch existing view
+        v.replace_properties(properties)  # update
+    except ViewGetError:
         db.create_arangosearch_view(name=name, properties=properties)
-
 
 def create_description_view(
     db: StandardDatabase,
@@ -26,16 +26,13 @@ def create_description_view(
                 "fields": {
                     "artifact_name": {"analyzers": ["identity"]},
                     "collection": {"analyzers": ["identity"]},
-                    "timestamp": {"analyzers": ["identity"]},
                     "text": {"analyzers": [text_analyzer]},
                 },
             }
         },
-        # Optional but often helpful for deterministic paging/sorting on attributes
         "primarySort": [
             {"field": "collection", "direction": "asc"},
             {"field": "artifact_name", "direction": "asc"},
-            {"field": "timestamp", "direction": "asc"},
         ],
         "primarySortCompression": "lz4",
     }
@@ -55,18 +52,23 @@ def create_session_view(
                 "storeValues": "none",
                 "trackListPositions": False,
                 "fields": {
-                    # text search fields
                     text_field: {"analyzers": [text_analyzer]},
                     "code": {"analyzers": [text_analyzer]},  # compatibility with your AQL
-
-                    # optional identity fields for filtering
                     "name": {"analyzers": ["identity"]},
-                    "timestamp": {"analyzers": ["identity"]},
+                    "session_name": {"analyzers": ["identity"]},
+                    "session_index": {"analyzers": ["identity"]},
+                    "start_position": {"analyzers": ["identity"]},
+                    "end_position": {"analyzers": ["identity"]},
                     "status": {"analyzers": ["identity"]},
                     "error": {"analyzers": [text_analyzer]},
                 },
             }
-        }
+        },
+        "primarySort": [
+            {"field": "name", "direction": "asc"},
+            {"field": "start_position", "direction": "asc"},
+        ],
+        "primarySortCompression": "lz4",
     }
     _create_or_replace_view(db, view_name, props)
 
@@ -87,10 +89,17 @@ def create_document_view(
                     text_field: {"analyzers": [text_analyzer]},
                     "name": {"analyzers": ["identity"]},
                     "session_name": {"analyzers": ["identity"]},
-                    "timestamp": {"analyzers": ["identity"]},
+                    "session_index": {"analyzers": ["identity"]},
+                    "start_position": {"analyzers": ["identity"]},
+                    "end_position": {"analyzers": ["identity"]},
                 },
             }
-        }
+        },
+        "primarySort": [
+            {"field": "name", "direction": "asc"},
+            {"field": "start_position", "direction": "asc"},
+        ],
+        "primarySortCompression": "lz4",
     }
     _create_or_replace_view(db, view_name, props)
 
@@ -111,10 +120,18 @@ def create_record_view(
                     record_text_field: {"analyzers": [text_analyzer]},
                     "name": {"analyzers": ["identity"]},
                     "session_name": {"analyzers": ["identity"]},
-                    "timestamp": {"analyzers": ["identity"]},
+                    "session_index": {"analyzers": ["identity"]},
+                    "start_position": {"analyzers": ["identity"]},
+                    "end_position": {"analyzers": ["identity"]},
+                    "column_names": {"analyzers": ["identity"]},
                 },
             }
-        }
+        },
+        "primarySort": [
+            {"field": "name", "direction": "asc"},
+            {"field": "start_position", "direction": "asc"},
+        ],
+        "primarySortCompression": "lz4",
     }
     _create_or_replace_view(db, view_name, props)
 

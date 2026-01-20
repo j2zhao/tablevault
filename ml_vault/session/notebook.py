@@ -1,5 +1,4 @@
 from IPython import get_ipython
-import time
 from ml_vault.database import session_collection
 
 class SessionNotebook:
@@ -10,23 +9,26 @@ class SessionNotebook:
         self.name = name
         self.db = db
         self._installed = True
+        self.user_id = user_id
         session_collection.create_session(db, name, user_id)
         self.ip.events.register("pre_run_cell", self.pre_run_cell)
         self.ip.events.register("post_run_cell", self.post_run_cell)
         self.current_index = None
 
     def pre_run_cell(self, info):
-        session_collection.session_add_code_start(self.db, self.name, self.user_id, info.raw_cell)
-        print(f"\n---[ Cell Recorded ]---")
+        self.current_index = session_collection.session_add_code_start(self.db, self.name, info.raw_cell)
+        print("\n---[ Cell Begin Record ]---")
 
     def post_run_cell(self, result):
+        if self.current_index == None:
+            return
         err = result.error_before_exec or result.error_in_exec
         if err is None:
             err_msg = ""
         else:
             err_msg = str(err)
-        session_collection.session_add_code_end(db, self.name, )
-        print(f"---[ Cell Recorded ]---\n")
+        session_collection.session_add_code_end(self.db, self.name, self.current_index,  error = err_msg)
+        print("---[ Cell End Record ]---\n")
 
     
     # def install(self):

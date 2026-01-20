@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional
 
 
-from typing import Any, Dict, List, Optional
 
 def query_session(
     db,
@@ -114,153 +113,6 @@ def query_session(
 
     return list(db.aql.execute(aql, bind_vars=bind_vars))
 
-
-def query_embedding_no_idx(
-    db,
-    embedding: Optional[Any] = None,
-    desciption_embedding: Optional[Any] = None,
-    desciption_text: Optional[str] = None,
-    code_text: Optional[str] = None,
-    k1: int = 500,
-    k2: int = 500,
-    k_text: int = 500,
-    text_analyzer: str = "text_en",
-    filtered: Optional[List[str]] = None,  # list of embedding.name strings (based on current query)
-):
-    filtered = filtered or []
-
-    use_emb_vec = embedding is not None  # NEW
-
-    use_desc_vec = desciption_embedding is not None
-    use_desc_txt = bool(desciption_text)
-    use_desc = use_desc_vec or use_desc_txt
-
-    use_text = bool(code_text)
-
-    aql = r"""
-    LET useEmbVec  = @useEmbVec
-    LET useDescVec = @useDescVec
-    LET useDescTxt = @useDescTxt
-    LET useDesc    = @useDesc
-    LET useText    = @useText
-
-    LET filteredNames = @filtered
-    LET hasFilter = LENGTH(filteredNames) > 0
-
-    // --- Embedding candidates ---
-    // If embedding vector provided: compute cosine similarity (no index) and take top-k
-    // Else: scan all embeddings (optionally restricted by filteredNames)
-    LET embCandidates = useEmbVec ? (
-      FOR e IN embedding
-        FILTER !hasFilter OR e.name IN filteredNames
-        LET score = COSINE_SIMILARITY(e.@@embedding_field, @e1)
-        SORT score DESC
-        LIMIT @k1
-        RETURN { _id: e._id, _key: e._key }
-    ) : (
-      FOR e IN embedding
-        FILTER !hasFilter OR e.name IN filteredNames
-        RETURN { _id: e._id, _key: e._key }
-    )
-
-    // --- Description candidates: OR (union) of vector hits and token-AND text hits ---
-    LET descVecCandidateIds = useDescVec ? (
-      FOR d IN description
-        FILTER d.artifact_collection == "embedding_list"
-        LET score = COSINE_SIMILARITY(d.embedding, @e2)
-        SORT score DESC
-        LIMIT @k2
-        RETURN d._id
-    ) : []
-
-    LET descQTokens = TOKENS(@desc_t1, @text_analyzer)
-
-    LET descTxtCandidateIds = (useDescTxt && LENGTH(descQTokens) > 0) ? (
-      FOR d IN description_view
-        SEARCH ANALYZER(d.text IN descQTokens, @text_analyzer)
-
-        LET dTokens = TOKENS(d.text, @text_analyzer)
-        FILTER LENGTH(
-          FOR t IN descQTokens
-            FILTER t IN dTokens
-            RETURN 1
-        ) == LENGTH(descQTokens)
-
-        LIMIT @k2
-        RETURN d._id
-    ) : []
-
-    LET descCandidateIds = UNIQUE(APPEND(descVecCandidateIds, descTxtCandidateIds))
-
-    // --- Session candidates: token-AND text hits (optional) ---
-    LET qTokens = TOKENS(@t1, @text_analyzer)
-
-    LET sessCandidateIds = (useText && LENGTH(qTokens) > 0) ? (
-      FOR s IN session_view
-        SEARCH ANALYZER(s.text IN qTokens, @text_analyzer)
-
-        LET sTokens = TOKENS(s.text, @text_analyzer)
-        FILTER LENGTH(
-          FOR t IN qTokens
-            FILTER t IN sTokens
-            RETURN 1
-        ) == LENGTH(qTokens)
-
-        LIMIT @k_text
-        RETURN s._id
-    ) : []
-
-    // --- Final: traverse from embeddings to connected descriptions/sessions and enforce filters ---
-    FOR e IN embCandidates
-      LET embDoc = DOCUMENT(e._id)
-
-      LET matchedDescriptions = useDesc ? (
-        FOR sl IN 1..1 INBOUND embDoc parent_edge
-          FOR d IN 1..1 INBOUND sl description_edge
-            FILTER d._id IN descCandidateIds
-            RETURN DISTINCT d._key
-      ) : []
-      FILTER (!useDesc) OR (LENGTH(matchedDescriptions) > 0)
-
-      LET matchedSessions = useText ? (
-        FOR sl IN 1..1 INBOUND embDoc session_parent_edge
-          FOR s IN 1..1 OUTBOUND sl parent_edge
-            FILTER s._id IN sessCandidateIds
-            RETURN DISTINCT s._key
-      ) : []
-      FILTER (!useText) OR (LENGTH(matchedSessions) > 0)
-
-      RETURN [e._key, matchedDescriptions, matchedSessions]
-    """
-
-    e1_list: List[float] = []
-    embedding_field = None
-    if use_emb_vec:
-        e1_list = list(embedding)
-        embedding_field = "embedding_" + str(len(e1_list))
-
-    bind_vars: Dict[str, Any] = {
-        "useEmbVec": use_emb_vec,
-        "e1": e1_list,
-        "k1": k1,
-        "useDescVec": use_desc_vec,
-        "e2": list(desciption_embedding) if use_desc_vec else [],
-        "k2": k2,
-        "useDescTxt": use_desc_txt,
-        "desc_t1": desciption_text or "",
-        "useDesc": use_desc,
-        "useText": use_text,
-        "t1": code_text or "",
-        "k_text": k_text,
-        "text_analyzer": text_analyzer,
-        "filtered": filtered,
-        "@embedding_field": embedding_field or "embedding_0",  # safe placeholder; unused when useEmbVec=false
-    }
-
-    cursor = db.aql.execute(aql, bind_vars=bind_vars)
-    return list(cursor)
-
-
 def query_embedding(
     db,
     embedding: Optional[Any] = None,
@@ -272,10 +124,10 @@ def query_embedding(
     k_text: int = 500,
     text_analyzer: str = "text_en",
     filtered: Optional[List[str]] = None,  # list of embedding.name strings
+    use_approx: bool = True,               # NEW: toggle approx vs exact
 ):
     filtered = filtered or []
 
-    # NEW: embedding query optional
     use_emb_vec = embedding is not None
 
     use_desc_vec = desciption_embedding is not None
@@ -286,6 +138,7 @@ def query_embedding(
 
     aql = r"""
     LET useEmbVec  = @useEmbVec
+    LET useApprox  = @useApprox
     LET useDescVec = @useDescVec
     LET useDescTxt = @useDescTxt
     LET useDesc    = @useDesc
@@ -295,13 +148,22 @@ def query_embedding(
     LET hasFilter = LENGTH(filteredNames) > 0
 
     // --- Embedding candidates ---
-    // If embedding vector provided: vector top-k
-    // Else: scan all embeddings (optionally restricted by filteredNames)
     LET embCandidates = useEmbVec ? (
       FOR e IN embedding
-        SEARCH APPROX_NEAR_COSINE(e.@@embedding_field, @e1, @k1)
+        // safety checks
+        FILTER HAS(e, @embedding_field)
+        LET vec = e[@embedding_field]
+        FILTER IS_ARRAY(vec) && LENGTH(vec) == LENGTH(@e1)
+
+        // toggle: approx (index-backed) vs exact (scan)
+        LET score = useApprox
+          ? APPROX_NEAR_COSINE(vec, @e1)
+          : COSINE_SIMILARITY(vec, @e1)
+
         FILTER !hasFilter OR e.name IN filteredNames
-        RETURN { _id: e._id, _key: e._key }
+        SORT score DESC
+        LIMIT @k1
+        RETURN { _id: e._id, _key: e._key, score: score }
     ) : (
       FOR e IN embedding
         FILTER !hasFilter OR e.name IN filteredNames
@@ -378,33 +240,36 @@ def query_embedding(
       RETURN [e._key, matchedDescriptions, matchedSessions]
     """
 
-    # Only needed when use_emb_vec=True
     embedding_field = None
     e1_list: List[float] = []
     if use_emb_vec:
         e1_list = list(embedding)
-        embedding_field = "embedding_" + str(len(e1_list))
+        embedding_field = f"embedding_{len(e1_list)}"  # e.g., embedding_16
 
     bind_vars: Dict[str, Any] = {
         "useEmbVec": use_emb_vec,
+        "useApprox": bool(use_approx),
         "e1": e1_list,
         "k1": k1,
+
         "useDescVec": use_desc_vec,
         "e2": list(desciption_embedding) if use_desc_vec else [],
         "k2": k2,
+
         "useDescTxt": use_desc_txt,
         "desc_t1": desciption_text or "",
         "useDesc": use_desc,
+
         "useText": use_text,
         "t1": code_text or "",
         "k_text": k_text,
+
         "text_analyzer": text_analyzer,
         "filtered": filtered,
-        "@embedding_field": embedding_field or "embedding_0",  # safe placeholder; not used if useEmbVec=false
+        "embedding_field": embedding_field or "embedding_0",
     }
 
-    cursor = db.aql.execute(aql, bind_vars=bind_vars)
-    return list(cursor)
+    return list(db.aql.execute(aql, bind_vars=bind_vars))
 
 
 def query_record(

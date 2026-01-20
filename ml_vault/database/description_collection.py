@@ -1,38 +1,39 @@
-from arango import ArangoClient
 from arango.database import StandardDatabase
-from arango.exceptions import ArangoError, DocumentInsertError
 from ml_vault.database import timestamp_utils
 from ml_vault.database import artifact_collection_helper as helper
-import os
-import signal
-import time
 
 def add_description_edge(db:StandardDatabase, description_key, artifact_name, artifact_collection, timestamp):
     edge = db.collection("description_edge")
     doc = {
         "timestamp": timestamp, 
         "_from": f"{artifact_collection}/{artifact_name}",
-        "_to": description_key
+        "_to": f"description/{description_key}"
     }
-    d_edge.insert(doc)
+    edge.insert(doc)
 
 
-def add_description(db, artifact_name, session_name,  description, embedding):
+def add_description(db, name, artifact_name, session_name, session_index, description, embedding):
     artifacts = db.collection("artifacts")
     art = artifacts.get({"_key": artifact_name})
     artifact_collection = art["collection"]
-    
-    description = db.collection("description")
-    timestamp = timestamp_utils.get_new_timestamp(db)
+    key_ = artifact_name + "_" + name + "_" + "DESCRIPT"
+    timestamp = timestamp_utils.get_new_timestamp(db, ["add_description", artifact_name, session_name, description, embedding])
+    helper.add_artifact_name(db, key_, "description", timestamp)
+    descript = db.collection("description")
     doc = {
-        "artifact_name": artifact_name, 
+        "_key": key_,
+        "name": key_,
+        "artifact_name": artifact_name,
+        "session_name": session_name, 
+        "session_index": session_index,
         "collection": artifact_collection,
         "timestamp": timestamp,
         "text": description,
         "embedding": embedding,
     }
-    meta = description.insert(doc)
+    meta = descript.insert(doc)
     add_description_edge(db, meta["_key"], artifact_name, artifact_collection, timestamp)
+    helper.add_session_parent_edge(db, meta["_key"], "description", session_name, session_index, timestamp)
     timestamp_utils.commit_new_timestamp(db, timestamp)
     
 
