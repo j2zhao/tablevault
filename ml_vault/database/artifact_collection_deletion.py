@@ -1,0 +1,1 @@
+# define artifact deletion

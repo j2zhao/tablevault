@@ -1,9 +1,54 @@
 
 from ml_vault.database import create_database, session_collection, artifact_collection, description_collection, query_artifact_simple, query_collection_simple
 from ml_vault.session.notebook import SessionNotebook
+from ml_vault.session.script import SessionScript
 import os
+import threading
+import weakref
+
+def is_ipython() -> bool:
+    try:
+        from IPython import get_ipython
+        return get_ipython() is not None
+    except Exception:
+        return False
 
 class Vault():
+    _instance = None
+    _lock = threading.Lock()
+    _allowed_key = None
+
+    def __new__(self,
+            user_id,
+            session_name, 
+            arango_url = "http://localhost:8529",
+            arango_db = "ml_vault",
+            arango_username = "mlvault_user",
+            arango_password = "mlvault_password",
+            new_arango_db = True,
+            arango_root_username = "root",
+            arango_root_password = "passwd",
+            description_embedding_size = 1024,
+            log_file_location = "~/.ml_vault/logs/",
+            ):
+        key = (user_id, session_name, arango_db, arango_url)
+        with cls._lock:
+            if cls._instance is None:
+                obj = super().__new__(cls)
+                cls._instance = obj
+                cls._allowed_key = key
+                obj._initialized = False
+                return obj
+
+            if key != cls._allowed_key:
+                raise RuntimeError(
+                    f"{cls.__name__} already exists with a different session.\n"
+                    f"allowed_key={cls._allowed_key!r}\n"
+                    f"new_key={key!r}"
+                )
+            return cls._instance
+
+
     def __init__(self,
             user_id,
             session_name, 
@@ -15,11 +60,11 @@ class Vault():
             arango_root_username = "root",
             arango_root_password = "passwd",
             description_embedding_size = 1024,
+            log_file_location = "~/.ml_vault/logs/",
             ):
-            
-            self.name  = session_name
-            self.user_id = user_id
-            
+            if getattr(self, "_initialized", True):
+                return
+            self._initialized = True
             self.db = create_database.get_arango_db(arango_db, 
                             arango_url, 
                             arango_username,
@@ -29,12 +74,19 @@ class Vault():
                             new_arango_db)
             if new_arango_db:
                 create_database.create_ml_vault_db(self.db, description_embedding_size)
-            
-            self.notebook_session = SessionNotebook(self.db, self.name, self.user_id)
+            else:
+                create_database.restart_db(self.db)
+            if is_ipython():
+                self.session = SessionNotebook(self.db, self.name, self.user_id)
+            else:
+                self.session.SessionScript(self.db, self.name, self.user_id)
     
     def checkpoint_execution(self): # don't test for now
         session_collection.session_checkpoint(self.db, self.name)
-    
+
+    def delete_list(self, item_name):
+        pass
+
     def create_file_list(self, item_name):
         artifact_collection.create_file_list(self.db, item_name, self.name, self.notebook_session.current_index)
     
@@ -44,7 +96,7 @@ class Vault():
         else:
             end_position = None
         artifact_collection.append_file(self.db, item_name, location, self.name, self.notebook_session.current_index, index, index, end_position, input_artifacts)
-    
+
     def create_document_list(self, item_name):
         artifact_collection.create_document_list(self.db, item_name, self.name, self.notebook_session.current_index)
 
@@ -76,6 +128,9 @@ class Vault():
         else:
             end_position = None
         artifact_collection.append_record(self.db, item_name, record, self.name, self.notebook_session.current_index, index, index, end_position, input_artifacts)
+
+    def create_description_list():
+        pass
 
     def create_description(self, description, item_name, embedding, description_name = "BASE"):
         description_collection.add_description(self.db, description_name, item_name, self.name, self.notebook_session.current_index, description, embedding)
@@ -145,8 +200,14 @@ class Vault():
                 code_text,
                 filtered = filtered,
             )
+    
+    def query_description_by_name(self, item_name, description_name, embedding = True):
+        # return session_name, item_name, description_
+        pass
+    
+ 
 
-   
+
     def query_item_content(self, item_name, start_position = None, end_position = None):
         return query_artifact_simple.query_artifact(self.db, item_name, start_position, end_position)
     

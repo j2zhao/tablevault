@@ -1,3 +1,5 @@
+# Add description view
+
 from arango.database import StandardDatabase
 import time
 
@@ -66,3 +68,5 @@ def build_vector_idx(db, embedding_name, dim, parallelism = 2, n_lists = 50, def
             "trainingIterations": training_iterations,
         },
     })
+
+# ADD DESCIRPTION INDICES

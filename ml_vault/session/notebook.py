@@ -17,7 +17,7 @@ class SessionNotebook:
 
     def pre_run_cell(self, info):
         self.current_index = session_collection.session_add_code_start(self.db, self.name, info.raw_cell)
-        print("\n---[ Cell Begin Record ]---")
+        print("\n---[ ML_Vault Record ]---")
 
     def post_run_cell(self, result):
         if self.current_index == None:
@@ -28,21 +28,5 @@ class SessionNotebook:
         else:
             err_msg = str(err)
         session_collection.session_add_code_end(self.db, self.name, self.current_index,  error = err_msg)
-        print("---[ Cell End Record ]---\n")
+        print("---[ ML_Vault Record ]---\n")
 
-    
-    # def install(self):
-    #     if self._installed:
-    #         return
-    #     self.ip.events.register("pre_run_cell", self.pre_run_cell)
-    #     self.ip.events.register("post_run_cell", self.post_run_cell)
-    #     self._installed = True
-    #     print("Session Started")
-
-    # def uninstall(self):
-    #     if not self._installed:
-    #         return
-    #     self.ip.events.unregister("pre_run_cell", self.pre_run_cell)
-    #     self.ip.events.unregister("post_run_cell", self.post_run_cell)
-    #     self._installed = False
-    #     print("Session Ended")

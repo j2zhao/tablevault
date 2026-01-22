@@ -1,3 +1,5 @@
+# change description format
+
 from arango.database import StandardDatabase
 from ml_vault.database import timestamp_utils
 from ml_vault.database import artifact_collection_helper as helper

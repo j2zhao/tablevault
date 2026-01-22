@@ -1,3 +1,5 @@
+# centralize creation
+
 from arango.database import StandardDatabase
 from arango.exceptions import DocumentInsertError
 from ml_vault.database import timestamp_utils
@@ -124,6 +126,10 @@ def _append_artifact(
     timeout = 60, 
     wait_time = 0.1):
     timestamp = timestamp_utils.get_new_timestamp(db, [f"append_{dtype}", name, session_name, input_artifacts])
+    art = db.collection("artifacts")
+    doc = art.get(name)
+    if doc == None:
+        raise ValueError("Artifact doesn't Exist")
     doc = helper.lock_artifact(db, name, f"{dtype}_list", timestamp, timeout, wait_time)
     if doc is None:
         timestamp_utils.commit_new_timestamp(db, timestamp)

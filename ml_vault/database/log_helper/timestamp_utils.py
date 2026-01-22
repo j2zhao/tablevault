@@ -1,3 +1,4 @@
+# ADD LOGS
 from arango.database import StandardDatabase
 from arango.exceptions import ArangoError
 import time

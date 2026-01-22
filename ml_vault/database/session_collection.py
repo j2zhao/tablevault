@@ -1,3 +1,6 @@
+# Move to general artifacts
+# double check conditions
+
 from arango.database import StandardDatabase
 from arango.exceptions import ArangoError, DocumentInsertError
 from ml_vault.database import timestamp_utils
