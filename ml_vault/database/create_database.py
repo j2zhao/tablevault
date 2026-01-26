@@ -46,7 +46,7 @@ def get_arango_db(database_name:str,
     return db
 
     
-def create_ml_vault_db(db: StandardDatabase, description_embedding_size: int):
+def create_ml_vault_db(db: StandardDatabase, log_file: str, description_embedding_size: int):
     if db.has_graph("lineage_graph"):
         graph = db.graph("lineage_graph")
     else:
@@ -59,6 +59,8 @@ def create_ml_vault_db(db: StandardDatabase, description_embedding_size: int):
         "active_timestamps": {},
         "new_timestamp": 1,
         "vector_indices": {},
+        "log_file": log_file,
+        "completed_timestamps": {},
     }
     col = db.collection("metadata")
     col.insert(doc)
@@ -69,8 +71,9 @@ def create_ml_vault_db(db: StandardDatabase, description_embedding_size: int):
                 "name": {"type": "string"},
                 "timestamp": {"type": "number"},
                 "collection": {"type": "string"}, 
+                "version": {"type": "number"}, 
             },
-            "required": ["name", "timestamp", "collection"],
+            "required": ["name", "timestamp", "collection", "restart"],
             "additionalProperties": False
         },
         "level": "strict",
@@ -90,6 +93,7 @@ def create_ml_vault_db(db: StandardDatabase, description_embedding_size: int):
                 "n_items": {"type": "number"},
                 "pid": {"type": "number"},
                 "creator_user_id": {"type": "string"},
+                "deleted": {"type": "number"},
             },
             "required": ["name", 
                 "session_name",
@@ -101,7 +105,8 @@ def create_ml_vault_db(db: StandardDatabase, description_embedding_size: int):
                 "length", 
                 "n_items", 
                 "pid", 
-                "creator_user_id"],
+                "creator_user_id",
+                "deleted"],
             "additionalProperties": False
         },
         "level": "strict",
@@ -136,9 +141,9 @@ def create_ml_vault_db(db: StandardDatabase, description_embedding_size: int):
                 "timestamp": {"type": "number"},
                 "n_items": {"type": "number"},
                 "length": {"type": "number"},
-                "locked": {"type": "number"}
+                "deleted": {"type": "number"}
             },
-            "required": ["name", "session_name", "session_index", "timestamp", "n_items", "length", "locked"],
+            "required": ["name", "session_name", "session_index", "timestamp", "n_items", "length", "deleted"],
             "additionalProperties": False
         },
         "level": "strict"
@@ -180,10 +185,10 @@ def create_ml_vault_db(db: StandardDatabase, description_embedding_size: int):
                 "n_items": {"type": "number"},
                 "length": {"type": "number"},
                 "n_dim": {"type": "number"},
-                "locked": {"type": "number"}
+                "deleted": {"type": "number"}
 
             },
-            "required": ["name", "session_name", "session_index", "timestamp", "n_items", "length", "n_dim", "locked"],
+            "required": ["name", "session_name", "session_index", "timestamp", "n_items", "length", "n_dim", "deleted"],
             "additionalProperties": False
         },
         "level": "strict"
@@ -223,9 +228,9 @@ def create_ml_vault_db(db: StandardDatabase, description_embedding_size: int):
                 "timestamp": {"type": "number"},
                 "n_items": {"type": "number"},
                 "length": {"type": "number"},
-                "locked": {"type": "number"},
+                "deleted": {"type": "number"},
             },
-            "required": ["name", "session_name", "session_index", "timestamp", "n_items", "length", "locked"],
+            "required": ["name", "session_name", "session_index", "timestamp", "n_items", "length", "deleted"],
             "additionalProperties": False
         },
         "level": "strict"
@@ -259,9 +264,9 @@ def create_ml_vault_db(db: StandardDatabase, description_embedding_size: int):
                 "n_items": {"type": "number"},
                 "length": {"type": "number"},
                 "column_names": {"type": "array", "items": {"type": "string"}},
-                "locked": {"type": "number"}
+                "deleted": {"type": "number"}
             },
-            "required": ["name", "session_name", "session_index", "timestamp", "n_items", "length", "column_names", "locked"],
+            "required": ["name", "session_name", "session_index", "timestamp", "n_items", "length", "column_names", "deleted"],
             "additionalProperties": False
         },
         "level": "strict"
@@ -299,6 +304,7 @@ def create_ml_vault_db(db: StandardDatabase, description_embedding_size: int):
                 "timestamp": {"type": "number"},
                 "text": {"type": "string"},
                 "embedding": {"type": "array", "items": {"type": "number"}},
+                "deleted": {"type": "number"},
             },
             "required": ["artifact_name", "name", "session_name", "session_index", "collection", "timestamp", "text", "embedding"],
             "additionalProperties": False
@@ -354,6 +360,18 @@ def create_ml_vault_db(db: StandardDatabase, description_embedding_size: int):
         },
         "level": "strict",
     })
+
+    create_collection_safe(db, "deleted_session_parent_edge", edge=True, schema={
+        "rule": {
+            "properties": {
+                "timestamp": {"type": "number"},
+                "index": {"type": "number"},
+            },
+            "required": ["timestamp", "index"],
+            "additionalProperties": False
+        },
+        "level": "strict",
+    })
     
     def add_edge_def(edge_col, from_cols, to_cols):
         if graph.has_edge_definition(edge_col):
@@ -366,7 +384,8 @@ def create_ml_vault_db(db: StandardDatabase, description_embedding_size: int):
             )
 
     add_edge_def("dependency_edge", DESCRIPTION_COLLECTIONS,  VIEW_COLLECTIONS) # input_list -> artifact (checked)
-    add_edge_def("session_parent_edge",  ["session_list"], VIEW_COLLECTIONS) # session_list -> artifact (checked)
+    add_edge_def("deleted_session_parent_edge",  ["session_list"], DESCRIPTION_COLLECTIONS)
+    add_edge_def("session_parent_edge",  ["session_list"], ALL_ARTIFACT_COLLECTIONS) # session_list -> artifact (checked)
     add_edge_def("description_edge",  ["desciption"], DESCRIPTION_COLLECTIONS) # artifact_list -> description (checked)
     add_edge_def("parent_edge",  DESCRIPTION_COLLECTIONS, VIEW_COLLECTIONS) # artifact_list -> artifact (checked)
     create_ml_vault_query_views(db, description_embedding_size)

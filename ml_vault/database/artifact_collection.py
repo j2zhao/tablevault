@@ -2,193 +2,165 @@
 
 from arango.database import StandardDatabase
 from arango.exceptions import DocumentInsertError
-from ml_vault.database import timestamp_utils
+from ml_vault.database.log_helper import utils
 from ml_vault.database import artifact_collection_helper as helper
 from ml_vault.database import database_vector_indices as vector_helper
 
-def create_file_list(db, name, session_name, session_index): 
-    timestamp = timestamp_utils.get_new_timestamp(db, ["create_file_list", name, session_name])
-    creation = helper.add_artifact_name(db, name, "file_list", timestamp)
-    if creation:
-        collection =  db.collection("file_list")
-        doc = {
-            "_key": name,
-            "name": name,
-            "session_name": session_name,
-            "session_index": session_index,
-            "timestamp": timestamp,
-            "n_items": 0,
-            "length": 0,
-            "locked": -1
-        }
-        try:
-            collection.insert(doc)
-        except Exception as e:
-            helper.delete_artifact_name(db, name)
-            timestamp_utils.commit_new_timestamp(db, timestamp)
-            raise e
-    else:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Name Duplicated. Need to be unique over all artifacts.")
-    helper.add_session_parent_edge(db, name, "file_list", session_name, session_index, timestamp)
-    timestamp_utils.commit_new_timestamp(db, timestamp)
+def delete_artifact_list_inner(db, timestamp, name, artifact_collection, session_name, session_index):
+    aql = r"""
+    LET rootId = @rootId
 
-def create_document_list(db, name, session_name, session_index):
-    timestamp = timestamp_utils.get_new_timestamp(db, ["create_document_list", name, session_name])
-    creation = helper.add_artifact_name(db, name, "document_list", timestamp) # assume success
-    if creation:
-        collection =  db.collection("document_list")
-        doc = {
-            "_key": name,
-            "name": name,
-            "session_name": session_name,
-            "session_index": session_index,
-            "timestamp": timestamp,
-            "n_items": 0,
-            "length": 0,
-            "locked": -1
-        }
-        try:
-            collection.insert(doc)
-        except Exception as e:
-            helper.delete_artifact_name(db, name)
-            timestamp_utils.commit_new_timestamp(db, timestamp)
-            raise e
-    else:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Name Duplicated. Need to be unique over all artifacts.")
-    helper.add_session_parent_edge(db, name, "document_list", session_name, session_index, timestamp)
-    timestamp_utils.commit_new_timestamp(db, timestamp)
-   
-def create_embedding_list(db, name, session_name, session_index, n_dim, view = True):
-    timestamp = timestamp_utils.get_new_timestamp(db, ["create_embedding_list", name, session_name])
-    creation = helper.add_artifact_name(db, name, "embedding_list", timestamp) # assume success
-    if creation:
-        collection =  db.collection("embedding_list")
-        doc = {
-            "_key": name,
-            "name": name,
-            "session_name": session_name,
-            "session_index": session_index,
-            "timestamp": timestamp,
-            "n_dim": n_dim,
-            "n_items": 0,
-            "length": 0,
-            "locked": -1
-        }
-        collection.insert(doc)
-    elif not creation and n_dim is not None:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Can only vector dimension at collection creation time. Consider using a new collection.")
-    else:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Name Duplicated. Need to be unique over all artifacts.")
-    helper.add_session_parent_edge(db, name, "embedding_list", session_name, session_index, timestamp)
-    timestamp_utils.commit_new_timestamp(db, timestamp)
+    LET childIds = (
+      FOR v, e IN 1..1 OUTBOUND rootId parent_edge
+        RETURN DISTINCT v._id
+    )
+    FOR e IN parent_edge
+      FILTER e._from == rootId
+      REMOVE e IN parent_edge
 
-def create_record_list(db, name, session_name, session_index, column_names):
-    timestamp = timestamp_utils.get_new_timestamp(db, ["create_record_list", name, session_name, column_names])
-    creation = helper.add_artifact_name(db, name, "record_list", timestamp) # assume success
-    if creation:
-        collection =  db.collection("record_list")
-        doc = {
-            "_key": name,
-            "name": name,
-            "session_name": session_name,
-            "session_index": session_index,
-            "timestamp": timestamp,
-            "n_items": 0,
-            "length": 0,
-            "column_names": column_names,
-            "locked": -1,
-        }
-        collection.insert(doc)
-    else:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Name Duplicated. Need to be unique over all artifacts.")
-    
-    helper.add_session_parent_edge(db, name, "record_list", session_name, session_index, timestamp)
-    timestamp_utils.commit_new_timestamp(db, timestamp)
+    FOR e IN session_parent_edge
+      FILTER e._from IN childIds OR e._to IN childIds
+      REMOVE e IN session_parent_edge
 
-# add session index later
-def _append_artifact(
-    db,
-    name,
-    session_name,
-    session_index,
-    input_artifacts,
-    artifact,
-    dtype,
-    length,
-    index = None,
-    start_position = None,
-    end_position = None,
-    timeout = 60, 
-    wait_time = 0.1):
-    timestamp = timestamp_utils.get_new_timestamp(db, [f"append_{dtype}", name, session_name, input_artifacts])
-    art = db.collection("artifacts")
-    doc = art.get(name)
-    if doc == None:
-        raise ValueError("Artifact doesn't Exist")
-    doc = helper.lock_artifact(db, name, f"{dtype}_list", timestamp, timeout, wait_time)
-    if doc is None:
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Could not append item.")
-    if index is None:
-        index = doc["n_items"]
-    if start_position is None:
-        start_position = doc["length"]
-        end_position = doc["length"] + length
-    artifact["index"] = index
-    artifact["start_position"] = start_position
-    artifact["end_position"] = end_position
-    artifact["_key"] = f"{name}_{index}"
+    FOR e IN dependency_edge
+      FILTER e._from IN childIds OR e._to IN childIds
+      REMOVE e IN dependency_edge
+
+    FOR v IN @@childCol
+      FILTER v._id IN childIds
+      REMOVE v IN @@childCol
+
+    UPDATE rootId WITH { deleted: 1 } IN @@rootCol
+
+    LET sid = CONCAT(@sessionCol, "/", @sessionKey)
+    LET sess = DOCUMENT(sid)
+    FILTER sess != null
+
+    UPSERT { _from: rootId, _to: sid }
+      INSERT { _key: edgeKey, _from: rootId, _to: sid, index: @sessionIndex, timestamp: @ts }
+      UPDATE { index: @sessionIndex, timestamp: @ts }
+    INTO deleted_session_parent_edge
+
+    RETURN { rootId, session_id: sid }
+    """
+    child_col = artifact_collection.split("_")[0]
+    root_id = f"{root_col}/{root_key}"
+    bind_vars = {
+        "rootId": name,
+        "@rootCol": artifact_collection,
+        "@childCol": child_col,
+        "sessionCol": "session_list",
+        "sessionKey": session_name,
+        "sessionIndex": session_index,
+        "ts": timestamp,
+        "edgeKey": str(timestamp),
+    }
+    return next(db.aql.execute(aql, bind_vars=bind_vars), {})
+
+def delete_artifact_list(db, name, session_name, session_index, timestamp = None):
+    artifacts = db.collection("artifacts")
+    artifact = artifacts.get(name)
+    if artifact["collection"] in ["session_list", "description"]:
+        raise ValueError("Cannot delete session or description items.")
+    if timestamp is None:
+        timestamp, _ = timestamp_utils.get_new_timestamp(db, ["delete_artifact_list", name, session_name, session_index], name)
+    delete_artifact_list_inner(db, timestamp, artifact, name, session_name, session_index)
+    utils.commit_new_timestamp(db, timestamp)
+
+def create_artifact_list(db, timestamp, name, session_name, session_index, artifact, collection_type):
+    rev_ = utils.add_artifact_name(db, name, collection_type, timestamp)
     artifact["name"] = name
     artifact["session_name"] = session_name
     artifact["session_index"] = session_index
     artifact["timestamp"] = timestamp
-    print(artifact)
-    collection = db.collection(dtype)
-    collection.insert(artifact)
-    #raise ValueError()
-    # try:
-    #     collection = db.collection(dtype)
-    #     collection.insert(artifact)
-    # except DocumentInsertError:
-    #     helper.unlock_artifact(db, name, f"{dtype}_list")
-    #     timestamp_utils.commit_new_timestamp(db, timestamp)
-    #     raise ValueError("Could not append item. Possible index error if specified.")
-    success = helper.add_parent_edge(db, f"{name}_{index}", name,  dtype, start_position, end_position, timestamp)
-    if not success:
-        collection.delete(f"{name}_{index}", ignore_missing=True)
-        helper.unlock_artifact(db, name, f"{dtype}_list")
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Could not add base parent edge.")
-    success = helper.add_session_parent_edge(db, f"{name}_{index}", dtype, session_name, session_index, timestamp)
-    if not success:
-        collection.delete(f"{name}_{index}", ignore_missing=True)
-        helper.delete_parent_edge(db, f"{name}_{index}", name, start_position, end_position)
-        helper.unlock_artifact(db, name, f"{dtype}_list")
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Could not add base parent edge.")
-    inputs_success = True
-    for parent in input_artifacts:
-        success = helper.add_dependency_edge(db, f"{name}_{index}", dtype, parent, "", input_artifacts[parent][0], input_artifacts[parent][1], timestamp)
-        if not success:
-            inputs_success = False
-            break
-    if not inputs_success:
-        collection.delete(f"{name}_{index}", ignore_missing=True)
-        helper.delete_parent_edge(db, f"{name}_{index}", name, start_position, end_position)
-        helper.delete_session_parent_edge(db, f"{name}_{index}")
-        for parent in input_artifacts:
-            helper.delete_dependency_edge(db, f"{name}_{index}", parent, input_artifacts[parent][0], input_artifacts[parent][1])
-        helper.unlock_artifact(db, name, f"{dtype}_list")
-        timestamp_utils.commit_new_timestamp(db, timestamp)
-        raise ValueError("Could not add parent edge. Possible name error.")
-    helper.unlock_artifact(db, name, f"{dtype}_list", index, end_position)
-    timestamp_utils.commit_new_timestamp(db, timestamp)
-        
+    artifact["n_items"] = 0
+    artifact["length"] = 0
+    artifact["deleted"] = -1
+    artifact["locked"] = -1
+    rev_ = utils.guarded_upsert(db, name, timestamp, rev_, collection_type, name, {}, doc)
+    if session_name != "":
+        doc = {
+            "_key": str(timestamp),
+            "timestamp": timestamp, 
+            "index": session_index,
+            "_from": f"session_list/{session_name}",
+            "_to": f"{artifact_collection}/{artifact_key}"
+        }
+        rev_ = utils.guarded_upsert(db, name, timestamp, rev_, "session_parent_edge", str(timestamp), {}, doc)
+
+def create_file_list(db, name, session_name, session_index): 
+    timestamp = timestamp_utils.get_new_timestamp(db, ["create_artifact_list", name, "file_list", session_name, session_index])
+    create_artifact_list(db, timestamp, name, session_name, session_index, {}, "file_list")
+
+def create_document_list(db,  name, session_name, session_index):
+    timestamp = timestamp_utils.get_new_timestamp(db, ["create_artifact_list", name, "document_list", session_name, session_index])
+    create_artifact_list(db, timestamp, name, session_name, session_index, {}, "document_list")
+   
+def create_embedding_list(db, name, session_name, session_index, n_dim):
+    timestamp = timestamp_utils.get_new_timestamp(db, ["create_artifact_list", name, "embedding_list", session_name, session_index, n_dim])
+    create_artifact_list(db, timestamp, name, session_name, session_index, {"n_dim": n_dim}, "embedding_list")
+
+def create_record_list(db, name, session_name, session_index, column_names):
+    timestamp = timestamp_utils.get_new_timestamp(db, ["create_artifact_list", name, "record_list", session_name, session_index, column_names])
+    create_artifact_list(db, timestamp, name, session_name, session_index, {"column_names": column_names}, "record_list")
+
+def append_artifact(
+    db,
+    timestamp,
+    name,
+    artifact,
+    session_name,
+    session_index,
+    input_artifacts,
+    dtype,
+    index,
+    start_position,
+    end_position,
+    rev_):
+    artifact["index"] = index
+    artifact["start_position"] = start_position
+    artifact["end_position"] = end_position
+    artifact["name"] = name
+    artifact["session_name"] = session_name
+    artifact["session_index"] = session_index
+    artifact["timestamp"] = timestamp
+    artifact_key = f"{name}_{index}"
+    rev_ = utils.guarded_upsert(db, name, timestamp, rev_, dtype, artifact_key , {}, artifact)
+    doc = {
+        "timestamp": timestamp, 
+        "start_position": start_position,
+        "end_position": end_position,
+        "_from": f"{dtype}_list/{parent_name}",
+        "_to": f"{dtype}/{artifact_key}"
+    }
+    rev_ = utils.guarded_upsert(db, name, timestamp, rev_, "parent_edge", str(timestamp), {}, doc)
+    doc = {
+        "timestamp": timestamp, 
+        "index": session_index,
+        "_from": f"session_list/{session_name}",
+        "_to": f"{dtype}/{artifact_key}"
+    }
+    rev_ = utils.guarded_upsert(db, name, timestamp, rev_, "session_parent_edge", str(timestamp), {}, doc)
+    artifacts = db.collection("artifacts")
+    for art in input_artifacts:
+        parent = artifacts.get({"_key": parent_name})
+        parent_collection = parent["collection"]
+        doc = {
+            "timestamp": timestamp, 
+            "start_position": start_position,
+            "end_position": end_position,
+            "_from": f"{parent_collection}/{art}",
+            "_to": f"{dtype}/{artifact_key}"
+        }
+        rev_ = utils.guarded_upsert(db, name, timestamp, rev_, "dependency_edge", str(timestamp) + '_' + parent_name, {}, doc)
+    list_collection = db.collection(f"{dtype}_list")
+    artifact_list = list_collection.get(name)
+    if artifact_list["n_items"] <= index:
+        artifact_list["n_items"] = index + 1
+    if artifact_list["length"] < end_position:
+        artifact_list["length"] = artifact_list["length"]
+    rev_ = utils.guarded_upsert(db, name, timestamp, rev_, f"{dtype}_list", name, {}, artifact_list)    
+
 def append_file(db:StandardDatabase, 
     name,
     location,
@@ -197,27 +169,33 @@ def append_file(db:StandardDatabase,
     index = None, 
     start_position = None,
     end_position = None,
-    input_artifacts = {},
-    timeout = 60, 
-    wait_time = 0.1):
-    
+    input_artifacts = {}):
+    timestamp, art = utils.get_new_timestamp(db, [], name)
+    file_list = db.collection('file_list').get(name)
     artifact = {
         "location": location,
     }
-    _append_artifact(
+    if index == None:
+        index = file_list['n_item']
+        start_position = file_list['length']
+        end_position = file_list['length'] + 1
+
+    data = ["append_artifact", name, "file", {}, session_name, session_index, file_list["n_items"], file_list["length"]]
+    utils.update_timestamp_info(db, timestamp, data)
+    
+    append_artifact(
         db,
+        timestamp,
         name,
+        artifact,
         session_name,
         session_index,
         input_artifacts,
-        artifact,
         "file",
-        1,
         index,
         start_position,
         end_position,
-        timeout, 
-        wait_time)
+        art["_rev"])
     
 
 def append_document(
@@ -229,29 +207,44 @@ def append_document(
     index = None, 
     start_position = None,
     end_position = None,
-    input_artifacts = {},
-    timeout = 60, 
-    wait_time = 0.1):
+    input_artifacts = {}):
 
-
+    timestamp, art = utils.get_new_timestamp(db, [], name)
+    document_list = db.collection('document_list').get(name)
+    
     artifact = {
         "text": text,
     }
-    _append_artifact(
+    data = ["create_artifact",
+        name, 
+        "document_list", 
+        session_name, 
+        session_index,
+        document_list['n_item'],
+        document_list['length']]
+    if index == None:
+        index = document_list['n_item']
+        start_position = document_list['length']
+        end_position = document_list['length'] + len(text)
+
+    data = ["append_artifact", name, "document", {}, session_name, session_index, document_list["n_items"], document_list["length"]]
+    utils.update_timestamp_info(db, timestamp,  data)
+
+    append_artifact(
         db,
+        timestamp,
         name,
         session_name,
         session_index,
         input_artifacts,
         artifact,
         "document",
-        len(text),
         index,
         start_position,
         end_position,
-        timeout, 
-        wait_time)
+        art["_rev"])
     
+# update timestamp
 def append_embedding(
     db,
     name, 
@@ -263,41 +256,42 @@ def append_embedding(
     end_position = None,
     input_artifacts = {},
     build_idx=True, 
-    timeout = 60, 
-    wait_time = 0.1):
+    index_rebuild_count = 10000):
+    timestamp, art = utils.get_new_timestamp(db, [], [name])
+    embedding_list = db.collection('embedding_list').get(name)
+    
+    if len(embedding) != embedding_list["n_dim"]:
+        raise ValueError(f"Embedding needs to be {embedding_list["n_dim"]} size.")
     embedding_name = "embedding_" + str(len(embedding))
-
     artifact = {
         embedding_name: embedding,
     }
-    _append_artifact(
+    if index == None:
+        index = embedding_list['n_item']
+        start_position = embedding_list['length']
+        end_position = embedding_list['length'] + 1
+
+    data = ["append_artifact", name, "embedding", {}, session_name, session_index, embedding_list["n_items"], embedding_list["length"]]
+    utils.update_timestamp_info(db, timestamp,  data)
+
+    append_artifact(
         db,
+        timestamp,
         name,
+        artifact,
         session_name,
         session_index,
         input_artifacts,
-        artifact,
         "embedding",
-        1,
         index,
         start_position,
         end_position,
-        timeout, 
-        wait_time)
+        art["_rev"])
     if build_idx:
-        print("hello")
         total_count, index_count = vector_helper.add_one_vector_count(db, embedding_name)
-        print((total_count, index_count))
-        
-        # if total_count - index_count > 10000:
-        #     vector_helper.build_vector_idx(db, embedding_name, len(embedding))
-        #     vector_helper.update_vector_idx(db, embedding_name)
-
-        if total_count - index_count > 10:
-            print("HELLLO")
+        if total_count - index_count > index_rebuild_count:
             vector_helper.build_vector_idx(db, embedding_name, len(embedding), parallelism=1, n_lists=2, default_n_probe=1, training_iterations=2)
             vector_helper.update_vector_idx(db, embedding_name)
-        
         
 
 def append_record(
@@ -309,12 +303,12 @@ def append_record(
     index = None,
     start_position = None,
     end_position = None,
-    input_artifacts = {},
-    timeout = 60, 
-    wait_time = 0.1):
+    input_artifacts = {}):
 
-    doc = db.collection("record_list").get(name)
-    if not isinstance(record, dict) or set(doc["column_names"]) != set(record.keys()):
+    timestamp, art = utils.get_new_timestamp(db, [], name)
+    record_list = db.collection('embedding_list').get(name)
+    
+    if set(record_list["column_names"]) != set(record.keys()):
         raise ValueError("Record not in correct format.")
 
     artifact = {
@@ -322,11 +316,15 @@ def append_record(
         "data_text": str(record),
         "column_names": list(record.keys()),
     }
-    if index is None:
-        end_position = None
-    else:
-        end_position = index + 1
-    _append_artifact(
+    if index == None:
+        index = record_list['n_item']
+        start_position = record_list['length']
+        end_position = record_list['length'] + 1
+
+    data = ["append_artifact", name, "record", {}, session_name, session_index, record_list["n_items"], record_list["length"]]
+    utils.update_timestamp_info(db, timestamp, data)
+
+    append_artifact(
         db,
         name,
         session_name,
@@ -334,9 +332,7 @@ def append_record(
         input_artifacts,
         artifact,
         "record",
-        1,
         index,
         index,
         end_position,
-        timeout, 
-        wait_time)
+        art["_rev"])
