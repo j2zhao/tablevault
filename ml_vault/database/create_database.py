@@ -60,7 +60,6 @@ def create_ml_vault_db(db: StandardDatabase, log_file: str, description_embeddin
         "new_timestamp": 1,
         "vector_indices": {},
         "log_file": log_file,
-        "completed_timestamps": {},
     }
     col = db.collection("metadata")
     col.insert(doc)

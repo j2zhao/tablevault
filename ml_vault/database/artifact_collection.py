@@ -5,6 +5,7 @@ from arango.exceptions import DocumentInsertError
 from ml_vault.database.log_helper import utils
 from ml_vault.database import artifact_collection_helper as helper
 from ml_vault.database import database_vector_indices as vector_helper
+from ml_vault.database.operation_management import function_safeguard
 
 def delete_artifact_list_inner(db, timestamp, name, artifact_collection, session_name, session_index):
     aql = r"""
@@ -63,10 +64,11 @@ def delete_artifact_list(db, name, session_name, session_index, timestamp = None
     if artifact["collection"] in ["session_list", "description"]:
         raise ValueError("Cannot delete session or description items.")
     if timestamp is None:
-        timestamp, _ = timestamp_utils.get_new_timestamp(db, ["delete_artifact_list", name, session_name, session_index], name)
-    delete_artifact_list_inner(db, timestamp, artifact, name, session_name, session_index)
+        timestamp, _ = utils.get_new_timestamp(db, ["delete_artifact_list", name, artifact["collection"], session_name, session_index], name)
+    delete_artifact_list_inner(db, timestamp, artifact, artifact["collection"], name, session_name, session_index)
     utils.commit_new_timestamp(db, timestamp)
 
+@function_safeguard
 def create_artifact_list(db, timestamp, name, session_name, session_index, artifact, collection_type):
     rev_ = utils.add_artifact_name(db, name, collection_type, timestamp)
     artifact["name"] = name
@@ -89,21 +91,22 @@ def create_artifact_list(db, timestamp, name, session_name, session_index, artif
         rev_ = utils.guarded_upsert(db, name, timestamp, rev_, "session_parent_edge", str(timestamp), {}, doc)
 
 def create_file_list(db, name, session_name, session_index): 
-    timestamp = timestamp_utils.get_new_timestamp(db, ["create_artifact_list", name, "file_list", session_name, session_index])
+    timestamp, _ = utils.get_new_timestamp(db, ["create_artifact_list", name, "file_list", session_name, session_index])
     create_artifact_list(db, timestamp, name, session_name, session_index, {}, "file_list")
 
 def create_document_list(db,  name, session_name, session_index):
-    timestamp = timestamp_utils.get_new_timestamp(db, ["create_artifact_list", name, "document_list", session_name, session_index])
+    timestamp, _ = utils.get_new_timestamp(db, ["create_artifact_list", name, "document_list", session_name, session_index])
     create_artifact_list(db, timestamp, name, session_name, session_index, {}, "document_list")
    
 def create_embedding_list(db, name, session_name, session_index, n_dim):
-    timestamp = timestamp_utils.get_new_timestamp(db, ["create_artifact_list", name, "embedding_list", session_name, session_index, n_dim])
+    timestamp, _ = utils.get_new_timestamp(db, ["create_artifact_list", name, "embedding_list", session_name, session_index, n_dim])
     create_artifact_list(db, timestamp, name, session_name, session_index, {"n_dim": n_dim}, "embedding_list")
 
 def create_record_list(db, name, session_name, session_index, column_names):
-    timestamp = timestamp_utils.get_new_timestamp(db, ["create_artifact_list", name, "record_list", session_name, session_index, column_names])
+    timestamp, _ = utils.get_new_timestamp(db, ["create_artifact_list", name, "record_list", session_name, session_index, column_names])
     create_artifact_list(db, timestamp, name, session_name, session_index, {"column_names": column_names}, "record_list")
 
+@function_safeguard
 def append_artifact(
     db,
     timestamp,

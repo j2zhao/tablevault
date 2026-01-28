@@ -1,7 +1,8 @@
 
-from ml_vault.database import create_database, session_collection, artifact_collection, description_collection, query_artifact_simple, query_collection_simple
+from ml_vault.database import create_database, session_collection, artifact_collection, description_collection, query_artifact_simple, query_collection_simple, database_restart
 from ml_vault.session.notebook import SessionNotebook
 from ml_vault.session.script import SessionScript
+
 import os
 import threading
 import weakref
@@ -80,22 +81,25 @@ class Vault():
                 self.session = SessionNotebook(self.db, self.name, self.user_id)
             else:
                 self.session.SessionScript(self.db, self.name, self.user_id)
+    def get_current_operations(self):
+        metadata = self.db.collection("metadata")
+        doc = metadata.get("global")
+        return doc["active_timestamps"]
+    def vault_cleanup(self, interval = 60, selected_timestamps = None):
+        database_restart.function_restart(self.db, interval, self.name, selected_timestamps)
     
-    def checkpoint_execution(self): # don't test for now
-        session_collection.session_checkpoint(self.db, self.name)
-
     def delete_list(self, item_name):
-        pass
+        artifact_collection.delete_artifact_list(self.db, item_name, self.name, self.session.current_index)
 
     def create_file_list(self, item_name):
-        artifact_collection.create_file_list(self.db, item_name, self.name, self.notebook_session.current_index)
+        artifact_collection.create_file_list(self.db, item_name, self.name, self.session.current_index)
     
     def append_file(self, item_name, location, input_artifacts = {}, index = None):
         if index is not None: 
             end_position = index + 1
         else:
             end_position = None
-        artifact_collection.append_file(self.db, item_name, location, self.name, self.notebook_session.current_index, index, index, end_position, input_artifacts)
+        artifact_collection.append_file(self.db, item_name, location, self.name, self.session.current_index, index, index, end_position, input_artifacts)
 
     def create_document_list(self, item_name):
         artifact_collection.create_document_list(self.db, item_name, self.name, self.notebook_session.current_index)
@@ -107,42 +111,42 @@ class Vault():
             end_position = start_position + len(text)
         else:
             end_position = None
-        artifact_collection.append_document(self.db, item_name, text, self.name, self.notebook_session.current_index,index,  start_position, end_position, input_artifacts)
+        artifact_collection.append_document(self.db, item_name, text, self.name, self.session.current_index, index,  start_position, end_position, input_artifacts)
 
     def create_embedding_list(self, item_name, ndim):
-        artifact_collection.create_embedding_list(self.db, item_name, self.name,self.notebook_session.current_index, ndim)
+        artifact_collection.create_embedding_list(self.db, item_name, self.name,self.session.current_index, ndim)
     
-    def append_embedding(self, item_name, embedding, input_artifacts = {}, index = None):
+    def append_embedding(self, item_name, embedding, input_artifacts = {}, index = None, build_idx=True, index_rebuild_count = 10000):
         if index is not None: 
             end_position = index + 1
         else:
             end_position = None
-        artifact_collection.append_embedding(self.db, item_name, embedding, self.name, self.notebook_session.current_index, index, index, end_position, input_artifacts)
+        artifact_collection.append_embedding(self.db, item_name, embedding, self.name, self.session.current_index, index, index, end_position, input_artifacts,build_idx, index_rebuild_count)
 
     def create_record_list(self, item_name, column_names):
-        artifact_collection.create_record_list(self.db, item_name, self.name, self.notebook_session.current_index, column_names)
+        artifact_collection.create_record_list(self.db, item_name, self.name, self.session.current_index, column_names)
 
     def append_record(self, item_name, record, input_artifacts = {}, index = None):
         if index is not None: 
             end_position = index + 1
         else:
             end_position = None
-        artifact_collection.append_record(self.db, item_name, record, self.name, self.notebook_session.current_index, index, index, end_position, input_artifacts)
-
-    def create_description_list():
-        pass
+        artifact_collection.append_record(self.db, item_name, record, self.name, self.session.current_index, index, index, end_position, input_artifacts)
 
     def create_description(self, description, item_name, embedding, description_name = "BASE"):
-        description_collection.add_description(self.db, description_name, item_name, self.name, self.notebook_session.current_index, description, embedding)
+        description_collection.add_description(self.db, description_name, item_name, self.name, self.session.current_index, description, embedding)
+
+    def checkpoint_execution(self):
+        session_collection.session_checkpoint(self.db, self.name)
 
     def pause_execution(self, session_name) -> bool:
-        session_collection.session_stop_pause_request(self.db, session_name, "pause", self.name, os.getpid())
+        session_collection.session_stop_pause_request(self.db, session_name, "pause", self.name)
 
     def stop_execution(self, session_name) -> bool:
-        session_collection.session_stop_pause_request(self.db, session_name, "stop", self.name, os.getpid())
+        session_collection.session_stop_pause_request(self.db, session_name, "stop", self.name)
 
     def resume_execution(self, session_name):
-        session_collection.session_resume_request(self.db,session_name, self.name, os.getpid())
+        session_collection.session_resume_request(self.db, session_name, self.name)
 
     def has_vector_index(self, ndim) -> bool:
             col = self.db.collection("embedding")
@@ -200,13 +204,6 @@ class Vault():
                 code_text,
                 filtered = filtered,
             )
-    
-    def query_description_by_name(self, item_name, description_name, embedding = True):
-        # return session_name, item_name, description_
-        pass
-    
- 
-
 
     def query_item_content(self, item_name, start_position = None, end_position = None):
         return query_artifact_simple.query_artifact(self.db, item_name, start_position, end_position)

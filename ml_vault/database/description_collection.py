@@ -3,8 +3,9 @@
 from arango.database import StandardDatabase
 from ml_vault.database.log_helper import utils
 from ml_vault.database import artifact_collection_helper as helper
+from ml_vault.database.operation_management import function_safeguard
 
-
+@function_safeguard
 def add_description_inner(db, timestamp, name, artifact_name, session_name, session_index, description, embedding):
     artifacts = db.collection("artifacts")
     art = artifacts.get({"_key": artifact_name})
@@ -41,5 +42,5 @@ def add_description_inner(db, timestamp, name, artifact_name, session_name, sess
     
 
 def add_description(db, name, artifact_name, session_name, session_index, description, embedding):
-    timestamp, _ = timestamp_utils.get_new_timestamp(db, ["add_description", name, artifact_name, session_name, session_index])
+    timestamp, _ = utils.get_new_timestamp(db, ["add_description", name, artifact_name, session_name, session_index])
     add_description_inner(db, timestamp, name, artifact_name, session_name, session_index, description, embedding)

@@ -103,7 +103,7 @@ def lock_artifact(db:StandardDatabase, name, timestamp, timeout = 60, wait_time 
         artifact = artifacts.get(name)
         if artifact == None:
             raise ValueError("Item list doesn't exist.")
-        info = timestamp_utils.get_timestamp_info(db, artifact["timestamp"])
+        info = get_timestamp_info(db, artifact["timestamp"])
         if info is None:        
             artifact["timestamp"] = timestamp
             artifact["version"] = time.time()
@@ -125,11 +125,12 @@ def get_new_timestamp(db: StandardDatabase, data = [], artifact = None, wait_tim
     while timeout is None or end - start < timeout:
         doc = metadata.get("global")
         ts = doc["new_timestamp"]
-        doc["active_timestamps"][ts] = [time.time(), data]
+        doc["active_timestamps"][ts] = ["start", time.time(), data]
         doc["new_timestamp"] = ts + 1
-        
+        log_file = doc["log_file"]
         try:
             metadata.update(doc, check_rev=True,  merge = False)
+            log_tuple(log_file, doc["active_timestamps"][ts])
             success = True
             break
         except ArangoError:
@@ -153,16 +154,17 @@ def update_timestamp_info(db:StandardDatabase, timestamp, data = [], wait_time =
     end = time.time()
     while timeout is None or end - start < timeout:
         doc = metadata.get("global")
-        doc["active_timestamps"][timestamp] = [time.time(), data]        
+        doc["active_timestamps"][timestamp] = ["update", time.time(), data]        
         try:
             metadata.update(doc, check_rev=True,  merge = False)
+            log_tuple(log_file, doc["active_timestamps"][ts])
             return ts
         except ArangoError:
             time.sleep(wait_time)
         end = time.time()
     raise ValueError("Could not update timestamp information.")
 
-def commit_new_timestamp(db, timestamp, wait_time = 0.1, timeout = None):
+def commit_new_timestamp(db, timestamp, status = "complete", wait_time = 0.1, timeout = None):
     metadata = db.collection("metadata")
     start = time.time()
     end = time.time()
@@ -173,6 +175,7 @@ def commit_new_timestamp(db, timestamp, wait_time = 0.1, timeout = None):
         data = None
         if str(timestamp) in doc["active_timestamps"]:
             data = doc["active_timestamps"][str(timestamp)]
+            data[0] = status
             del doc["active_timestamps"][str(timestamp)] #
         try:
             metadata.update(doc, check_rev=True, merge = False)
@@ -188,6 +191,6 @@ def get_timestamp_info(db, timestamp):
     metadata = db.collection("metadata")
     doc = metadata.get("global")
     if str(timestamp) in doc["active_timestamps"]:
-        return doc["active_timestamps"][str(timestamp)]
+        return doc["active_timestamps"][str(timestamp)][1:]
     else:
         return None

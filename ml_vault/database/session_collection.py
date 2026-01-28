@@ -45,14 +45,11 @@ def session_add_code_end(db, name, index, error = "", timestamp = None):
     session_code.update(code_doc, check_rev = True, merge = False)
     utils.commit_new_timestamp(db, timestamp)
     
-def session_stop_pause_request(db, name, action, session_name, timestamp = None):
+def session_stop_pause_request(db, name, action, session_name):
     if action != "stop" and action != "pause":
         raise ValueError("Only support stop or pause events.")
-    if timestamp == None:
-        timestamp, _ = utils.get_new_timestamp(db, ["session_stop_pause_request", name, action, session_name], name)
-    else:
-        utils.commit_new_timestamp(db, timestamp)
-        return
+    timestamp, _ = utils.get_new_timestamp(db, ["session_stop_pause_request", name, action, session_name], name)
+       
     session = db.collection("session_list")
     doc = session.get({"_key":name}) 
     if doc["interupt_request"] != "":
