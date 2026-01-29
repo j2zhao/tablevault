@@ -1,5 +1,6 @@
 from typing import Optional, Any, List, Dict
 
+
 def _query_session_artifact(
     db,
     name: str,
@@ -124,6 +125,7 @@ def _query_document_artifact(db, name, start_position, end_position):
 
     return list(db.aql.execute(aql, bind_vars=bind_vars))
 
+
 def _query_record_artifact(db, name, start_position, end_position):
     aql = r"""
     LET qStart = @qStart
@@ -152,30 +154,34 @@ def _query_record_artifact(db, name, start_position, end_position):
 
 
 def query_artifact_list(db, name):
-    artifacts =  db.collection("artifacts")
+    artifacts = db.collection("artifacts")
     art = artifacts.get(name)
     coll_name = art["collection"]
     coll = db.collection(coll_name)
-    return coll.get(name) 
+    return coll.get(name)
 
-def query_artifact(db, name, start_position = None, end_position=None):
-    artifacts =  db.collection("artifacts")
+
+def query_artifact(db, name, start_position=None, end_position=None):
+    artifacts = db.collection("artifacts")
     art = artifacts.get(name)
     coll_name = art["collection"]
     if coll_name == "description":
         raise ValueError("Use query_item_list instead for descriptions.")
     elif coll_name == "session_list":
-        return _query_session_artifact(db, name, start_position, end_position) 
+        return _query_session_artifact(db, name, start_position, end_position)
     elif coll_name == "file_list":
         return _query_file_artifact(db, name, start_position, end_position)
     elif coll_name == "embedding_list":
         return _query_embedding_artifact(db, name, start_position, end_position)
-    elif  coll_name == "document_list":
+    elif coll_name == "document_list":
         return _query_document_artifact(db, name, start_position, end_position)
     elif coll_name == "record_list":
         return _query_record_artifact(db, name, start_position, end_position)
 
-def query_artifact_input(db, name: str, start_position:Optional[int], end_position:Optional[int]):
+
+def query_artifact_input(
+    db, name: str, start_position: Optional[int], end_position: Optional[int]
+):
     AQL_QUERY_ARTIFACT_DEPENDENCY = r"""
     LET art = DOCUMENT("artifacts", @name)
     LET startId = CONCAT(art.collection, "/", @name)
@@ -196,7 +202,7 @@ def query_artifact_input(db, name: str, start_position:Optional[int], end_positi
 """
     bind_vars = {
         "name": name,
-        "start_position": start_position,  
+        "start_position": start_position,
         "end_position": end_position,
     }
     cursor = db.aql.execute(
@@ -205,7 +211,10 @@ def query_artifact_input(db, name: str, start_position:Optional[int], end_positi
     )
     return list(cursor)
 
-def query_artifact_output(db, name: str, start_position:Optional[int], end_position:Optional[int]):
+
+def query_artifact_output(
+    db, name: str, start_position: Optional[int], end_position: Optional[int]
+):
     AQL_QUERY_ARTIFACT_CHILDREN = r"""
     LET art = DOCUMENT("artifacts", @name)
     LET startId = CONCAT(art.collection, "/", @name)
@@ -225,7 +234,7 @@ def query_artifact_output(db, name: str, start_position:Optional[int], end_posit
     bind_vars = {
         "name": name,
         "start_position": start_position,  # None -> AQL null
-        "end_position": end_position,      # None -> AQL null
+        "end_position": end_position,  # None -> AQL null
     }
 
     cursor = db.aql.execute(
@@ -248,6 +257,7 @@ def query_artifact_description(db: Any, name: str) -> list[str]:
     )
     return list(cursor)
 
+
 def query_artifact_creation_session(db, name: str):
     aql = r"""
     LET art = DOCUMENT(CONCAT("artifacts/", @name))
@@ -265,7 +275,10 @@ def query_artifact_creation_session(db, name: str):
     )
     return list(cursor)
 
-def query_artifact_session(db, name: str, start_position: Optional[int], end_position: Optional[int]):
+
+def query_artifact_session(
+    db, name: str, start_position: Optional[int], end_position: Optional[int]
+):
     aql = r"""
     LET art = DOCUMENT(CONCAT("artifacts/", @name))
     LET startId = CONCAT(art.collection, "/", @name)
@@ -281,7 +294,11 @@ def query_artifact_session(db, name: str, start_position: Optional[int], end_pos
 
     cursor = db.aql.execute(
         aql,
-        bind_vars={"name": name, "start_position": start_position, "end_position": end_position},
+        bind_vars={
+            "name": name,
+            "start_position": start_position,
+            "end_position": end_position,
+        },
     )
     return list(cursor)
 

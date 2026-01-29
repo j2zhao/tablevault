@@ -5,10 +5,11 @@ import time
 from typing import Any, Dict, Optional
 from ml_vault.database.log_helper import log_manager
 
+
 def guarded_upsert(
     db,
     name: str,
-    timestamp: int,              
+    timestamp: int,
     guard_rev: str,
     target_col: str,
     target_key: str,
@@ -53,7 +54,9 @@ def guarded_upsert(
         cursor = db.aql.execute(aql, bind_vars=bind_vars)
         out = next(cursor, None)
         if out is None:
-            raise RuntimeError("Guard check failed (missing guard doc or rev mismatch).")
+            raise RuntimeError(
+                "Guard check failed (missing guard doc or rev mismatch)."
+            )
         return out
     except ArangoError:
         raise
@@ -63,7 +66,7 @@ def add_artifact_name(db, artifact_name, artifact_type, timestamp):
     artifacts = db.collection("artifacts")
     doc = {
         "_key": artifact_name,
-        "name": artifact_name, 
+        "name": artifact_name,
         "collection": artifact_type,
         "timestamp": timestamp,
         "version": time.time(),
@@ -72,7 +75,7 @@ def add_artifact_name(db, artifact_name, artifact_type, timestamp):
     return art["_rev"]
 
 
-def update_artifact(db:StandardDatabase, name, timestamp, timeout = 60, wait_time = 0.1):
+def update_artifact(db: StandardDatabase, name, timestamp, timeout=60, wait_time=0.1):
     artifacts = db.collection("artifacts")
     end = time.time()
     start = time.time()
@@ -92,7 +95,8 @@ def update_artifact(db:StandardDatabase, name, timestamp, timeout = 60, wait_tim
         end = time.time()
     raise ValueError(f"Could not lock artifact {name}")
 
-def lock_artifact(db:StandardDatabase, name, timestamp, timeout = 60, wait_time = 0.1):
+
+def lock_artifact(db: StandardDatabase, name, timestamp, timeout=60, wait_time=0.1):
     start = time.time()
     end = time.time()
     artifacts = db.collection("artifacts")
@@ -111,7 +115,14 @@ def lock_artifact(db:StandardDatabase, name, timestamp, timeout = 60, wait_time 
         end = time.time()
     raise ValueError(f"Could not lock artifact {name}")
 
-def get_new_timestamp(db: StandardDatabase, data: Optional[list] = None, artifact = None, wait_time = 0.1, timeout = None):
+
+def get_new_timestamp(
+    db: StandardDatabase,
+    data: Optional[list] = None,
+    artifact=None,
+    wait_time=0.1,
+    timeout=None,
+):
     metadata = db.collection("metadata")
     start = time.time()
     end = time.time()
@@ -127,7 +138,7 @@ def get_new_timestamp(db: StandardDatabase, data: Optional[list] = None, artifac
         log_file = doc["log_file"]
         try:
             log_manager.log_tuple(log_file, doc["active_timestamps"][key])
-            metadata.update(doc, check_rev=True,  merge = False)
+            metadata.update(doc, check_rev=True, merge=False)
             success = True
             break
         except ArangoError:
@@ -145,26 +156,34 @@ def get_new_timestamp(db: StandardDatabase, data: Optional[list] = None, artifac
     else:
         return ts, None
 
-def update_timestamp_info(db:StandardDatabase, timestamp, data: Optional[list] = None, wait_time = 0.1, timeout = None):
+
+def update_timestamp_info(
+    db: StandardDatabase,
+    timestamp,
+    data: Optional[list] = None,
+    wait_time=0.1,
+    timeout=None,
+):
     metadata = db.collection("metadata")
     start = time.time()
     end = time.time()
     key = str(timestamp)
-    data = [] if data is None else list(data) 
+    data = [] if data is None else list(data)
     while timeout is None or end - start < timeout:
         doc = metadata.get("global")
-        doc["active_timestamps"][key] = ["update", time.time(), data]        
+        doc["active_timestamps"][key] = ["update", time.time(), data]
         log_file = doc["log_file"]
         try:
             log_manager.log_tuple(log_file, doc["active_timestamps"][key])
-            metadata.update(doc, check_rev=True,  merge = False)
+            metadata.update(doc, check_rev=True, merge=False)
             return
         except ArangoError:
             time.sleep(wait_time)
         end = time.time()
     raise ValueError("Could not update timestamp information.")
 
-def commit_new_timestamp(db, timestamp, status = "complete", wait_time = 0.1, timeout = None):
+
+def commit_new_timestamp(db, timestamp, status="complete", wait_time=0.1, timeout=None):
     metadata = db.collection("metadata")
     start = time.time()
     end = time.time()
@@ -177,18 +196,19 @@ def commit_new_timestamp(db, timestamp, status = "complete", wait_time = 0.1, ti
         if key in doc["active_timestamps"]:
             data = doc["active_timestamps"][key]
             data[0] = status
-            del doc["active_timestamps"][key] #
+            del doc["active_timestamps"][key]  #
         try:
             if data is not None:
                 log_manager.log_tuple(log_file, data)
-            metadata.update(doc, check_rev=True, merge = False)
+            metadata.update(doc, check_rev=True, merge=False)
             return True
         except ArangoError:
             time.sleep(wait_time)
         end = time.time()
     raise ValueError("Could not commit lock")
 
-def get_timestamp_info(db, timestamp = None):
+
+def get_timestamp_info(db, timestamp=None):
     metadata = db.collection("metadata")
     doc = metadata.get("global")
     if timestamp is not None:

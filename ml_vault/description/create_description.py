@@ -1,6 +1,7 @@
-
-
-def identify_collection_description(item_id, session_id, ):
+def identify_collection_description(
+    item_id,
+    session_id,
+):
     pass
 
 

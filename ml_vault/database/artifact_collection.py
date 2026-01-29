@@ -5,7 +5,10 @@ from ml_vault.database.log_helper import utils
 from ml_vault.database import database_vector_indices as vector_helper
 from ml_vault.database.log_helper.operation_management import function_safeguard
 
-def delete_artifact_list_inner(db, timestamp, name, artifact_collection, session_name, session_index):
+
+def delete_artifact_list_inner(
+    db, timestamp, name, artifact_collection, session_name, session_index
+):
     aql = r"""
     LET rootId = @rootId
 
@@ -56,18 +59,34 @@ def delete_artifact_list_inner(db, timestamp, name, artifact_collection, session
     }
     return next(db.aql.execute(aql, bind_vars=bind_vars), {})
 
-def delete_artifact_list(db, name, session_name, session_index, timestamp = None):
+
+def delete_artifact_list(db, name, session_name, session_index, timestamp=None):
     artifacts = db.collection("artifacts")
     artifact = artifacts.get(name)
     if artifact["collection"] in ["session_list", "description"]:
         raise ValueError("Cannot delete session or description items.")
     if timestamp is None:
-        timestamp, _ = utils.get_new_timestamp(db, ["delete_artifact_list", name, artifact["collection"], session_name, session_index], name)
-    delete_artifact_list_inner(db, timestamp, name, artifact["collection"], session_name, session_index)
+        timestamp, _ = utils.get_new_timestamp(
+            db,
+            [
+                "delete_artifact_list",
+                name,
+                artifact["collection"],
+                session_name,
+                session_index,
+            ],
+            name,
+        )
+    delete_artifact_list_inner(
+        db, timestamp, name, artifact["collection"], session_name, session_index
+    )
     utils.commit_new_timestamp(db, timestamp)
 
+
 @function_safeguard
-def create_artifact_list(db, timestamp, name, session_name, session_index, artifact, collection_type):
+def create_artifact_list(
+    db, timestamp, name, session_name, session_index, artifact, collection_type
+):
     rev_ = utils.add_artifact_name(db, name, collection_type, timestamp)
     artifact["name"] = name
     artifact["session_name"] = session_name
@@ -76,33 +95,86 @@ def create_artifact_list(db, timestamp, name, session_name, session_index, artif
     artifact["n_items"] = 0
     artifact["length"] = 0
     artifact["deleted"] = -1
-    rev_ = utils.guarded_upsert(db, name, timestamp, rev_, collection_type, name, {}, artifact)
+    rev_ = utils.guarded_upsert(
+        db, name, timestamp, rev_, collection_type, name, {}, artifact
+    )
     if session_name != "":
         doc = {
             "_key": str(timestamp),
-            "timestamp": timestamp, 
+            "timestamp": timestamp,
             "index": session_index,
             "_from": f"session_list/{session_name}",
-            "_to": f"{collection_type}/{name}"
+            "_to": f"{collection_type}/{name}",
         }
-        rev_ = utils.guarded_upsert(db, name, timestamp, rev_, "session_parent_edge", str(timestamp), {}, doc)
+        rev_ = utils.guarded_upsert(
+            db, name, timestamp, rev_, "session_parent_edge", str(timestamp), {}, doc
+        )
     utils.commit_new_timestamp(db, timestamp)
 
-def create_file_list(db, name, session_name, session_index): 
-    timestamp, _ = utils.get_new_timestamp(db, ["create_artifact_list", name, "file_list", session_name, session_index])
-    create_artifact_list(db, timestamp, name, session_name, session_index, {}, "file_list")
 
-def create_document_list(db,  name, session_name, session_index):
-    timestamp, _ = utils.get_new_timestamp(db, ["create_artifact_list", name, "document_list", session_name, session_index])
-    create_artifact_list(db, timestamp, name, session_name, session_index, {}, "document_list")
-   
+def create_file_list(db, name, session_name, session_index):
+    timestamp, _ = utils.get_new_timestamp(
+        db, ["create_artifact_list", name, "file_list", session_name, session_index]
+    )
+    create_artifact_list(
+        db, timestamp, name, session_name, session_index, {}, "file_list"
+    )
+
+
+def create_document_list(db, name, session_name, session_index):
+    timestamp, _ = utils.get_new_timestamp(
+        db, ["create_artifact_list", name, "document_list", session_name, session_index]
+    )
+    create_artifact_list(
+        db, timestamp, name, session_name, session_index, {}, "document_list"
+    )
+
+
 def create_embedding_list(db, name, session_name, session_index, n_dim):
-    timestamp, _ = utils.get_new_timestamp(db, ["create_artifact_list", name, "embedding_list", session_name, session_index, n_dim])
-    create_artifact_list(db, timestamp, name, session_name, session_index, {"n_dim": n_dim}, "embedding_list")
+    timestamp, _ = utils.get_new_timestamp(
+        db,
+        [
+            "create_artifact_list",
+            name,
+            "embedding_list",
+            session_name,
+            session_index,
+            n_dim,
+        ],
+    )
+    create_artifact_list(
+        db,
+        timestamp,
+        name,
+        session_name,
+        session_index,
+        {"n_dim": n_dim},
+        "embedding_list",
+    )
+
 
 def create_record_list(db, name, session_name, session_index, column_names):
-    timestamp, _ = utils.get_new_timestamp(db, ["create_artifact_list", name, "record_list", session_name, session_index, column_names])
-    create_artifact_list(db, timestamp, name, session_name, session_index, {"column_names": column_names}, "record_list")
+    timestamp, _ = utils.get_new_timestamp(
+        db,
+        [
+            "create_artifact_list",
+            name,
+            "record_list",
+            session_name,
+            session_index,
+            column_names,
+        ],
+    )
+    create_artifact_list(
+        db,
+        timestamp,
+        name,
+        session_name,
+        session_index,
+        {"column_names": column_names},
+        "record_list",
+    )
+
 
 @function_safeguard
 def append_artifact(
@@ -117,7 +189,8 @@ def append_artifact(
     index,
     start_position,
     end_position,
-    rev_):
+    rev_,
+):
     artifact["index"] = index
     artifact["start_position"] = start_position
     artifact["end_position"] = end_position
@@ -126,67 +199,96 @@ def append_artifact(
     artifact["session_index"] = session_index
     artifact["timestamp"] = timestamp
     artifact_key = f"{name}_{index}"
-    rev_ = utils.guarded_upsert(db, name, timestamp, rev_, dtype, artifact_key , {}, artifact)
+    rev_ = utils.guarded_upsert(
+        db, name, timestamp, rev_, dtype, artifact_key, {}, artifact
+    )
     doc = {
-        "timestamp": timestamp, 
+        "timestamp": timestamp,
         "start_position": start_position,
         "end_position": end_position,
         "_from": f"{dtype}_list/{name}",
-        "_to": f"{dtype}/{artifact_key}"
+        "_to": f"{dtype}/{artifact_key}",
     }
-    rev_ = utils.guarded_upsert(db, name, timestamp, rev_, "parent_edge", str(timestamp), {}, doc)
+    rev_ = utils.guarded_upsert(
+        db, name, timestamp, rev_, "parent_edge", str(timestamp), {}, doc
+    )
     if session_name != "":
         doc = {
-            "timestamp": timestamp, 
+            "timestamp": timestamp,
             "index": session_index,
             "_from": f"session_list/{session_name}",
-            "_to": f"{dtype}/{artifact_key}"
+            "_to": f"{dtype}/{artifact_key}",
         }
-        rev_ = utils.guarded_upsert(db, name, timestamp, rev_, "session_parent_edge", str(timestamp), {}, doc)
+        rev_ = utils.guarded_upsert(
+            db, name, timestamp, rev_, "session_parent_edge", str(timestamp), {}, doc
+        )
     artifacts = db.collection("artifacts")
     if input_artifacts is not None:
         for art_name in input_artifacts:
             art = artifacts.get({"_key": art_name})
             art_collection = art["collection"]
             doc = {
-                "timestamp": timestamp, 
+                "timestamp": timestamp,
                 "start_position": start_position,
                 "end_position": end_position,
                 "_from": f"{art_collection}/{art_name}",
-                "_to": f"{dtype}/{artifact_key}"
+                "_to": f"{dtype}/{artifact_key}",
             }
-            rev_ = utils.guarded_upsert(db, name, timestamp, rev_, "dependency_edge", str(timestamp) + '_' + art_name, {}, doc)
+            rev_ = utils.guarded_upsert(
+                db,
+                name,
+                timestamp,
+                rev_,
+                "dependency_edge",
+                str(timestamp) + "_" + art_name,
+                {},
+                doc,
+            )
     list_collection = db.collection(f"{dtype}_list")
     artifact_list = list_collection.get(name)
     if artifact_list["n_items"] <= index:
         artifact_list["n_items"] = index + 1
     if artifact_list["length"] < end_position:
         artifact_list["length"] = end_position
-    rev_ = utils.guarded_upsert(db, name, timestamp, rev_, f"{dtype}_list", name, {}, artifact_list)    
+    rev_ = utils.guarded_upsert(
+        db, name, timestamp, rev_, f"{dtype}_list", name, {}, artifact_list
+    )
     utils.commit_new_timestamp(db, timestamp)
 
-def append_file(db:StandardDatabase, 
+
+def append_file(
+    db: StandardDatabase,
     name,
     location,
     session_name,
     session_index,
-    index = None, 
-    start_position = None,
-    end_position = None,
-    input_artifacts = None):
+    index=None,
+    start_position=None,
+    end_position=None,
+    input_artifacts=None,
+):
     timestamp, art = utils.get_new_timestamp(db, [], name)
-    file_list = db.collection('file_list').get(name)
+    file_list = db.collection("file_list").get(name)
     artifact = {
         "location": location,
     }
     if index is None:
-        index = file_list['n_items']
-        start_position = file_list['length']
-        end_position = file_list['length'] + 1
+        index = file_list["n_items"]
+        start_position = file_list["length"]
+        end_position = file_list["length"] + 1
 
-    data = ["append_artifact", name, "file", input_artifacts or {}, session_name, session_index, file_list["n_items"], file_list["length"]]
+    data = [
+        "append_artifact",
+        name,
+        "file",
+        input_artifacts or {},
+        session_name,
+        session_index,
+        file_list["n_items"],
+        file_list["length"],
+    ]
     utils.update_timestamp_info(db, timestamp, data)
-    
+
     append_artifact(
         db,
         timestamp,
@@ -199,33 +301,43 @@ def append_file(db:StandardDatabase,
         index,
         start_position,
         end_position,
-        art["_rev"])
-    
+        art["_rev"],
+    )
+
 
 def append_document(
     db,
-    name, 
+    name,
     text,
     session_name,
     session_index,
-    index = None, 
-    start_position = None,
-    end_position = None,
-    input_artifacts = None):
-
+    index=None,
+    start_position=None,
+    end_position=None,
+    input_artifacts=None,
+):
     timestamp, art = utils.get_new_timestamp(db, [], name)
-    document_list = db.collection('document_list').get(name)
-    
+    document_list = db.collection("document_list").get(name)
+
     artifact = {
         "text": text,
     }
     if index is None:
-        index = document_list['n_items']
-        start_position = document_list['length']
-        end_position = document_list['length'] + len(text)
+        index = document_list["n_items"]
+        start_position = document_list["length"]
+        end_position = document_list["length"] + len(text)
 
-    data = ["append_artifact", name, "document",  input_artifacts or {}, session_name, session_index, document_list["n_items"], document_list["length"]]
-    utils.update_timestamp_info(db, timestamp,  data)
+    data = [
+        "append_artifact",
+        name,
+        "document",
+        input_artifacts or {},
+        session_name,
+        session_index,
+        document_list["n_items"],
+        document_list["length"],
+    ]
+    utils.update_timestamp_info(db, timestamp, data)
 
     append_artifact(
         db,
@@ -239,24 +351,27 @@ def append_document(
         index,
         start_position,
         end_position,
-        art["_rev"])
-    
+        art["_rev"],
+    )
+
+
 # update timestamp
 def append_embedding(
     db,
-    name, 
+    name,
     embedding,
     session_name,
     session_index,
-    index = None, 
-    start_position = None,
-    end_position = None,
-    input_artifacts = None,
-    build_idx=True, 
-    index_rebuild_count = 10000):
+    index=None,
+    start_position=None,
+    end_position=None,
+    input_artifacts=None,
+    build_idx=True,
+    index_rebuild_count=10000,
+):
     timestamp, art = utils.get_new_timestamp(db, [], name)
-    embedding_list = db.collection('embedding_list').get(name)
-    
+    embedding_list = db.collection("embedding_list").get(name)
+
     if len(embedding) != embedding_list["n_dim"]:
         raise ValueError(f"Embedding needs to be {embedding_list['n_dim']} size.")
     embedding_name = "embedding_" + str(len(embedding))
@@ -264,12 +379,21 @@ def append_embedding(
         embedding_name: embedding,
     }
     if index is None:
-        index = embedding_list['n_items']
-        start_position = embedding_list['length']
-        end_position = embedding_list['length'] + 1
+        index = embedding_list["n_items"]
+        start_position = embedding_list["length"]
+        end_position = embedding_list["length"] + 1
 
-    data = ["append_artifact", name, "embedding",  input_artifacts or {}, session_name, session_index, embedding_list["n_items"], embedding_list["length"]]
-    utils.update_timestamp_info(db, timestamp,  data)
+    data = [
+        "append_artifact",
+        name,
+        "embedding",
+        input_artifacts or {},
+        session_name,
+        session_index,
+        embedding_list["n_items"],
+        embedding_list["length"],
+    ]
+    utils.update_timestamp_info(db, timestamp, data)
 
     append_artifact(
         db,
@@ -283,28 +407,39 @@ def append_embedding(
         index,
         start_position,
         end_position,
-        art["_rev"])
+        art["_rev"],
+    )
     if build_idx:
-        total_count, index_count = vector_helper.add_one_vector_count(db, embedding_name)
+        total_count, index_count = vector_helper.add_one_vector_count(
+            db, embedding_name
+        )
         if total_count - index_count > index_rebuild_count:
-            vector_helper.build_vector_idx(db, embedding_name, len(embedding), parallelism=1, n_lists=2, default_n_probe=1, training_iterations=2)
+            vector_helper.build_vector_idx(
+                db,
+                embedding_name,
+                len(embedding),
+                parallelism=1,
+                n_lists=2,
+                default_n_probe=1,
+                training_iterations=2,
+            )
             vector_helper.update_vector_idx(db, embedding_name)
-        
+
 
 def append_record(
     db,
-    name, 
+    name,
     record,
     session_name,
     session_index,
-    index = None,
-    start_position = None,
-    end_position = None,
-    input_artifacts = None):
-
+    index=None,
+    start_position=None,
+    end_position=None,
+    input_artifacts=None,
+):
     timestamp, art = utils.get_new_timestamp(db, [], name)
-    record_list = db.collection('record_list').get(name)
-    
+    record_list = db.collection("record_list").get(name)
+
     if set(record_list["column_names"]) != set(record.keys()):
         raise ValueError("Record not in correct format.")
 
@@ -314,11 +449,20 @@ def append_record(
         "column_names": list(record.keys()),
     }
     if index is None:
-        index = record_list['n_items']
-        start_position = record_list['length']
-        end_position = record_list['length'] + 1
+        index = record_list["n_items"]
+        start_position = record_list["length"]
+        end_position = record_list["length"] + 1
 
-    data = ["append_artifact", name, "record",  input_artifacts or {}, session_name, session_index, record_list["n_items"], record_list["length"]]
+    data = [
+        "append_artifact",
+        name,
+        "record",
+        input_artifacts or {},
+        session_name,
+        session_index,
+        record_list["n_items"],
+        record_list["length"],
+    ]
     utils.update_timestamp_info(db, timestamp, data)
 
     append_artifact(
@@ -333,4 +477,5 @@ def append_record(
         index,
         start_position,
         end_position,
-        art["_rev"])
+        art["_rev"],
+    )

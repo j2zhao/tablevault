@@ -2,12 +2,16 @@ from typing import Any, Dict
 from arango.database import StandardDatabase
 from arango.exceptions import ViewGetError
 
-def _create_or_replace_view(db: StandardDatabase, name: str, properties: Dict[str, Any]) -> None:
+
+def _create_or_replace_view(
+    db: StandardDatabase, name: str, properties: Dict[str, Any]
+) -> None:
     try:
-        v = db.view(name)                 # fetch existing view
+        v = db.view(name)  # fetch existing view
         v.replace_properties(properties)  # update
     except ViewGetError:
         db.create_arangosearch_view(name=name, properties=properties)
+
 
 def create_description_view(
     db: StandardDatabase,
@@ -38,6 +42,7 @@ def create_description_view(
     }
     _create_or_replace_view(db, view_name, props)
 
+
 def create_session_view(
     db: StandardDatabase,
     view_name: str = "session_view",
@@ -53,7 +58,9 @@ def create_session_view(
                 "trackListPositions": False,
                 "fields": {
                     text_field: {"analyzers": [text_analyzer]},
-                    "code": {"analyzers": [text_analyzer]},  # compatibility with your AQL
+                    "code": {
+                        "analyzers": [text_analyzer]
+                    },  # compatibility with your AQL
                     "name": {"analyzers": ["identity"]},
                     "session_name": {"analyzers": ["identity"]},
                     "session_index": {"analyzers": ["identity"]},
@@ -71,6 +78,7 @@ def create_session_view(
         "primarySortCompression": "lz4",
     }
     _create_or_replace_view(db, view_name, props)
+
 
 def create_document_view(
     db: StandardDatabase,
@@ -103,6 +111,7 @@ def create_document_view(
     }
     _create_or_replace_view(db, view_name, props)
 
+
 def create_record_view(
     db: StandardDatabase,
     view_name: str = "record_view",
@@ -134,6 +143,7 @@ def create_record_view(
         "primarySortCompression": "lz4",
     }
     _create_or_replace_view(db, view_name, props)
+
 
 def create_ml_vault_query_views(
     db: StandardDatabase,

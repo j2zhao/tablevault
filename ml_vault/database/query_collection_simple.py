@@ -1,7 +1,6 @@
 from typing import Any, Dict, List, Optional
 
 
-
 def query_session(
     db,
     code_text: Optional[str] = None,
@@ -125,7 +124,7 @@ def query_embedding(
     k_text: int = 500,
     text_analyzer: str = "text_en",
     filtered: Optional[List[str]] = None,  # list of embedding.name strings
-    use_approx: bool = True,               # NEW: toggle approx vs exact
+    use_approx: bool = True,  # NEW: toggle approx vs exact
 ):
     filtered = filtered or []
 
@@ -252,19 +251,15 @@ def query_embedding(
         "useApprox": bool(use_approx),
         "e1": e1_list,
         "k1": k1,
-
         "useDescVec": use_desc_vec,
         "e2": list(description_embedding) if use_desc_vec else [],
         "k2": k2,
-
         "useDescTxt": use_desc_txt,
         "desc_t1": description_text or "",
         "useDesc": use_desc,
-
         "useText": use_text,
         "t1": code_text or "",
         "k_text": k_text,
-
         "text_analyzer": text_analyzer,
         "filtered": filtered,
         "embedding_field": embedding_field or "embedding_0",
@@ -398,8 +393,8 @@ def query_record(
     """
 
     bind_vars: Dict[str, Any] = {
-        "useRecordTxt": use_record_txt,              # NEW
-        "t1": record_text or "",                     # safe
+        "useRecordTxt": use_record_txt,  # NEW
+        "t1": record_text or "",  # safe
         "useDescVec": use_desc_vec,
         "e2": list(description_embedding) if use_desc_vec else [],
         "k2": k2,
@@ -568,7 +563,7 @@ def query_file(
     description_embedding: Optional[Any] = None,
     description_text: Optional[str] = None,
     code_text: Optional[str] = None,
-    k1: int = 500,      # kept for API compatibility; not used
+    k1: int = 500,  # kept for API compatibility; not used
     k2: int = 500,
     k_text: int = 500,
     text_analyzer: str = "text_en",

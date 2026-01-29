@@ -1,0 +1,24 @@
+services:
+  arangodb:
+    image: arangodb/arangodb:3.12
+    container_name: mlvault-arango
+    environment:
+      ARANGO_ROOT_PASSWORD: passwd
+    command:
+      - arangod
+      - --server.endpoint=tcp://0.0.0.0:8529
+      - --experimental-vector-index=true
+    ports:
+      - "8529:8529"
+    volumes:
+      - arango_data:/var/lib/arangodb3
+      - arango_apps:/var/lib/arangodb3-apps
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8529/_api/version"]
+      interval: 3s
+      timeout: 2s
+      retries: 40
+
+volumes:
+  arango_data:
+  arango_apps:

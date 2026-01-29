@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Optional, Type
 from ml_vault.database import session_collection
 
+
 @dataclass
 class Uncaught:
     exc_type: Type[BaseException]

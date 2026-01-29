@@ -3,8 +3,18 @@
 from ml_vault.database.log_helper import utils
 from ml_vault.database.log_helper.operation_management import function_safeguard
 
+
 @function_safeguard
-def add_description_inner(db, timestamp, name, artifact_name, session_name, session_index, description, embedding):
+def add_description_inner(
+    db,
+    timestamp,
+    name,
+    artifact_name,
+    session_name,
+    session_index,
+    description,
+    embedding,
+):
     artifacts = db.collection("artifacts")
     art = artifacts.get({"_key": artifact_name})
     if art is None:
@@ -17,7 +27,7 @@ def add_description_inner(db, timestamp, name, artifact_name, session_name, sess
         "_key": key_,
         "name": key_,
         "artifact_name": artifact_name,
-        "session_name": session_name, 
+        "session_name": session_name,
         "session_index": session_index,
         "collection": artifact_collection,
         "timestamp": timestamp,
@@ -25,25 +35,44 @@ def add_description_inner(db, timestamp, name, artifact_name, session_name, sess
         "embedding": embedding,
         "deleted": -1,
     }
-    guard_rev = utils.guarded_upsert(db, key_, timestamp, guard_rev, "description", key_, {}, doc)
+    guard_rev = utils.guarded_upsert(
+        db, key_, timestamp, guard_rev, "description", key_, {}, doc
+    )
     doc = {
         "_key": str(timestamp),
-        "timestamp": timestamp, 
+        "timestamp": timestamp,
         "_from": f"{artifact_collection}/{artifact_name}",
-        "_to": f"description/{key_}"
+        "_to": f"description/{key_}",
     }
-    guard_rev = utils.guarded_upsert(db, key_, timestamp, guard_rev, "description_edge", str(timestamp), {}, doc)
+    guard_rev = utils.guarded_upsert(
+        db, key_, timestamp, guard_rev, "description_edge", str(timestamp), {}, doc
+    )
     doc = {
         "_key": str(timestamp),
-        "timestamp": timestamp, 
+        "timestamp": timestamp,
         "index": session_index,
         "_from": f"session_list/{session_name}",
-        "_to": f"description/{key_}"
+        "_to": f"description/{key_}",
     }
-    utils.guarded_upsert(db, key_, timestamp, guard_rev, "session_parent_edge", str(timestamp), {}, doc)
-    
+    utils.guarded_upsert(
+        db, key_, timestamp, guard_rev, "session_parent_edge", str(timestamp), {}, doc
+    )
 
-def add_description(db, name, artifact_name, session_name, session_index, description, embedding):
-    timestamp, _ = utils.get_new_timestamp(db, ["add_description", name, artifact_name, session_name, session_index])
-    add_description_inner(db, timestamp, name, artifact_name, session_name, session_index, description, embedding)
+
+def add_description(
+    db, name, artifact_name, session_name, session_index, description, embedding
+):
+    timestamp, _ = utils.get_new_timestamp(
+        db, ["add_description", name, artifact_name, session_name, session_index]
+    )
+    add_description_inner(
+        db,
+        timestamp,
+        name,
+        artifact_name,
+        session_name,
+        session_index,
+        description,
+        embedding,
+    )
     utils.commit_new_timestamp(db, timestamp)

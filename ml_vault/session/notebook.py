@@ -1,6 +1,7 @@
 from IPython import get_ipython
 from ml_vault.database import session_collection
 
+
 class SessionNotebook:
     def __init__(self, db, name, user_id):
         self.ip = get_ipython()
@@ -16,7 +17,9 @@ class SessionNotebook:
         self.current_index = None
 
     def pre_run_cell(self, info):
-        self.current_index = session_collection.session_add_code_start(self.db, self.name, info.raw_cell, "", 0)
+        self.current_index = session_collection.session_add_code_start(
+            self.db, self.name, info.raw_cell, "", 0
+        )
         print("\n---[ ML_Vault Record ]---")
 
     def post_run_cell(self, result):
@@ -27,6 +30,7 @@ class SessionNotebook:
             err_msg = ""
         else:
             err_msg = str(err)
-        session_collection.session_add_code_end(self.db, self.name, self.current_index,  error = err_msg)
+        session_collection.session_add_code_end(
+            self.db, self.name, self.current_index, error=err_msg
+        )
         print("---[ ML_Vault Record ]---\n")
-

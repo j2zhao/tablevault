@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from typing import Tuple, Any, Iterator
 from pathlib import Path
 
+
 @contextmanager
 def _exclusive_file_lock(f) -> Iterator[None]:
     if os.name == "nt":
@@ -34,11 +35,13 @@ def _exclusive_file_lock(f) -> Iterator[None]:
 
     else:
         import fcntl
+
         fcntl.flock(f.fileno(), fcntl.LOCK_EX)
         try:
             yield
         finally:
             fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
 
 def log_tuple(log_file: str, record: Tuple[Any, ...], *, fsync: bool = True) -> None:
     path = Path(log_file).expanduser()
