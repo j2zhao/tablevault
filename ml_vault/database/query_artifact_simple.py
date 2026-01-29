@@ -12,9 +12,10 @@ def _query_session_artifact(
 
     LET hasStart = (qStart != null)
     LET hasEnd   = (qEnd != null)
+    LET targetId = CONCAT("session_list/", @name)
 
     FOR s IN session_list
-      FILTER CONTAINS(s._id, @name)
+      FILTER s._id == targetId
       FOR v, e IN 1..1 OUTBOUND s parent_edge
         FILTER (!hasEnd   OR e.start_position < qEnd)
           AND (!hasStart OR e.end_position   > qStart)
@@ -43,9 +44,10 @@ def _query_file_artifact(db, name, start_position, end_position):
 
     LET hasStart = (qStart != null)
     LET hasEnd   = (qEnd != null)
+    LET targetId = CONCAT("file_list/", @name)
 
     FOR s IN file_list
-      FILTER CONTAINS(s._id, @name)
+      FILTER s._id == targetId
       FOR v, e IN 1..1 OUTBOUND s parent_edge
         FILTER (!hasEnd   OR e.start_position < qEnd)
           AND (!hasStart OR e.end_position   > qStart)
@@ -69,9 +71,10 @@ def _query_embedding_artifact(db, name, start_position, end_position):
 
     LET hasStart = (qStart != null)
     LET hasEnd   = (qEnd != null)
+    LET targetId = CONCAT("embedding_list/", @name)
 
     FOR s IN embedding_list
-      FILTER CONTAINS(TO_STRING(s._id), @name)
+      FILTER TO_STRING(s._id) == targetId
 
       FOR v, e IN 1..1 OUTBOUND s parent_edge
         FILTER (!hasEnd   OR e.start_position < qEnd)
@@ -102,9 +105,10 @@ def _query_document_artifact(db, name, start_position, end_position):
 
     LET hasStart = (qStart != null)
     LET hasEnd   = (qEnd != null)
+    LET targetId = CONCAT("document_list/", @name)
 
     FOR s IN document_list
-      FILTER CONTAINS(s._id, @name)
+      FILTER s._id == targetId
       FOR v, e IN 1..1 OUTBOUND s parent_edge
         FILTER (!hasEnd   OR e.start_position < qEnd)
           AND (!hasStart OR e.end_position   > qStart)
@@ -127,9 +131,10 @@ def _query_record_artifact(db, name, start_position, end_position):
 
     LET hasStart = (qStart != null)
     LET hasEnd   = (qEnd != null)
+    LET targetId = CONCAT("record_list/", @name)
 
     FOR s IN record_list
-      FILTER CONTAINS(s._id, @name)
+      FILTER s._id == targetId
       FOR v, e IN 1..1 OUTBOUND s parent_edge
         FILTER (!hasEnd   OR e.start_position < qEnd)
           AND (!hasStart OR e.end_position   > qStart)

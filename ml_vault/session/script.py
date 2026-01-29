@@ -4,7 +4,7 @@ import sys
 import traceback
 from dataclasses import dataclass
 from typing import Optional, Type
-
+from ml_vault.database import session_collection
 
 @dataclass
 class Uncaught:
@@ -56,6 +56,8 @@ class SessionScript:
             self.db,
             self.name,
             final_code,
+            "",
+            0,
         )
         print("\n---[ ML_Vault Record ]---")
 

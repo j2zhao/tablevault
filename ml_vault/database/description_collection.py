@@ -1,17 +1,18 @@
 # change description format
 
-from arango.database import StandardDatabase
 from ml_vault.database.log_helper import utils
-from ml_vault.database import artifact_collection_helper as helper
-from ml_vault.database.operation_management import function_safeguard
+from ml_vault.database.log_helper.operation_management import function_safeguard
 
 @function_safeguard
 def add_description_inner(db, timestamp, name, artifact_name, session_name, session_index, description, embedding):
     artifacts = db.collection("artifacts")
     art = artifacts.get({"_key": artifact_name})
+    if art is None:
+        utils.commit_new_timestamp(db, timestamp)
+        raise ValueError(f"Artifact '{artifact_name}' not found")
     artifact_collection = art["collection"]
     key_ = artifact_name + "_" + name + "_" + "DESCRIPT"
-    guard_rev = helper.add_artifact_name(db, key_, "description", timestamp)
+    guard_rev = utils.add_artifact_name(db, key_, "description", timestamp)
     doc = {
         "_key": key_,
         "name": key_,
@@ -22,6 +23,7 @@ def add_description_inner(db, timestamp, name, artifact_name, session_name, sess
         "timestamp": timestamp,
         "text": description,
         "embedding": embedding,
+        "deleted": -1,
     }
     guard_rev = utils.guarded_upsert(db, key_, timestamp, guard_rev, "description", key_, {}, doc)
     doc = {
@@ -44,3 +46,4 @@ def add_description_inner(db, timestamp, name, artifact_name, session_name, sess
 def add_description(db, name, artifact_name, session_name, session_index, description, embedding):
     timestamp, _ = utils.get_new_timestamp(db, ["add_description", name, artifact_name, session_name, session_index])
     add_description_inner(db, timestamp, name, artifact_name, session_name, session_index, description, embedding)
+    utils.commit_new_timestamp(db, timestamp)

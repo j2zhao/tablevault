@@ -3,9 +3,7 @@ from ml_vault.database import create_database, session_collection, artifact_coll
 from ml_vault.session.notebook import SessionNotebook
 from ml_vault.session.script import SessionScript
 
-import os
 import threading
-import weakref
 
 def is_ipython() -> bool:
     try:
@@ -19,7 +17,7 @@ class Vault():
     _lock = threading.Lock()
     _allowed_key = None
 
-    def __new__(self,
+    def __new__(cls,
             user_id,
             session_name, 
             arango_url = "http://localhost:8529",
@@ -63,6 +61,8 @@ class Vault():
             description_embedding_size = 1024,
             log_file_location = "~/.ml_vault/logs/",
             ):
+            self.name = session_name
+            self.user_id = user_id
             if getattr(self, "_initialized", True):
                 return
             self._initialized = True
@@ -74,17 +74,16 @@ class Vault():
                             arango_root_password,
                             new_arango_db)
             if new_arango_db:
-                create_database.create_ml_vault_db(self.db, description_embedding_size)
-            else:
-                create_database.restart_db(self.db)
+                create_database.create_ml_vault_db(self.db, log_file_location, description_embedding_size)
             if is_ipython():
                 self.session = SessionNotebook(self.db, self.name, self.user_id)
             else:
-                self.session.SessionScript(self.db, self.name, self.user_id)
+                self.session = SessionScript(self.db, self.name, self.user_id)
     def get_current_operations(self):
         metadata = self.db.collection("metadata")
         doc = metadata.get("global")
         return doc["active_timestamps"]
+    
     def vault_cleanup(self, interval = 60, selected_timestamps = None):
         database_restart.function_restart(self.db, interval, self.name, selected_timestamps)
     
@@ -94,7 +93,7 @@ class Vault():
     def create_file_list(self, item_name):
         artifact_collection.create_file_list(self.db, item_name, self.name, self.session.current_index)
     
-    def append_file(self, item_name, location, input_artifacts = {}, index = None):
+    def append_file(self, item_name, location, input_artifacts = None, index = None):
         if index is not None: 
             end_position = index + 1
         else:
@@ -102,10 +101,10 @@ class Vault():
         artifact_collection.append_file(self.db, item_name, location, self.name, self.session.current_index, index, index, end_position, input_artifacts)
 
     def create_document_list(self, item_name):
-        artifact_collection.create_document_list(self.db, item_name, self.name, self.notebook_session.current_index)
+        artifact_collection.create_document_list(self.db, item_name, self.name, self.session.current_index)
 
-    def append_document(self, item_name, text, input_artifacts = {}, index = None, start_position = None):
-        if index is None and start_position is not None or index is not None and start_position is None:
+    def append_document(self, item_name, text, input_artifacts = None, index = None, start_position = None):
+        if (index is None and start_position is not None) or (index is not None and start_position is None):
             raise ValueError("Start Position and Index must both be given")
         if start_position is not None: 
             end_position = start_position + len(text)
@@ -116,7 +115,7 @@ class Vault():
     def create_embedding_list(self, item_name, ndim):
         artifact_collection.create_embedding_list(self.db, item_name, self.name,self.session.current_index, ndim)
     
-    def append_embedding(self, item_name, embedding, input_artifacts = {}, index = None, build_idx=True, index_rebuild_count = 10000):
+    def append_embedding(self, item_name, embedding, input_artifacts = None, index = None, build_idx=True, index_rebuild_count = 10000):
         if index is not None: 
             end_position = index + 1
         else:
@@ -126,7 +125,7 @@ class Vault():
     def create_record_list(self, item_name, column_names):
         artifact_collection.create_record_list(self.db, item_name, self.name, self.session.current_index, column_names)
 
-    def append_record(self, item_name, record, input_artifacts = {}, index = None):
+    def append_record(self, item_name, record, input_artifacts = None, index = None):
         if index is not None: 
             end_position = index + 1
         else:
@@ -156,51 +155,51 @@ class Vault():
                     return True
             return False
    
-    def query_session_collection(self, code_text = None, desciption_embedding = None, desciption_text = None, filtered = []):
+    def query_session_collection(self, code_text = None, description_embedding = None, description_text = None, filtered = []):
             return query_collection_simple.query_session(
                     self.db,
                     code_text,
-                    desciption_embedding,
-                    desciption_text,
+                    description_embedding,
+                    description_text,
                     filtered = filtered,  # list of file.name strings
                 )
 
-    def query_embedding_collection(self, embedding, desciption_embedding = None, desciption_text = None, code_text = None, filtered = [], use_approx=False):
+    def query_embedding_collection(self, embedding, description_embedding = None, description_text = None, code_text = None, filtered = [], use_approx=False):
         return query_collection_simple.query_embedding(
                 self.db,
                 embedding,
-                desciption_embedding,
-                desciption_text,
+                description_embedding,
+                description_text,
                 code_text,
                 filtered = filtered,
                 use_approx = use_approx
             )
 
-    def query_record_collection(self, record_text, desciption_embedding = None, desciption_text = None, code_text = None, filtered = []):
+    def query_record_collection(self, record_text, description_embedding = None, description_text = None, code_text = None, filtered = []):
         return query_collection_simple.query_record(
                 self.db,
                 record_text,
-                desciption_embedding,
-                desciption_text,
+                description_embedding,
+                description_text,
                 code_text,
                 filtered = filtered,
             )
 
-    def query_document_collection(self, document_text, desciption_embedding = None, desciption_text = None, code_text = None, filtered = []):
+    def query_document_collection(self, document_text, description_embedding = None, description_text = None, code_text = None, filtered = []):
         return query_collection_simple.query_document(
                 self.db,
                 document_text,
-                desciption_embedding,
-                desciption_text,
+                description_embedding,
+                description_text,
                 code_text,
                 filtered = filtered,
             )
 
-    def query_file_collection(self, desciption_embedding = None, desciption_text = None, code_text = None, filtered = []):
+    def query_file_collection(self, description_embedding = None, description_text = None, code_text = None, filtered = []):
         return query_collection_simple.query_file(
                 self.db,
-                desciption_embedding,
-                desciption_text,
+                description_embedding,
+                description_text,
                 code_text,
                 filtered = filtered,
             )

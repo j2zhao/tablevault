@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Optional
 def query_session(
     db,
     code_text: Optional[str] = None,
-    desciption_embedding: Optional[Any] = None,
-    desciption_text: Optional[str] = None,
+    description_embedding: Optional[Any] = None,
+    description_text: Optional[str] = None,
     k2: int = 500,
     k_text: int = 500,
     text_analyzer: str = "text_en",
@@ -15,8 +15,8 @@ def query_session(
     filtered = filtered or []
 
     use_text = bool(code_text)
-    use_desc_vec = desciption_embedding is not None
-    use_desc_txt = bool(desciption_text)
+    use_desc_vec = description_embedding is not None
+    use_desc_txt = bool(description_text)
     use_desc = use_desc_vec or use_desc_txt
 
     aql = r"""
@@ -56,7 +56,7 @@ def query_session(
     // --- Description candidates: OR (union) of vector hits and token-AND text hits ---
     LET descVecCandidateIds = useDescVec ? (
       FOR d IN description
-        FILTER d.artifact_collection == "embedding_list"
+        FILTER d.collection == "session_list"
         LET score = COSINE_SIMILARITY(d.embedding, @e2)
         SORT score DESC
         LIMIT @k2
@@ -101,10 +101,10 @@ def query_session(
         "useText": use_text,
         "t1": code_text or "",
         "useDescVec": use_desc_vec,
-        "e2": list(desciption_embedding) if use_desc_vec else [],
+        "e2": list(description_embedding) if use_desc_vec else [],
         "k2": k2,
         "useDescTxt": use_desc_txt,
-        "desc_t1": desciption_text or "",
+        "desc_t1": description_text or "",
         "useDesc": use_desc,
         "k_text": k_text,
         "text_analyzer": text_analyzer,
@@ -113,11 +113,12 @@ def query_session(
 
     return list(db.aql.execute(aql, bind_vars=bind_vars))
 
+
 def query_embedding(
     db,
     embedding: Optional[Any] = None,
-    desciption_embedding: Optional[Any] = None,
-    desciption_text: Optional[str] = None,
+    description_embedding: Optional[Any] = None,
+    description_text: Optional[str] = None,
     code_text: Optional[str] = None,
     k1: int = 500,
     k2: int = 500,
@@ -130,8 +131,8 @@ def query_embedding(
 
     use_emb_vec = embedding is not None
 
-    use_desc_vec = desciption_embedding is not None
-    use_desc_txt = bool(desciption_text)
+    use_desc_vec = description_embedding is not None
+    use_desc_txt = bool(description_text)
     use_desc = use_desc_vec or use_desc_txt
 
     use_text = bool(code_text)
@@ -173,7 +174,7 @@ def query_embedding(
     // --- Description candidates: OR (union) of vector hits and token-AND text hits ---
     LET descVecCandidateIds = useDescVec ? (
       FOR d IN description
-        FILTER d.artifact_collection == "embedding_list"
+        FILTER d.collection == "embedding_list"
         LET score = COSINE_SIMILARITY(d.embedding, @e2)
         SORT score DESC
         LIMIT @k2
@@ -253,11 +254,11 @@ def query_embedding(
         "k1": k1,
 
         "useDescVec": use_desc_vec,
-        "e2": list(desciption_embedding) if use_desc_vec else [],
+        "e2": list(description_embedding) if use_desc_vec else [],
         "k2": k2,
 
         "useDescTxt": use_desc_txt,
-        "desc_t1": desciption_text or "",
+        "desc_t1": description_text or "",
         "useDesc": use_desc,
 
         "useText": use_text,
@@ -275,8 +276,8 @@ def query_embedding(
 def query_record(
     db,
     record_text: Optional[str] = None,
-    desciption_embedding: Optional[Any] = None,
-    desciption_text: Optional[str] = None,
+    description_embedding: Optional[Any] = None,
+    description_text: Optional[str] = None,
     code_text: Optional[str] = None,
     k2: int = 500,
     k_text: int = 500,
@@ -287,8 +288,8 @@ def query_record(
 
     use_record_txt = bool(record_text)  # NEW
 
-    use_desc_vec = desciption_embedding is not None
-    use_desc_txt = bool(desciption_text)
+    use_desc_vec = description_embedding is not None
+    use_desc_txt = bool(description_text)
     use_desc = use_desc_vec or use_desc_txt
     use_text = bool(code_text)
 
@@ -329,7 +330,7 @@ def query_record(
     // --- Description candidates: OR (union) of vector hits and token-AND text hits ---
     LET descVecCandidateIds = useDescVec ? (
       FOR d IN description
-        FILTER d.artifact_collection == "embedding_list"
+        FILTER d.collection == "record_list"
         LET score = COSINE_SIMILARITY(d.embedding, @e2)
         SORT score DESC
         LIMIT @k2
@@ -400,10 +401,10 @@ def query_record(
         "useRecordTxt": use_record_txt,              # NEW
         "t1": record_text or "",                     # safe
         "useDescVec": use_desc_vec,
-        "e2": list(desciption_embedding) if use_desc_vec else [],
+        "e2": list(description_embedding) if use_desc_vec else [],
         "k2": k2,
         "useDescTxt": use_desc_txt,
-        "desc_t1": desciption_text or "",
+        "desc_t1": description_text or "",
         "useDesc": use_desc,
         "useText": use_text,
         "t2": code_text or "",
@@ -418,8 +419,8 @@ def query_record(
 def query_document(
     db,
     document_text: Optional[str] = None,
-    desciption_embedding: Optional[Any] = None,
-    desciption_text: Optional[str] = None,
+    description_embedding: Optional[Any] = None,
+    description_text: Optional[str] = None,
     code_text: Optional[str] = None,
     k2: int = 500,
     k_text: int = 500,
@@ -430,8 +431,8 @@ def query_document(
 
     use_doc_txt = bool(document_text)
 
-    use_desc_vec = desciption_embedding is not None
-    use_desc_txt = bool(desciption_text)
+    use_desc_vec = description_embedding is not None
+    use_desc_txt = bool(description_text)
     use_desc = use_desc_vec or use_desc_txt
     use_text = bool(code_text)
 
@@ -476,7 +477,7 @@ def query_document(
     // --- Description candidates: OR (union) of vector hits and token-AND text hits ---
     LET descVecCandidateIds = useDescVec ? (
       FOR x IN description
-        FILTER x.artifact_collection == "embedding_list"
+        FILTER x.collection == "document_list"
         LET score = COSINE_SIMILARITY(x.embedding, @e2)
         SORT score DESC
         LIMIT @k2
@@ -547,10 +548,10 @@ def query_document(
         "useDocTxt": use_doc_txt,
         "t1": document_text or "",
         "useDescVec": use_desc_vec,
-        "e2": list(desciption_embedding) if use_desc_vec else [],
+        "e2": list(description_embedding) if use_desc_vec else [],
         "k2": k2,
         "useDescTxt": use_desc_txt,
-        "desc_t1": desciption_text or "",
+        "desc_t1": description_text or "",
         "useDesc": use_desc,
         "useText": use_text,
         "t2": code_text or "",
@@ -564,8 +565,8 @@ def query_document(
 
 def query_file(
     db,
-    desciption_embedding: Optional[Any] = None,
-    desciption_text: Optional[str] = None,
+    description_embedding: Optional[Any] = None,
+    description_text: Optional[str] = None,
     code_text: Optional[str] = None,
     k1: int = 500,      # kept for API compatibility; not used
     k2: int = 500,
@@ -575,8 +576,8 @@ def query_file(
 ):
     filtered = filtered or []
 
-    use_desc_vec = desciption_embedding is not None
-    use_desc_txt = bool(desciption_text)
+    use_desc_vec = description_embedding is not None
+    use_desc_txt = bool(description_text)
     use_desc = use_desc_vec or use_desc_txt
     use_text = bool(code_text)
 
@@ -604,7 +605,7 @@ def query_file(
     LET descCandidateIds = hasAny ? (
       LET descVecCandidateIds = useDescVec ? (
         FOR d IN description
-          FILTER d.artifact_collection == "embedding_list"
+          FILTER d.collection == "file_list"
           LET score = COSINE_SIMILARITY(d.embedding, @e2)
           SORT score DESC
           LIMIT @k2
@@ -679,9 +680,9 @@ def query_file(
         "useDesc": use_desc,
         "useText": use_text,
         "hasAny": has_any_constraint,  # NEW
-        "e2": list(desciption_embedding) if use_desc_vec else [],
+        "e2": list(description_embedding) if use_desc_vec else [],
         "k2": k2,
-        "desc_t1": desciption_text or "",
+        "desc_t1": description_text or "",
         "t1": code_text or "",
         "k_text": k_text,
         "text_analyzer": text_analyzer,

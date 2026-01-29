@@ -2,7 +2,7 @@
 
 Version 2.0 of TableVault. Retains basic functionality from v1.0 but with more robust backend storage and simplier API.
 
-You can view the previous website here: 
+You can view the previous website at: www.tablevault.org.
 
 # Changes from v1.0
 

@@ -16,11 +16,11 @@ class SessionNotebook:
         self.current_index = None
 
     def pre_run_cell(self, info):
-        self.current_index = session_collection.session_add_code_start(self.db, self.name, info.raw_cell)
+        self.current_index = session_collection.session_add_code_start(self.db, self.name, info.raw_cell, "", 0)
         print("\n---[ ML_Vault Record ]---")
 
     def post_run_cell(self, result):
-        if self.current_index == None:
+        if self.current_index is None:
             return
         err = result.error_before_exec or result.error_in_exec
         if err is None:

@@ -12,7 +12,7 @@ def _get_index_by_name(db: StandardDatabase, collection: str, index_name: str):
 
 def add_one_vector_count(db, embedding_name, tries = 5, wait_time=0.1):
     coll = db.collection("metadata")
-    for i in range(5):
+    for i in range(tries):
         meta = coll.get("global")
         if embedding_name in meta["vector_indices"]:
             meta["vector_indices"][embedding_name]["total_count"] += 1
@@ -24,14 +24,14 @@ def add_one_vector_count(db, embedding_name, tries = 5, wait_time=0.1):
             coll.update(meta, check_rev=True,  merge = False)
             return meta["vector_indices"][embedding_name]["total_count"], meta["vector_indices"][embedding_name]["idx_count"]
         except Exception:
-            continue
+            pass
         time.sleep(wait_time)
     raise ValueError("Vector Update Failed")
 
 
 def update_vector_idx(db, embedding_name, tries = 5,  wait_time=0.1):
     coll = db.collection("metadata")
-    for i in range(5):
+    for i in range(tries):
         meta = coll.get("global")
         if embedding_name in meta["vector_indices"]:
             meta["vector_indices"][embedding_name]["idx_count"] = meta["vector_indices"][embedding_name]["total_count"]
@@ -43,7 +43,7 @@ def update_vector_idx(db, embedding_name, tries = 5,  wait_time=0.1):
             coll.update(meta, check_rev=True,  merge = False)
             return meta["vector_indices"][embedding_name]["total_count"]
         except Exception:
-            continue
+            pass
         time.sleep(wait_time)
     raise ValueError("Vector Update Failed")
 

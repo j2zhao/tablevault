@@ -9,7 +9,7 @@ ALL_ARTIFACT_COLLECTIONS = [
 ]
 
 DESCRIPTION_COLLECTIONS = [
-    "session_list", "file_list", "document_list", "record_list"
+    "session_list", "file_list", "document_list", "record_list", "embedding_list"
 ]
 
 VIEW_COLLECTIONS = [
@@ -72,7 +72,7 @@ def create_ml_vault_db(db: StandardDatabase, log_file: str, description_embeddin
                 "collection": {"type": "string"}, 
                 "version": {"type": "number"}, 
             },
-            "required": ["name", "timestamp", "collection", "restart"],
+            "required": ["name", "timestamp", "collection"],
             "additionalProperties": False
         },
         "level": "strict",
@@ -85,8 +85,8 @@ def create_ml_vault_db(db: StandardDatabase, log_file: str, description_embeddin
                 "session_name": {"type": "string"},
                 "session_index": {"type": "number"},
                 "timestamp": {"type": "number"},
-                "interupt_request": {"type": "string"},
-                "interupt_action": {"type": "string"},
+                "interrupt_request": {"type": "string"},
+                "interrupt_action": {"type": "string"},
                 "execution_type": {"type": "string"}, 
                 "length": {"type": "number"},
                 "n_items": {"type": "number"},
@@ -98,8 +98,8 @@ def create_ml_vault_db(db: StandardDatabase, log_file: str, description_embeddin
                 "session_name",
                 "session_index",
                 "timestamp", 
-                "interupt_request", 
-                "interupt_action",
+                "interrupt_request", 
+                "interrupt_action",
                 "execution_type",
                 "length", 
                 "n_items", 
@@ -305,7 +305,7 @@ def create_ml_vault_db(db: StandardDatabase, log_file: str, description_embeddin
                 "embedding": {"type": "array", "items": {"type": "number"}},
                 "deleted": {"type": "number"},
             },
-            "required": ["artifact_name", "name", "session_name", "session_index", "collection", "timestamp", "text", "embedding"],
+            "required": ["artifact_name", "name", "session_name", "session_index", "collection", "timestamp", "text", "embedding", "deleted"],
             "additionalProperties": False
         },
         "level": "strict"
@@ -385,6 +385,6 @@ def create_ml_vault_db(db: StandardDatabase, log_file: str, description_embeddin
     add_edge_def("dependency_edge", DESCRIPTION_COLLECTIONS,  VIEW_COLLECTIONS) # input_list -> artifact (checked)
     add_edge_def("deleted_session_parent_edge",  ["session_list"], DESCRIPTION_COLLECTIONS)
     add_edge_def("session_parent_edge",  ["session_list"], ALL_ARTIFACT_COLLECTIONS) # session_list -> artifact (checked)
-    add_edge_def("description_edge",  ["desciption"], DESCRIPTION_COLLECTIONS) # artifact_list -> description (checked)
+    add_edge_def("description_edge", DESCRIPTION_COLLECTIONS,  ["description"]) # artifact_list -> description (checked)
     add_edge_def("parent_edge",  DESCRIPTION_COLLECTIONS, VIEW_COLLECTIONS) # artifact_list -> artifact (checked)
     create_ml_vault_query_views(db, description_embedding_size)
