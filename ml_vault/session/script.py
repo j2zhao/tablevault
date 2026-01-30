@@ -34,7 +34,7 @@ class SessionScript:
         self._uncaught: Optional[Uncaught] = None
         self._prev_excepthook = sys.excepthook
 
-        session_collection.create_session(db, name, user_id)
+        session_collection.create_session(db, name, user_id, "script")
         sys.excepthook = self._excepthook
         atexit.register(self._atexit_finalize)
         self.pre_run_script(

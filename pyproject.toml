@@ -33,3 +33,9 @@ dev = [
 #     "basic: marks barebone test",
 #     "remote: marks remote dir tests"
 # ]
+
+[tool.setuptools.packages.find]
+include = ["ml_vault*"]
+exclude = ["testing*"]
+
+[tool.setuptools_scm]

@@ -11,7 +11,7 @@ class SessionNotebook:
         self.db = db
         self._installed = True
         self.user_id = user_id
-        session_collection.create_session(db, name, user_id)
+        session_collection.create_session(db, name, user_id, "notebook")
         self.ip.events.register("pre_run_cell", self.pre_run_cell)
         self.ip.events.register("post_run_cell", self.post_run_cell)
         self.current_index = None

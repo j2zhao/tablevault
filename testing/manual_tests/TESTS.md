@@ -2,21 +2,21 @@
 
 ## Single Session
 
-- Create a Vault Object in Jupyter notebook and Python file.
-  - We will test the Jupyter notebook manually.
-- Create two Vault Objects in one file
-  - One with the same settings (return the previous object)
-  - One with different settings
-- Create each Artifact object type
-- Append data to each Artifact type
-- Add description to each Artifact type
-- Query each Artifact metadata query
+- [x] Create a Vault Object in Jupyter notebook 
+- [x] Create two Vault Objects in one file
+  - [x] One with the same settings (return the previous object)
+  - [x] One with different settings
+- [x] Create each Artifact object type
+- [x] Append data to each Artifact type
+- [x] Add description to each Artifact type
+- [x] Query each Artifact metadata query
 - Query Each Artifact collection 
   - with no context
   - with description text
   - With description embedding
   - with session text
-- Try deletion session
+- [x] Try deletion session (FIX DELETION SESSION)
+- [x] Create a Vault Object in Python file.
 
 ## Multiple Session and Data
 - Run two concurrent sessions

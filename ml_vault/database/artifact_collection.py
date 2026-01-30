@@ -10,45 +10,81 @@ def delete_artifact_list_inner(
     db, timestamp, name, artifact_collection, session_name, session_index
 ):
     aql = r"""
-    LET rootId = @rootId
+    LET rootId  = @rootId
+    LET rootKey = @rootKey
+    LET sid     = CONCAT(@sessionCol, "/", @sessionKey)
 
-    LET childIds = (
-      FOR v, e IN 1..1 OUTBOUND rootId parent_edge
-        RETURN DISTINCT v._id
+    LET childIds = UNIQUE(
+    FOR v, e IN 1..1 OUTBOUND rootId parent_edge
+        RETURN v._id
     )
-    FOR e IN parent_edge
-      FILTER e._from == rootId
-      REMOVE e IN parent_edge
 
+    LET rmSessionEdges = (
     FOR e IN session_parent_edge
-      FILTER e._from IN childIds OR e._to IN childIds
-      REMOVE e IN session_parent_edge
+        FILTER e._to IN childIds
+        REMOVE e IN session_parent_edge
+        RETURN 1
+    )
 
+    LET rmDepEdges = (
     FOR e IN dependency_edge
-      FILTER e._from IN childIds OR e._to IN childIds
-      REMOVE e IN dependency_edge
+        FILTER e._from IN childIds
+        REMOVE e IN dependency_edge
+        RETURN 1
+    )
 
+    LET rmChildren = (
     FOR v IN @@childCol
-      FILTER v._id IN childIds
-      REMOVE v IN @@childCol
+        FILTER v._id IN childIds
+        REMOVE v IN @@childCol
+        RETURN 1
+    )
 
-    UPDATE rootId WITH { deleted: 1 } IN @@rootCol
+    LET rmParentEdges = (
+    FOR e IN parent_edge
+        FILTER e._from == rootId
+        REMOVE e IN parent_edge
+        RETURN 1
+    )
 
-    LET sid = CONCAT(@sessionCol, "/", @sessionKey)
-    LET sess = DOCUMENT(sid)
-    FILTER sess != null
+    LET updRoot = (
+    UPDATE rootKey WITH { deleted: 1 } IN @@rootCol
+    RETURN 1
+    )
 
-    UPSERT { _from: rootId, _to: sid }
-      INSERT { _key: @edgeKey, _from: rootId, _to: sid, index: @sessionIndex, timestamp: @ts }
-      UPDATE { index: @sessionIndex, timestamp: @ts }
-    INTO deleted_session_parent_edge
+    LET upsertDeletedSessEdge = (
+        INSERT {
+        _key: @edgeKey,
+        _from: rootId, _to: sid,
+        index: @sessionIndex,
+        timestamp: @ts
+        }
+        INTO deleted_session_parent_edge
+        RETURN 1
+        )
 
-    RETURN { rootId, session_id: sid }
+    RETURN {
+    rootId,
+    session_id: sid,
+    childCount: LENGTH(childIds),
+
+    removed: {
+        session_parent_edge: LENGTH(rmSessionEdges),
+        dependency_edge: LENGTH(rmDepEdges),
+        children: LENGTH(rmChildren),
+        parent_edge: LENGTH(rmParentEdges)
+    },
+
+    updated: { root: LENGTH(updRoot) },
+    inserted: { deleted_session_parent_edge: LENGTH(upsertDeletedSessEdge) }
+    }
+
     """
     child_col = artifact_collection.split("_")[0]
     root_id = f"{artifact_collection}/{name}"
     bind_vars = {
         "rootId": root_id,
+        "rootKey": name,
         "@rootCol": artifact_collection,
         "@childCol": child_col,
         "sessionCol": "session_list",
@@ -57,7 +93,9 @@ def delete_artifact_list_inner(
         "ts": timestamp,
         "edgeKey": str(timestamp),
     }
-    return next(db.aql.execute(aql, bind_vars=bind_vars), {})
+    print(bind_vars)
+    val = next(db.aql.execute(aql, bind_vars=bind_vars), {})
+    print(val)
 
 
 def delete_artifact_list(db, name, session_name, session_index, timestamp=None):
@@ -251,9 +289,11 @@ def append_artifact(
     if artifact_list["length"] < end_position:
         artifact_list["length"] = end_position
     rev_ = utils.guarded_upsert(
-        db, name, timestamp, rev_, f"{dtype}_list", name, {}, artifact_list
+        db, name, timestamp, rev_, f"{dtype}_list", name, artifact_list, {} 
     )
+    artifact_list = list_collection.get(name)
     utils.commit_new_timestamp(db, timestamp)
+    return index
 
 
 def append_file(

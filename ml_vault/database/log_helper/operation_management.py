@@ -13,8 +13,11 @@ def add_description_reverse(db, timestamp):
     artifacts = db.collection("artifacts")
     artifacts.delete(key_, ignore_missing=True)
     coll = db.collection("description")
-    coll.delete(key_, ignore_missing=True)
-    edge = db.collection("description_edge")
+    doc = coll.get(key_)
+    if doc is not None:
+        if int(doc["timestamp"]) == int(timestamp):
+            coll.delete(key_, ignore_missing=True)
+    edge = db.collection("description_edge")    
     edge.delete(str(timestamp), ignore_missing=True)
     session_edge = db.collection("session_parent_edge")
     session_edge.delete(str(timestamp), ignore_missing=True)
@@ -28,6 +31,10 @@ def create_artifact_reverse(db, timestamp):
     name = op_info[1]
     collection_type = op_info[2]
     artifacts = db.collection("artifacts")
+    doc = artifacts.get(name)
+    if doc is None or int(doc["timestamp"]) != int(timestamp):
+        utils.commit_new_timestamp(db, timestamp, "failed")
+        return
     artifacts.delete(name, ignore_missing=True)
     coll = db.collection(collection_type)
     coll.delete(name, ignore_missing=True)
@@ -45,7 +52,16 @@ def append_artifact_reverse(db, timestamp):
     input_artifacts = op_info[3]
     n_items = op_info[6]
     length = op_info[7]
+
+    doc = artifacts.get(name)
+    if doc is None or int(doc["timestamp"]) != int(timestamp):
+        utils.commit_new_timestamp(db, timestamp, "failed")
+        return
     collection = db.collection(dtype)
+    doc = artifacts.get(f"{name}_{n_items}")
+    if doc is None or int(doc["timestamp"]) != int(timestamp):
+        utils.commit_new_timestamp(db, timestamp, "failed")
+        return
     collection.delete(f"{name}_{n_items}", ignore_missing=True)
     parent = db.collection("parent_edge")
     parent.delete(str(timestamp), ignore_missing=True)

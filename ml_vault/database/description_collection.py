@@ -47,6 +47,7 @@ def add_description_inner(
     guard_rev = utils.guarded_upsert(
         db, key_, timestamp, guard_rev, "description_edge", str(timestamp), {}, doc
     )
+    
     doc = {
         "_key": str(timestamp),
         "timestamp": timestamp,

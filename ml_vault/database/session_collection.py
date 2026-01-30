@@ -8,11 +8,11 @@ import os
 import signal
 
 
-def create_session(db, name, user_id, session_name="", session_index=0):
+def create_session(db, name, user_id, execution_type, session_name="", session_index=0):
     doc = {
         "interrupt_request": "",
         "interrupt_action": "",
-        "execution_type": "notebook",
+        "execution_type": execution_type,
         "pid": os.getpid(),
         "creator_user_id": user_id,
     }
@@ -36,6 +36,7 @@ def session_add_code_start(db, name, code, session_name, session_index):
         session_index,
         session_list["n_items"],
         session_list["length"],
+        "dtype"
     ]
     utils.update_timestamp_info(db, timestamp, data)
     code_doc = {
@@ -43,8 +44,8 @@ def session_add_code_start(db, name, code, session_name, session_index):
         "status": "start",
         "error": "",
     }
-
-    artifact_collection.append_artifact(
+    
+    return artifact_collection.append_artifact(
         db,
         timestamp,
         name,
@@ -58,7 +59,7 @@ def session_add_code_start(db, name, code, session_name, session_index):
         session_list["length"] + len(code),
         art["_rev"],
     )
-    return session_list["n_items"]
+    return
 
 
 def session_add_code_end(db, name, index, error="", timestamp=None):
