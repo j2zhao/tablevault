@@ -5,7 +5,7 @@ from ml_vault.database.log_helper import utils
 from ml_vault.database import artifact_collection
 
 import os
-import signal
+import psutil
 
 
 def create_session(db, name, user_id, execution_type, session_name="", session_index=0):
@@ -109,34 +109,37 @@ def session_resume_request(db, name, session_name, timestamp=None):
             utils.commit_new_timestamp(db, timestamp)
             raise ValueError("session status is not paused.")
         try:
-            os.kill(doc["pid"], signal.SIGCONT)
+            p = psutil.Process(doc["pid"])
+            p.resume()
         except Exception:
-            import warnings
-
-            warnings.warn(f"Could not {name}: PID - {doc['pid']}")
+            utils.commit_new_timestamp(db, timestamp)
+            raise
+        doc["interrupt_request"] = ""
+        doc["interrupt_action"] = ""
+        session.update(doc, check_rev=True, merge=False)
+        utils.commit_new_timestamp(db, timestamp)
     else:
         session = db.collection("session_list")
         doc = session.get({"_key": name})
         if doc is None:
-            utils.commit_new_timestamp(db, timestamp)
+            utils.commit_new_timestamp(db, timestamp, status="failed")
             raise ValueError(f"No session with name {name} found.")
-        if doc["interrupt_action"] != "pause":
-            utils.commit_new_timestamp(db, timestamp)
-            raise ValueError("session status is not paused.")
-    doc["interrupt_request"] = ""
-    doc["interrupt_action"] = ""
-    session.update(doc, check_rev=True, merge=False)
-    utils.commit_new_timestamp(db, timestamp)
-    return True
+
+        p = psutil.Process(doc["pid"])
+        if p.status() == psutil.STATUS_RUNNING:
+            doc["interrupt_request"] = ""
+            doc["interrupt_action"] = ""
+            session.update(doc, check_rev=True, merge=False)
+        utils.commit_new_timestamp(db, timestamp)
+    
 
 
 def session_checkpoint(db, name):
     session = db.collection("session_list")
     doc = session.get({"_key": name})
     if doc["interrupt_request"] != "":
+        p = psutil.Process(doc["pid"])
         if doc["interrupt_action"] == "pause":
-            sig = signal.SIGSTOP
-            os.kill(doc["pid"], sig)
+            p.suspend()
         elif doc["interrupt_action"] == "stop":
-            sig = signal.SIGTERM
-            os.kill(doc["pid"], sig)
+            p.terminate()

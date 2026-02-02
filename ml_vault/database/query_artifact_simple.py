@@ -25,7 +25,8 @@ def _query_session_artifact(
           text: v.text,
           status: v.status,
           error: v.error,
-          start_position: v.start_position
+          start_position: v.start_position,
+          index: v.index
         }
     """
 
@@ -160,6 +161,33 @@ def query_artifact_list(db, name):
     coll = db.collection(coll_name)
     return coll.get(name)
 
+def query_artifact_index(db, name, index):
+    print('hello')
+    artifacts = db.collection("artifacts")
+    art = artifacts.get(name)
+    coll_name = art["collection"]
+    if coll_name == "description":
+        raise ValueError("Use query_item_list instead for descriptions.")
+    key_ = f"{name}_{index}"
+    coll_name = art["collection"].split("_")[0]
+    item = db.collection(coll_name).get(key_)
+    print(coll_name)
+    if coll_name == "session":
+        return {
+          "text": item["text"],
+          "status": item["status"],
+          "error": item["error"],
+          "start_position": item["start_position"],
+          "index": item["index"]
+        }
+    elif coll_name == "file":
+        return item["location"]
+    elif coll_name == "embedding":
+        return item["embedding_"]
+    elif coll_name == "document":
+        return item["text"]
+    elif coll_name == "record":
+        return item["data"]
 
 def query_artifact(db, name, start_position=None, end_position=None):
     artifacts = db.collection("artifacts")

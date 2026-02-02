@@ -254,15 +254,17 @@ class Vault:
     def query_session_collection(
         self,
         code_text=None,
+        parent_code_text=None,
         description_embedding=None,
         description_text=None,
         filtered=[],
     ):
         return query_collection_simple.query_session(
             self.db,
-            code_text,
-            description_embedding,
-            description_text,
+            code_text=code_text,
+            parent_code_text=parent_code_text,
+            description_embedding=description_embedding,
+            description_text=description_text,
             filtered=filtered,  # list of file.name strings
         )
 
@@ -334,7 +336,11 @@ class Vault:
             filtered=filtered,
         )
 
-    def query_item_content(self, item_name, start_position=None, end_position=None):
+    def query_item_content(self, item_name, index=None, start_position=None, end_position=None):
+        if index is not None:
+            return query_artifact_simple.query_artifact_index(
+            self.db, item_name, index
+        )
         return query_artifact_simple.query_artifact(
             self.db, item_name, start_position, end_position
         )

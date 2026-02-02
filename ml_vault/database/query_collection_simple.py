@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 def query_session(
     db,
     code_text: Optional[str] = None,
+    parent_code_text: Optional[str] = None,
     description_embedding: Optional[Any] = None,
     description_text: Optional[str] = None,
     k2: int = 500,
@@ -14,12 +15,14 @@ def query_session(
     filtered = filtered or []
 
     use_text = bool(code_text)
+    use_parent_text = bool(parent_code_text)
     use_desc_vec = description_embedding is not None
     use_desc_txt = bool(description_text)
     use_desc = use_desc_vec or use_desc_txt
 
     aql = r"""
     LET useText    = @useText
+    LET useParent  = @useParent
     LET useDescVec = @useDescVec
     LET useDescTxt = @useDescTxt
     LET useDesc    = @useDesc
@@ -28,6 +31,7 @@ def query_session(
     LET hasFilter = LENGTH(filteredNames) > 0
 
     LET qTokens = TOKENS(@t1, @text_analyzer)
+    LET parentQTokens = TOKENS(@parent_t1, @text_analyzer)
 
     // --- Session candidates ---
     LET sessionCandidates = (useText && LENGTH(qTokens) > 0) ? (
@@ -81,6 +85,22 @@ def query_session(
 
     LET descCandidateIds = UNIQUE(APPEND(descVecCandidateIds, descTxtCandidateIds))
 
+    // --- Parent session candidates: token-AND text hits (optional) ---
+    LET sessCandidateIds = (useParent && LENGTH(parentQTokens) > 0) ? (
+      FOR s IN session_view
+        SEARCH ANALYZER(s.text IN parentQTokens, @text_analyzer)
+
+        LET sTokens = TOKENS(s.text, @text_analyzer)
+        FILTER LENGTH(
+          FOR t IN parentQTokens
+            FILTER t IN sTokens
+            RETURN 1
+        ) == LENGTH(parentQTokens)
+
+        LIMIT @k_text
+        RETURN s._id
+    ) : []
+
     // --- Final: traverse from session -> connected descriptions and enforce AND ---
     FOR s IN sessionCandidates
       LET sesDoc = DOCUMENT(s._id)
@@ -93,12 +113,22 @@ def query_session(
       ) : []
       FILTER (!useDesc) OR (LENGTH(matchedDescriptions) > 0)
 
-      RETURN [s._key, matchedDescriptions]
+      LET matchedSessions = useParent ? (
+        FOR sl IN 1..1 INBOUND sesDoc session_parent_edge
+          FOR ps IN 1..1 OUTBOUND sl parent_edge
+            FILTER ps._id IN sessCandidateIds
+            RETURN DISTINCT [ps.name, ps.index]
+      ) : []
+      FILTER (!useParent) OR (LENGTH(matchedSessions) > 0)
+
+      RETURN [[sesDoc.name, sesDoc.index], matchedDescriptions, matchedSessions]
     """
 
     bind_vars: Dict[str, Any] = {
         "useText": use_text,
         "t1": code_text or "",
+        "useParent": use_parent_text,
+        "parent_t1": parent_code_text or "",
         "useDescVec": use_desc_vec,
         "e2": list(description_embedding) if use_desc_vec else [],
         "k2": k2,
@@ -233,11 +263,11 @@ def query_embedding(
         FOR sl IN 1..1 INBOUND embDoc session_parent_edge
           FOR s IN 1..1 OUTBOUND sl parent_edge
             FILTER s._id IN sessCandidateIds
-            RETURN DISTINCT s._key
+            RETURN DISTINCT [s.name, s.index]
       ) : []
       FILTER (!useText) OR (LENGTH(matchedSessions) > 0)
 
-      RETURN [e._key, matchedDescriptions, matchedSessions]
+      RETURN [embDoc.name, embDoc.index, matchedDescriptions, matchedSessions]
     """
 
     embedding_field = None
@@ -385,11 +415,11 @@ def query_record(
         FOR sl IN 1..1 INBOUND recDoc session_parent_edge
           FOR s IN 1..1 OUTBOUND sl parent_edge
             FILTER s._id IN sessCandidateIds
-            RETURN DISTINCT s._key
+            RETURN DISTINCT [s.name, s.index]
       ) : []
       FILTER (!useText) OR (LENGTH(matchedSessions) > 0)
 
-      RETURN [r._key, matchedDescriptions, matchedSessions]
+      RETURN [recDoc.name, recDoc.index, matchedDescriptions, matchedSessions]
     """
 
     bind_vars: Dict[str, Any] = {
@@ -532,11 +562,11 @@ def query_document(
         FOR sl IN 1..1 INBOUND txtDoc session_parent_edge
           FOR s IN 1..1 OUTBOUND sl parent_edge
             FILTER s._id IN sessCandidateIds
-            RETURN DISTINCT s._key
+            RETURN DISTINCT [ s.name, s.index ]
       ) : []
       FILTER (!useText) OR (LENGTH(matchedSessions) > 0)
 
-      RETURN [d._key, matchedDescriptions, matchedSessions]
+      RETURN [txtDoc.name, txtDoc.index, matchedDescriptions, matchedSessions]
     """
 
     bind_vars: Dict[str, Any] = {
@@ -662,11 +692,11 @@ def query_file(
         FOR sl IN 1..1 INBOUND fileDoc session_parent_edge
           FOR s IN 1..1 OUTBOUND sl parent_edge
             FILTER s._id IN sessCandidateIds
-            RETURN DISTINCT s._key
+            RETURN DISTINCT [s.name, s.index ]
       ) : []
       FILTER (!useText) OR (LENGTH(matchedSessions) > 0)
 
-      RETURN [f._key, matchedDescriptions, matchedSessions]
+      RETURN [fileDoc.name, fileDoc.index, matchedDescriptions, matchedSessions]
     """
 
     bind_vars: Dict[str, Any] = {

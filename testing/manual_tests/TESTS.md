@@ -11,36 +11,39 @@
 - [x] Add description to each Artifact type
 - [x] Query each Artifact metadata query
 - Query Each Artifact collection 
-  - with no context
-  - with description text
-  - With description embedding
-  - with session text
+  - [x] With empty collections
+  - [x] With one item
+  - [x] with description text
+  - [x] With description embedding
+  - [x] with session text
 - [x] Try deletion session (FIX DELETION SESSION)
 - [x] Create a Vault Object in Python file.
 
 ## Multiple Session and Data
 - Run two concurrent sessions
   - Have each session -> create an artifact 
-    - Test that concurrent creates don't work
-    - Test that sequential creates work
+    - [ ] Test that concurrent creates don't work
+    - [x] Test that sequential creates work
   - Have each session -> append to an object
-    - Test that concurrent appends don't work
-    - Test that sequential appends work
-    - Test that concurrent append/create don't work
-- Test that queries work in both sessions independently
+    - [x] Test that concurrent appends don't work
+    - [x] Test that sequential appends work
+    - [ ] Test that concurrent append/create don't work
+- [x] Test that queries work in both sessions independently
   
 ## Multiple Sessions and Session Control
-- Try Stop and Checkpointing
-- Try Pause and Checkpointing
-- Try Multiple Stops and Checkpointing
-- Try Multiple Pauses and Checkpointing
-- Try Pause Checkpoint Restart
-- Try Stop Checkpoint Restart
-- Try Restart (without Pause)
-- Try Pause Restart (without Checkpoint)
+- [x] Try Stop and Checkpointing
+- [x] Try Pause and Checkpointing
+- [x] Try Multiple Stops and Checkpointing
+- [x] Try Multiple Pauses and Checkpointing
+- [x] Try Pause Checkpoint Restart
+- [x] Try Stop Checkpoint Restart
+- [x] Try Restart (without Pause)
+- [x] Try Pause Restart (without Checkpoint)
 
-## Session Failure
-- For each session consider different fail points and check that one restart works. Check that one restart is the same as two restarts.
-
-## Session Failure Checkpoints
-- Check that failures during checkpoints are properly supported.
+## Session Failure Restart
+- [ ] create_artifact_list -> List doesn't exist
+- [ ] append_artifact -> Item not appended
+- [ ] add_description_inner -> Do not add item to description
+- [ ] delete_artifact_list -> Delete Artifact Anyways
+- [ ] session_add_code_end -> Adds code to the end?
+- [ ] session_resume_request -> Just commits properly?

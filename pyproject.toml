@@ -14,7 +14,8 @@ readme = "README.md"
 keywords = ["example", "package", "python"]
 requires-python = ">=3.11" 
 dependencies = [
-    "python-arango"
+    "python-arango",
+    "psutil"
 ]
 
 

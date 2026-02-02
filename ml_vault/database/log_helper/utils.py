@@ -75,7 +75,7 @@ def add_artifact_name(db, artifact_name, artifact_type, timestamp):
     return art["_rev"]
 
 
-def update_artifact(db: StandardDatabase, name, timestamp, timeout=60, wait_time=0.1):
+def update_artifact(db: StandardDatabase, name, timestamp, timeout=5, wait_time=0.1):
     artifacts = db.collection("artifacts")
     end = time.time()
     start = time.time()
@@ -96,7 +96,7 @@ def update_artifact(db: StandardDatabase, name, timestamp, timeout=60, wait_time
     raise ValueError(f"Could not lock artifact {name}")
 
 
-def lock_artifact(db: StandardDatabase, name, timestamp, timeout=60, wait_time=0.1):
+def lock_artifact(db: StandardDatabase, name, timestamp, timeout=5, wait_time=0.1):
     start = time.time()
     end = time.time()
     artifacts = db.collection("artifacts")
@@ -104,13 +104,15 @@ def lock_artifact(db: StandardDatabase, name, timestamp, timeout=60, wait_time=0
         artifact = artifacts.get(name)
         if artifact is None:
             raise ValueError("Item list doesn't exist.")
-        artifact["timestamp"] = timestamp
-        artifact["version"] = time.time()
-        try:
-            artifact = artifacts.update(artifact, check_rev=True, merge=False)
-            return artifact
-        except Exception:
-            pass
+        prev_ts = get_timestamp_info(db, artifact["timestamp"])
+        if prev_ts is None:
+            artifact["timestamp"] = timestamp
+            artifact["version"] = time.time()
+            try:
+                artifact = artifacts.update(artifact, check_rev=True, merge=False)
+                return artifact
+            except Exception:
+                pass
         time.sleep(wait_time)
         end = time.time()
     raise ValueError(f"Could not lock artifact {name}")
@@ -121,7 +123,7 @@ def get_new_timestamp(
     data: Optional[list] = None,
     artifact=None,
     wait_time=0.1,
-    timeout=None,
+    timeout=5,
 ):
     metadata = db.collection("metadata")
     start = time.time()
@@ -162,7 +164,7 @@ def update_timestamp_info(
     timestamp,
     data: Optional[list] = None,
     wait_time=0.1,
-    timeout=None,
+    timeout=5,
 ):
     metadata = db.collection("metadata")
     start = time.time()

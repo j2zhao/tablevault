@@ -237,6 +237,7 @@ def append_artifact(
     artifact["session_index"] = session_index
     artifact["timestamp"] = timestamp
     artifact_key = f"{name}_{index}"
+    print("HELLLLLO")
     rev_ = utils.guarded_upsert(
         db, name, timestamp, rev_, dtype, artifact_key, {}, artifact
     )
@@ -247,6 +248,10 @@ def append_artifact(
         "_from": f"{dtype}_list/{name}",
         "_to": f"{dtype}/{artifact_key}",
     }
+    if session_name == "test1" and dtype == "file":
+        import time
+        print("HELLO TESTING")
+        time.sleep(60)        
     rev_ = utils.guarded_upsert(
         db, name, timestamp, rev_, "parent_edge", str(timestamp), {}, doc
     )
