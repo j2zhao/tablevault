@@ -1,9 +1,18 @@
+from typing import List, Optional
+
+from arango.database import StandardDatabase
+
 from ml_vault.database.log_helper import operation_management, utils
-from ml_vault.database import session_collection, artifact_collection
+from ml_vault.database import session_collection, item_collection
 import time
 
 
-def function_restart(db, interval, session_name, selected_timestamps=None):
+def function_restart(
+    db: StandardDatabase,
+    interval: int,
+    session_name: str,
+    selected_timestamps: Optional[List[int]] = None,
+) -> None:
     # only consider values where interval is greater than n
     # for each function condition -> write out the right function interval
     timestamps = utils.get_timestamp_info(db)
@@ -18,18 +27,18 @@ def function_restart(db, interval, session_name, selected_timestamps=None):
             _, last_update, op_info = timestamps[k]
             ts = int(k)
             if current_time - last_update > interval:
-                if op_info[0] == "create_artifact_list":
-                    operation_management.create_artifact_reverse(db, ts)
-                elif op_info[0] == "append_artifact":
-                    operation_management.append_artifact_reverse(db, ts)
+                if op_info[0] == "create_item_list":
+                    operation_management.create_item_reverse(db, ts)
+                elif op_info[0] == "append_item":
+                    operation_management.append_item_reverse(db, ts)
                 elif op_info[0] == "add_description_inner":
                     operation_management.add_description_reverse(db, ts)
-                elif op_info[0] == "delete_artifact_list":
+                elif op_info[0] == "delete_item_list":
                     op_name = op_info[1]
                     op_coll_name = op_info[2]
                     op_session_name = op_info[3]
                     op_session_index = op_info[4]
-                    artifact_collection.delete_artifact_list_inner(
+                    item_collection.delete_item_list_inner(
                         db, ts, op_name, op_coll_name, op_session_name, op_session_index
                     )
                     utils.commit_new_timestamp(db, ts, "restart")

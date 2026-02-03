@@ -1,14 +1,25 @@
-# Move to general artifacts
+# Move to general items
 # double check conditions
 
+from typing import Optional
+
+from arango.database import StandardDatabase
+
 from ml_vault.database.log_helper import utils
-from ml_vault.database import artifact_collection
+from ml_vault.database import item_collection
 
 import os
 import psutil
 
 
-def create_session(db, name, user_id, execution_type, session_name="", session_index=0):
+def create_session(
+    db: StandardDatabase,
+    name: str,
+    user_id: str,
+    execution_type: str,
+    session_name: str = "",
+    session_index: int = 0,
+) -> None:
     doc = {
         "interrupt_request": "",
         "interrupt_action": "",
@@ -17,18 +28,20 @@ def create_session(db, name, user_id, execution_type, session_name="", session_i
         "creator_user_id": user_id,
     }
     timestamp, _ = utils.get_new_timestamp(
-        db, ["create_artifact", name, "session_list", session_name, session_index]
+        db, ["create_item", name, "session_list", session_name, session_index]
     )
-    artifact_collection.create_artifact_list(
+    item_collection.create_item_list(
         db, timestamp, name, session_name, session_index, doc, "session_list"
     )
 
 
-def session_add_code_start(db, name, code, session_name, session_index):
-    timestamp, art = utils.get_new_timestamp(db, [], name)
+def session_add_code_start(
+    db: StandardDatabase, name: str, code: str, session_name: str, session_index: int
+) -> int:
+    timestamp, itm = utils.get_new_timestamp(db, [], name)
     session_list = db.collection("session_list").get(name)
     data = [
-        "append_artifact",
+        "append_item",
         name,
         "session",
         {},
@@ -44,8 +57,8 @@ def session_add_code_start(db, name, code, session_name, session_index):
         "status": "start",
         "error": "",
     }
-    
-    return artifact_collection.append_artifact(
+
+    return item_collection.append_item(
         db,
         timestamp,
         name,
@@ -57,14 +70,20 @@ def session_add_code_start(db, name, code, session_name, session_index):
         session_list["n_items"],
         session_list["length"],
         session_list["length"] + len(code),
-        art["_rev"],
+        itm["_rev"],
     )
     return
 
 
-def session_add_code_end(db, name, index, error="", timestamp=None):
+def session_add_code_end(
+    db: StandardDatabase,
+    name: str,
+    index: int,
+    error: str = "",
+    timestamp: Optional[int] = None,
+) -> None:
     if timestamp is None:
-        timestamp, artifact = utils.get_new_timestamp(
+        timestamp, item = utils.get_new_timestamp(
             db, ["session_add_code_end", name, index, error], name
         )
     session_code = db.collection("session")
@@ -75,7 +94,9 @@ def session_add_code_end(db, name, index, error="", timestamp=None):
     utils.commit_new_timestamp(db, timestamp)
 
 
-def session_stop_pause_request(db, name, action, session_name):
+def session_stop_pause_request(
+    db: StandardDatabase, name: str, action: str, session_name: str
+) -> None:
     timestamp, _ = utils.get_new_timestamp(
         db, ["session_stop_pause_request", name, action, session_name], name
     )
@@ -95,7 +116,9 @@ def session_stop_pause_request(db, name, action, session_name):
     utils.commit_new_timestamp(db, timestamp)
 
 
-def session_resume_request(db, name, session_name, timestamp=None):
+def session_resume_request(
+    db: StandardDatabase, name: str, session_name: str, timestamp: Optional[int] = None
+) -> None:
     if timestamp is None:
         timestamp, _ = utils.get_new_timestamp(
             db, ["session_resume_request", name, session_name], name
@@ -134,7 +157,7 @@ def session_resume_request(db, name, session_name, timestamp=None):
     
 
 
-def session_checkpoint(db, name):
+def session_checkpoint(db: StandardDatabase, name: str) -> None:
     session = db.collection("session_list")
     doc = session.get({"_key": name})
     if doc["interrupt_request"] != "":

@@ -1,8 +1,10 @@
-from typing import Optional, Any, List, Dict
+from typing import Optional, Any, List, Dict, Union
+
+from arango.database import StandardDatabase
 
 
-def _query_session_artifact(
-    db,
+def _query_session_item(
+    db: StandardDatabase,
     name: str,
     start_position: Optional[int] = None,
     end_position: Optional[int] = None,
@@ -39,7 +41,12 @@ def _query_session_artifact(
     return list(db.aql.execute(aql, bind_vars=bind_vars))
 
 
-def _query_file_artifact(db, name, start_position, end_position):
+def _query_file_item(
+    db: StandardDatabase,
+    name: str,
+    start_position: Optional[int],
+    end_position: Optional[int],
+) -> List[str]:
     aql = r"""
     LET qStart = @qStart
     LET qEnd   = @qEnd
@@ -66,7 +73,12 @@ def _query_file_artifact(db, name, start_position, end_position):
     return list(db.aql.execute(aql, bind_vars=bind_vars))
 
 
-def _query_embedding_artifact(db, name, start_position, end_position):
+def _query_embedding_item(
+    db: StandardDatabase,
+    name: str,
+    start_position: Optional[int],
+    end_position: Optional[int],
+) -> List[Optional[List[float]]]:
     aql = r"""
     LET qStart = @qStart
     LET qEnd   = @qEnd
@@ -100,7 +112,12 @@ def _query_embedding_artifact(db, name, start_position, end_position):
     return list(db.aql.execute(aql, bind_vars=bind_vars))
 
 
-def _query_document_artifact(db, name, start_position, end_position):
+def _query_document_item(
+    db: StandardDatabase,
+    name: str,
+    start_position: Optional[int],
+    end_position: Optional[int],
+) -> List[str]:
     aql = r"""
     LET qStart = @qStart
     LET qEnd   = @qEnd
@@ -127,7 +144,12 @@ def _query_document_artifact(db, name, start_position, end_position):
     return list(db.aql.execute(aql, bind_vars=bind_vars))
 
 
-def _query_record_artifact(db, name, start_position, end_position):
+def _query_record_item(
+    db: StandardDatabase,
+    name: str,
+    start_position: Optional[int],
+    end_position: Optional[int],
+) -> List[Optional[Dict[str, Any]]]:
     aql = r"""
     LET qStart = @qStart
     LET qEnd   = @qEnd
@@ -154,22 +176,23 @@ def _query_record_artifact(db, name, start_position, end_position):
     return list(db.aql.execute(aql, bind_vars=bind_vars))
 
 
-def query_artifact_list(db, name):
-    artifacts = db.collection("artifacts")
-    art = artifacts.get(name)
-    coll_name = art["collection"]
+def query_item_list(db: StandardDatabase, name: str) -> Dict[str, Any]:
+    items = db.collection("items")
+    itm = items.get(name)
+    coll_name = itm["collection"]
     coll = db.collection(coll_name)
     return coll.get(name)
 
-def query_artifact_index(db, name, index):
+
+def query_item_index(db: StandardDatabase, name: str, index: int) -> Any:
     print('hello')
-    artifacts = db.collection("artifacts")
-    art = artifacts.get(name)
-    coll_name = art["collection"]
+    items = db.collection("items")
+    itm = items.get(name)
+    coll_name = itm["collection"]
     if coll_name == "description":
         raise ValueError("Use query_item_list instead for descriptions.")
     key_ = f"{name}_{index}"
-    coll_name = art["collection"].split("_")[0]
+    coll_name = itm["collection"].split("_")[0]
     item = db.collection(coll_name).get(key_)
     print(coll_name)
     if coll_name == "session":
@@ -189,30 +212,35 @@ def query_artifact_index(db, name, index):
     elif coll_name == "record":
         return item["data"]
 
-def query_artifact(db, name, start_position=None, end_position=None):
-    artifacts = db.collection("artifacts")
-    art = artifacts.get(name)
-    coll_name = art["collection"]
+def query_item(
+    db: StandardDatabase,
+    name: str,
+    start_position: Optional[int] = None,
+    end_position: Optional[int] = None,
+) -> Optional[List[Any]]:
+    items = db.collection("items")
+    itm = items.get(name)
+    coll_name = itm["collection"]
     if coll_name == "description":
         raise ValueError("Use query_item_list instead for descriptions.")
     elif coll_name == "session_list":
-        return _query_session_artifact(db, name, start_position, end_position)
+        return _query_session_item(db, name, start_position, end_position)
     elif coll_name == "file_list":
-        return _query_file_artifact(db, name, start_position, end_position)
+        return _query_file_item(db, name, start_position, end_position)
     elif coll_name == "embedding_list":
-        return _query_embedding_artifact(db, name, start_position, end_position)
+        return _query_embedding_item(db, name, start_position, end_position)
     elif coll_name == "document_list":
-        return _query_document_artifact(db, name, start_position, end_position)
+        return _query_document_item(db, name, start_position, end_position)
     elif coll_name == "record_list":
-        return _query_record_artifact(db, name, start_position, end_position)
+        return _query_record_item(db, name, start_position, end_position)
 
 
-def query_artifact_input(
-    db, name: str, start_position: Optional[int], end_position: Optional[int]
-):
-    AQL_QUERY_ARTIFACT_DEPENDENCY = r"""
-    LET art = DOCUMENT("artifacts", @name)
-    LET startId = CONCAT(art.collection, "/", @name)
+def query_item_input(
+    db: StandardDatabase, name: str, start_position: Optional[int], end_position: Optional[int]
+) -> List[Any]:
+    AQL_QUERY_ITEM_DEPENDENCY = r"""
+    LET itm = DOCUMENT("items", @name)
+    LET startId = CONCAT(itm.collection, "/", @name)
 
     FOR child, parentE IN 1..1 OUTBOUND startId parent_edge
     FILTER (@start_position == null OR parentE.start_position > @start_position)
@@ -234,18 +262,18 @@ def query_artifact_input(
         "end_position": end_position,
     }
     cursor = db.aql.execute(
-        AQL_QUERY_ARTIFACT_DEPENDENCY,
+        AQL_QUERY_ITEM_DEPENDENCY,
         bind_vars=bind_vars,
     )
     return list(cursor)
 
 
-def query_artifact_output(
-    db, name: str, start_position: Optional[int], end_position: Optional[int]
-):
-    AQL_QUERY_ARTIFACT_CHILDREN = r"""
-    LET art = DOCUMENT("artifacts", @name)
-    LET startId = CONCAT(art.collection, "/", @name)
+def query_item_output(
+    db: StandardDatabase, name: str, start_position: Optional[int], end_position: Optional[int]
+) -> List[Any]:
+    AQL_QUERY_ITEM_CHILDREN = r"""
+    LET itm = DOCUMENT("items", @name)
+    LET startId = CONCAT(itm.collection, "/", @name)
     FOR dep, depE IN 1..1 OUTBOUND startId dependency_edge
     FILTER (@start_position == null OR depE.start_position > @start_position)
         AND (@end_position   == null OR depE.end_position   < @end_position)
@@ -266,30 +294,30 @@ def query_artifact_output(
     }
 
     cursor = db.aql.execute(
-        AQL_QUERY_ARTIFACT_CHILDREN,
+        AQL_QUERY_ITEM_CHILDREN,
         bind_vars=bind_vars,
     )
     return list(cursor)
 
 
-def query_artifact_description(db: Any, name: str) -> list[str]:
-    AQL_QUERY_ARTIFACT_DESCRIPTION = r"""
-    LET art = DOCUMENT("artifacts", @name)
-    LET startId = CONCAT(art.collection, "/", @name)
+def query_item_description(db: StandardDatabase, name: str) -> List[str]:
+    AQL_QUERY_ITEM_DESCRIPTION = r"""
+    LET itm = DOCUMENT("items", @name)
+    LET startId = CONCAT(itm.collection, "/", @name)
     FOR d IN 1..1 OUTBOUND startId description_edge
     RETURN d.text
     """
     cursor = db.aql.execute(
-        AQL_QUERY_ARTIFACT_DESCRIPTION,
+        AQL_QUERY_ITEM_DESCRIPTION,
         bind_vars={"name": name},
     )
     return list(cursor)
 
 
-def query_artifact_creation_session(db, name: str):
+def query_item_creation_session(db: StandardDatabase, name: str) -> List[Dict[str, Any]]:
     aql = r"""
-    LET art = DOCUMENT(CONCAT("artifacts/", @name))
-    LET startId = CONCAT(art.collection, "/", @name)
+    LET itm = DOCUMENT(CONCAT("items/", @name))
+    LET startId = CONCAT(itm.collection, "/", @name)
     FOR s, sPE IN 1..1 INBOUND startId session_parent_edge
       COLLECT sid = s._id, idx = sPE.index
       RETURN { session_id: sid, index: idx }
@@ -304,12 +332,12 @@ def query_artifact_creation_session(db, name: str):
     return list(cursor)
 
 
-def query_artifact_session(
-    db, name: str, start_position: Optional[int], end_position: Optional[int]
-):
+def query_item_session(
+    db: StandardDatabase, name: str, start_position: Optional[int], end_position: Optional[int]
+) -> List[Dict[str, Any]]:
     aql = r"""
-    LET art = DOCUMENT(CONCAT("artifacts/", @name))
-    LET startId = CONCAT(art.collection, "/", @name)
+    LET itm = DOCUMENT(CONCAT("items/", @name))
+    LET startId = CONCAT(itm.collection, "/", @name)
 
     FOR child, pE IN 1..1 OUTBOUND startId parent_edge
       FILTER (@start_position == null OR pE.start_position > @start_position)
@@ -331,7 +359,7 @@ def query_artifact_session(
     return list(cursor)
 
 
-def query_session_artifact(db, session_name: str) -> List[Dict[str, Any]]:
+def query_session_item(db: StandardDatabase, session_name: str) -> List[Dict[str, Any]]:
     aql = r"""
     LET sid = @sid
 

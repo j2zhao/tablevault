@@ -1,10 +1,14 @@
 # Add description view
 
+from typing import Any, Dict, Optional, Tuple
+
 from arango.database import StandardDatabase
 import time
 
 
-def _get_index_by_name(db: StandardDatabase, collection: str, index_name: str):
+def _get_index_by_name(
+    db: StandardDatabase, collection: str, index_name: str
+) -> Optional[Dict[str, Any]]:
     col = db.collection(collection)
     for idx in col.indexes():
         if idx.get("name") == index_name:
@@ -12,7 +16,9 @@ def _get_index_by_name(db: StandardDatabase, collection: str, index_name: str):
     return None
 
 
-def add_one_vector_count(db, embedding_name, tries=5, wait_time=0.1):
+def add_one_vector_count(
+    db: StandardDatabase, embedding_name: str, tries: int = 5, wait_time: float = 0.1
+) -> Tuple[int, int]:
     coll = db.collection("metadata")
     for i in range(tries):
         meta = coll.get("global")
@@ -33,7 +39,9 @@ def add_one_vector_count(db, embedding_name, tries=5, wait_time=0.1):
     raise ValueError("Vector Update Failed")
 
 
-def update_vector_idx(db, embedding_name, tries=5, wait_time=0.1):
+def update_vector_idx(
+    db: StandardDatabase, embedding_name: str, tries: int = 5, wait_time: float = 0.1
+) -> int:
     coll = db.collection("metadata")
     for i in range(tries):
         meta = coll.get("global")
@@ -55,14 +63,14 @@ def update_vector_idx(db, embedding_name, tries=5, wait_time=0.1):
 
 
 def build_vector_idx(
-    db,
-    embedding_name,
-    dim,
-    parallelism=2,
-    n_lists=50,
-    default_n_probe=2,
-    training_iterations=25,
-):
+    db: StandardDatabase,
+    embedding_name: str,
+    dim: int,
+    parallelism: int = 2,
+    n_lists: int = 50,
+    default_n_probe: int = 2,
+    training_iterations: int = 25,
+) -> None:
     col = db.collection("embedding")
     idx_name = embedding_name + "_idx"
     idx = _get_index_by_name(db, "embedding", idx_name)

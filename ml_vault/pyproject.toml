@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ml_vault"
 version = "0.1.0"
-description = "ML Vault - A machine learning artifact management system"
+description = "ML Vault - A machine learning item management system"
 requires-python = ">=3.8"
 dependencies = [
     "python-arango",

@@ -1,10 +1,13 @@
 # make more stringent about pids
 
+from typing import Any, Dict, List, Optional
+
 from arango import ArangoClient
 from arango.database import StandardDatabase
+from arango.graph import Graph
 from ml_vault.database.database_views import create_ml_vault_query_views
 
-ALL_ARTIFACT_COLLECTIONS = [
+ALL_ITEM_COLLECTIONS: List[str] = [
     "session",
     "file_list",
     "file",
@@ -17,7 +20,7 @@ ALL_ARTIFACT_COLLECTIONS = [
     "description",
 ]
 
-DESCRIPTION_COLLECTIONS = [
+DESCRIPTION_COLLECTIONS: List[str] = [
     "session_list",
     "file_list",
     "document_list",
@@ -25,12 +28,12 @@ DESCRIPTION_COLLECTIONS = [
     "embedding_list",
 ]
 
-VIEW_COLLECTIONS = ["session", "embedding", "document", "record", "description"]
+VIEW_COLLECTIONS: List[str] = ["session", "embedding", "document", "record", "description"]
 
 
 def create_collection_safe(
-    db: StandardDatabase, name: str, schema: dict = None, edge: bool = False
-):
+    db: StandardDatabase, name: str, schema: Optional[Dict[str, Any]] = None, edge: bool = False
+) -> None:
     """Helper to create collection only if it doesn't exist."""
     if not db.has_collection(name):
         db.create_collection(name=name, schema=schema, edge=edge)
@@ -43,8 +46,8 @@ def get_arango_db(
     arango_password: str,
     arango_root_username: str,
     arango_root_password: str,
-    new_arango_db=True,
-):
+    new_arango_db: bool = True,
+) -> StandardDatabase:
     client = ArangoClient(hosts=arango_url)
     sys_db = client.db(
         "_system", username=arango_root_username, password=arango_root_password
@@ -69,7 +72,7 @@ def get_arango_db(
 
 def create_ml_vault_db(
     db: StandardDatabase, log_file: str, description_embedding_size: int
-):
+) -> None:
     if db.has_graph("lineage_graph"):
         graph = db.graph("lineage_graph")
     else:
@@ -89,7 +92,7 @@ def create_ml_vault_db(
 
     create_collection_safe(
         db,
-        "artifacts",
+        "items",
         {
             "rule": {
                 "properties": {
@@ -434,7 +437,7 @@ def create_ml_vault_db(
             "rule": {
                 "properties": {
                     "name": {"type": "string"},
-                    "artifact_name": {"type": "string"},
+                    "item_name": {"type": "string"},
                     "session_name": {"type": "string"},
                     "session_index": {"type": "number"},
                     "collection": {"type": "string"},
@@ -444,7 +447,7 @@ def create_ml_vault_db(
                     "deleted": {"type": "number"},
                 },
                 "required": [
-                    "artifact_name",
+                    "item_name",
                     "name",
                     "session_name",
                     "session_index",
@@ -546,7 +549,7 @@ def create_ml_vault_db(
         },
     )
 
-    def add_edge_def(edge_col, from_cols, to_cols):
+    def add_edge_def(edge_col: str, from_cols: List[str], to_cols: List[str]) -> None:
         if graph.has_edge_definition(edge_col):
             pass
         else:
@@ -558,17 +561,17 @@ def create_ml_vault_db(
 
     add_edge_def(
         "dependency_edge", DESCRIPTION_COLLECTIONS, VIEW_COLLECTIONS
-    )  # input_list -> artifact (checked)
+    )  # input_list -> item (checked)
     add_edge_def(
         "deleted_session_parent_edge", ["session_list"], DESCRIPTION_COLLECTIONS
     )
     add_edge_def(
-        "session_parent_edge", ["session_list"], ALL_ARTIFACT_COLLECTIONS
-    )  # session_list -> artifact (checked)
+        "session_parent_edge", ["session_list"], ALL_ITEM_COLLECTIONS
+    )  # session_list -> item (checked)
     add_edge_def(
         "description_edge", DESCRIPTION_COLLECTIONS, ["description"]
-    )  # artifact_list -> description (checked)
+    )  # item_list -> description (checked)
     add_edge_def(
         "parent_edge", DESCRIPTION_COLLECTIONS, VIEW_COLLECTIONS
-    )  # artifact_list -> artifact (checked)
+    )  # item_list -> item (checked)
     create_ml_vault_query_views(db, description_embedding_size)

@@ -1,35 +1,39 @@
 # change description format
 
+from typing import List
+
+from arango.database import StandardDatabase
+
 from ml_vault.database.log_helper import utils
 from ml_vault.database.log_helper.operation_management import function_safeguard
 
 
 @function_safeguard
 def add_description_inner(
-    db,
-    timestamp,
-    name,
-    artifact_name,
-    session_name,
-    session_index,
-    description,
-    embedding,
-):
-    artifacts = db.collection("artifacts")
-    art = artifacts.get({"_key": artifact_name})
-    if art is None:
+    db: StandardDatabase,
+    timestamp: int,
+    name: str,
+    item_name: str,
+    session_name: str,
+    session_index: int,
+    description: str,
+    embedding: List[float],
+) -> None:
+    items = db.collection("items")
+    itm = items.get({"_key": item_name})
+    if itm is None:
         utils.commit_new_timestamp(db, timestamp)
-        raise ValueError(f"Artifact '{artifact_name}' not found")
-    artifact_collection = art["collection"]
-    key_ = artifact_name + "_" + name + "_" + "DESCRIPT"
-    guard_rev = utils.add_artifact_name(db, key_, "description", timestamp)
+        raise ValueError(f"Item '{item_name}' not found")
+    item_collection = itm["collection"]
+    key_ = item_name + "_" + name + "_" + "DESCRIPT"
+    guard_rev = utils.add_item_name(db, key_, "description", timestamp)
     doc = {
         "_key": key_,
         "name": key_,
-        "artifact_name": artifact_name,
+        "item_name": item_name,
         "session_name": session_name,
         "session_index": session_index,
-        "collection": artifact_collection,
+        "collection": item_collection,
         "timestamp": timestamp,
         "text": description,
         "embedding": embedding,
@@ -41,13 +45,13 @@ def add_description_inner(
     doc = {
         "_key": str(timestamp),
         "timestamp": timestamp,
-        "_from": f"{artifact_collection}/{artifact_name}",
+        "_from": f"{item_collection}/{item_name}",
         "_to": f"description/{key_}",
     }
     guard_rev = utils.guarded_upsert(
         db, key_, timestamp, guard_rev, "description_edge", str(timestamp), {}, doc
     )
-    
+
     doc = {
         "_key": str(timestamp),
         "timestamp": timestamp,
@@ -61,16 +65,22 @@ def add_description_inner(
 
 
 def add_description(
-    db, name, artifact_name, session_name, session_index, description, embedding
-):
+    db: StandardDatabase,
+    name: str,
+    item_name: str,
+    session_name: str,
+    session_index: int,
+    description: str,
+    embedding: List[float],
+) -> None:
     timestamp, _ = utils.get_new_timestamp(
-        db, ["add_description", name, artifact_name, session_name, session_index]
+        db, ["add_description", name, item_name, session_name, session_index]
     )
     add_description_inner(
         db,
         timestamp,
         name,
-        artifact_name,
+        item_name,
         session_name,
         session_index,
         description,

@@ -28,7 +28,7 @@ def create_description_view(
                 "storeValues": "none",
                 "trackListPositions": False,
                 "fields": {
-                    "artifact_name": {"analyzers": ["identity"]},
+                    "item_name": {"analyzers": ["identity"]},
                     "collection": {"analyzers": ["identity"]},
                     "text": {"analyzers": [text_analyzer]},
                 },
@@ -36,7 +36,7 @@ def create_description_view(
         },
         "primarySort": [
             {"field": "collection", "direction": "asc"},
-            {"field": "artifact_name", "direction": "asc"},
+            {"field": "item_name", "direction": "asc"},
         ],
         "primarySortCompression": "lz4",
     }
