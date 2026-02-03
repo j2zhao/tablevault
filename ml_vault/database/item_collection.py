@@ -6,6 +6,7 @@ from arango.database import StandardDatabase
 from ml_vault.database.log_helper import utils
 from ml_vault.database import database_vector_indices as vector_helper
 from ml_vault.database.log_helper.operation_management import function_safeguard
+from ml_vault.utils.errors import ValidationError
 
 
 def delete_item_list_inner(
@@ -115,7 +116,13 @@ def delete_item_list(
     items = db.collection("items")
     item = items.get(name)
     if item["collection"] in ["session_list", "description"]:
-        raise ValueError("Cannot delete session or description items.")
+        raise ValidationError(
+            f"Cannot delete items in protected collections ('session_list', 'description'); "
+            f"item='{name}' belongs to '{item['collection']}'.",
+            operation="delete_item_list",
+            collection=item["collection"],
+            key=name,
+        )
     if timestamp is None:
         timestamp, _ = utils.get_new_timestamp(
             db,
@@ -278,10 +285,10 @@ def append_item(
         "_from": f"{dtype}_list/{name}",
         "_to": f"{dtype}/{item_key}",
     }
-    if session_name == "test1" and dtype == "file":
-        import time
-        print("HELLO TESTING")
-        time.sleep(60)
+    # if session_name == "test1" and dtype == "file":
+    #     import time
+    #     print("HELLO TESTING")
+    #     time.sleep(60)
     rev_ = utils.guarded_upsert(
         db, name, timestamp, rev_, "parent_edge", str(timestamp), {}, doc
     )
@@ -448,7 +455,13 @@ def append_embedding(
     embedding_list = db.collection("embedding_list").get(name)
 
     if len(embedding) != embedding_list["n_dim"]:
-        raise ValueError(f"Embedding needs to be {embedding_list['n_dim']} size.")
+        raise ValidationError(
+            f"Embedding length {len(embedding)} does not match required dimension "
+            f"{embedding_list['n_dim']} for list '{name}'.",
+            operation="append_embedding",
+            collection="embedding_list",
+            key=name,
+        )
     embedding_name = "embedding_" + str(len(embedding))
     item = {
         embedding_name: embedding,
@@ -516,7 +529,22 @@ def append_record(
     record_list = db.collection("record_list").get(name)
 
     if set(record_list["column_names"]) != set(record.keys()):
-        raise ValueError("Record not in correct format.")
+        expected = set(record_list["column_names"])
+        provided = set(record.keys())
+        missing = expected - provided
+        extra = provided - expected
+        details = []
+        if missing:
+            details.append(f"missing={sorted(missing)}")
+        if extra:
+            details.append(f"extra={sorted(extra)}")
+        detail_msg = "; ".join(details) if details else "column mismatch"
+        raise ValidationError(
+            f"Record columns do not match record_list '{name}': {detail_msg}.",
+            operation="append_record",
+            collection="record_list",
+            key=name,
+        )
 
     item = {
         "data": record,

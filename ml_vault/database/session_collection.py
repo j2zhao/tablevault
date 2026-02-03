@@ -7,6 +7,7 @@ from arango.database import StandardDatabase
 
 from ml_vault.database.log_helper import utils
 from ml_vault.database import item_collection
+from ml_vault.utils.errors import NotFoundError, ConflictError, ValidationError
 
 import os
 import psutil
@@ -104,11 +105,20 @@ def session_stop_pause_request(
     doc = session.get({"_key": name})
     if doc is None:
         utils.commit_new_timestamp(db, timestamp)
-        raise ValueError(f"Session with {name} doesn't exist.")
+        raise NotFoundError(
+            f"Session '{name}' does not exist.",
+            operation="session_stop_pause_request",
+            collection="session_list",
+            key=name,
+        )
     if doc["interrupt_request"] != "":
         utils.commit_new_timestamp(db, timestamp)
-        raise ValueError(
-            f"Pre-existing request found by {doc['interrupt_request']} found."
+        raise ConflictError(
+            f"Existing interrupt request by '{doc['interrupt_request']}' with action "
+            f"'{doc['interrupt_action']}' blocks new '{action}' request.",
+            operation="session_stop_pause_request",
+            collection="session_list",
+            key=name,
         )
     doc["interrupt_request"] = session_name
     doc["interrupt_action"] = action
@@ -127,10 +137,20 @@ def session_resume_request(
         doc = session.get({"_key": name})
         if doc is None:
             utils.commit_new_timestamp(db, timestamp)
-            raise ValueError(f"No session with name {name} found.")
+            raise NotFoundError(
+                f"No session with name '{name}' found.",
+                operation="session_resume_request",
+                collection="session_list",
+                key=name,
+            )
         if doc["interrupt_action"] != "pause":
             utils.commit_new_timestamp(db, timestamp)
-            raise ValueError("session status is not paused.")
+            raise ValidationError(
+                f"Session '{name}' is not paused; current state is '{doc['interrupt_action'] or 'running'}'.",
+                operation="session_resume_request",
+                collection="session_list",
+                key=name,
+            )
         try:
             p = psutil.Process(doc["pid"])
             p.resume()
@@ -146,7 +166,12 @@ def session_resume_request(
         doc = session.get({"_key": name})
         if doc is None:
             utils.commit_new_timestamp(db, timestamp, status="failed")
-            raise ValueError(f"No session with name {name} found.")
+            raise NotFoundError(
+                f"No session with name '{name}' found.",
+                operation="session_resume_request",
+                collection="session_list",
+                key=name,
+            )
 
         p = psutil.Process(doc["pid"])
         if p.status() == psutil.STATUS_RUNNING:

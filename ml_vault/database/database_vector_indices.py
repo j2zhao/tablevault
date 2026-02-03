@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from arango.database import StandardDatabase
 import time
+from ml_vault.utils.errors import LockTimeoutError
 
 
 def _get_index_by_name(
@@ -33,10 +34,15 @@ def add_one_vector_count(
             return meta["vector_indices"][embedding_name]["total_count"], meta[
                 "vector_indices"
             ][embedding_name]["idx_count"]
-        except Exception:
+            except Exception:
             pass
         time.sleep(wait_time)
-    raise ValueError("Vector Update Failed")
+    raise LockTimeoutError(
+        f"Failed to update vector counters for '{embedding_name}' after {tries} attempts.",
+        operation="add_one_vector_count",
+        collection="metadata",
+        key=embedding_name,
+    )
 
 
 def update_vector_idx(
@@ -56,10 +62,15 @@ def update_vector_idx(
         try:
             coll.update(meta, check_rev=True, merge=False)
             return meta["vector_indices"][embedding_name]["total_count"]
-        except Exception:
+            except Exception:
             pass
         time.sleep(wait_time)
-    raise ValueError("Vector Update Failed")
+    raise LockTimeoutError(
+        f"Failed to update vector index counts for '{embedding_name}' after {tries} attempts.",
+        operation="update_vector_idx",
+        collection="metadata",
+        key=embedding_name,
+    )
 
 
 def build_vector_idx(

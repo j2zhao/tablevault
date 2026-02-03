@@ -4,6 +4,12 @@ from arango.exceptions import ArangoError
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
 from ml_vault.database.log_helper import log_manager
+from ml_vault.utils.errors import (
+    ConflictError,
+    DuplicateItemError,
+    LockTimeoutError,
+    NotFoundError,
+)
 
 
 def guarded_upsert(
@@ -54,8 +60,12 @@ def guarded_upsert(
         cursor = db.aql.execute(aql, bind_vars=bind_vars)
         out = next(cursor, None)
         if out is None:
-            raise RuntimeError(
-                "Guard check failed (missing guard doc or rev mismatch)."
+            raise ConflictError(
+                f"Guard check failed for item '{name}' at rev '{guard_rev}' "
+                f"while upserting {target_col}/{target_key} (possible revision mismatch).",
+                operation="guarded_upsert",
+                collection=target_col,
+                key=target_key,
             )
         return out
     except ArangoError:
@@ -66,6 +76,15 @@ def add_item_name(
     db: StandardDatabase, item_name: str, item_type: str, timestamp: int
 ) -> str:
     items = db.collection("items")
+    existing = items.get(item_name)
+    if existing is not None:
+        raise DuplicateItemError(
+            f"Item '{item_name}' already exists in 'items' as '{existing.get('collection')}'. "
+            f"Cannot create as '{item_type}'.",
+            operation="add_item_name",
+            collection="items",
+            key=item_name,
+        )
     doc = {
         "_key": item_name,
         "name": item_name,
@@ -90,9 +109,20 @@ def update_item(
     while end - start < timeout:
         item = items.get(name)
         if item is None:
-            raise ValueError("Item list doesn't exist.")
+            raise NotFoundError(
+                f"Item list '{name}' does not exist.",
+                operation="update_item",
+                collection="items",
+                key=name,
+            )
         if item["timestamp"] != timestamp:
-            raise ValueError("Item currently not locked to this different operation.")
+            raise ConflictError(
+                f"Item '{name}' is locked by timestamp {item['timestamp']} "
+                f"(requested {timestamp}).",
+                operation="update_item",
+                collection="items",
+                key=name,
+            )
         item["version"] = item["version"] + 1
         try:
             items.update(item, check_rev=True, merge=False)
@@ -101,7 +131,12 @@ def update_item(
             pass
         time.sleep(wait_time)
         end = time.time()
-    raise ValueError(f"Could not lock item {name}")
+    raise LockTimeoutError(
+        f"Could not lock item '{name}' within {timeout}s.",
+        operation="update_item",
+        collection="items",
+        key=name,
+    )
 
 
 def lock_item(
@@ -117,7 +152,12 @@ def lock_item(
     while end - start < timeout:
         item = items.get(name)
         if item is None:
-            raise ValueError("Item list doesn't exist.")
+            raise NotFoundError(
+                f"Item list '{name}' does not exist.",
+                operation="lock_item",
+                collection="items",
+                key=name,
+            )
         prev_ts = get_timestamp_info(db, item["timestamp"])
         if prev_ts is None:
             item["timestamp"] = timestamp
@@ -129,7 +169,12 @@ def lock_item(
                 pass
         time.sleep(wait_time)
         end = time.time()
-    raise ValueError(f"Could not lock item {name}")
+    raise LockTimeoutError(
+        f"Could not lock item '{name}' within {timeout}s.",
+        operation="lock_item",
+        collection="items",
+        key=name,
+    )
 
 
 def get_new_timestamp(
@@ -161,7 +206,11 @@ def get_new_timestamp(
             time.sleep(wait_time)
         end = time.time()
     if not success:
-        raise ValueError("Could not acquire lock")
+        raise LockTimeoutError(
+            f"Could not acquire new timestamp lock within {timeout}s.",
+            operation="get_new_timestamp",
+            collection="metadata",
+        )
     if item is not None:
         try:
             itm = lock_item(db, item, ts)
@@ -196,7 +245,12 @@ def update_timestamp_info(
         except ArangoError:
             time.sleep(wait_time)
         end = time.time()
-    raise ValueError("Could not update timestamp information.")
+    raise LockTimeoutError(
+        f"Could not update timestamp information for {timestamp} within {timeout}s.",
+        operation="update_timestamp_info",
+        collection="metadata",
+        key=str(timestamp),
+    )
 
 
 def commit_new_timestamp(
@@ -227,7 +281,12 @@ def commit_new_timestamp(
         except ArangoError:
             time.sleep(wait_time)
         end = time.time()
-    raise ValueError("Could not commit lock")
+    raise LockTimeoutError(
+        f"Could not commit timestamp {timestamp} with status '{status}' within {timeout or 'unbounded'}s.",
+        operation="commit_new_timestamp",
+        collection="metadata",
+        key=str(timestamp),
+    )
 
 
 def get_timestamp_info(

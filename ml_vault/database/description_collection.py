@@ -6,6 +6,7 @@ from arango.database import StandardDatabase
 
 from ml_vault.database.log_helper import utils
 from ml_vault.database.log_helper.operation_management import function_safeguard
+from ml_vault.utils.errors import NotFoundError
 
 
 @function_safeguard
@@ -23,7 +24,12 @@ def add_description_inner(
     itm = items.get({"_key": item_name})
     if itm is None:
         utils.commit_new_timestamp(db, timestamp)
-        raise ValueError(f"Item '{item_name}' not found")
+        raise NotFoundError(
+            f"Item '{item_name}' not found while adding description.",
+            operation="add_description_inner",
+            collection="items",
+            key=item_name,
+        )
     item_collection = itm["collection"]
     key_ = item_name + "_" + name + "_" + "DESCRIPT"
     guard_rev = utils.add_item_name(db, key_, "description", timestamp)

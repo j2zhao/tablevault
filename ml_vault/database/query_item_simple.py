@@ -1,6 +1,7 @@
 from typing import Optional, Any, List, Dict, Union
 
 from arango.database import StandardDatabase
+from ml_vault.utils.errors import ValidationError
 
 
 def _query_session_item(
@@ -190,11 +191,15 @@ def query_item_index(db: StandardDatabase, name: str, index: int) -> Any:
     itm = items.get(name)
     coll_name = itm["collection"]
     if coll_name == "description":
-        raise ValueError("Use query_item_list instead for descriptions.")
+        raise ValidationError(
+            "Use query_item_list instead for descriptions.",
+            operation="query_item_index",
+            collection=coll_name,
+            key=name,
+        )
     key_ = f"{name}_{index}"
     coll_name = itm["collection"].split("_")[0]
     item = db.collection(coll_name).get(key_)
-    print(coll_name)
     if coll_name == "session":
         return {
           "text": item["text"],
@@ -222,7 +227,12 @@ def query_item(
     itm = items.get(name)
     coll_name = itm["collection"]
     if coll_name == "description":
-        raise ValueError("Use query_item_list instead for descriptions.")
+        raise ValidationError(
+            "Use query_item_list instead for descriptions.",
+            operation="query_item",
+            collection=coll_name,
+            key=name,
+        )
     elif coll_name == "session_list":
         return _query_session_item(db, name, start_position, end_position)
     elif coll_name == "file_list":

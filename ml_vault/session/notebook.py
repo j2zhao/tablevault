@@ -11,7 +11,9 @@ class SessionNotebook:
     def __init__(self, db: StandardDatabase, name: str, user_id: str) -> None:
         self.ip: InteractiveShell = get_ipython()
         if self.ip is None:
-            raise RuntimeError("Not running inside IPython / Jupyter")
+            raise RuntimeError(
+                "SessionNotebook requires an IPython/Jupyter environment; get_ipython() returned None."
+            )
         self.name: str = name
         self.db: StandardDatabase = db
         self._installed: bool = True

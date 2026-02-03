@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from arango.database import StandardDatabase
 from ml_vault.types import InputItems
+from ml_vault.utils.errors import ValidationError, NotFoundError
 
 from ml_vault.database import (
     create_database,
@@ -137,6 +138,26 @@ class Vault:
         doc = metadata.get("global")
         return doc["active_timestamps"]
 
+    def _ensure_item_exists(self, item_name: str, *, operation: str) -> None:
+        items = self.db.collection("items")
+        if items.get(item_name) is None:
+            raise NotFoundError(
+                f"Item '{item_name}' not found in 'items' collection.",
+                operation=operation,
+                collection="items",
+                key=item_name,
+            )
+
+    def _ensure_session_exists(self, session_name: str, *, operation: str) -> None:
+        sessions = self.db.collection("session_list")
+        if sessions.get(session_name) is None:
+            raise NotFoundError(
+                f"Session '{session_name}' not found in 'session_list'.",
+                operation=operation,
+                collection="session_list",
+                key=session_name,
+            )
+
     def vault_cleanup(self, interval: int = 60, selected_timestamps: Optional[List[int]] = None) -> None:
         """
         Clean up stale operations that have exceeded the interval.
@@ -224,7 +245,12 @@ class Vault:
         if (index is None and start_position is not None) or (
             index is not None and start_position is None
         ):
-            raise ValueError("Start Position and Index must both be given")
+            raise ValidationError(
+                "Both 'index' and 'start_position' must be provided together when specifying manual positions.",
+                operation="append_document",
+                collection="document_list",
+                key=item_name,
+            )
         if start_position is not None:
             end_position = start_position + len(text)
         else:
@@ -574,6 +600,7 @@ class Vault:
         Returns:
             The item content at the specified index or position range.
         """
+        self._ensure_item_exists(item_name, operation="query_item_content")
         if index is not None:
             return query_item_simple.query_item_index(
             self.db, item_name, index
@@ -592,6 +619,7 @@ class Vault:
         Returns:
             Dictionary with list metadata (n_items, length, etc.).
         """
+        self._ensure_item_exists(item_name, operation="query_item_list")
         return query_item_simple.query_item_list(self.db, item_name)
 
     def query_item_parent(self, item_name: str, start_position: Optional[int] = None, end_position: Optional[int] = None) -> List[Any]:
@@ -606,6 +634,7 @@ class Vault:
         Returns:
             List of item list information.
         """
+        self._ensure_item_exists(item_name, operation="query_item_parent")
         return query_item_simple.query_item_input(
             self.db, item_name, start_position, end_position
         )
@@ -622,6 +651,7 @@ class Vault:
         Returns:
             List of child item information.
         """
+        self._ensure_item_exists(item_name, operation="query_item_child")
         return query_item_simple.query_item_output(
             self.db, item_name, start_position, end_position
         )
@@ -636,6 +666,7 @@ class Vault:
         Returns:
             List of description texts.
         """
+        self._ensure_item_exists(item_name, operation="query_item_description")
         return query_item_simple.query_item_description(self.db, item_name)
 
     def query_item_creation_session(self, item_name: str) -> List[Dict[str, Any]]:
@@ -648,6 +679,7 @@ class Vault:
         Returns:
             List of session information with session_id and index.
         """
+        self._ensure_item_exists(item_name, operation="query_item_creation_session")
         return query_item_simple.query_item_creation_session(self.db, item_name)
 
     def query_item_session(self, item_name: str, start_position: Optional[int] = None, end_position: Optional[int] = None) -> List[Dict[str, Any]]:
@@ -662,6 +694,7 @@ class Vault:
         Returns:
             List of session info dicts with session name and index.
         """
+        self._ensure_item_exists(item_name, operation="query_item_session")
         return query_item_simple.query_item_session(
             self.db, item_name, start_position, end_position
         )
@@ -676,4 +709,5 @@ class Vault:
         Returns:
             List of item dictionaries with name and position range.
         """
+        self._ensure_session_exists(session_name, operation="query_session_item")
         return query_item_simple.query_session_item(self.db, session_name)
