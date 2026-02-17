@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from arango.database import StandardDatabase
 import time
-from ml_vault.utils.errors import LockTimeoutError
+from tablevault.utils.errors import LockTimeoutError
 
 
 def _get_index_by_name(

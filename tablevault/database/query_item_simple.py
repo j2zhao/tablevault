@@ -1,7 +1,7 @@
 from typing import Optional, Any, List, Dict, Union
 
 from arango.database import StandardDatabase
-from ml_vault.utils.errors import ValidationError
+from tablevault.utils.errors import ValidationError
 
 
 def _query_session_item(

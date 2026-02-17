@@ -5,9 +5,9 @@ from typing import Optional
 
 from arango.database import StandardDatabase
 
-from ml_vault.database.log_helper import utils
-from ml_vault.database import item_collection
-from ml_vault.utils.errors import NotFoundError, ConflictError, ValidationError
+from tablevault.database.log_helper import utils
+from tablevault.database import item_collection
+from tablevault.utils.errors import NotFoundError, ConflictError, ValidationError
 
 import os
 import psutil

@@ -4,9 +4,9 @@ from typing import List
 
 from arango.database import StandardDatabase
 
-from ml_vault.database.log_helper import utils
-from ml_vault.database.log_helper.operation_management import function_safeguard
-from ml_vault.utils.errors import NotFoundError
+from tablevault.database.log_helper import utils
+from tablevault.database.log_helper.operation_management import function_safeguard
+from tablevault.utils.errors import NotFoundError
 
 
 @function_safeguard

@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 from arango import ArangoClient
 from arango.database import StandardDatabase
 from arango.graph import Graph
-from ml_vault.database.database_views import create_ml_vault_query_views
+from tablevault.database.database_views import create_tablevault_query_views
 
 ALL_ITEM_COLLECTIONS: List[str] = [
     "session",
@@ -70,7 +70,7 @@ def get_arango_db(
     return db
 
 
-def create_ml_vault_db(
+def create_tablevault_db(
     db: StandardDatabase, log_file: str, description_embedding_size: int
 ) -> None:
     if db.has_graph("lineage_graph"):
@@ -574,4 +574,4 @@ def create_ml_vault_db(
     add_edge_def(
         "parent_edge", DESCRIPTION_COLLECTIONS, VIEW_COLLECTIONS
     )  # item_list -> item (checked)
-    create_ml_vault_query_views(db, description_embedding_size)
+    create_tablevault_query_views(db, description_embedding_size)

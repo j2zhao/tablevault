@@ -2,7 +2,7 @@ from typing import Any, Callable, Dict, TypeVar
 
 from arango.database import StandardDatabase
 
-from ml_vault.database.log_helper import utils
+from tablevault.database.log_helper import utils
 import functools
 import sys
 

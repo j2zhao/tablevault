@@ -1,0 +1,48 @@
+site_name: TableVault
+theme:
+  name: material
+  palette:
+    primary: red
+    accent: blue
+  icon:
+    repo: fontawesome/brands/github
+    logo: fontawesome/solid/stapler
+  favicon: assets/favicon.png
+  features:
+    - content.code.copy
+    - content.code.select
+extra:
+  generator: false
+repo_url: https://github.com/j2zhao/tablevault
+repo_name: tablevault
+markdown_extensions:
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - attr_list
+  - md_in_html
+  - pymdownx.blocks.caption
+nav:
+  - Introduction: index.md
+  - Repository Setup: concepts/setup.md # show structure
+  - Item Lists: concepts/lists.md
+  - Descriptions: concepts/descriptions.md
+  - Basic Queries: concepts/queries.md
+  - Types and Type Queries: concepts/types.md
+  - Session Management: concepts/process.md
+  - API:
+    - TableVault API: api/core_api.md
+    - TableVault Descriptions API: api/description_functions.md
+  - Colab Example: other/example.md
+  - About TableVault: other/about.md

@@ -1,10 +1,10 @@
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from arango.database import StandardDatabase
-from ml_vault.types import InputItems
-from ml_vault.utils.errors import ValidationError, NotFoundError
+from tablevault.types import InputItems
+from tablevault.utils.errors import ValidationError, NotFoundError
 
-from ml_vault.database import (
+from tablevault.database import (
     create_database,
     session_collection,
     item_collection,
@@ -13,8 +13,8 @@ from ml_vault.database import (
     query_collection_simple,
     database_restart,
 )
-from ml_vault.session.notebook import SessionNotebook
-from ml_vault.session.script import SessionScript
+from tablevault.session.notebook import SessionNotebook
+from tablevault.session.script import SessionScript
 
 import threading
 
@@ -50,15 +50,17 @@ class Vault:
         cls,
         user_id: str,
         session_name: str,
+        parent_session_name: str = "",
+        parent_session_index: int = 0,
         arango_url: str = "http://localhost:8529",
-        arango_db: str = "ml_vault",
-        arango_username: str = "mlvault_user",
-        arango_password: str = "mlvault_password",
+        arango_db: str = "tablevault",
+        arango_username: str = "tablevault_user",
+        arango_password: str = "tablevault_password",
         new_arango_db: bool = True,
         arango_root_username: str = "root",
         arango_root_password: str = "passwd",
         description_embedding_size: int = 1024,
-        log_file_location: str = "~/.ml_vault/logs/",
+        log_file_location: str = "~/.tablevault/logs/",
     ) -> "Vault":
         key = (user_id, session_name, arango_db, arango_url)
         with cls._lock:
@@ -81,15 +83,17 @@ class Vault:
         self,
         user_id: str,
         session_name: str,
+        parent_session_name: str = "",
+        parent_session_index: int = 0,
         arango_url: str = "http://localhost:8529",
-        arango_db: str = "ml_vault",
-        arango_username: str = "mlvault_user",
-        arango_password: str = "mlvault_password",
+        arango_db: str = "tablevault",
+        arango_username: str = "tablevault_user",
+        arango_password: str = "tablevault_password",
         new_arango_db: bool = True,
         arango_root_username: str = "root",
         arango_root_password: str = "passwd",
         description_embedding_size: int = 1024,
-        log_file_location: str = "~/.ml_vault/logs/",
+        log_file_location: str = "~/.tablevault/logs/",
     ) -> None:
         """
         Initialize the Vault singleton. 
@@ -99,6 +103,8 @@ class Vault:
         Args:
             user_id: Unique identifier for the user.
             session_name: Name for this session.
+            parent_session_name: Name of generating session (if exists).
+            parent_session_index: Index of generating session (if exists).
             arango_url: URL of the ArangoDB server.
             arango_db: Name of the database to use.
             arango_username: Username for database access.
@@ -124,13 +130,13 @@ class Vault:
             new_arango_db,
         )
         if new_arango_db:
-            create_database.create_ml_vault_db(
+            create_database.create_tablevault_db(
                 self.db, log_file_location, description_embedding_size
             )
         if is_ipython():
-            self.session: Union[SessionNotebook, SessionScript] = SessionNotebook(self.db, self.name, self.user_id)
+            self.session = SessionNotebook(self.db, self.name, self.user_id, parent_session_name, parent_session_index)
         else:
-            self.session = SessionScript(self.db, self.name, self.user_id)
+            self.session = SessionScript(self.db, self.name, self.user_id, parent_session_name, parent_session_index)
 
     def get_current_operations(self) -> Dict[str, Any]:
         """Get all currently active operations."""
@@ -358,14 +364,14 @@ class Vault:
         )
 
     def create_description(
-        self, description: str, item_name: str, embedding: List[float], description_name: str = "BASE"
+        self, item_name: str, description: str, embedding: List[float], description_name: str = "BASE"
     ) -> None:
         """
         Adds a joint text and embedding description to an item list.
 
         Args:
-            description: Text description of the item.
             item_name: Name of the item to describe.
+            description: Text description of the item.
             embedding: Embedding vector for the description.
             description_name: Label for this description (default "BASE").
         """
@@ -437,7 +443,7 @@ class Vault:
                 return True
         return False
 
-    def query_session_collection(
+    def query_session_list(
         self,
         code_text: Optional[str] = None,
         parent_code_text: Optional[str] = None,
@@ -467,7 +473,7 @@ class Vault:
             filtered=filtered or [],  # list of file.name strings
         )
 
-    def query_embedding_collection(
+    def query_embedding_list(
         self,
         embedding: List[float],
         description_embedding: Optional[List[float]] = None,
@@ -500,7 +506,7 @@ class Vault:
             use_approx=use_approx,
         )
 
-    def query_record_collection(
+    def query_record_list(
         self,
         record_text: str,
         description_embedding: Optional[List[float]] = None,
@@ -530,7 +536,7 @@ class Vault:
             filtered=filtered or [],
         )
 
-    def query_document_collection(
+    def query_document_list(
         self,
         document_text: str,
         description_embedding: Optional[List[float]] = None,
@@ -560,7 +566,7 @@ class Vault:
             filtered=filtered or [],
         )
 
-    def query_file_collection(
+    def query_file_list(
         self,
         description_embedding: Optional[List[float]] = None,
         description_text: Optional[str] = None,

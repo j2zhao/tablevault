@@ -1,6 +1,6 @@
-# MLVault
+# TableVault
 
-Version 2.0 of TableVault. Retains basic functionality from v1.0 but with more robust backend storage and simplier API.
+Version 2.0 of TableVault. Retains basic functionality from v1.0 but with more robust backend storage and simpler API.
 
 You can view the previous website at: www.tablevault.org.
 

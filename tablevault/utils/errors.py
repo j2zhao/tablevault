@@ -1,10 +1,10 @@
-# ml_vault/errors.py
+# tablevault/errors.py
 from __future__ import annotations
 from typing import Optional
 
 
-class MLVaultError(Exception):
-    """Base for all ML Vault errors; include optional db context."""
+class TableVaultError(Exception):
+    """Base for all TableVault errors; include optional db context."""
     code: str = "unknown"
 
     def __init__(
@@ -25,31 +25,31 @@ class MLVaultError(Exception):
         self.arango_http = arango_http
 
 
-class ValidationError(MLVaultError):
+class ValidationError(TableVaultError):
     """Bad user input or shape."""
     code = "validation_error"
 
 
-class NotFoundError(MLVaultError):
+class NotFoundError(TableVaultError):
     """Requested item/doc/collection key does not exist."""
     code = "not_found"
 
 
-class DuplicateItemError(MLVaultError):
+class DuplicateItemError(TableVaultError):
     """Unique/duplicate constraint violation for the given key."""
     code = "duplicate_item"
 
 
-class ConflictError(MLVaultError):
+class ConflictError(TableVaultError):
     """Concurrent write / revision conflict; often retryable."""
     code = "conflict"
 
 
-class LockTimeoutError(MLVaultError):
+class LockTimeoutError(TableVaultError):
     """Failed to obtain or persist a lock/timestamp within the timeout."""
     code = "lock_timeout"
 
 
-class DBError(MLVaultError):
+class DBError(TableVaultError):
     """Fallback for other database errors (unmapped Arango codes)."""
     code = "db_error"

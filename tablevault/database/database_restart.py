@@ -2,8 +2,8 @@ from typing import List, Optional
 
 from arango.database import StandardDatabase
 
-from ml_vault.database.log_helper import operation_management, utils
-from ml_vault.database import session_collection, item_collection
+from tablevault.database.log_helper import operation_management, utils
+from tablevault.database import session_collection, item_collection
 import time
 
 

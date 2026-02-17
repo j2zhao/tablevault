@@ -3,10 +3,10 @@
 from typing import Any, Dict, List, Optional
 
 from arango.database import StandardDatabase
-from ml_vault.database.log_helper import utils
-from ml_vault.database import database_vector_indices as vector_helper
-from ml_vault.database.log_helper.operation_management import function_safeguard
-from ml_vault.utils.errors import ValidationError
+from tablevault.database.log_helper import utils
+from tablevault.database import database_vector_indices as vector_helper
+from tablevault.database.log_helper.operation_management import function_safeguard
+from tablevault.utils.errors import ValidationError
 
 
 def delete_item_list_inner(

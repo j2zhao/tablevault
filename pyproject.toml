@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0.0", "wheel", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mlvault"
-version = "0.2.1"
-description = "Distribed ML workflow tracking tool."
+name = "tablevault"
+version = "0.2.0"
+description = "Centralized data repository for cross-process data filtering in Python."
 authors = [
     { name = "Jinjin Zhao", email = "j2zhao@uchicago.edu" }
 ]
@@ -27,16 +27,8 @@ dev = [
     "mike"
 ]
 
-# [tool.pytest.ini_options]
-# testpaths = ["tests/api_tests"]
-# python_files = ["test_*.py"]
-# markers = [
-#     "basic: marks barebone test",
-#     "remote: marks remote dir tests"
-# ]
-
 [tool.setuptools.packages.find]
-include = ["ml_vault*"]
+include = ["tablevault*"]
 exclude = ["testing*"]
 
 [tool.setuptools_scm]

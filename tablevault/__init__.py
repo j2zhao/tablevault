@@ -1,6 +1,6 @@
-from ml_vault.ml_vault import Vault
-from ml_vault.utils.errors import (
-    MLVaultError,
+from tablevault.tablevault import Vault
+from tablevault.utils.errors import (
+    TableVaultError,
     ValidationError,
     NotFoundError,
     DuplicateItemError,
@@ -11,7 +11,7 @@ from ml_vault.utils.errors import (
 
 __all__ = [
     "Vault",
-    "MLVaultError",
+    "TableVaultError",
     "ValidationError",
     "NotFoundError",
     "DuplicateItemError",
@@ -19,4 +19,4 @@ __all__ = [
     "LockTimeoutError",
     "DBError",
 ]
-__version__ = "0.1.0"
+__version__ = "0.2.0"

@@ -145,7 +145,7 @@ def create_record_view(
     _create_or_replace_view(db, view_name, props)
 
 
-def create_ml_vault_query_views(
+def create_tablevault_query_views(
     db: StandardDatabase,
     description_embedding_size: int,
     text_analyzer: str = "text_en",

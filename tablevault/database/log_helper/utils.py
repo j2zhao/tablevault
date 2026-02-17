@@ -3,8 +3,8 @@ from arango.database import StandardDatabase
 from arango.exceptions import ArangoError
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
-from ml_vault.database.log_helper import log_manager
-from ml_vault.utils.errors import (
+from tablevault.database.log_helper import log_manager
+from tablevault.utils.errors import (
     ConflictError,
     DuplicateItemError,
     LockTimeoutError,
