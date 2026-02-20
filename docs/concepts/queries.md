@@ -110,7 +110,7 @@ children = vault.query_item_child(
 
 ## Item List Descriptions
 
-You can also retrieve descriptions associated with an item list (which are items themselves):
+You can also retrieve descriptions associated with an item list:
 
 ```python
 # Get all descriptions for an item

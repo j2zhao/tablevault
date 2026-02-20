@@ -8,7 +8,7 @@ When you create a `Vault` object, TableVault automatically:
 
 1. Creates a process record in the database
 2. Tracks the process ID (PID) of the running Python process
-3. Records all executed code (cells in notebooks, full script in scripts)
+3. Records all executed code (cells in notebooks, full scripts for scripts)
 4. Monitors for interrupt requests from other processes
 
 ### Process Types
@@ -179,7 +179,7 @@ This relationship enables:
 
 ## Cleanup Operations
 
-If processes crash or exit unexpectedly, operations may remain in an incomplete state. Use cleanup to recover:
+If processes crash or exit unexpectedly, operations may remain incomplete. Use cleanup to recover:
 
 ```python
 # Clean up operations older than 60 seconds

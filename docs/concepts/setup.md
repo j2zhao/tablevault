@@ -21,13 +21,13 @@ This starts ArangoDB with:
 
 - Root password: `passwd`
 - Port: `8529`
-- Container name: `arangodb`
+- Container name: `tablevault-arango`
 
 You can verify the database is running by visiting `http://localhost:8529` in your browser.
 
 ## Setting Up a TableVault Process
 
-To interact with a TableVault repository, you must create a `Vault` object. The Vault represents a process in a Python process or notebook.
+To interact with a TableVault repository, you must create a `Vault` object. The Vault represents a tracked process within a Python script or notebook.
 
 ### Basic Initialization
 
@@ -41,7 +41,7 @@ vault = Vault(
 ```
 
 !!! note "Unique Process Name"
-    Processes are considered a unique type of item lists. The process name is user defined, but must be unique among all item lists in a TableVault repository.
+    Processes are considered a unique type of item list. The process name is user-defined but must be unique among all item lists in a TableVault repository.
 
 ### Full Initialization with Custom Parameters
 
@@ -136,7 +136,7 @@ vault = Vault(
 
 ### Custom Embedding Dimensions
 
-The `description_embedding_size` parameter defines the embedding size of all descriptions over item lists in the TableVault. You should define it based on your chosen embedding model.
+The `description_embedding_size` parameter defines the embedding size for all descriptions of item lists in the TableVault repository. Set it based on your chosen embedding model.
 
 ```python
 vault = Vault(

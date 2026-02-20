@@ -12,8 +12,8 @@ The `Vault` class is the main interface for tracking ML items and their lineage.
 Vault(
     user_id: str,
     process_name: str,
-    parent_process_name: str,
-    parent_process_index: str,
+    parent_process_name: str = "",
+    parent_process_index: int = 0,
     arango_url: str = "http://localhost:8529",
     arango_db: str = "tablevault",
     arango_username: str = "tablevault_user",
@@ -26,16 +26,16 @@ Vault(
 ) -> Vault
 ```
 
-Initialize the Vault singleton. Only one vault can be active per Python process. Once active, all subsequently executed code is stored in the TableVault repository.
+Initialize the Vault singleton. Only one vault can be active per Python process. Once active, all subsequently executed code is tracked in the TableVault repository.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `user_id` | `str` | Identifier of the user (defined by) |
+| `user_id` | `str` | Unique identifier for the user |
 | `process_name` | `str` | Unique name for this process |
-| `parent_process_name` | `str` | Name of the parent process  (If|
-| `parent_process_index` | `str` | Index of the parent process |
+| `parent_process_name` | `str` | Name of the generating process (if exists) |
+| `parent_process_index` | `int` | Index of the generating process (if exists) |
 | `arango_url` | `str` | URL of the ArangoDB server |
 | `arango_db` | `str` | Name of the database to use |
 | `arango_username` | `str` | Username for database access |
@@ -60,7 +60,7 @@ Functions for creating new item lists.
 create_file_list(item_name: str) -> None
 ```
 
-Create a new file list item.
+Create a new file list.
 
 **Parameters:**
 
@@ -76,7 +76,7 @@ Create a new file list item.
 create_document_list(item_name: str) -> None
 ```
 
-Create a new document list item.
+Create a new document list.
 
 **Parameters:**
 
@@ -256,9 +256,9 @@ Append a record (row) to a record list.
 
 ---
 
-## Operations & Process Manipulation
+## Operation Management
 
-Functions for managing vault operations and process lifecycle.
+Functions for managing vault operations and cleanup.
 
 ### `get_current_operations`
 
@@ -292,6 +292,75 @@ Clean up stale operations that have exceeded the interval.
 
 ---
 
+## Process Control
+
+Functions for controlling process execution lifecycle.
+
+### `checkpoint_execution`
+
+```python
+checkpoint_execution() -> None
+```
+
+Mark a safe checkpoint in code where stop and pause requests can be executed. This avoids stopping during undesirable conditions (e.g., while waiting for outgoing API calls).
+
+---
+
+### `pause_execution`
+
+```python
+pause_execution(process_name: str) -> None
+```
+
+Request to pause another process's execution.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `process_name` | `str` | Name of the process to pause |
+
+---
+
+### `stop_execution`
+
+```python
+stop_execution(process_name: str) -> None
+```
+
+Request to stop another process's execution.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `process_name` | `str` | Name of the process to stop |
+
+---
+
+### `resume_execution`
+
+```python
+resume_execution(process_name: str) -> None
+```
+
+Resume a paused process by name.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `process_name` | `str` | Name of the process list to resume |
+
+!!! note
+    Currently only works when processes are on the same machine or container.
+
+---
+
+## Delete Functions
+
+Functions for deleting item lists.
+
 ### `delete_list`
 
 ```python
@@ -308,66 +377,9 @@ Delete an item list's content.
 
 ---
 
-### `checkpoint_execution`
+## Utility Functions
 
-```python
-checkpoint_execution() -> None
-```
-
-Identify a safe checkpoint in code where stop and pause requests can be executed. Using this avoids stopping during undesirable conditions (e.g., while still waiting for outgoing API calls).
-
----
-
-### `pause_execution`
-
-```python
-pause_execution(process_name: str) -> None
-```
-
-Request to pause another process list's current execution.
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `process_name` | `str` | Name of the process to pause |
-
----
-
-### `stop_execution`
-
-```python
-stop_execution(process_name: str) -> None
-```
-
-Request to stop another process list's current execution.
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `process_name` | `str` | Name of the process to stop |
-
----
-
-### `resume_execution`
-
-```python
-resume_execution(process_name: str) -> None
-```
-
-Resume a paused process list's current process by name.
-
-**Parameters:**
-
-| Name | Type | Description |
-|------|------|-------------|
-| `process_name` | `str` | Name of the process list to resume |
-
-!!! note
-    Only works in single machine/container case currently.
-
----
+Helper functions for checking vault state.
 
 ### `has_vector_index`
 
@@ -673,7 +685,7 @@ query_item_process(
 ) -> List[Dict[str, Any]]
 ```
 
-Get processes that modified an item list. Can filter by interval range within the list.
+Get processes that modified an item list. Can filter by position range within the list.
 
 **Parameters:**
 

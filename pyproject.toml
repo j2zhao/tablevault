@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tablevault"
-version = "0.2.1"
+version = "0.2.2"
 description = "Centralized data repository for cross-process data filtering in Python."
 authors = [
     { name = "Jinjin Zhao", email = "j2zhao@uchicago.edu" }
