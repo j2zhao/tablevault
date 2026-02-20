@@ -40,7 +40,7 @@ nav:
   - Descriptions: concepts/descriptions.md
   - Basic Queries: concepts/queries.md
   - Types and Type Queries: concepts/types.md
-  - Session Management: concepts/process.md
+  - Process Management: concepts/process.md
   - API:
     - TableVault API: api/core_api.md
     - TableVault Descriptions API: api/description_functions.md

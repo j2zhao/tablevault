@@ -8,7 +8,7 @@ from arango.graph import Graph
 from tablevault.database.database_views import create_tablevault_query_views
 
 ALL_ITEM_COLLECTIONS: List[str] = [
-    "session",
+    "process",
     "file_list",
     "file",
     "embedding_list",
@@ -21,14 +21,14 @@ ALL_ITEM_COLLECTIONS: List[str] = [
 ]
 
 DESCRIPTION_COLLECTIONS: List[str] = [
-    "session_list",
+    "process_list",
     "file_list",
     "document_list",
     "record_list",
     "embedding_list",
 ]
 
-VIEW_COLLECTIONS: List[str] = ["session", "embedding", "document", "record", "description"]
+VIEW_COLLECTIONS: List[str] = ["process", "embedding", "document", "record", "description"]
 
 
 def create_collection_safe(
@@ -110,13 +110,13 @@ def create_tablevault_db(
 
     create_collection_safe(
         db,
-        "session_list",
+        "process_list",
         {
             "rule": {
                 "properties": {
                     "name": {"type": "string"},
-                    "session_name": {"type": "string"},
-                    "session_index": {"type": "number"},
+                    "process_name": {"type": "string"},
+                    "process_index": {"type": "number"},
                     "timestamp": {"type": "number"},
                     "interrupt_request": {"type": "string"},
                     "interrupt_action": {"type": "string"},
@@ -129,8 +129,8 @@ def create_tablevault_db(
                 },
                 "required": [
                     "name",
-                    "session_name",
-                    "session_index",
+                    "process_name",
+                    "process_index",
                     "timestamp",
                     "interrupt_request",
                     "interrupt_action",
@@ -149,13 +149,13 @@ def create_tablevault_db(
 
     create_collection_safe(
         db,
-        "session",
+        "process",
         {
             "rule": {
                 "properties": {
                     "name": {"type": "string"},
-                    "session_name": {"type": "string"},
-                    "session_index": {"type": "number"},
+                    "process_name": {"type": "string"},
+                    "process_index": {"type": "number"},
                     "index": {"type": "number"},
                     "timestamp": {"type": "number"},
                     "start_position": {"type": "number"},
@@ -166,8 +166,8 @@ def create_tablevault_db(
                 },
                 "required": [
                     "name",
-                    "session_name",
-                    "session_index",
+                    "process_name",
+                    "process_index",
                     "index",
                     "timestamp",
                     "start_position",
@@ -189,8 +189,8 @@ def create_tablevault_db(
             "rule": {
                 "properties": {
                     "name": {"type": "string"},
-                    "session_name": {"type": "string"},
-                    "session_index": {"type": "number"},
+                    "process_name": {"type": "string"},
+                    "process_index": {"type": "number"},
                     "timestamp": {"type": "number"},
                     "n_items": {"type": "number"},
                     "length": {"type": "number"},
@@ -198,8 +198,8 @@ def create_tablevault_db(
                 },
                 "required": [
                     "name",
-                    "session_name",
-                    "session_index",
+                    "process_name",
+                    "process_index",
                     "timestamp",
                     "n_items",
                     "length",
@@ -219,8 +219,8 @@ def create_tablevault_db(
                 "properties": {
                     "name": {"type": "string"},
                     "index": {"type": "number"},
-                    "session_name": {"type": "string"},
-                    "session_index": {"type": "number"},
+                    "process_name": {"type": "string"},
+                    "process_index": {"type": "number"},
                     "timestamp": {"type": "number"},
                     "start_position": {"type": "number"},
                     "end_position": {"type": "number"},
@@ -229,8 +229,8 @@ def create_tablevault_db(
                 "required": [
                     "name",
                     "index",
-                    "session_name",
-                    "session_index",
+                    "process_name",
+                    "process_index",
                     "timestamp",
                     "start_position",
                     "end_position",
@@ -249,8 +249,8 @@ def create_tablevault_db(
             "rule": {
                 "properties": {
                     "name": {"type": "string"},
-                    "session_name": {"type": "string"},
-                    "session_index": {"type": "number"},
+                    "process_name": {"type": "string"},
+                    "process_index": {"type": "number"},
                     "timestamp": {"type": "number"},
                     "n_items": {"type": "number"},
                     "length": {"type": "number"},
@@ -259,8 +259,8 @@ def create_tablevault_db(
                 },
                 "required": [
                     "name",
-                    "session_name",
-                    "session_index",
+                    "process_name",
+                    "process_index",
                     "timestamp",
                     "n_items",
                     "length",
@@ -281,8 +281,8 @@ def create_tablevault_db(
                 "properties": {
                     "name": {"type": "string"},
                     "index": {"type": "number"},
-                    "session_name": {"type": "string"},
-                    "session_index": {"type": "number"},
+                    "process_name": {"type": "string"},
+                    "process_index": {"type": "number"},
                     "timestamp": {"type": "number"},
                     "start_position": {"type": "number"},
                     "end_position": {"type": "number"},
@@ -293,8 +293,8 @@ def create_tablevault_db(
                 "required": [
                     "name",
                     "index",
-                    "session_name",
-                    "session_index",
+                    "process_name",
+                    "process_index",
                     "timestamp",
                     "start_position",
                     "end_position",
@@ -312,8 +312,8 @@ def create_tablevault_db(
             "rule": {
                 "properties": {
                     "name": {"type": "string"},
-                    "session_name": {"type": "string"},
-                    "session_index": {"type": "number"},
+                    "process_name": {"type": "string"},
+                    "process_index": {"type": "number"},
                     "timestamp": {"type": "number"},
                     "n_items": {"type": "number"},
                     "length": {"type": "number"},
@@ -321,8 +321,8 @@ def create_tablevault_db(
                 },
                 "required": [
                     "name",
-                    "session_name",
-                    "session_index",
+                    "process_name",
+                    "process_index",
                     "timestamp",
                     "n_items",
                     "length",
@@ -341,8 +341,8 @@ def create_tablevault_db(
                 "properties": {
                     "name": {"type": "string"},
                     "index": {"type": "number"},
-                    "session_name": {"type": "string"},
-                    "session_index": {"type": "number"},
+                    "process_name": {"type": "string"},
+                    "process_index": {"type": "number"},
                     "timestamp": {"type": "number"},
                     "start_position": {"type": "number"},
                     "end_position": {"type": "number"},
@@ -351,8 +351,8 @@ def create_tablevault_db(
                 "required": [
                     "name",
                     "index",
-                    "session_name",
-                    "session_index",
+                    "process_name",
+                    "process_index",
                     "timestamp",
                     "start_position",
                     "end_position",
@@ -371,8 +371,8 @@ def create_tablevault_db(
             "rule": {
                 "properties": {
                     "name": {"type": "string"},
-                    "session_name": {"type": "string"},
-                    "session_index": {"type": "number"},
+                    "process_name": {"type": "string"},
+                    "process_index": {"type": "number"},
                     "timestamp": {"type": "number"},
                     "n_items": {"type": "number"},
                     "length": {"type": "number"},
@@ -381,8 +381,8 @@ def create_tablevault_db(
                 },
                 "required": [
                     "name",
-                    "session_name",
-                    "session_index",
+                    "process_name",
+                    "process_index",
                     "timestamp",
                     "n_items",
                     "length",
@@ -404,8 +404,8 @@ def create_tablevault_db(
                     "name": {"type": "string"},
                     "index": {"type": "number"},
                     "timestamp": {"type": "number"},
-                    "session_name": {"type": "string"},
-                    "session_index": {"type": "number"},
+                    "process_name": {"type": "string"},
+                    "process_index": {"type": "number"},
                     "start_position": {"type": "number"},
                     "end_position": {"type": "number"},
                     "data": {"type": ["object", "null"]},
@@ -416,8 +416,8 @@ def create_tablevault_db(
                     "name",
                     "index",
                     "timestamp",
-                    "session_name",
-                    "session_index",
+                    "process_name",
+                    "process_index",
                     "start_position",
                     "end_position",
                     "data",
@@ -438,8 +438,8 @@ def create_tablevault_db(
                 "properties": {
                     "name": {"type": "string"},
                     "item_name": {"type": "string"},
-                    "session_name": {"type": "string"},
-                    "session_index": {"type": "number"},
+                    "process_name": {"type": "string"},
+                    "process_index": {"type": "number"},
                     "collection": {"type": "string"},
                     "timestamp": {"type": "number"},
                     "text": {"type": "string"},
@@ -449,8 +449,8 @@ def create_tablevault_db(
                 "required": [
                     "item_name",
                     "name",
-                    "session_name",
-                    "session_index",
+                    "process_name",
+                    "process_index",
                     "collection",
                     "timestamp",
                     "text",
@@ -517,7 +517,7 @@ def create_tablevault_db(
 
     create_collection_safe(
         db,
-        "session_parent_edge",
+        "process_parent_edge",
         edge=True,
         schema={
             "rule": {
@@ -534,7 +534,7 @@ def create_tablevault_db(
 
     create_collection_safe(
         db,
-        "deleted_session_parent_edge",
+        "deleted_process_parent_edge",
         edge=True,
         schema={
             "rule": {
@@ -563,11 +563,11 @@ def create_tablevault_db(
         "dependency_edge", DESCRIPTION_COLLECTIONS, VIEW_COLLECTIONS
     )  # input_list -> item (checked)
     add_edge_def(
-        "deleted_session_parent_edge", ["session_list"], DESCRIPTION_COLLECTIONS
+        "deleted_process_parent_edge", ["process_list"], DESCRIPTION_COLLECTIONS
     )
     add_edge_def(
-        "session_parent_edge", ["session_list"], ALL_ITEM_COLLECTIONS
-    )  # session_list -> item (checked)
+        "process_parent_edge", ["process_list"], ALL_ITEM_COLLECTIONS
+    )  # process_list -> item (checked)
     add_edge_def(
         "description_edge", DESCRIPTION_COLLECTIONS, ["description"]
     )  # item_list -> description (checked)

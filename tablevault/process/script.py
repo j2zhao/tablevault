@@ -4,7 +4,7 @@ import sys
 import traceback
 from dataclasses import dataclass
 from typing import Optional, Type
-from tablevault.database import session_collection
+from tablevault.database import process_collection
 
 
 @dataclass
@@ -24,8 +24,8 @@ def try_get_main_source() -> str:
         return ""
 
 
-class SessionScript:
-    def __init__(self, db, name: str, user_id: str, parent_session_name: str, parent_session_index: int, code_text: Optional[str] = None):
+class ProcessScript:
+    def __init__(self, db, name: str, user_id: str, parent_process_name: str, parent_process_index: int, code_text: Optional[str] = None):
         self.name = name
         self.db = db
         self.user_id = user_id
@@ -34,7 +34,7 @@ class SessionScript:
         self._uncaught: Optional[Uncaught] = None
         self._prev_excepthook = sys.excepthook
 
-        session_collection.create_session(db, name, user_id, "script", parent_session_name, parent_session_index)
+        process_collection.create_process(db, name, user_id, "script", parent_process_name, parent_process_index)
         sys.excepthook = self._excepthook
         atexit.register(self._atexit_finalize)
         self.pre_run_script(
@@ -53,7 +53,7 @@ class SessionScript:
             if not final_code:
                 final_code = fallback_stub or ""
 
-        self.current_index = session_collection.session_add_code_start(
+        self.current_index = process_collection.process_add_code_start(
             self.db,
             self.name,
             final_code,
@@ -78,7 +78,7 @@ class SessionScript:
                     self._uncaught.exc_type, self._uncaught.exc, self._uncaught.tb
                 )
             )
-        session_collection.session_add_code_end(
+        process_collection.process_add_code_end(
             self.db,
             self.name,
             self.current_index,

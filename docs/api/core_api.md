@@ -11,9 +11,9 @@ The `Vault` class is the main interface for tracking ML items and their lineage.
 ```python
 Vault(
     user_id: str,
-    session_name: str,
-    parent_session_name: str,
-    parent_session_index: str,
+    process_name: str,
+    parent_process_name: str,
+    parent_process_index: str,
     arango_url: str = "http://localhost:8529",
     arango_db: str = "tablevault",
     arango_username: str = "tablevault_user",
@@ -33,9 +33,9 @@ Initialize the Vault singleton. Only one vault can be active per Python process.
 | Name | Type | Description |
 |------|------|-------------|
 | `user_id` | `str` | Identifier of the user (defined by) |
-| `session_name` | `str` | Unique name for this session |
-| `parent_session_name` | `str` | Name of the parent session  (If|
-| `parent_session_index` | `str` | Index of the parent session |
+| `process_name` | `str` | Unique name for this process |
+| `parent_process_name` | `str` | Name of the parent process  (If|
+| `parent_process_index` | `str` | Index of the parent process |
 | `arango_url` | `str` | URL of the ArangoDB server |
 | `arango_db` | `str` | Name of the database to use |
 | `arango_username` | `str` | Username for database access |
@@ -256,9 +256,9 @@ Append a record (row) to a record list.
 
 ---
 
-## Operations & Session Manipulation
+## Operations & Process Manipulation
 
-Functions for managing vault operations and session lifecycle.
+Functions for managing vault operations and process lifecycle.
 
 ### `get_current_operations`
 
@@ -321,48 +321,48 @@ Identify a safe checkpoint in code where stop and pause requests can be executed
 ### `pause_execution`
 
 ```python
-pause_execution(session_name: str) -> None
+pause_execution(process_name: str) -> None
 ```
 
-Request to pause another session list's current execution.
+Request to pause another process list's current execution.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `session_name` | `str` | Name of the session to pause |
+| `process_name` | `str` | Name of the process to pause |
 
 ---
 
 ### `stop_execution`
 
 ```python
-stop_execution(session_name: str) -> None
+stop_execution(process_name: str) -> None
 ```
 
-Request to stop another session list's current execution.
+Request to stop another process list's current execution.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `session_name` | `str` | Name of the session to stop |
+| `process_name` | `str` | Name of the process to stop |
 
 ---
 
 ### `resume_execution`
 
 ```python
-resume_execution(session_name: str) -> None
+resume_execution(process_name: str) -> None
 ```
 
-Resume a paused session list's current session by name.
+Resume a paused process list's current process by name.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `session_name` | `str` | Name of the session list to resume |
+| `process_name` | `str` | Name of the process list to resume |
 
 !!! note
     Only works in single machine/container case currently.
@@ -391,10 +391,10 @@ Check if a vector index exists for embeddings of a given dimension.
 
 Functions for querying across item lists with filtering and similarity search.
 
-### `query_session_list`
+### `query_process_list`
 
 ```python
-query_session_list(
+query_process_list(
     code_text: Optional[str] = None,
     parent_code_text: Optional[str] = None,
     description_embedding: Optional[List[float]] = None,
@@ -403,19 +403,19 @@ query_session_list(
 ) -> List[Any]
 ```
 
-Query session items. Can optionally filter by descriptions and parent session.
+Query process items. Can optionally filter by descriptions and parent process.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `code_text` | `Optional[str]` | Text to search in session code |
-| `parent_code_text` | `Optional[str]` | Text to search in parent session code |
+| `code_text` | `Optional[str]` | Text to search in process code |
+| `parent_code_text` | `Optional[str]` | Text to search in parent process code |
 | `description_embedding` | `Optional[List[float]]` | Embedding vector for similarity search |
 | `description_text` | `Optional[str]` | Text to search in descriptions |
-| `filtered` | `Optional[List[str]]` | List of session names to restrict search to |
+| `filtered` | `Optional[List[str]]` | List of process names to restrict search to |
 
-**Returns:** List of matching session results
+**Returns:** List of matching process results
 
 ---
 
@@ -432,7 +432,7 @@ query_embedding_list(
 ) -> List[Any]
 ```
 
-Query embedding items. Can optionally filter by descriptions and parent session.
+Query embedding items. Can optionally filter by descriptions and parent process.
 
 **Parameters:**
 
@@ -441,7 +441,7 @@ Query embedding items. Can optionally filter by descriptions and parent session.
 | `embedding` | `List[float]` | Query embedding vector for similarity search |
 | `description_embedding` | `Optional[List[float]]` | Embedding for description similarity |
 | `description_text` | `Optional[str]` | Text to search in descriptions |
-| `code_text` | `Optional[str]` | Text to search in session code |
+| `code_text` | `Optional[str]` | Text to search in process code |
 | `filtered` | `Optional[List[str]]` | List of embedding names to restrict search to |
 | `use_approx` | `bool` | Use approximate (faster) similarity search |
 
@@ -461,7 +461,7 @@ query_record_list(
 ) -> List[Any]
 ```
 
-Query record items. Can optionally filter by descriptions and parent session.
+Query record items. Can optionally filter by descriptions and parent process.
 
 **Parameters:**
 
@@ -470,7 +470,7 @@ Query record items. Can optionally filter by descriptions and parent session.
 | `record_text` | `str` | Text to search in record data |
 | `description_embedding` | `Optional[List[float]]` | Embedding for description similarity |
 | `description_text` | `Optional[str]` | Text to search in descriptions |
-| `code_text` | `Optional[str]` | Text to search in session code |
+| `code_text` | `Optional[str]` | Text to search in process code |
 | `filtered` | `Optional[List[str]]` | List of record names to restrict search to |
 
 **Returns:** List of matching record results
@@ -489,7 +489,7 @@ query_document_list(
 ) -> List[Any]
 ```
 
-Query document items. Can optionally filter by descriptions and parent session.
+Query document items. Can optionally filter by descriptions and parent process.
 
 **Parameters:**
 
@@ -498,7 +498,7 @@ Query document items. Can optionally filter by descriptions and parent session.
 | `document_text` | `str` | Text to search in document content |
 | `description_embedding` | `Optional[List[float]]` | Embedding for description similarity |
 | `description_text` | `Optional[str]` | Text to search in descriptions |
-| `code_text` | `Optional[str]` | Text to search in session code |
+| `code_text` | `Optional[str]` | Text to search in process code |
 | `filtered` | `Optional[List[str]]` | List of document names to restrict search to |
 
 **Returns:** List of matching document item results
@@ -516,7 +516,7 @@ query_file_list(
 ) -> List[Any]
 ```
 
-Query file items. Can optionally filter by descriptions and parent session.
+Query file items. Can optionally filter by descriptions and parent process.
 
 **Parameters:**
 
@@ -524,7 +524,7 @@ Query file items. Can optionally filter by descriptions and parent session.
 |------|------|-------------|
 | `description_embedding` | `Optional[List[float]]` | Embedding for description similarity |
 | `description_text` | `Optional[str]` | Text to search in descriptions |
-| `code_text` | `Optional[str]` | Text to search in session code |
+| `code_text` | `Optional[str]` | Text to search in process code |
 | `filtered` | `Optional[List[str]]` | List of file names to restrict search to |
 
 **Returns:** List of matching file item results
@@ -645,13 +645,13 @@ Get descriptions associated with an item list.
 
 ---
 
-### `query_item_creation_session`
+### `query_item_creation_process`
 
 ```python
-query_item_creation_session(item_name: str) -> List[Dict[str, Any]]
+query_item_creation_process(item_name: str) -> List[Dict[str, Any]]
 ```
 
-Get the session that created an item list.
+Get the process that created an item list.
 
 **Parameters:**
 
@@ -659,21 +659,21 @@ Get the session that created an item list.
 |------|------|-------------|
 | `item_name` | `str` | Name of the item list |
 
-**Returns:** List of session information with session_id and index
+**Returns:** List of process information with process_id and index
 
 ---
 
-### `query_item_session`
+### `query_item_process`
 
 ```python
-query_item_session(
+query_item_process(
     item_name: str,
     start_position: Optional[int] = None,
     end_position: Optional[int] = None
 ) -> List[Dict[str, Any]]
 ```
 
-Get sessions that modified an item list. Can filter by interval range within the list.
+Get processes that modified an item list. Can filter by interval range within the list.
 
 **Parameters:**
 
@@ -683,22 +683,22 @@ Get sessions that modified an item list. Can filter by interval range within the
 | `start_position` | `Optional[int]` | Filter by start position |
 | `end_position` | `Optional[int]` | Filter by end position |
 
-**Returns:** List of session info dicts with session name and index
+**Returns:** List of process info dicts with process name and index
 
 ---
 
-### `query_session_item`
+### `query_process_item`
 
 ```python
-query_session_item(session_name: str) -> List[Dict[str, Any]]
+query_process_item(process_name: str) -> List[Dict[str, Any]]
 ```
 
-Get all items created or modified by a given session name.
+Get all items created or modified by a given process name.
 
 **Parameters:**
 
 | Name | Type | Description |
 |------|------|-------------|
-| `session_name` | `str` | Name of the session list |
+| `process_name` | `str` | Name of the process list |
 
 **Returns:** List of item dictionaries with name and position range

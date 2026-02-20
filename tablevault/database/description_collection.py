@@ -15,8 +15,8 @@ def add_description_inner(
     timestamp: int,
     name: str,
     item_name: str,
-    session_name: str,
-    session_index: int,
+    process_name: str,
+    process_index: int,
     description: str,
     embedding: List[float],
 ) -> None:
@@ -37,8 +37,8 @@ def add_description_inner(
         "_key": key_,
         "name": key_,
         "item_name": item_name,
-        "session_name": session_name,
-        "session_index": session_index,
+        "process_name": process_name,
+        "process_index": process_index,
         "collection": item_collection,
         "timestamp": timestamp,
         "text": description,
@@ -61,12 +61,12 @@ def add_description_inner(
     doc = {
         "_key": str(timestamp),
         "timestamp": timestamp,
-        "index": session_index,
-        "_from": f"session_list/{session_name}",
+        "index": process_index,
+        "_from": f"process_list/{process_name}",
         "_to": f"description/{key_}",
     }
     utils.guarded_upsert(
-        db, key_, timestamp, guard_rev, "session_parent_edge", str(timestamp), {}, doc
+        db, key_, timestamp, guard_rev, "process_parent_edge", str(timestamp), {}, doc
     )
 
 
@@ -74,21 +74,21 @@ def add_description(
     db: StandardDatabase,
     name: str,
     item_name: str,
-    session_name: str,
-    session_index: int,
+    process_name: str,
+    process_index: int,
     description: str,
     embedding: List[float],
 ) -> None:
     timestamp, _ = utils.get_new_timestamp(
-        db, ["add_description", name, item_name, session_name, session_index]
+        db, ["add_description", name, item_name, process_name, process_index]
     )
     add_description_inner(
         db,
         timestamp,
         name,
         item_name,
-        session_name,
-        session_index,
+        process_name,
+        process_index,
         description,
         embedding,
     )

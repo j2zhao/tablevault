@@ -14,23 +14,23 @@ def delete_item_list_inner(
     timestamp: int,
     name: str,
     item_collection: str,
-    session_name: str,
-    session_index: int,
+    process_name: str,
+    process_index: int,
 ) -> None:
     aql = r"""
     LET rootId  = @rootId
     LET rootKey = @rootKey
-    LET sid     = CONCAT(@sessionCol, "/", @sessionKey)
+    LET sid     = CONCAT(@processCol, "/", @processKey)
 
     LET childIds = UNIQUE(
     FOR v, e IN 1..1 OUTBOUND rootId parent_edge
         RETURN v._id
     )
 
-    LET rmSessionEdges = (
-    FOR e IN session_parent_edge
+    LET rmProcessEdges = (
+    FOR e IN process_parent_edge
         FILTER e._to IN childIds
-        REMOVE e IN session_parent_edge
+        REMOVE e IN process_parent_edge
         RETURN 1
     )
 
@@ -60,31 +60,31 @@ def delete_item_list_inner(
     RETURN 1
     )
 
-    LET upsertDeletedSessEdge = (
+    LET upsertDeletedProcEdge = (
         INSERT {
         _key: @edgeKey,
         _from: rootId, _to: sid,
-        index: @sessionIndex,
+        index: @processIndex,
         timestamp: @ts
         }
-        INTO deleted_session_parent_edge
+        INTO deleted_process_parent_edge
         RETURN 1
         )
 
     RETURN {
     rootId,
-    session_id: sid,
+    process_id: sid,
     childCount: LENGTH(childIds),
 
     removed: {
-        session_parent_edge: LENGTH(rmSessionEdges),
+        process_parent_edge: LENGTH(rmProcessEdges),
         dependency_edge: LENGTH(rmDepEdges),
         children: LENGTH(rmChildren),
         parent_edge: LENGTH(rmParentEdges)
     },
 
     updated: { root: LENGTH(updRoot) },
-    inserted: { deleted_session_parent_edge: LENGTH(upsertDeletedSessEdge) }
+    inserted: { deleted_process_parent_edge: LENGTH(upsertDeletedProcEdge) }
     }
 
     """
@@ -95,9 +95,9 @@ def delete_item_list_inner(
         "rootKey": name,
         "@rootCol": item_collection,
         "@childCol": child_col,
-        "sessionCol": "session_list",
-        "sessionKey": session_name,
-        "sessionIndex": session_index,
+        "processCol": "process_list",
+        "processKey": process_name,
+        "processIndex": process_index,
         "ts": timestamp,
         "edgeKey": str(timestamp),
     }
@@ -109,15 +109,15 @@ def delete_item_list_inner(
 def delete_item_list(
     db: StandardDatabase,
     name: str,
-    session_name: str,
-    session_index: int,
+    process_name: str,
+    process_index: int,
     timestamp: Optional[int] = None,
 ) -> None:
     items = db.collection("items")
     item = items.get(name)
-    if item["collection"] in ["session_list", "description"]:
+    if item["collection"] in ["process_list", "description"]:
         raise ValidationError(
-            f"Cannot delete items in protected collections ('session_list', 'description'); "
+            f"Cannot delete items in protected collections ('process_list', 'description'); "
             f"item='{name}' belongs to '{item['collection']}'.",
             operation="delete_item_list",
             collection=item["collection"],
@@ -130,13 +130,13 @@ def delete_item_list(
                 "delete_item_list",
                 name,
                 item["collection"],
-                session_name,
-                session_index,
+                process_name,
+                process_index,
             ],
             name,
         )
     delete_item_list_inner(
-        db, timestamp, name, item["collection"], session_name, session_index
+        db, timestamp, name, item["collection"], process_name, process_index
     )
     utils.commit_new_timestamp(db, timestamp)
 
@@ -146,15 +146,15 @@ def create_item_list(
     db: StandardDatabase,
     timestamp: int,
     name: str,
-    session_name: str,
-    session_index: int,
+    process_name: str,
+    process_index: int,
     item: Dict[str, Any],
     collection_type: str,
 ) -> None:
     rev_ = utils.add_item_name(db, name, collection_type, timestamp)
     item["name"] = name
-    item["session_name"] = session_name
-    item["session_index"] = session_index
+    item["process_name"] = process_name
+    item["process_index"] = process_index
     item["timestamp"] = timestamp
     item["n_items"] = 0
     item["length"] = 0
@@ -162,44 +162,44 @@ def create_item_list(
     rev_ = utils.guarded_upsert(
         db, name, timestamp, rev_, collection_type, name, {}, item
     )
-    if session_name != "":
+    if process_name != "":
         doc = {
             "_key": str(timestamp),
             "timestamp": timestamp,
-            "index": session_index,
-            "_from": f"session_list/{session_name}",
+            "index": process_index,
+            "_from": f"process_list/{process_name}",
             "_to": f"{collection_type}/{name}",
         }
         rev_ = utils.guarded_upsert(
-            db, name, timestamp, rev_, "session_parent_edge", str(timestamp), {}, doc
+            db, name, timestamp, rev_, "process_parent_edge", str(timestamp), {}, doc
         )
     utils.commit_new_timestamp(db, timestamp)
 
 
 def create_file_list(
-    db: StandardDatabase, name: str, session_name: str, session_index: int
+    db: StandardDatabase, name: str, process_name: str, process_index: int
 ) -> None:
     timestamp, _ = utils.get_new_timestamp(
-        db, ["create_item_list", name, "file_list", session_name, session_index]
+        db, ["create_item_list", name, "file_list", process_name, process_index]
     )
     create_item_list(
-        db, timestamp, name, session_name, session_index, {}, "file_list"
+        db, timestamp, name, process_name, process_index, {}, "file_list"
     )
 
 
 def create_document_list(
-    db: StandardDatabase, name: str, session_name: str, session_index: int
+    db: StandardDatabase, name: str, process_name: str, process_index: int
 ) -> None:
     timestamp, _ = utils.get_new_timestamp(
-        db, ["create_item_list", name, "document_list", session_name, session_index]
+        db, ["create_item_list", name, "document_list", process_name, process_index]
     )
     create_item_list(
-        db, timestamp, name, session_name, session_index, {}, "document_list"
+        db, timestamp, name, process_name, process_index, {}, "document_list"
     )
 
 
 def create_embedding_list(
-    db: StandardDatabase, name: str, session_name: str, session_index: int, n_dim: int
+    db: StandardDatabase, name: str, process_name: str, process_index: int, n_dim: int
 ) -> None:
     timestamp, _ = utils.get_new_timestamp(
         db,
@@ -207,8 +207,8 @@ def create_embedding_list(
             "create_item_list",
             name,
             "embedding_list",
-            session_name,
-            session_index,
+            process_name,
+            process_index,
             n_dim,
         ],
     )
@@ -216,8 +216,8 @@ def create_embedding_list(
         db,
         timestamp,
         name,
-        session_name,
-        session_index,
+        process_name,
+        process_index,
         {"n_dim": n_dim},
         "embedding_list",
     )
@@ -226,8 +226,8 @@ def create_embedding_list(
 def create_record_list(
     db: StandardDatabase,
     name: str,
-    session_name: str,
-    session_index: int,
+    process_name: str,
+    process_index: int,
     column_names: List[str],
 ) -> None:
     timestamp, _ = utils.get_new_timestamp(
@@ -236,8 +236,8 @@ def create_record_list(
             "create_item_list",
             name,
             "record_list",
-            session_name,
-            session_index,
+            process_name,
+            process_index,
             column_names,
         ],
     )
@@ -245,8 +245,8 @@ def create_record_list(
         db,
         timestamp,
         name,
-        session_name,
-        session_index,
+        process_name,
+        process_index,
         {"column_names": column_names},
         "record_list",
     )
@@ -258,8 +258,8 @@ def append_item(
     timestamp: int,
     name: str,
     item: Dict[str, Any],
-    session_name: str,
-    session_index: int,
+    process_name: str,
+    process_index: int,
     input_items: Optional[Dict[str, List[int]]],
     dtype: str,
     index: int,
@@ -271,8 +271,8 @@ def append_item(
     item["start_position"] = start_position
     item["end_position"] = end_position
     item["name"] = name
-    item["session_name"] = session_name
-    item["session_index"] = session_index
+    item["process_name"] = process_name
+    item["process_index"] = process_index
     item["timestamp"] = timestamp
     item_key = f"{name}_{index}"
     rev_ = utils.guarded_upsert(
@@ -285,22 +285,22 @@ def append_item(
         "_from": f"{dtype}_list/{name}",
         "_to": f"{dtype}/{item_key}",
     }
-    # if session_name == "test1" and dtype == "file":
+    # if process_name == "test1" and dtype == "file":
     #     import time
     #     print("HELLO TESTING")
     #     time.sleep(60)
     rev_ = utils.guarded_upsert(
         db, name, timestamp, rev_, "parent_edge", str(timestamp), {}, doc
     )
-    if session_name != "":
+    if process_name != "":
         doc = {
             "timestamp": timestamp,
-            "index": session_index,
-            "_from": f"session_list/{session_name}",
+            "index": process_index,
+            "_from": f"process_list/{process_name}",
             "_to": f"{dtype}/{item_key}",
         }
         rev_ = utils.guarded_upsert(
-            db, name, timestamp, rev_, "session_parent_edge", str(timestamp), {}, doc
+            db, name, timestamp, rev_, "process_parent_edge", str(timestamp), {}, doc
         )
     items = db.collection("items")
     if input_items is not None:
@@ -342,8 +342,8 @@ def append_file(
     db: StandardDatabase,
     name: str,
     location: str,
-    session_name: str,
-    session_index: int,
+    process_name: str,
+    process_index: int,
     index: Optional[int] = None,
     start_position: Optional[int] = None,
     end_position: Optional[int] = None,
@@ -364,8 +364,8 @@ def append_file(
         name,
         "file",
         input_items or {},
-        session_name,
-        session_index,
+        process_name,
+        process_index,
         file_list["n_items"],
         file_list["length"],
     ]
@@ -376,8 +376,8 @@ def append_file(
         timestamp,
         name,
         item,
-        session_name,
-        session_index,
+        process_name,
+        process_index,
         input_items,
         "file",
         index,
@@ -391,8 +391,8 @@ def append_document(
     db: StandardDatabase,
     name: str,
     text: str,
-    session_name: str,
-    session_index: int,
+    process_name: str,
+    process_index: int,
     index: Optional[int] = None,
     start_position: Optional[int] = None,
     end_position: Optional[int] = None,
@@ -414,8 +414,8 @@ def append_document(
         name,
         "document",
         input_items or {},
-        session_name,
-        session_index,
+        process_name,
+        process_index,
         document_list["n_items"],
         document_list["length"],
     ]
@@ -426,8 +426,8 @@ def append_document(
         timestamp,
         name,
         item,
-        session_name,
-        session_index,
+        process_name,
+        process_index,
         input_items,
         "document",
         index,
@@ -442,8 +442,8 @@ def append_embedding(
     db: StandardDatabase,
     name: str,
     embedding: List[float],
-    session_name: str,
-    session_index: int,
+    process_name: str,
+    process_index: int,
     index: Optional[int] = None,
     start_position: Optional[int] = None,
     end_position: Optional[int] = None,
@@ -476,8 +476,8 @@ def append_embedding(
         name,
         "embedding",
         input_items or {},
-        session_name,
-        session_index,
+        process_name,
+        process_index,
         embedding_list["n_items"],
         embedding_list["length"],
     ]
@@ -488,8 +488,8 @@ def append_embedding(
         timestamp,
         name,
         item,
-        session_name,
-        session_index,
+        process_name,
+        process_index,
         input_items,
         "embedding",
         index,
@@ -518,8 +518,8 @@ def append_record(
     db: StandardDatabase,
     name: str,
     record: Dict[str, Any],
-    session_name: str,
-    session_index: int,
+    process_name: str,
+    process_index: int,
     index: Optional[int] = None,
     start_position: Optional[int] = None,
     end_position: Optional[int] = None,
@@ -561,8 +561,8 @@ def append_record(
         name,
         "record",
         input_items or {},
-        session_name,
-        session_index,
+        process_name,
+        process_index,
         record_list["n_items"],
         record_list["length"],
     ]
@@ -573,8 +573,8 @@ def append_record(
         timestamp,
         name,
         item,
-        session_name,
-        session_index,
+        process_name,
+        process_index,
         input_items,
         "record",
         index,

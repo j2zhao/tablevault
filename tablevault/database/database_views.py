@@ -43,10 +43,10 @@ def create_description_view(
     _create_or_replace_view(db, view_name, props)
 
 
-def create_session_view(
+def create_process_view(
     db: StandardDatabase,
-    view_name: str = "session_view",
-    collection_name: str = "session",
+    view_name: str = "process_view",
+    collection_name: str = "process",
     text_analyzer: str = "text_en",
     text_field: str = "text",
 ) -> None:
@@ -62,8 +62,8 @@ def create_session_view(
                         "analyzers": [text_analyzer]
                     },  # compatibility with your AQL
                     "name": {"analyzers": ["identity"]},
-                    "session_name": {"analyzers": ["identity"]},
-                    "session_index": {"analyzers": ["identity"]},
+                    "process_name": {"analyzers": ["identity"]},
+                    "process_index": {"analyzers": ["identity"]},
                     "start_position": {"analyzers": ["identity"]},
                     "end_position": {"analyzers": ["identity"]},
                     "status": {"analyzers": ["identity"]},
@@ -96,8 +96,8 @@ def create_document_view(
                 "fields": {
                     text_field: {"analyzers": [text_analyzer]},
                     "name": {"analyzers": ["identity"]},
-                    "session_name": {"analyzers": ["identity"]},
-                    "session_index": {"analyzers": ["identity"]},
+                    "process_name": {"analyzers": ["identity"]},
+                    "process_index": {"analyzers": ["identity"]},
                     "start_position": {"analyzers": ["identity"]},
                     "end_position": {"analyzers": ["identity"]},
                 },
@@ -128,8 +128,8 @@ def create_record_view(
                 "fields": {
                     record_text_field: {"analyzers": [text_analyzer]},
                     "name": {"analyzers": ["identity"]},
-                    "session_name": {"analyzers": ["identity"]},
-                    "session_index": {"analyzers": ["identity"]},
+                    "process_name": {"analyzers": ["identity"]},
+                    "process_index": {"analyzers": ["identity"]},
                     "start_position": {"analyzers": ["identity"]},
                     "end_position": {"analyzers": ["identity"]},
                     "column_names": {"analyzers": ["identity"]},
@@ -158,10 +158,10 @@ def create_tablevault_query_views(
         description_embedding_size=description_embedding_size,
         vector_field="embedding",
     )
-    create_session_view(
+    create_process_view(
         db,
-        view_name="session_view",
-        collection_name="session",
+        view_name="process_view",
+        collection_name="process",
         text_analyzer=text_analyzer,
         text_field="text",
     )

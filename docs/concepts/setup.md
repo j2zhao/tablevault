@@ -1,6 +1,6 @@
 # Repository Setup
 
-This guide covers setting up ArangoDB and initializing a TableVault session.
+This guide covers setting up ArangoDB and initializing a TableVault process.
 
 ## Local Setup of ArangoDB
 
@@ -25,9 +25,9 @@ This starts ArangoDB with:
 
 You can verify the database is running by visiting `http://localhost:8529` in your browser.
 
-## Setting Up a TableVault Session
+## Setting Up a TableVault Process
 
-To interact with a TableVault repository, you must create a `Vault` object. The Vault represents a session in a Python process or notebook.
+To interact with a TableVault repository, you must create a `Vault` object. The Vault represents a process in a Python process or notebook.
 
 ### Basic Initialization
 
@@ -36,12 +36,12 @@ from tablevault import Vault
 
 vault = Vault(
     user_id="my_user",
-    session_name="experiment_01"
+    process_name="experiment_01"
 )
 ```
 
-!!! note "Unique Session Name"
-    Sessions are considered an unique type of item lists. The session name is user defined, but must be unique among all items lists in a TableVault repository.
+!!! note "Unique Process Name"
+    Processes are considered a unique type of item lists. The process name is user defined, but must be unique among all item lists in a TableVault repository.
 
 ### Full Initialization with Custom Parameters
 
@@ -50,9 +50,9 @@ from tablevault import Vault
 
 vault = Vault(
     user_id="my_user",
-    session_name="experiment_01",
-    parent_session_name="",           # Name of parent session (if spawned)
-    parent_session_index=0,           # Index within parent session
+    process_name="experiment_01",
+    parent_process_name="",           # Name of parent process (if spawned)
+    parent_process_index=0,           # Index within parent process
     arango_url="http://localhost:8529",
     arango_db="tablevault",
     arango_username="tablevault_user",
@@ -70,9 +70,9 @@ vault = Vault(
 | Parameter | Description |
 |-----------|-------------|
 | `user_id` | Your unique identifier |
-| `session_name` | Unique name for this session |
-| `parent_session_name` | Parent session name (for spawned sessions) |
-| `parent_session_index` | Index in parent session |
+| `process_name` | Unique name for this process |
+| `parent_process_name` | Parent process name (for spawned processes) |
+| `parent_process_index` | Index in parent process |
 | `arango_url` | ArangoDB server URL |
 | `arango_db` | Database name to use |
 | `arango_username` | Database username |
@@ -92,10 +92,10 @@ The `Vault` class is a singleton. Only one vault can be active per Python proces
 
 ```python
 # First call creates the vault
-vault1 = Vault(user_id="user1", session_name="session1")
+vault1 = Vault(user_id="user1", process_name="process1")
 
 # Second call with same params returns the same object
-vault2 = Vault(user_id="user1", session_name="session1")
+vault2 = Vault(user_id="user1", process_name="process1")
 
 assert vault1 is vault2  # True
 ```
@@ -103,15 +103,15 @@ assert vault1 is vault2  # True
 Attempting to create a vault with different parameters raises an error:
 
 ```python
-vault1 = Vault(user_id="user1", session_name="session1")
-vault2 = Vault(user_id="user1", session_name="session2")  # RuntimeError!
+vault1 = Vault(user_id="user1", process_name="process1")
+vault2 = Vault(user_id="user1", process_name="process2")  # RuntimeError!
 ```
 
 ## Automatic Code Tracking
 
 Once a Vault is created, TableVault automatically tracks executed code:
 
-- **In Python scripts**: The entire script is stored as one data item in a session list
+- **In Python scripts**: The entire script is stored as one data item in a process list
 - **In Jupyter notebooks**: Each executed cell is stored as a separate data item (in order)
 
 This tracking enables querying items by the code that created them.
@@ -125,7 +125,7 @@ To connect to an existing TableVault database without dropping it:
 ```python
 vault = Vault(
     user_id="my_user",
-    session_name="analysis_session",
+    process_name="analysis_process",
     new_arango_db=False,  # Don't drop existing database
     arango_db="tablevault",
     arango_url="http://localhost:8529",
@@ -141,7 +141,7 @@ The `description_embedding_size` parameter defines the embedding size of all des
 ```python
 vault = Vault(
     user_id="my_user",
-    session_name="bert_experiment",
+    process_name="bert_experiment",
     description_embedding_size=768  # Match your model's output
 )
 ```

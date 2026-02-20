@@ -25,8 +25,8 @@ def add_description_reverse(db: StandardDatabase, timestamp: int) -> None:
             coll.delete(key_, ignore_missing=True)
     edge = db.collection("description_edge")
     edge.delete(str(timestamp), ignore_missing=True)
-    session_edge = db.collection("session_parent_edge")
-    session_edge.delete(str(timestamp), ignore_missing=True)
+    process_edge = db.collection("process_parent_edge")
+    process_edge.delete(str(timestamp), ignore_missing=True)
     utils.commit_new_timestamp(db, timestamp, "failed")
 
 
@@ -44,8 +44,8 @@ def create_item_reverse(db: StandardDatabase, timestamp: int) -> None:
     items.delete(name, ignore_missing=True)
     coll = db.collection(collection_type)
     coll.delete(name, ignore_missing=True)
-    session_edge = db.collection("session_parent_edge")
-    session_edge.delete(str(timestamp), ignore_missing=True)
+    process_edge = db.collection("process_parent_edge")
+    process_edge.delete(str(timestamp), ignore_missing=True)
     utils.commit_new_timestamp(db, timestamp, "failed")
 
 
@@ -72,8 +72,8 @@ def append_item_reverse(db: StandardDatabase, timestamp: int) -> None:
     collection.delete(f"{name}_{n_items}", ignore_missing=True)
     parent = db.collection("parent_edge")
     parent.delete(str(timestamp), ignore_missing=True)
-    session_edge = db.collection("session_parent_edge")
-    session_edge.delete(str(timestamp), ignore_missing=True)
+    process_edge = db.collection("process_parent_edge")
+    process_edge.delete(str(timestamp), ignore_missing=True)
     edge = db.collection("dependency_edge")
     for itm in input_items:
         edge.delete(f"{timestamp}_{itm}", ignore_missing=True)

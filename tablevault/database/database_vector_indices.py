@@ -34,7 +34,7 @@ def add_one_vector_count(
             return meta["vector_indices"][embedding_name]["total_count"], meta[
                 "vector_indices"
             ][embedding_name]["idx_count"]
-            except Exception:
+        except Exception:
             pass
         time.sleep(wait_time)
     raise LockTimeoutError(
@@ -62,7 +62,7 @@ def update_vector_idx(
         try:
             coll.update(meta, check_rev=True, merge=False)
             return meta["vector_indices"][embedding_name]["total_count"]
-            except Exception:
+        except Exception:
             pass
         time.sleep(wait_time)
     raise LockTimeoutError(

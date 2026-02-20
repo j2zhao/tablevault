@@ -1,6 +1,6 @@
 # Item Lists
 
-Each data item in TableVault is stored in an ordered collection called an item list. Multiple sessions may incrementally append data to a list as long as the data matches the list constraints. We may identify data items within a list based on the position and index values of the item, as well as search for data items for matches.
+Each data item in TableVault is stored in an ordered collection called an item list. Multiple processes may incrementally append data to a list as long as the data matches the list constraints. We may identify data items within a list based on the position and index values of the item, as well as search for data items for matches.
 
 For example, we can store the text of a novel, such as "Frankenstein", as a document list. If we store each paragraph as an data item, we can find third paragraph by the paragraph index (e.g. 2), the character/position offset (e.g. 2494) or text match (e.g. "These reflections have dispelled the agitation").
 
@@ -11,7 +11,7 @@ We can also store a list of vector embeddings, such as embeddings generated from
 Once a Vault object has been created (see: Setup), each item list can be created by defining the type of item and an unique name. 
 
 !!! note "Unique Names"
-    Note that names must be unique across all item types and sessions. Once a name is used as an item list, it currently cannot be reused, even if the data is later deleted.
+    Note that names must be unique across all item types and processes. Once a name is used as an item list, it currently cannot be reused, even if the data is later deleted.
 
 ```python
 # Example: Create a document list

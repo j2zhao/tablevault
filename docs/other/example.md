@@ -24,10 +24,10 @@ We'll build a pipeline that:
 ```python
 from tablevault import Vault
 
-# Create a new TableVault session
+# Create a new TableVault process
 vault = Vault(
     user_id="tutorial_user",
-    session_name="document_pipeline",
+    process_name="document_pipeline",
     arango_url="http://localhost:8529",
     arango_db="tutorial_db",
     new_arango_db=True,  # Start fresh
@@ -161,16 +161,16 @@ results = vault.query_document_list(
 print("Documents matching 'neural networks':", results)
 ```
 
-## Step 8: Session Queries
+## Step 8: Process Queries
 
 ```python
-# Find which session created these items
-creation_session = vault.query_item_creation_session("research_papers")
-print("Created by session:", creation_session)
+# Find which process created these items
+creation_process = vault.query_item_creation_process("research_papers")
+print("Created by process:", creation_process)
 
-# Find all items created in this session
-session_items = vault.query_session_item("document_pipeline")
-print("Items in session:", session_items)
+# Find all items created in this process
+process_items = vault.query_process_item("document_pipeline")
+print("Items in process:", process_items)
 ```
 
 ## Step 9: Safe Checkpointing (for Long Workflows)
@@ -201,7 +201,7 @@ def get_embedding(text):
 # Initialize
 vault = Vault(
     user_id="tutorial_user",
-    session_name="document_pipeline",
+    process_name="document_pipeline",
     new_arango_db=True,
     arango_root_password="passwd"
 )

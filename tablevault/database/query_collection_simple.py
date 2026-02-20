@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional
 
 
-def query_session(
+def query_process(
     db,
     code_text: Optional[str] = None,
     parent_code_text: Optional[str] = None,
@@ -10,7 +10,7 @@ def query_session(
     k2: int = 500,
     k_text: int = 500,
     text_analyzer: str = "text_en",
-    filtered: Optional[List[str]] = None,  # list of session.name strings
+    filtered: Optional[List[str]] = None,  # list of process.name strings
 ):
     filtered = filtered or []
 
@@ -33,9 +33,9 @@ def query_session(
     LET qTokens = TOKENS(@t1, @text_analyzer)
     LET parentQTokens = TOKENS(@parent_t1, @text_analyzer)
 
-    // --- Session candidates ---
-    LET sessionCandidates = (useText && LENGTH(qTokens) > 0) ? (
-      FOR s IN session_view
+    // --- Process candidates ---
+    LET processCandidates = (useText && LENGTH(qTokens) > 0) ? (
+      FOR s IN process_view
         SEARCH ANALYZER(s.text IN qTokens, @text_analyzer)
 
         FILTER !hasFilter OR s.name IN filteredNames
@@ -51,7 +51,7 @@ def query_session(
         LIMIT @k_text
         RETURN { _id: s._id, _key: s._key }
     ) : (
-      FOR s IN session
+      FOR s IN process
         FILTER !hasFilter OR s.name IN filteredNames
         RETURN { _id: s._id, _key: s._key }
     )
@@ -59,7 +59,7 @@ def query_session(
     // --- Description candidates: OR (union) of vector hits and token-AND text hits ---
     LET descVecCandidateIds = useDescVec ? (
       FOR d IN description
-        FILTER d.collection == "session_list"
+        FILTER d.collection == "process_list"
         LET score = COSINE_SIMILARITY(d.embedding, @e2)
         SORT score DESC
         LIMIT @k2
@@ -85,9 +85,9 @@ def query_session(
 
     LET descCandidateIds = UNIQUE(APPEND(descVecCandidateIds, descTxtCandidateIds))
 
-    // --- Parent session candidates: token-AND text hits (optional) ---
-    LET sessCandidateIds = (useParent && LENGTH(parentQTokens) > 0) ? (
-      FOR s IN session_view
+    // --- Parent process candidates: token-AND text hits (optional) ---
+    LET procCandidateIds = (useParent && LENGTH(parentQTokens) > 0) ? (
+      FOR s IN process_view
         SEARCH ANALYZER(s.text IN parentQTokens, @text_analyzer)
 
         LET sTokens = TOKENS(s.text, @text_analyzer)
@@ -101,27 +101,27 @@ def query_session(
         RETURN s._id
     ) : []
 
-    // --- Final: traverse from session -> connected descriptions and enforce AND ---
-    FOR s IN sessionCandidates
-      LET sesDoc = DOCUMENT(s._id)
+    // --- Final: traverse from process -> connected descriptions and enforce AND ---
+    FOR s IN processCandidates
+      LET procDoc = DOCUMENT(s._id)
 
       LET matchedDescriptions = useDesc ? (
-        FOR sl IN 1..1 INBOUND sesDoc parent_edge
+        FOR sl IN 1..1 INBOUND procDoc parent_edge
           FOR d IN 1..1 OUTBOUND sl description_edge
             FILTER d._id IN descCandidateIds
             RETURN DISTINCT d._key
       ) : []
       FILTER (!useDesc) OR (LENGTH(matchedDescriptions) > 0)
 
-      LET matchedSessions = useParent ? (
-        FOR sl IN 1..1 INBOUND sesDoc session_parent_edge
+      LET matchedProcesses = useParent ? (
+        FOR sl IN 1..1 INBOUND procDoc process_parent_edge
           FOR ps IN 1..1 OUTBOUND sl parent_edge
-            FILTER ps._id IN sessCandidateIds
+            FILTER ps._id IN procCandidateIds
             RETURN DISTINCT [ps.name, ps.index]
       ) : []
-      FILTER (!useParent) OR (LENGTH(matchedSessions) > 0)
+      FILTER (!useParent) OR (LENGTH(matchedProcesses) > 0)
 
-      RETURN [[sesDoc.name, sesDoc.index], matchedDescriptions, matchedSessions]
+      RETURN [[procDoc.name, procDoc.index], matchedDescriptions, matchedProcesses]
     """
 
     bind_vars: Dict[str, Any] = {
@@ -229,11 +229,11 @@ def query_embedding(
 
     LET descCandidateIds = UNIQUE(APPEND(descVecCandidateIds, descTxtCandidateIds))
 
-    // --- Session candidates: token-AND text hits (optional) ---
+    // --- Process candidates: token-AND text hits (optional) ---
     LET qTokens = TOKENS(@t1, @text_analyzer)
 
-    LET sessCandidateIds = (useText && LENGTH(qTokens) > 0) ? (
-      FOR s IN session_view
+    LET procCandidateIds = (useText && LENGTH(qTokens) > 0) ? (
+      FOR s IN process_view
         SEARCH ANALYZER(s.text IN qTokens, @text_analyzer)
 
         LET sTokens = TOKENS(s.text, @text_analyzer)
@@ -247,7 +247,7 @@ def query_embedding(
         RETURN s._id
     ) : []
 
-    // --- Final: traverse from embeddings to connected descriptions/sessions and enforce filters ---
+    // --- Final: traverse from embeddings to connected descriptions/processes and enforce filters ---
     FOR e IN embCandidates
       LET embDoc = DOCUMENT(e._id)
 
@@ -259,15 +259,15 @@ def query_embedding(
       ) : []
       FILTER (!useDesc) OR (LENGTH(matchedDescriptions) > 0)
 
-      LET matchedSessions = useText ? (
-        FOR sl IN 1..1 INBOUND embDoc session_parent_edge
+      LET matchedProcesses = useText ? (
+        FOR sl IN 1..1 INBOUND embDoc process_parent_edge
           FOR s IN 1..1 OUTBOUND sl parent_edge
-            FILTER s._id IN sessCandidateIds
+            FILTER s._id IN procCandidateIds
             RETURN DISTINCT [s.name, s.index]
       ) : []
-      FILTER (!useText) OR (LENGTH(matchedSessions) > 0)
+      FILTER (!useText) OR (LENGTH(matchedProcesses) > 0)
 
-      RETURN [embDoc.name, embDoc.index, matchedDescriptions, matchedSessions]
+      RETURN [embDoc.name, embDoc.index, matchedDescriptions, matchedProcesses]
     """
 
     embedding_field = None
@@ -381,25 +381,25 @@ def query_record(
 
     LET descCandidateIds = UNIQUE(APPEND(descVecCandidateIds, descTxtCandidateIds))
 
-    // --- Session candidates: token-AND text hits (optional) ---
-    LET sessQTokens = TOKENS(@t2, @text_analyzer)
+    // --- Process candidates: token-AND text hits (optional) ---
+    LET procQTokens = TOKENS(@t2, @text_analyzer)
 
-    LET sessCandidateIds = (useText && LENGTH(sessQTokens) > 0) ? (
-      FOR s IN session_view
-        SEARCH ANALYZER(s.text IN sessQTokens, @text_analyzer)
+    LET procCandidateIds = (useText && LENGTH(procQTokens) > 0) ? (
+      FOR s IN process_view
+        SEARCH ANALYZER(s.text IN procQTokens, @text_analyzer)
 
         LET sTokens = TOKENS(s.text, @text_analyzer)
         FILTER LENGTH(
-          FOR t IN sessQTokens
+          FOR t IN procQTokens
             FILTER t IN sTokens
             RETURN 1
-        ) == LENGTH(sessQTokens)
+        ) == LENGTH(procQTokens)
 
         LIMIT @k_text
         RETURN s._id
     ) : []
 
-    // --- Final: traverse from record -> connected descriptions/sessions and enforce "AND" across modalities ---
+    // --- Final: traverse from record -> connected descriptions/processes and enforce "AND" across modalities ---
     FOR r IN recordCandidates
       LET recDoc = DOCUMENT(r._id)
 
@@ -411,15 +411,15 @@ def query_record(
       ) : []
       FILTER (!useDesc) OR (LENGTH(matchedDescriptions) > 0)
 
-      LET matchedSessions = useText ? (
-        FOR sl IN 1..1 INBOUND recDoc session_parent_edge
+      LET matchedProcesses = useText ? (
+        FOR sl IN 1..1 INBOUND recDoc process_parent_edge
           FOR s IN 1..1 OUTBOUND sl parent_edge
-            FILTER s._id IN sessCandidateIds
+            FILTER s._id IN procCandidateIds
             RETURN DISTINCT [s.name, s.index]
       ) : []
-      FILTER (!useText) OR (LENGTH(matchedSessions) > 0)
+      FILTER (!useText) OR (LENGTH(matchedProcesses) > 0)
 
-      RETURN [recDoc.name, recDoc.index, matchedDescriptions, matchedSessions]
+      RETURN [recDoc.name, recDoc.index, matchedDescriptions, matchedProcesses]
     """
 
     bind_vars: Dict[str, Any] = {
@@ -528,25 +528,25 @@ def query_document(
 
     LET descCandidateIds = UNIQUE(APPEND(descVecCandidateIds, descTxtCandidateIds))
 
-    // --- Session candidates: token-AND text hits (optional) ---
-    LET sessQTokens = TOKENS(@t2, @text_analyzer)
+    // --- Process candidates: token-AND text hits (optional) ---
+    LET procQTokens = TOKENS(@t2, @text_analyzer)
 
-    LET sessCandidateIds = (useText && LENGTH(sessQTokens) > 0) ? (
-      FOR s IN session_view
-        SEARCH ANALYZER(s.text IN sessQTokens, @text_analyzer)
+    LET procCandidateIds = (useText && LENGTH(procQTokens) > 0) ? (
+      FOR s IN process_view
+        SEARCH ANALYZER(s.text IN procQTokens, @text_analyzer)
 
         LET sTokens = TOKENS(s.text, @text_analyzer)
         FILTER LENGTH(
-          FOR t IN sessQTokens
+          FOR t IN procQTokens
             FILTER t IN sTokens
             RETURN 1
-        ) == LENGTH(sessQTokens)
+        ) == LENGTH(procQTokens)
 
         LIMIT @k_text
         RETURN s._id
     ) : []
 
-    // --- Final: traverse from documents to connected descriptions/sessions and enforce "AND" across modalities ---
+    // --- Final: traverse from documents to connected descriptions/processes and enforce "AND" across modalities ---
     FOR d IN documentCandidates
       LET txtDoc = DOCUMENT(d._id)
 
@@ -558,15 +558,15 @@ def query_document(
       ) : []
       FILTER (!useDesc) OR (LENGTH(matchedDescriptions) > 0)
 
-      LET matchedSessions = useText ? (
-        FOR sl IN 1..1 INBOUND txtDoc session_parent_edge
+      LET matchedProcesses = useText ? (
+        FOR sl IN 1..1 INBOUND txtDoc process_parent_edge
           FOR s IN 1..1 OUTBOUND sl parent_edge
-            FILTER s._id IN sessCandidateIds
+            FILTER s._id IN procCandidateIds
             RETURN DISTINCT [ s.name, s.index ]
       ) : []
-      FILTER (!useText) OR (LENGTH(matchedSessions) > 0)
+      FILTER (!useText) OR (LENGTH(matchedProcesses) > 0)
 
-      RETURN [txtDoc.name, txtDoc.index, matchedDescriptions, matchedSessions]
+      RETURN [txtDoc.name, txtDoc.index, matchedDescriptions, matchedProcesses]
     """
 
     bind_vars: Dict[str, Any] = {
@@ -657,11 +657,11 @@ def query_file(
       RETURN UNIQUE(APPEND(descVecCandidateIds, descTxtCandidateIds))
     ) : []
 
-    LET sessCandidateIds = (hasAny && useText) ? (
+    LET procCandidateIds = (hasAny && useText) ? (
       LET qTokens = TOKENS(@t1, @text_analyzer)
 
       RETURN (LENGTH(qTokens) > 0) ? (
-        FOR s IN session_view
+        FOR s IN process_view
           SEARCH ANALYZER(s.text IN qTokens, @text_analyzer)
 
           LET sTokens = TOKENS(s.text, @text_analyzer)
@@ -676,7 +676,7 @@ def query_file(
       ) : []
     ) : []
 
-    // --- Final: traverse from file docs to connected descriptions/sessions and enforce filters ---
+    // --- Final: traverse from file docs to connected descriptions/processes and enforce filters ---
     FOR f IN fileCandidates
       LET fileDoc = DOCUMENT(f._id)
 
@@ -688,15 +688,15 @@ def query_file(
       ) : []
       FILTER (!useDesc) OR (LENGTH(matchedDescriptions) > 0)
 
-      LET matchedSessions = useText ? (
-        FOR sl IN 1..1 INBOUND fileDoc session_parent_edge
+      LET matchedProcesses = useText ? (
+        FOR sl IN 1..1 INBOUND fileDoc process_parent_edge
           FOR s IN 1..1 OUTBOUND sl parent_edge
-            FILTER s._id IN sessCandidateIds
+            FILTER s._id IN procCandidateIds
             RETURN DISTINCT [s.name, s.index ]
       ) : []
-      FILTER (!useText) OR (LENGTH(matchedSessions) > 0)
+      FILTER (!useText) OR (LENGTH(matchedProcesses) > 0)
 
-      RETURN [fileDoc.name, fileDoc.index, matchedDescriptions, matchedSessions]
+      RETURN [fileDoc.name, fileDoc.index, matchedDescriptions, matchedProcesses]
     """
 
     bind_vars: Dict[str, Any] = {

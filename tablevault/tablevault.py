@@ -6,15 +6,15 @@ from tablevault.utils.errors import ValidationError, NotFoundError
 
 from tablevault.database import (
     create_database,
-    session_collection,
+    process_collection,
     item_collection,
     description_collection,
     query_item_simple,
     query_collection_simple,
     database_restart,
 )
-from tablevault.session.notebook import SessionNotebook
-from tablevault.session.script import SessionScript
+from tablevault.process.notebook import ProcessNotebook
+from tablevault.process.script import ProcessScript
 
 import threading
 
@@ -35,11 +35,11 @@ class Vault:
 
     The Vault provides methods for creating and querying various item types
     (files, documents, embeddings, records) and tracking their relationships
-    and provenance through sessions.
+    and provenance through processes.
 
     Once active in a notebook or Python script, all subsequently executed code is tracked.
 
-    Only one vault can be active in one session. Subsequent calls (with same initialization
+    Only one vault can be active in one process. Subsequent calls (with same initialization
     parameters return the same Vault object)
     """
     _instance: Optional["Vault"] = None
@@ -49,9 +49,9 @@ class Vault:
     def __new__(
         cls,
         user_id: str,
-        session_name: str,
-        parent_session_name: str = "",
-        parent_session_index: int = 0,
+        process_name: str,
+        parent_process_name: str = "",
+        parent_process_index: int = 0,
         arango_url: str = "http://localhost:8529",
         arango_db: str = "tablevault",
         arango_username: str = "tablevault_user",
@@ -62,7 +62,7 @@ class Vault:
         description_embedding_size: int = 1024,
         log_file_location: str = "~/.tablevault/logs/",
     ) -> "Vault":
-        key = (user_id, session_name, arango_db, arango_url)
+        key = (user_id, process_name, arango_db, arango_url)
         with cls._lock:
             if cls._instance is None:
                 obj = super().__new__(cls)
@@ -73,7 +73,7 @@ class Vault:
 
             if key != cls._allowed_key:
                 raise RuntimeError(
-                    f"{cls.__name__} already exists with a different session.\n"
+                    f"{cls.__name__} already exists with a different process.\n"
                     f"allowed_key={cls._allowed_key!r}\n"
                     f"new_key={key!r}"
                 )
@@ -82,9 +82,9 @@ class Vault:
     def __init__(
         self,
         user_id: str,
-        session_name: str,
-        parent_session_name: str = "",
-        parent_session_index: int = 0,
+        process_name: str,
+        parent_process_name: str = "",
+        parent_process_index: int = 0,
         arango_url: str = "http://localhost:8529",
         arango_db: str = "tablevault",
         arango_username: str = "tablevault_user",
@@ -96,15 +96,15 @@ class Vault:
         log_file_location: str = "~/.tablevault/logs/",
     ) -> None:
         """
-        Initialize the Vault singleton. 
-        
+        Initialize the Vault singleton.
+
         Note: Arango database must be active with matching sign-in information.
 
         Args:
             user_id: Unique identifier for the user.
-            session_name: Name for this session.
-            parent_session_name: Name of generating session (if exists).
-            parent_session_index: Index of generating session (if exists).
+            process_name: Name for this process.
+            parent_process_name: Name of generating process (if exists).
+            parent_process_index: Index of generating process (if exists).
             arango_url: URL of the ArangoDB server.
             arango_db: Name of the database to use.
             arango_username: Username for database access.
@@ -115,7 +115,7 @@ class Vault:
             description_embedding_size: Dimension of description embeddings.
             log_file_location: Directory for log files.
         """
-        self.name: str = session_name
+        self.name: str = process_name
         self.user_id: str = user_id
         if getattr(self, "_initialized", True):
             return
@@ -134,9 +134,9 @@ class Vault:
                 self.db, log_file_location, description_embedding_size
             )
         if is_ipython():
-            self.session = SessionNotebook(self.db, self.name, self.user_id, parent_session_name, parent_session_index)
+            self.process = ProcessNotebook(self.db, self.name, self.user_id, parent_process_name, parent_process_index)
         else:
-            self.session = SessionScript(self.db, self.name, self.user_id, parent_session_name, parent_session_index)
+            self.process = ProcessScript(self.db, self.name, self.user_id, parent_process_name, parent_process_index)
 
     def get_current_operations(self) -> Dict[str, Any]:
         """Get all currently active operations."""
@@ -154,14 +154,14 @@ class Vault:
                 key=item_name,
             )
 
-    def _ensure_session_exists(self, session_name: str, *, operation: str) -> None:
-        sessions = self.db.collection("session_list")
-        if sessions.get(session_name) is None:
+    def _ensure_process_exists(self, process_name: str, *, operation: str) -> None:
+        processes = self.db.collection("process_list")
+        if processes.get(process_name) is None:
             raise NotFoundError(
-                f"Session '{session_name}' not found in 'session_list'.",
+                f"Process '{process_name}' not found in 'process_list'.",
                 operation=operation,
-                collection="session_list",
-                key=session_name,
+                collection="process_list",
+                key=process_name,
             )
 
     def vault_cleanup(self, interval: int = 60, selected_timestamps: Optional[List[int]] = None) -> None:
@@ -184,7 +184,7 @@ class Vault:
             item_name: Name of the item list to delete.
         """
         item_collection.delete_item_list(
-            self.db, item_name, self.name, self.session.current_index
+            self.db, item_name, self.name, self.process.current_index
         )
 
     def create_file_list(self, item_name: str) -> None:
@@ -195,7 +195,7 @@ class Vault:
             item_name: Unique name for the file list.
         """
         item_collection.create_file_list(
-            self.db, item_name, self.name, self.session.current_index
+            self.db, item_name, self.name, self.process.current_index
         )
 
     def append_file(self, item_name: str, location: str, input_items: Optional[InputItems] = None, index: Optional[int] = None) -> None:
@@ -217,7 +217,7 @@ class Vault:
             item_name,
             location,
             self.name,
-            self.session.current_index,
+            self.process.current_index,
             index,
             index,
             end_position,
@@ -232,7 +232,7 @@ class Vault:
             item_name: Unique name for the document list.
         """
         item_collection.create_document_list(
-            self.db, item_name, self.name, self.session.current_index
+            self.db, item_name, self.name, self.process.current_index
         )
 
     def append_document(
@@ -266,7 +266,7 @@ class Vault:
             item_name,
             text,
             self.name,
-            self.session.current_index,
+            self.process.current_index,
             index,
             start_position,
             end_position,
@@ -282,7 +282,7 @@ class Vault:
             ndim: Dimensionality of the embeddings in this list.
         """
         item_collection.create_embedding_list(
-            self.db, item_name, self.name, self.session.current_index, ndim
+            self.db, item_name, self.name, self.process.current_index, ndim
         )
 
     def append_embedding(
@@ -314,7 +314,7 @@ class Vault:
             item_name,
             embedding,
             self.name,
-            self.session.current_index,
+            self.process.current_index,
             index,
             index,
             end_position,
@@ -332,7 +332,7 @@ class Vault:
             column_names: List of column names for records in this list.
         """
         item_collection.create_record_list(
-            self.db, item_name, self.name, self.session.current_index, column_names
+            self.db, item_name, self.name, self.process.current_index, column_names
         )
 
     def append_record(self, item_name: str, record: Dict[str, Any], input_items: Optional[InputItems] = None, index: Optional[int] = None) -> None:
@@ -356,7 +356,7 @@ class Vault:
             item_name,
             record,
             self.name,
-            self.session.current_index,
+            self.process.current_index,
             index,
             index,
             end_position,
@@ -380,7 +380,7 @@ class Vault:
             description_name,
             item_name,
             self.name,
-            self.session.current_index,
+            self.process.current_index,
             description,
             embedding,
         )
@@ -388,43 +388,43 @@ class Vault:
     def checkpoint_execution(self) -> None:
         """
         Identify safe checkpoint in code where stop and pause requests can be executed.
-        
+
         Using this avoids stopping during undesirable conditions (e.g. while still waiting for outgoing API calls).
         """
-        session_collection.session_checkpoint(self.db, self.name)
+        process_collection.process_checkpoint(self.db, self.name)
 
-    def pause_execution(self, session_name: str) -> None:
+    def pause_execution(self, process_name: str) -> None:
         """
-        Request to pause another session list's current execution.
-
-        Args:
-            session_name: Name of the session to pause.
-        """
-        session_collection.session_stop_pause_request(
-            self.db, session_name, "pause", self.name
-        )
-
-    def stop_execution(self, session_name: str) -> None:
-        """
-        Request to stop another session list's current execution.
+        Request to pause another process list's current execution.
 
         Args:
-            session_name: Name of the session to stop.
+            process_name: Name of the process to pause.
         """
-        session_collection.session_stop_pause_request(
-            self.db, session_name, "stop", self.name
+        process_collection.process_stop_pause_request(
+            self.db, process_name, "pause", self.name
         )
 
-    def resume_execution(self, session_name: str) -> None:
+    def stop_execution(self, process_name: str) -> None:
         """
-        Resume a paused session list's current session by name.
+        Request to stop another process list's current execution.
+
+        Args:
+            process_name: Name of the process to stop.
+        """
+        process_collection.process_stop_pause_request(
+            self.db, process_name, "stop", self.name
+        )
+
+    def resume_execution(self, process_name: str) -> None:
+        """
+        Resume a paused process list's current process by name.
 
         Note: Only work in single machine/container case currently.
 
         Args:
-            session_name: Name of the session list to resume.
+            process_name: Name of the process list to resume.
         """
-        session_collection.session_resume_request(self.db, session_name, self.name)
+        process_collection.process_resume_request(self.db, process_name, self.name)
 
     def has_vector_index(self, ndim: int) -> bool:
         """
@@ -443,7 +443,7 @@ class Vault:
                 return True
         return False
 
-    def query_session_list(
+    def query_process_list(
         self,
         code_text: Optional[str] = None,
         parent_code_text: Optional[str] = None,
@@ -452,19 +452,19 @@ class Vault:
         filtered: Optional[List[str]] = None,
     ) -> List[Any]:
         """
-        Query session items. Can optionally filter by descriptions and parent session.
+        Query process items. Can optionally filter by descriptions and parent process.
 
         Args:
-            code_text: Text to search in session code.
-            parent_code_text: Text to search in parent session code.
+            code_text: Text to search in process code.
+            parent_code_text: Text to search in parent process code.
             description_embedding: Embedding vector for similarity search.
             description_text: Text to search in descriptions.
-            filtered: List of session names to restrict search to.
+            filtered: List of process names to restrict search to.
 
         Returns:
-            List of matching session results.
+            List of matching process results.
         """
-        return query_collection_simple.query_session(
+        return query_collection_simple.query_process(
             self.db,
             code_text=code_text,
             parent_code_text=parent_code_text,
@@ -483,13 +483,13 @@ class Vault:
         use_approx: bool = False,
     ) -> List[Any]:
         """
-        Query embedding items. Can optionally filter by descriptions and parent session.
+        Query embedding items. Can optionally filter by descriptions and parent process.
 
         Args:
             embedding: Query embedding vector for similarity search.
             description_embedding: Embedding for description similarity.
             description_text: Text to search in descriptions.
-            code_text: Text to search in session code.
+            code_text: Text to search in process code.
             filtered: List of embedding names to restrict search to.
             use_approx: Use approximate (faster) similarity search.
 
@@ -515,13 +515,13 @@ class Vault:
         filtered: Optional[List[str]] = None,
     ) -> List[Any]:
         """
-        Query record items. Can optionally filter by descriptions and parent session.
+        Query record items. Can optionally filter by descriptions and parent process.
 
         Args:
             record_text: Text to search in record data.
             description_embedding: Embedding for description similarity.
             description_text: Text to search in descriptions.
-            code_text: Text to search in session code.
+            code_text: Text to search in process code.
             filtered: List of record names to restrict search to.
 
         Returns:
@@ -545,13 +545,13 @@ class Vault:
         filtered: Optional[List[str]] = None,
     ) -> List[Any]:
         """
-        Query document items. Can optionally filter by descriptions and parent session.
+        Query document items. Can optionally filter by descriptions and parent process.
 
         Args:
             document_text: Text to search in document content.
             description_embedding: Embedding for description similarity.
             description_text: Text to search in descriptions.
-            code_text: Text to search in session code.
+            code_text: Text to search in process code.
             filtered: List of document names to restrict search to.
 
         Returns:
@@ -574,12 +574,12 @@ class Vault:
         filtered: Optional[List[str]] = None,
     ) -> List[Any]:
         """
-        Query file items. Can optionally filter by descriptions and parent session.
+        Query file items. Can optionally filter by descriptions and parent process.
 
         Args:
             description_embedding: Embedding for description similarity.
             description_text: Text to search in descriptions.
-            code_text: Text to search in session code.
+            code_text: Text to search in process code.
             filtered: List of file names to restrict search to.
 
         Returns:
@@ -675,22 +675,22 @@ class Vault:
         self._ensure_item_exists(item_name, operation="query_item_description")
         return query_item_simple.query_item_description(self.db, item_name)
 
-    def query_item_creation_session(self, item_name: str) -> List[Dict[str, Any]]:
+    def query_item_creation_process(self, item_name: str) -> List[Dict[str, Any]]:
         """
-        Get the session that created an item list.
+        Get the process that created an item list.
 
         Args:
             item_name: Name of the item list.
 
         Returns:
-            List of session information with session_id and index.
+            List of process information with process_id and index.
         """
-        self._ensure_item_exists(item_name, operation="query_item_creation_session")
-        return query_item_simple.query_item_creation_session(self.db, item_name)
+        self._ensure_item_exists(item_name, operation="query_item_creation_process")
+        return query_item_simple.query_item_creation_process(self.db, item_name)
 
-    def query_item_session(self, item_name: str, start_position: Optional[int] = None, end_position: Optional[int] = None) -> List[Dict[str, Any]]:
+    def query_item_process(self, item_name: str, start_position: Optional[int] = None, end_position: Optional[int] = None) -> List[Dict[str, Any]]:
         """
-        Get sessions that modified an item list (given name). Can filter by interval range within the list.
+        Get processes that modified an item list (given name). Can filter by interval range within the list.
 
         Args:
             item_name: Name of the item list.
@@ -698,22 +698,22 @@ class Vault:
             end_position: Filter by end position.
 
         Returns:
-            List of session info dicts with session name and index.
+            List of process info dicts with process name and index.
         """
-        self._ensure_item_exists(item_name, operation="query_item_session")
-        return query_item_simple.query_item_session(
+        self._ensure_item_exists(item_name, operation="query_item_process")
+        return query_item_simple.query_item_process(
             self.db, item_name, start_position, end_position
         )
 
-    def query_session_item(self, session_name: str) -> List[Dict[str, Any]]:
+    def query_process_item(self, process_name: str) -> List[Dict[str, Any]]:
         """
-        Get all items created or modified by a given session name.
+        Get all items created or modified by a given process name.
 
         Args:
-            session_name: Name of the session list.
+            process_name: Name of the process list.
 
         Returns:
             List of item dictionaries with name and position range.
         """
-        self._ensure_session_exists(session_name, operation="query_session_item")
-        return query_item_simple.query_session_item(self.db, session_name)
+        self._ensure_process_exists(process_name, operation="query_process_item")
+        return query_item_simple.query_process_item(self.db, process_name)

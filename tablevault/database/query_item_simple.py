@@ -4,7 +4,7 @@ from arango.database import StandardDatabase
 from tablevault.utils.errors import ValidationError
 
 
-def _query_session_item(
+def _query_process_item(
     db: StandardDatabase,
     name: str,
     start_position: Optional[int] = None,
@@ -16,9 +16,9 @@ def _query_session_item(
 
     LET hasStart = (qStart != null)
     LET hasEnd   = (qEnd != null)
-    LET targetId = CONCAT("session_list/", @name)
+    LET targetId = CONCAT("process_list/", @name)
 
-    FOR s IN session_list
+    FOR s IN process_list
       FILTER s._id == targetId
       FOR v, e IN 1..1 OUTBOUND s parent_edge
         FILTER (!hasEnd   OR e.start_position < qEnd)
@@ -186,7 +186,6 @@ def query_item_list(db: StandardDatabase, name: str) -> Dict[str, Any]:
 
 
 def query_item_index(db: StandardDatabase, name: str, index: int) -> Any:
-    print('hello')
     items = db.collection("items")
     itm = items.get(name)
     coll_name = itm["collection"]
@@ -200,7 +199,7 @@ def query_item_index(db: StandardDatabase, name: str, index: int) -> Any:
     key_ = f"{name}_{index}"
     coll_name = itm["collection"].split("_")[0]
     item = db.collection(coll_name).get(key_)
-    if coll_name == "session":
+    if coll_name == "process":
         return {
           "text": item["text"],
           "status": item["status"],
@@ -233,8 +232,8 @@ def query_item(
             collection=coll_name,
             key=name,
         )
-    elif coll_name == "session_list":
-        return _query_session_item(db, name, start_position, end_position)
+    elif coll_name == "process_list":
+        return _query_process_item(db, name, start_position, end_position)
     elif coll_name == "file_list":
         return _query_file_item(db, name, start_position, end_position)
     elif coll_name == "embedding_list":
@@ -324,13 +323,13 @@ def query_item_description(db: StandardDatabase, name: str) -> List[str]:
     return list(cursor)
 
 
-def query_item_creation_session(db: StandardDatabase, name: str) -> List[Dict[str, Any]]:
+def query_item_creation_process(db: StandardDatabase, name: str) -> List[Dict[str, Any]]:
     aql = r"""
     LET itm = DOCUMENT(CONCAT("items/", @name))
     LET startId = CONCAT(itm.collection, "/", @name)
-    FOR s, sPE IN 1..1 INBOUND startId session_parent_edge
+    FOR s, sPE IN 1..1 INBOUND startId process_parent_edge
       COLLECT sid = s._id, idx = sPE.index
-      RETURN { session_id: sid, index: idx }
+      RETURN { process_id: sid, index: idx }
     """
 
     cursor = db.aql.execute(
@@ -342,7 +341,7 @@ def query_item_creation_session(db: StandardDatabase, name: str) -> List[Dict[st
     return list(cursor)
 
 
-def query_item_session(
+def query_item_process(
     db: StandardDatabase, name: str, start_position: Optional[int], end_position: Optional[int]
 ) -> List[Dict[str, Any]]:
     aql = r"""
@@ -353,9 +352,9 @@ def query_item_session(
       FILTER (@start_position == null OR pE.start_position > @start_position)
         AND (@end_position   == null OR pE.end_position   < @end_position)
 
-      FOR s, sPE IN 1..1 INBOUND child session_parent_edge
+      FOR s, sPE IN 1..1 INBOUND child process_parent_edge
         COLLECT sid = s._id, idx = sPE.index
-        RETURN { session_id: sid, index: idx }
+        RETURN { process_id: sid, index: idx }
     """
 
     cursor = db.aql.execute(
@@ -369,12 +368,12 @@ def query_item_session(
     return list(cursor)
 
 
-def query_session_item(db: StandardDatabase, session_name: str) -> List[Dict[str, Any]]:
+def query_process_item(db: StandardDatabase, process_name: str) -> List[Dict[str, Any]]:
     aql = r"""
     LET sid = @sid
 
     LET candidates = (
-      FOR v IN 1..1 OUTBOUND sid session_parent_edge
+      FOR v IN 1..1 OUTBOUND sid process_parent_edge
         FILTER v.name != null
         RETURN v
     )
@@ -401,5 +400,5 @@ def query_session_item(db: StandardDatabase, session_name: str) -> List[Dict[str
       RETURN row
     """
 
-    bind_vars = {"sid": f"session_list/{session_name}"}
+    bind_vars = {"sid": f"process_list/{process_name}"}
     return list(db.aql.execute(aql, bind_vars=bind_vars))

@@ -1,28 +1,28 @@
-# Session Management
+# Process Management
 
-TableVault provides mechanisms for coordinating execution between multiple Python sessions. This enables workflows where one session can request another to stop or pause at safe checkpoints.
+TableVault provides mechanisms for coordinating execution between multiple Python processes. This enables workflows where one process can request another to stop or pause at safe checkpoints.
 
-## Session Overview
+## Process Overview
 
 When you create a `Vault` object, TableVault automatically:
 
-1. Creates a session record in the database
+1. Creates a process record in the database
 2. Tracks the process ID (PID) of the running Python process
 3. Records all executed code (cells in notebooks, full script in scripts)
-4. Monitors for interrupt requests from other sessions
+4. Monitors for interrupt requests from other processes
 
-### Session Types
+### Process Types
 
 TableVault distinguishes between two execution types:
 
-- **Notebook sessions**: Each cell execution is recorded as a separate item
-- **Script sessions**: The entire script is recorded as a single item
+- **Notebook processes**: Each cell execution is recorded as a separate item
+- **Script processes**: The entire script is recorded as a single item
 
-The session type is automatically detected based on your execution environment.
+The process type is automatically detected based on your execution environment.
 
-## Cross-Session Communication
+## Cross-Process Communication
 
-Sessions can send control requests to other running sessions. This is useful for:
+Processes can send control requests to other running processes. This is useful for:
 
 - Stopping long-running experiments
 - Pausing data processing pipelines
@@ -30,37 +30,37 @@ Sessions can send control requests to other running sessions. This is useful for
 
 ### Requesting Stop
 
-Stop a session by name:
+Stop a process by name:
 
 ```python
-# In session A
-vault.stop_execution("experiment_session")
+# In process A
+vault.stop_execution("experiment_process")
 ```
 
-The target session will terminate at its next checkpoint.
+The target process will terminate at its next checkpoint.
 
 ### Requesting Pause
 
-Pause a session (can be resumed later):
+Pause a process (can be resumed later):
 
 ```python
-# In session A
+# In process A
 vault.pause_execution("data_pipeline")
 ```
 
-The target session will suspend at its next checkpoint.
+The target process will suspend at its next checkpoint.
 
-### Resuming a Paused Session
+### Resuming a Paused Process
 
-Resume a previously paused session:
+Resume a previously paused process:
 
 ```python
-# In session A
+# In process A
 vault.resume_execution("data_pipeline")
 ```
 
 !!! note "Single Machine Limitation"
-    Resume functionality currently only works when all sessions are running on the same machine/container, as it uses process signals.
+    Resume functionality currently only works when all processes are running on the same machine/container, as it uses process signals.
 
 ## Checkpoints
 
@@ -95,14 +95,14 @@ When a checkpoint is reached:
 
 ## Example: Coordinated ML Workflow
 
-### Main Controller Session
+### Main Controller Process
 
 ```python
 from tablevault import Vault
 
 vault = Vault(
     user_id="researcher",
-    session_name="controller",
+    process_name="controller",
     new_arango_db=False
 )
 
@@ -122,14 +122,14 @@ vault.pause_execution("data_ingestion")
 vault.resume_execution("data_ingestion")
 ```
 
-### Worker Session
+### Worker Process
 
 ```python
 from tablevault import Vault
 
 vault = Vault(
     user_id="researcher",
-    session_name="slow_experiment",
+    process_name="slow_experiment",
     new_arango_db=False
 )
 
@@ -147,39 +147,39 @@ for epoch in range(1000):
     vault.checkpoint_execution()
 ```
 
-## Parent-Child Session Relationships
+## Parent-Child Process Relationships
 
-Sessions can be linked in a parent-child hierarchy. This is useful when one script spawns others:
+Processes can be linked in a parent-child hierarchy. This is useful when one script spawns others:
 
 ```python
-# Parent session
+# Parent process
 parent_vault = Vault(
     user_id="researcher",
-    session_name="hyperparameter_search"
+    process_name="hyperparameter_search"
 )
 
 # ... spawn child processes ...
 ```
 
 ```python
-# Child session (spawned by parent)
+# Child process (spawned by parent)
 child_vault = Vault(
     user_id="researcher",
-    session_name="experiment_run_1",
-    parent_session_name="hyperparameter_search",
-    parent_session_index=0  # Index in parent's code
+    process_name="experiment_run_1",
+    parent_process_name="hyperparameter_search",
+    parent_process_index=0  # Index in parent's code
 )
 ```
 
 This relationship enables:
 
-- Querying sessions by parent code (`parent_code_text` parameter)
+- Querying processes by parent code (`parent_code_text` parameter)
 - Understanding experiment provenance
 - Tracking which parent spawned which experiments
 
 ## Cleanup Operations
 
-If sessions crash or exit unexpectedly, operations may remain in an incomplete state. Use cleanup to recover:
+If processes crash or exit unexpectedly, operations may remain in an incomplete state. Use cleanup to recover:
 
 ```python
 # Clean up operations older than 60 seconds
@@ -189,22 +189,22 @@ vault.vault_cleanup(interval=60)
 vault.vault_cleanup(selected_timestamps=[1234567890, 1234567891])
 ```
 
-## Querying Sessions
+## Querying Processes
 
-Find sessions based on various criteria:
+Find processes based on various criteria:
 
 ```python
-# Find sessions by code content
-sessions = vault.query_session_list(code_text="import pandas")
+# Find processes by code content
+processes = vault.query_process_list(code_text="import pandas")
 
-# Find sessions by parent code
-sessions = vault.query_session_list(parent_code_text="spawn_worker")
+# Find processes by parent code
+processes = vault.query_process_list(parent_code_text="spawn_worker")
 
-# Find sessions by description
-sessions = vault.query_session_list(description_text="training pipeline")
+# Find processes by description
+processes = vault.query_process_list(description_text="training pipeline")
 
 # Combine filters
-sessions = vault.query_session_list(
+processes = vault.query_process_list(
     code_text="model.fit",
     parent_code_text="hyperparameter_search",
     filtered=["exp_1", "exp_2", "exp_3"]
@@ -213,9 +213,9 @@ sessions = vault.query_session_list(
 
 ## Error Handling
 
-Sessions automatically record errors:
+Processes automatically record errors:
 
 - **In scripts**: Uncaught exceptions are captured
 - **In notebooks**: Cell errors are captured
 
-This information is stored with the session code and can be queried for debugging.
+This information is stored with the process code and can be queried for debugging.
