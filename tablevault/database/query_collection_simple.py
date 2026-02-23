@@ -166,9 +166,8 @@ def query_embedding(
 
     use_text = bool(code_text)
 
-    aql = r"""
+    aql_template = r"""
     LET useEmbVec  = @useEmbVec
-    LET useApprox  = @useApprox
     LET useDescVec = @useDescVec
     LET useDescTxt = @useDescTxt
     LET useDesc    = @useDesc
@@ -185,10 +184,7 @@ def query_embedding(
         LET vec = e[@embedding_field]
         FILTER IS_ARRAY(vec) && LENGTH(vec) == LENGTH(@e1)
 
-        // toggle: approx (index-backed) vs exact (scan)
-        LET score = useApprox
-          ? APPROX_NEAR_COSINE(vec, @e1)
-          : COSINE_SIMILARITY(vec, @e1)
+        LET score = __SCORE_FN__(vec, @e1)
 
         FILTER !hasFilter OR e.name IN filteredNames
         SORT score DESC
@@ -278,7 +274,6 @@ def query_embedding(
 
     bind_vars: Dict[str, Any] = {
         "useEmbVec": use_emb_vec,
-        "useApprox": bool(use_approx),
         "e1": e1_list,
         "k1": k1,
         "useDescVec": use_desc_vec,
@@ -295,7 +290,24 @@ def query_embedding(
         "embedding_field": embedding_field or "embedding_0",
     }
 
-    return list(db.aql.execute(aql, bind_vars=bind_vars))
+    def _run_query(score_fn: str) -> List[Any]:
+        aql = aql_template.replace("__SCORE_FN__", score_fn)
+        return list(db.aql.execute(aql, bind_vars=bind_vars))
+
+    if not use_approx:
+        return _run_query("COSINE_SIMILARITY")
+
+    try:
+        return _run_query("APPROX_NEAR_COSINE")
+    except Exception as exc:
+        msg = str(exc).lower()
+        # Fallback for ArangoDB builds without APPROX_NEAR_COSINE or without vector-index support.
+        if (
+            "approx_near_cosine" in msg
+            and ("unknown function" in msg or "vector index" in msg)
+        ):
+            return _run_query("COSINE_SIMILARITY")
+        raise
 
 
 def query_record(

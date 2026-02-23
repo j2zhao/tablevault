@@ -1,6 +1,8 @@
-Currently, users can store various data types in TableVault: **file list**, **document list**, **embedding list**, and **record list**. TableVault also generates a new **process list** for each individual Python process.
+# Types and Type Queries
 
-You can query directly over the full collection of each type using the TableVault API. In this section, we will discuss individual characteristics of each data type and their queries.
+TableVault supports five list categories: **file lists**, **document lists**, **embedding lists**, **record lists**, and **process lists**.
+
+You can query each type directly through the TableVault API. This page summarizes the characteristics of each type and the corresponding query patterns.
 
 ## Data Types
 
@@ -225,4 +227,3 @@ results = vault.query_process_list(
     filtered=["training_process_1", "training_process_2"]
 )
 ```
-

@@ -1,4 +1,4 @@
-from typing import Optional, Any, List, Dict, Union
+from typing import Optional, Any, List, Dict
 
 from arango.database import StandardDatabase
 from tablevault.utils.errors import ValidationError

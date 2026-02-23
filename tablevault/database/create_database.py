@@ -4,7 +4,6 @@ from typing import Any, Dict, List, Optional
 
 from arango import ArangoClient
 from arango.database import StandardDatabase
-from arango.graph import Graph
 from tablevault.database.database_views import create_tablevault_query_views
 
 ALL_ITEM_COLLECTIONS: List[str] = [

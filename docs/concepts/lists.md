@@ -8,7 +8,7 @@ We can also store a list of vector embeddings, such as embeddings generated from
 
 ## Item List Creation
 
-Once a Vault object has been created (see: Setup), each item list can be created by defining the type of item and a unique name. 
+Once a Vault object has been created (see [Repository Setup](setup.md)), each item list can be created by defining the item type and a unique name.
 
 !!! note "Unique Names"
     Note that names must be unique across all item types and processes. Once a name is used as an item list, it currently cannot be reused, even if the data is later deleted.
@@ -18,20 +18,21 @@ Once a Vault object has been created (see: Setup), each item list can be created
 vault.create_document_list("frankenstein_novel")
 
 # Example: Create an embedding list
-vault.create_embedding_list("image_net_embeddings", ndim = 1024)
+vault.create_embedding_list("image_net_embeddings", ndim=1024)
 
 ```
 An embedding list has an extra constraint that the length of all embeddings must be the same.
 
 ## Appending Items
 
-Once a list has been defined in a TableVault repository, *any* process can append data to the list. 
+Once a list has been defined in a TableVault repository, *any* process can append data to the list.
 
 ```python
 # Example: Add a Frankenstein paragraph to frankenstein_novel
-
-vault.append_document("frankenstein_novel"
-    text = "These reflections have dispelled the agitation...")
+vault.append_document(
+    "frankenstein_novel",
+    text="These reflections have dispelled the agitation...",
+)
 
 # Example: Add a generated embedding to image_net_embeddings
 embedding = MODEL(image)
@@ -41,7 +42,7 @@ vault.append_embedding("image_net_embeddings", embedding)
 
 Opportunistic locking ensures that each item is appended atomically. In a single process, the stored order is the same as the appending order. With concurrent processes, you can use the `index` parameter to define absolute ordering if necessary.
 
-# Input Item Parameters
+## Input Item Parameters
 
 When you are appending a data item, you can define the input items that contributed to the generation of that item. This allows for more powerful queries, since you can subsequently query for lineage between items.
 
@@ -51,12 +52,14 @@ For example, if you have previously stored an index of ImageNet images as a file
 image_files = vault.query_item_content("image_net_files")
 
 for index, image_file in enumerate(image_files):
-    image = GET_IMAGE(image_file) # placeholder function
-    embedding = MODEL(image) # placeholder model
-    input_item = {"image_net_files": [index, index + 1]}
-    vault.append_embedding("image_net_embeddings", 
+    image = GET_IMAGE(image_file)  # placeholder function
+    embedding = MODEL(image)  # placeholder model
+    input_items = {"image_net_files": [index, index + 1]}
+    vault.append_embedding(
+        "image_net_embeddings",
         embedding,
-        input_item)
+        input_items=input_items,
+    )
 
 ```
 

@@ -13,7 +13,8 @@ Run the ArangoDB container:
 ```bash
 docker run -d --name tablevault-arango \
     -e ARANGO_ROOT_PASSWORD=passwd \
-    -p 8529:8529 \ arangodb/arangodb \
+    -p 8529:8529 \
+    arangodb/arangodb \
     arangod --experimental-vector-index=true
 ```
 

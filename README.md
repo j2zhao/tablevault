@@ -1,34 +1,33 @@
 # TableVault
 
-Version 2.0 of TableVault. Retains basic functionality from v1.0 but with more robust backend storage and simpler API.
+TableVault is a Python package for storing and querying workflow data with lineage tracking across scripts and notebooks.
 
-You can view the previous website at: www.tablevault.org.
+It uses ArangoDB as the backend and gives you a single API (`Vault`) to:
 
-# Changes from v1.0
+- Store typed data lists (`file`, `document`, `embedding`, `record`)
+- Track upstream/downstream dependencies between items
+- Search by text, code provenance, and embedding similarity
+- Coordinate long-running processes with safe pause/stop checkpoints
 
-- Data is stored by data type rather than by instance.
+## Documentation
 
-- Tables are stored in ArangoDB rather than as DataFrames.
+You can find the full documentation at [tablevault.org](https://tablevault.org).
 
-- First level support for arrays, embeddings, and text files.
+## Installation
 
-- API changes to match industry standards.
+Install from PyPI:
 
-# New Core Feature: Data Queries
+```bash
+pip install tablevault
+```
 
-The main reason for the redesign is that we want to design the metadata layer to support robust queries from the ground up.
+## Citation
 
-The API supports:
+If you use TableVault in research, cite:
 
-- Vector search over data descriptions
+- Zhao, J. and Krishnan, S. (2025). *TableVault: Managing Dynamic Data Collections for LLM-Augmented Workflows*. NOVAS @ SIGMOD.  
+  ArXiv: <https://arxiv.org/abs/2506.18257>
 
-- Reproducible search (with timestamps)
+## License
 
-- Direct and indirect data lineage (based on code traces)
-
-I would also like to include:
-
-# Planned Features
-
-- Experimental LLM Layer to support natural language search over context
-
+MIT License. See `LICENSE`.

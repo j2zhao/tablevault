@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tablevault"
-version = "0.2.2"
+version = "0.2.2.post1"
 description = "Centralized data repository for cross-process data filtering in Python."
 authors = [
     { name = "Jinjin Zhao", email = "j2zhao@uchicago.edu" }
 ]
 license = "MIT"
 license-files = ["LICENSE"]
-readme = "README.md"
+readme = { file = "README.md", content-type = "text/markdown" }
 keywords = ["example", "package", "python"]
 requires-python = ">=3.11" 
 dependencies = [

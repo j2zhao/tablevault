@@ -44,5 +44,5 @@ nav:
   - API:
     - TableVault API: api/core_api.md
     - TableVault Descriptions API: api/description_functions.md
-  - Colab Example: other/example.md
+  - Tutorial: other/tutorial.md
   - About TableVault: other/about.md
