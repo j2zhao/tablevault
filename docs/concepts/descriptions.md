@@ -14,4 +14,4 @@ When querying item types, you can filter by token search over description text o
 
 ## AI Generated Descriptions
 
-Automatic description and embedding generation may be added in a future release. If this is useful for your workflow, feel free to reach out.
+Automatic description and embedding generation may be added in a future release. If this is useful for your workflow, please free to reach out!
