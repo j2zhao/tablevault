@@ -475,7 +475,7 @@ class Vault:
 
     def query_embedding_list(
         self,
-        embedding: List[float],
+        embedding: Optional[List[float]] = None,
         description_embedding: Optional[List[float]] = None,
         description_text: Optional[str] = None,
         code_text: Optional[str] = None,
@@ -486,7 +486,7 @@ class Vault:
         Query embedding items. Can optionally filter by descriptions and parent process.
 
         Args:
-            embedding: Query embedding vector for similarity search.
+            embedding: Query embedding vector for similarity search (optional).
             description_embedding: Embedding for description similarity.
             description_text: Text to search in descriptions.
             code_text: Text to search in process code.
@@ -508,7 +508,7 @@ class Vault:
 
     def query_record_list(
         self,
-        record_text: str,
+        record_text: Optional[str] = None,
         description_embedding: Optional[List[float]] = None,
         description_text: Optional[str] = None,
         code_text: Optional[str] = None,
@@ -518,7 +518,7 @@ class Vault:
         Query record items. Can optionally filter by descriptions and parent process.
 
         Args:
-            record_text: Text to search in record data.
+            record_text: Text to search in record data (optional).
             description_embedding: Embedding for description similarity.
             description_text: Text to search in descriptions.
             code_text: Text to search in process code.
@@ -538,7 +538,7 @@ class Vault:
 
     def query_document_list(
         self,
-        document_text: str,
+        document_text: Optional[str] = None,
         description_embedding: Optional[List[float]] = None,
         description_text: Optional[str] = None,
         code_text: Optional[str] = None,
@@ -548,7 +548,7 @@ class Vault:
         Query document items. Can optionally filter by descriptions and parent process.
 
         Args:
-            document_text: Text to search in document content.
+            document_text: Text to search in document content (optional).
             description_embedding: Embedding for description similarity.
             description_text: Text to search in descriptions.
             code_text: Text to search in process code.
@@ -559,10 +559,10 @@ class Vault:
         """
         return query_collection_simple.query_document(
             self.db,
-            document_text,
-            description_embedding,
-            description_text,
-            code_text,
+            document_text=document_text,
+            description_embedding=description_embedding,
+            description_text=description_text,
+            code_text=code_text,
             filtered=filtered or [],
         )
 

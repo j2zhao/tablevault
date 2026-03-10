@@ -435,7 +435,7 @@ Query process items. Can optionally filter by descriptions and parent process.
 
 ```python
 query_embedding_list(
-    embedding: List[float],
+    embedding: Optional[List[float]] = None,
     description_embedding: Optional[List[float]] = None,
     description_text: Optional[str] = None,
     code_text: Optional[str] = None,
@@ -450,7 +450,7 @@ Query embedding items. Can optionally filter by descriptions and parent process.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `embedding` | `List[float]` | Query embedding vector for similarity search |
+| `embedding` | `Optional[List[float]]` | Query embedding vector for similarity search |
 | `description_embedding` | `Optional[List[float]]` | Embedding for description similarity |
 | `description_text` | `Optional[str]` | Text to search in descriptions |
 | `code_text` | `Optional[str]` | Text to search in process code |
@@ -465,7 +465,7 @@ Query embedding items. Can optionally filter by descriptions and parent process.
 
 ```python
 query_record_list(
-    record_text: str,
+    record_text: Optional[str] = None,
     description_embedding: Optional[List[float]] = None,
     description_text: Optional[str] = None,
     code_text: Optional[str] = None,
@@ -479,7 +479,7 @@ Query record items. Can optionally filter by descriptions and parent process.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `record_text` | `str` | Text to search in record data |
+| `record_text` | `Optional[str]` | Text to search in record data |
 | `description_embedding` | `Optional[List[float]]` | Embedding for description similarity |
 | `description_text` | `Optional[str]` | Text to search in descriptions |
 | `code_text` | `Optional[str]` | Text to search in process code |
@@ -493,7 +493,7 @@ Query record items. Can optionally filter by descriptions and parent process.
 
 ```python
 query_document_list(
-    document_text: str,
+    document_text: Optional[str] = None,
     description_embedding: Optional[List[float]] = None,
     description_text: Optional[str] = None,
     code_text: Optional[str] = None,
@@ -507,7 +507,7 @@ Query document items. Can optionally filter by descriptions and parent process.
 
 | Name | Type | Description |
 |------|------|-------------|
-| `document_text` | `str` | Text to search in document content |
+| `document_text` | `Optional[str]` | Text to search in document content |
 | `description_embedding` | `Optional[List[float]]` | Embedding for description similarity |
 | `description_text` | `Optional[str]` | Text to search in descriptions |
 | `code_text` | `Optional[str]` | Text to search in process code |
