@@ -61,6 +61,7 @@ class Vault:
         arango_root_password: str = "passwd",
         description_embedding_size: int = 1024,
         log_file_location: str = "~/.tablevault/logs/",
+        is_experiment: bool = True,
     ) -> "Vault":
         key = (user_id, process_name, arango_db, arango_url)
         with cls._lock:
@@ -94,6 +95,7 @@ class Vault:
         arango_root_password: str = "passwd",
         description_embedding_size: int = 1024,
         log_file_location: str = "~/.tablevault/logs/",
+        is_experiment: bool = True,
     ) -> None:
         """
         Initialize the Vault singleton.
@@ -114,9 +116,11 @@ class Vault:
             arango_root_password: Root password for database creation.
             description_embedding_size: Dimension of description embeddings.
             log_file_location: Directory for log files.
+            
         """
         self.name: str = process_name
         self.user_id: str = user_id
+        self.is_experiment = is_experiment
         if getattr(self, "_initialized", True):
             return
         self._initialized: bool = True
@@ -134,9 +138,9 @@ class Vault:
                 self.db, log_file_location, description_embedding_size
             )
         if is_ipython():
-            self.process = ProcessNotebook(self.db, self.name, self.user_id, parent_process_name, parent_process_index)
+            self.process = ProcessNotebook(self.db, self.name, self.user_id, parent_process_name, parent_process_index, is_experiment)
         else:
-            self.process = ProcessScript(self.db, self.name, self.user_id, parent_process_name, parent_process_index)
+            self.process = ProcessScript(self.db, self.name, self.user_id, parent_process_name, parent_process_index, is_experiment)
 
     def get_current_operations(self) -> Dict[str, Any]:
         """Get all currently active operations."""

@@ -5,7 +5,11 @@ import traceback
 from dataclasses import dataclass
 from typing import Optional, Type
 from tablevault.database import process_collection
+import re
 
+def extract_star_block(s: str) -> str:
+    match = re.search(r'"""\*(.*?)\*"""', s, re.DOTALL)
+    return match.group(1).strip() if match else s
 
 @dataclass
 class Uncaught:
@@ -25,11 +29,11 @@ def try_get_main_source() -> str:
 
 
 class ProcessScript:
-    def __init__(self, db, name: str, user_id: str, parent_process_name: str, parent_process_index: int, code_text: Optional[str] = None):
+    def __init__(self, db, name: str, user_id: str, parent_process_name: str, parent_process_index: int, is_experiment: bool, code_text: Optional[str] = None):
         self.name = name
         self.db = db
         self.user_id = user_id
-
+        self.is_experiment = is_experiment
         self.current_index = None
         self._uncaught: Optional[Uncaught] = None
         self._prev_excepthook = sys.excepthook
@@ -52,6 +56,10 @@ class ProcessScript:
             final_code = try_get_main_source()
             if not final_code:
                 final_code = fallback_stub or ""
+
+        if self.is_experiment:
+            final_code = extract_star_block(final_code)
+
 
         self.current_index = process_collection.process_add_code_start(
             self.db,
