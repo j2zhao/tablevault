@@ -694,6 +694,21 @@ class Vault:
         """
         return query_item_simple.query_names_by_collection(self.db, item_type)
 
+    def query_item_type(self, item_list: List[str]) -> Dict[str, str]:
+        """
+        Get the collection type for each item in a list of item names.
+
+        Args:
+            item_list: List of item names to look up.
+
+        Returns:
+            Dict mapping each item name to its collection type string
+            (e.g. ``"process_list"``, ``"file_list"``, ``"embedding_list"``,
+            ``"document_list"``, or ``"record_list"``). Items not found in the
+            vault are omitted from the result.
+        """
+        return query_item_simple.query_item_types(self.db, item_list)
+
     def query_item_list(self, item_name: str) -> Dict[str, Any]:
         """
         Get metadata for an item list.

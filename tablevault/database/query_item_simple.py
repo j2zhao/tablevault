@@ -187,6 +187,16 @@ def query_names_by_collection(db: StandardDatabase, collection: str) -> List[str
     return list(db.aql.execute(aql, bind_vars={"collection": collection}))
 
 
+def query_item_types(db: StandardDatabase, item_list: List[str]) -> Dict[str, str]:
+    aql = r"""
+    FOR i IN items
+      FILTER i._key IN @item_list
+      RETURN { name: i._key, collection: i.collection }
+    """
+    results = list(db.aql.execute(aql, bind_vars={"item_list": item_list}))
+    return {r["name"]: r["collection"] for r in results}
+
+
 def query_item_list(db: StandardDatabase, name: str) -> Dict[str, Any]:
     items = db.collection("items")
     itm = items.get(name)

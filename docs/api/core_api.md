@@ -641,6 +641,32 @@ Get all item names of a given collection type.
 
 ---
 
+### `query_item_type`
+
+```python
+query_item_type(item_list: List[str]) -> Dict[str, str]
+```
+
+Get the collection type for each item in a list of item names.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `item_list` | `List[str]` | List of item names to look up |
+
+**Returns:** `Dict[str, str]` — mapping of item name to its collection type string. Items not found in the vault are omitted.
+
+| Value | Description |
+|-------|-------------|
+| `"process_list"` | Process list |
+| `"file_list"` | File list |
+| `"embedding_list"` | Embedding list |
+| `"document_list"` | Document list |
+| `"record_list"` | Record list |
+
+---
+
 ### `query_item_list`
 
 ```python
