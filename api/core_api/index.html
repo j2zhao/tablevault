@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -938,6 +938,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#query_item_names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        query_item_names
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#query_item_list" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1008,6 +1019,45 @@
     <span class="md-ellipsis">
       
         query_process_item
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#description-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description Queries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Description Queries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query_description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        query_description
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query_description_embedding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        query_description_embedding
       
     </span>
   </a>
@@ -1556,6 +1606,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#query_item_names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        query_item_names
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#query_item_list" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1626,6 +1687,45 @@
     <span class="md-ellipsis">
       
         query_process_item
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#description-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Description Queries
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Description Queries">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#query_description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        query_description
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#query_description_embedding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        query_description_embedding
       
     </span>
   </a>
@@ -2309,7 +2409,43 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Returns:</strong> List of matching process results</p>
+<p><strong>Returns:</strong> <code>List[List]</code> — one 5-element list per matching process run:</p>
+<table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[0]</code></td>
+<td><code>str</code></td>
+<td>Process name</td>
+</tr>
+<tr>
+<td><code>[1]</code></td>
+<td><code>int</code></td>
+<td>Run index of this process execution</td>
+</tr>
+<tr>
+<td><code>[2]</code></td>
+<td><code>int</code></td>
+<td>Start position offset of this run in the process stream</td>
+</tr>
+<tr>
+<td><code>[3]</code></td>
+<td><code>List[str]</code></td>
+<td>Matched description names; empty when no description filter applied</td>
+</tr>
+<tr>
+<td><code>[4]</code></td>
+<td><code>List[[str, int]]</code></td>
+<td>Matched parent processes as <code>[process_name, process_index]</code>; empty when no <code>parent_code_text</code> filter applied</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h3 id="query_embedding_list"><code>query_embedding_list</code></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">query_embedding_list</span><span class="p">(</span>
@@ -2364,7 +2500,43 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Returns:</strong> List of matching embedding results</p>
+<p><strong>Returns:</strong> <code>List[List]</code> — one 5-element list per matching embedding entry:</p>
+<table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[0]</code></td>
+<td><code>str</code></td>
+<td>Embedding list name</td>
+</tr>
+<tr>
+<td><code>[1]</code></td>
+<td><code>int</code></td>
+<td>Position index of the entry within its embedding list</td>
+</tr>
+<tr>
+<td><code>[2]</code></td>
+<td><code>int</code></td>
+<td>Numeric start position of the entry</td>
+</tr>
+<tr>
+<td><code>[3]</code></td>
+<td><code>List[str]</code></td>
+<td>Matched description names; empty when no description filter applied</td>
+</tr>
+<tr>
+<td><code>[4]</code></td>
+<td><code>List[[str, int]]</code></td>
+<td>Matched processes as <code>[process_name, process_index]</code>; empty when no <code>code_text</code> filter applied</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h3 id="query_record_list"><code>query_record_list</code></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="n">query_record_list</span><span class="p">(</span>
@@ -2413,7 +2585,43 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Returns:</strong> List of matching record results</p>
+<p><strong>Returns:</strong> <code>List[List]</code> — one 5-element list per matching record entry:</p>
+<table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[0]</code></td>
+<td><code>str</code></td>
+<td>Record list name</td>
+</tr>
+<tr>
+<td><code>[1]</code></td>
+<td><code>int</code></td>
+<td>Position index of the entry within its record list</td>
+</tr>
+<tr>
+<td><code>[2]</code></td>
+<td><code>int</code></td>
+<td>Numeric start position of the entry</td>
+</tr>
+<tr>
+<td><code>[3]</code></td>
+<td><code>List[str]</code></td>
+<td>Matched description names; empty when no description filter applied</td>
+</tr>
+<tr>
+<td><code>[4]</code></td>
+<td><code>List[[str, int]]</code></td>
+<td>Matched processes as <code>[process_name, process_index]</code>; empty when no <code>code_text</code> filter applied</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h3 id="query_document_list"><code>query_document_list</code></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">query_document_list</span><span class="p">(</span>
@@ -2462,7 +2670,43 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Returns:</strong> List of matching document item results</p>
+<p><strong>Returns:</strong> <code>List[List]</code> — one 5-element list per matching document chunk:</p>
+<table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[0]</code></td>
+<td><code>str</code></td>
+<td>Document list name</td>
+</tr>
+<tr>
+<td><code>[1]</code></td>
+<td><code>int</code></td>
+<td>Position index of the chunk within its document list</td>
+</tr>
+<tr>
+<td><code>[2]</code></td>
+<td><code>int</code></td>
+<td>Character offset where this chunk begins</td>
+</tr>
+<tr>
+<td><code>[3]</code></td>
+<td><code>List[str]</code></td>
+<td>Matched description names; empty when no description filter applied</td>
+</tr>
+<tr>
+<td><code>[4]</code></td>
+<td><code>List[[str, int]]</code></td>
+<td>Matched processes as <code>[process_name, process_index]</code>; empty when no <code>code_text</code> filter applied</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h3 id="query_file_list"><code>query_file_list</code></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="n">query_file_list</span><span class="p">(</span>
@@ -2505,7 +2749,43 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Returns:</strong> List of matching file item results</p>
+<p><strong>Returns:</strong> <code>List[List]</code> — one 5-element list per matching file entry:</p>
+<table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[0]</code></td>
+<td><code>str</code></td>
+<td>File list name</td>
+</tr>
+<tr>
+<td><code>[1]</code></td>
+<td><code>int</code></td>
+<td>Position index of the file entry within its file list</td>
+</tr>
+<tr>
+<td><code>[2]</code></td>
+<td><code>int</code></td>
+<td>Numeric start position of the entry</td>
+</tr>
+<tr>
+<td><code>[3]</code></td>
+<td><code>List[str]</code></td>
+<td>Matched description names; empty when no description filter applied</td>
+</tr>
+<tr>
+<td><code>[4]</code></td>
+<td><code>List[[str, int]]</code></td>
+<td>Matched processes as <code>[process_name, process_index]</code>; empty when no <code>code_text</code> filter applied</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h2 id="basic-queries">Basic Queries</h2>
 <p>Functions for querying individual items and their relationships.</p>
@@ -2550,10 +2830,70 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Returns:</strong> The item content at the specified index or position range</p>
+<p><strong>Returns:</strong> When <code>index</code> is given, a single item whose type depends on the list type:</p>
+<table>
+<thead>
+<tr>
+<th>List type</th>
+<th>Return type</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>process_list</code></td>
+<td><code>dict</code></td>
+<td><code>{"text": str, "status": str, "error": str, "start_position": int, "index": int}</code></td>
+</tr>
+<tr>
+<td><code>file_list</code></td>
+<td><code>str</code></td>
+<td>File location/path</td>
+</tr>
+<tr>
+<td><code>embedding_list</code></td>
+<td><code>List[float]</code></td>
+<td>Embedding vector</td>
+</tr>
+<tr>
+<td><code>document_list</code></td>
+<td><code>str</code></td>
+<td>Text chunk</td>
+</tr>
+<tr>
+<td><code>record_list</code></td>
+<td><code>Dict[str, Any]</code></td>
+<td>Record data keyed by column name</td>
+</tr>
+</tbody>
+</table>
+<p>When <code>index</code> is <code>None</code>, a <code>List</code> of the above types for all entries whose position range overlaps <code>[start_position, end_position)</code>, sorted by <code>start_position</code>.</p>
+<hr />
+<h3 id="query_item_names"><code>query_item_names</code></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="n">query_item_names</span><span class="p">(</span><span class="n">item_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+</span></code></pre></div>
+<p>Get all item names of a given collection type.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>item_type</code></td>
+<td><code>str</code></td>
+<td>Collection type to filter by: <code>"process_list"</code>, <code>"file_list"</code>, <code>"embedding_list"</code>, <code>"document_list"</code>, or <code>"record_list"</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong> <code>List[str]</code> — sorted list of item names belonging to that collection type</p>
 <hr />
 <h3 id="query_item_list"><code>query_item_list</code></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="n">query_item_list</span><span class="p">(</span><span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="n">query_item_list</span><span class="p">(</span><span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
 </span></code></pre></div>
 <p>Get metadata for an item list.</p>
 <p><strong>Parameters:</strong></p>
@@ -2573,14 +2913,65 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Returns:</strong> Dictionary with list metadata (n_items, length, etc.)</p>
+<p><strong>Returns:</strong> <code>Dict[str, Any]</code> — the list's metadata document. Common fields:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>n_items</code></td>
+<td><code>int</code></td>
+<td>Number of entries currently in the list</td>
+</tr>
+<tr>
+<td><code>length</code></td>
+<td><code>int</code></td>
+<td>Total length/size (entry count for file/record/embedding lists; total character count for document lists)</td>
+</tr>
+<tr>
+<td><code>deleted</code></td>
+<td><code>int</code></td>
+<td>Deletion marker (<code>-1</code> = not deleted)</td>
+</tr>
+</tbody>
+</table>
+<p>Additional fields by list type:</p>
+<table>
+<thead>
+<tr>
+<th>List type</th>
+<th>Extra field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>embedding_list</code></td>
+<td><code>n_dim</code></td>
+<td><code>int</code></td>
+<td>Dimensionality of stored embeddings</td>
+</tr>
+<tr>
+<td><code>record_list</code></td>
+<td><code>column_names</code></td>
+<td><code>List[str]</code></td>
+<td>Ordered column names</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h3 id="query_item_parent"><code>query_item_parent</code></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="n">query_item_parent</span><span class="p">(</span>
-</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>    <span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="__span-25-3"><a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>    <span class="n">start_position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="__span-25-4"><a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>    <span class="n">end_position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="__span-25-5"><a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="n">query_item_parent</span><span class="p">(</span>
+</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>    <span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>    <span class="n">start_position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>    <span class="n">end_position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
 </span></code></pre></div>
 <p>Query input dependencies of an item list. Allows optional position filtering.</p>
 <p><strong>Parameters:</strong></p>
@@ -2610,14 +3001,55 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Returns:</strong> List of item list information</p>
+<p><strong>Returns:</strong> <code>List[List]</code> — one 6-element list per dependency edge in the filtered range:</p>
+<table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[0]</code></td>
+<td><code>int</code></td>
+<td>Start position of the parent entry that has this dependency</td>
+</tr>
+<tr>
+<td><code>[1]</code></td>
+<td><code>int</code></td>
+<td>End position of the parent entry</td>
+</tr>
+<tr>
+<td><code>[2]</code></td>
+<td><code>str</code></td>
+<td>Collection type of the input dependency (e.g. <code>"file_list"</code>, <code>"document_list"</code>)</td>
+</tr>
+<tr>
+<td><code>[3]</code></td>
+<td><code>str</code></td>
+<td>Name of the input dependency item list</td>
+</tr>
+<tr>
+<td><code>[4]</code></td>
+<td><code>int</code></td>
+<td>Start position within the dependency list</td>
+</tr>
+<tr>
+<td><code>[5]</code></td>
+<td><code>int</code></td>
+<td>End position within the dependency list</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h3 id="query_item_child"><code>query_item_child</code></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="n">query_item_child</span><span class="p">(</span>
-</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>    <span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>    <span class="n">start_position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>    <span class="n">end_position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="n">query_item_child</span><span class="p">(</span>
+</span><span id="__span-27-2"><a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>    <span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="__span-27-3"><a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>    <span class="n">start_position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-27-4"><a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>    <span class="n">end_position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="__span-27-5"><a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
 </span></code></pre></div>
 <p>Query items that depend on an item list. Allows optional position filtering.</p>
 <p><strong>Parameters:</strong></p>
@@ -2647,10 +3079,51 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Returns:</strong> List of child item information</p>
+<p><strong>Returns:</strong> <code>List[List]</code> — one 6-element list per outgoing dependency edge in the filtered range:</p>
+<table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[0]</code></td>
+<td><code>int</code></td>
+<td>Start position of the dependency edge on this item</td>
+</tr>
+<tr>
+<td><code>[1]</code></td>
+<td><code>int</code></td>
+<td>End position of the dependency edge on this item</td>
+</tr>
+<tr>
+<td><code>[2]</code></td>
+<td><code>str</code></td>
+<td>Collection type of the dependent (child) item list (e.g. <code>"embedding_list"</code>, <code>"record_list"</code>)</td>
+</tr>
+<tr>
+<td><code>[3]</code></td>
+<td><code>str</code></td>
+<td>Name of the child item list</td>
+</tr>
+<tr>
+<td><code>[4]</code></td>
+<td><code>int</code></td>
+<td>Start position of the child entry</td>
+</tr>
+<tr>
+<td><code>[5]</code></td>
+<td><code>int</code></td>
+<td>End position of the child entry</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h3 id="query_item_description"><code>query_item_description</code></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="n">query_item_description</span><span class="p">(</span><span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="n">query_item_description</span><span class="p">(</span><span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 </span></code></pre></div>
 <p>Get descriptions associated with an item list.</p>
 <p><strong>Parameters:</strong></p>
@@ -2670,10 +3143,31 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Returns:</strong> List of description texts</p>
+<p><strong>Returns:</strong> <code>List[List]</code> — one 2-element list per description attached to this item:</p>
+<table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[0]</code></td>
+<td><code>str</code></td>
+<td>Description label (e.g. <code>"BASE"</code>)</td>
+</tr>
+<tr>
+<td><code>[1]</code></td>
+<td><code>str</code></td>
+<td>Full text of the description</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h3 id="query_item_creation_process"><code>query_item_creation_process</code></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="n">query_item_creation_process</span><span class="p">(</span><span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="n">query_item_creation_process</span><span class="p">(</span><span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
 </span></code></pre></div>
 <p>Get the process that created an item list.</p>
 <p><strong>Parameters:</strong></p>
@@ -2693,14 +3187,35 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Returns:</strong> List of process information with process_id and index</p>
+<p><strong>Returns:</strong> <code>List[Dict[str, Any]]</code> — one dict per creating process:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>process_id</code></td>
+<td><code>str</code></td>
+<td>ArangoDB document ID of the creating process (e.g. <code>"process_list/my_process"</code>)</td>
+</tr>
+<tr>
+<td><code>index</code></td>
+<td><code>int</code></td>
+<td>Run index at which the item was created</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h3 id="query_item_process"><code>query_item_process</code></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="n">query_item_process</span><span class="p">(</span>
-</span><span id="__span-29-2"><a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>    <span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-</span><span id="__span-29-3"><a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>    <span class="n">start_position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="__span-29-4"><a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>    <span class="n">end_position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="__span-29-5"><a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="n">query_item_process</span><span class="p">(</span>
+</span><span id="__span-30-2"><a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>    <span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="__span-30-3"><a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>    <span class="n">start_position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-30-4"><a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a>    <span class="n">end_position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="__span-30-5"><a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
 </span></code></pre></div>
 <p>Get processes that modified an item list. Can filter by position range within the list.</p>
 <p><strong>Parameters:</strong></p>
@@ -2730,10 +3245,31 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Returns:</strong> List of process info dicts with process name and index</p>
+<p><strong>Returns:</strong> <code>List[Dict[str, Any]]</code> — one dict per process that wrote entries in the filtered range:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>process_id</code></td>
+<td><code>str</code></td>
+<td>ArangoDB document ID of the process (e.g. <code>"process_list/my_process"</code>)</td>
+</tr>
+<tr>
+<td><code>index</code></td>
+<td><code>int</code></td>
+<td>Run index at which the entries were written</td>
+</tr>
+</tbody>
+</table>
 <hr />
 <h3 id="query_process_item"><code>query_process_item</code></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="n">query_process_item</span><span class="p">(</span><span class="n">process_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="n">query_process_item</span><span class="p">(</span><span class="n">process_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
 </span></code></pre></div>
 <p>Get all items created or modified by a given process name.</p>
 <p><strong>Parameters:</strong></p>
@@ -2753,7 +3289,171 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Returns:</strong> List of item dictionaries with name and position range</p>
+<p><strong>Returns:</strong> <code>List[Dict[str, Any]]</code> — one dict per item list touched by this process:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>Name of the item list</td>
+</tr>
+<tr>
+<td><code>start_position</code></td>
+<td><code>int \| None</code></td>
+<td>Earliest start position written by this process; <code>None</code> if not recorded</td>
+</tr>
+<tr>
+<td><code>end_position</code></td>
+<td><code>int \| None</code></td>
+<td>Latest end position written by this process; <code>None</code> if not recorded</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="description-queries">Description Queries</h2>
+<p>Functions for searching across descriptions attached to any item list type.</p>
+<h3 id="query_description"><code>query_description</code></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="n">query_description</span><span class="p">(</span>
+</span><span id="__span-32-2"><a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>    <span class="n">description_text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="__span-32-3"><a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a>    <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+</span><span id="__span-32-4"><a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>    <span class="n">text_analyzer</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;text_en&quot;</span>
+</span><span id="__span-32-5"><a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+</span></code></pre></div>
+<p>Search descriptions by token match across all data types. All tokens in <code>description_text</code> must match.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>description_text</code></td>
+<td><code>str</code></td>
+<td>Text to search in descriptions (all tokens must match)</td>
+</tr>
+<tr>
+<td><code>k</code></td>
+<td><code>int</code></td>
+<td>Maximum number of results to return</td>
+</tr>
+<tr>
+<td><code>text_analyzer</code></td>
+<td><code>str</code></td>
+<td>ArangoSearch analyzer to use for tokenization</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong> <code>List[List]</code> — one 4-element list per matching description:</p>
+<table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[0]</code></td>
+<td><code>str</code></td>
+<td>Description label (e.g. <code>"BASE"</code>)</td>
+</tr>
+<tr>
+<td><code>[1]</code></td>
+<td><code>str</code></td>
+<td>Full text of the description</td>
+</tr>
+<tr>
+<td><code>[2]</code></td>
+<td><code>str</code></td>
+<td>Name of the item list this description belongs to</td>
+</tr>
+<tr>
+<td><code>[3]</code></td>
+<td><code>str</code></td>
+<td>Collection type of the item list (e.g. <code>"file_list"</code>, <code>"embedding_list"</code>)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="query_description_embedding"><code>query_description_embedding</code></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-33-1"><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="n">query_description_embedding</span><span class="p">(</span>
+</span><span id="__span-33-2"><a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>    <span class="n">embedding</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+</span><span id="__span-33-3"><a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a>    <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+</span><span id="__span-33-4"><a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>    <span class="n">use_approx</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+</span><span id="__span-33-5"><a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span>
+</span></code></pre></div>
+<p>Search descriptions by embedding similarity across all data types.</p>
+<p><strong>Parameters:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>embedding</code></td>
+<td><code>List[float]</code></td>
+<td>Query embedding vector</td>
+</tr>
+<tr>
+<td><code>k</code></td>
+<td><code>int</code></td>
+<td>Maximum number of results to return</td>
+</tr>
+<tr>
+<td><code>use_approx</code></td>
+<td><code>bool</code></td>
+<td>Use approximate (faster) nearest-neighbor search when available</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Returns:</strong> <code>List[List]</code> — one 4-element list per matching description, sorted by descending cosine similarity:</p>
+<table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[0]</code></td>
+<td><code>str</code></td>
+<td>Description label (e.g. <code>"BASE"</code>)</td>
+</tr>
+<tr>
+<td><code>[1]</code></td>
+<td><code>str</code></td>
+<td>Full text of the description</td>
+</tr>
+<tr>
+<td><code>[2]</code></td>
+<td><code>str</code></td>
+<td>Name of the item list this description belongs to</td>
+</tr>
+<tr>
+<td><code>[3]</code></td>
+<td><code>str</code></td>
+<td>Collection type of the item list (e.g. <code>"file_list"</code>, <code>"embedding_list"</code>)</td>
+</tr>
+</tbody>
+</table>
 
 
 

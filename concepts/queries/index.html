@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -524,6 +524,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#listing-all-item-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Listing All Item Names
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#range-based-filtering" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -915,6 +926,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#listing-all-item-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Listing All Item Names
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#range-based-filtering" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -970,7 +992,8 @@
 <p>Get the process that originally created an item list:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Find which process created this item</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">creation_info</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_creation_process</span><span class="p">(</span><span class="s2">&quot;experiment_results&quot;</span><span class="p">)</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># Returns: [{&quot;process_id&quot;: &quot;training_run_01&quot;, &quot;index&quot;: 3}]</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># Returns: [{&quot;process_id&quot;: &quot;process_list/training_run_01&quot;, &quot;index&quot;: 3}]</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># process_id is an ArangoDB document ID in the form &quot;process_list/&lt;name&gt;&quot;</span>
 </span></code></pre></div>
 <h3 id="finding-all-modifying-processes">Finding All Modifying Processes</h3>
 <p>Get all processes that have modified an item list, optionally filtered by position:</p>
@@ -989,7 +1012,7 @@
 <p>Get all items that a process created or modified:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Get all items touched by a process</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">items</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_process_item</span><span class="p">(</span><span class="s2">&quot;data_pipeline_process&quot;</span><span class="p">)</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># Returns: [{&quot;name&quot;: &quot;raw_data&quot;, &quot;start&quot;: 0, &quot;end&quot;: 1000}, ...]</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># Returns: [{&quot;name&quot;: &quot;raw_data&quot;, &quot;start_position&quot;: 0, &quot;end_position&quot;: 1000}, ...]</span>
 </span></code></pre></div>
 <h2 id="data-lineage-tracking">Data Lineage Tracking</h2>
 <p>When you specify <code>input_items</code> during append operations, these dependencies are also stored and can be queried later.</p>
@@ -1025,8 +1048,29 @@
 <p>You can also retrieve descriptions associated with an item list:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Get all descriptions for an item</span>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">descriptions</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_description</span><span class="p">(</span><span class="s2">&quot;trained_models&quot;</span><span class="p">)</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># Returns: [&quot;Random forest classifier for sentiment analysis&quot;, ...]</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="c1"># Returns: [[&quot;BASE&quot;, &quot;Random forest classifier for sentiment analysis&quot;], ...]</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Each element is [description_name, description_text]</span>
 </span></code></pre></div>
+<h2 id="listing-all-item-names">Listing All Item Names</h2>
+<p>Use <code>query_item_names</code> to get a sorted list of all item names belonging to a given collection type:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Get all document list names</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">doc_lists</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_names</span><span class="p">(</span><span class="s2">&quot;document_list&quot;</span><span class="p">)</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1"># Returns: [&quot;frankenstein_novel&quot;, &quot;research_notes&quot;, ...]</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1"># Get all embedding list names</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">emb_lists</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_names</span><span class="p">(</span><span class="s2">&quot;embedding_list&quot;</span><span class="p">)</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1"># Get all record list names</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="n">rec_lists</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_names</span><span class="p">(</span><span class="s2">&quot;record_list&quot;</span><span class="p">)</span>
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="c1"># Get all file list names</span>
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="n">file_lists</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_names</span><span class="p">(</span><span class="s2">&quot;file_list&quot;</span><span class="p">)</span>
+</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
+</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="c1"># Get all process list names</span>
+</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="n">proc_lists</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_names</span><span class="p">(</span><span class="s2">&quot;process_list&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Valid values for <code>item_type</code>: <code>"process_list"</code>, <code>"file_list"</code>, <code>"embedding_list"</code>, <code>"document_list"</code>, <code>"record_list"</code>.</p>
+<hr />
 <h2 id="range-based-filtering">Range-Based Filtering</h2>
 <p>Many query functions support <code>start_position</code> and <code>end_position</code> parameters to filter results to specific ranges within a list. This is useful when:</p>
 <ul>
@@ -1034,33 +1078,33 @@
 <li>You want to trace lineage for only part of an item</li>
 <li>You need to understand which code created specific chunks</li>
 </ul>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Get content for positions 100-200</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">content</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_content</span><span class="p">(</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="s2">&quot;document_chunks&quot;</span><span class="p">,</span>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">start_position</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="n">end_position</span><span class="o">=</span><span class="mi">200</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="p">)</span>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>
-</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1"># Find parents for only the first 50 items</span>
-</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="n">parents</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_parent</span><span class="p">(</span>
-</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="s2">&quot;embeddings&quot;</span><span class="p">,</span>
-</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="n">start_position</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>    <span class="n">end_position</span><span class="o">=</span><span class="mi">50</span>
-</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="p">)</span>
-</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>
-</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="c1"># Find which processes modified positions 500-1000</span>
-</span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="n">processes</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_process</span><span class="p">(</span>
-</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>    <span class="s2">&quot;training_data&quot;</span><span class="p">,</span>
-</span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>    <span class="n">start_position</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
-</span><span id="__span-8-19"><a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>    <span class="n">end_position</span><span class="o">=</span><span class="mi">1000</span>
-</span><span id="__span-8-20"><a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="p">)</span>
-</span><span id="__span-8-21"><a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>
-</span><span id="__span-8-22"><a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a><span class="c1"># Find children derived from positions 0-100</span>
-</span><span id="__span-8-23"><a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="n">children</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_child</span><span class="p">(</span>
-</span><span id="__span-8-24"><a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a>    <span class="s2">&quot;source_documents&quot;</span><span class="p">,</span>
-</span><span id="__span-8-25"><a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a>    <span class="n">start_position</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-8-26"><a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a>    <span class="n">end_position</span><span class="o">=</span><span class="mi">100</span>
-</span><span id="__span-8-27"><a id="__codelineno-8-27" name="__codelineno-8-27" href="#__codelineno-8-27"></a><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Get content for positions 100-200</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">content</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_content</span><span class="p">(</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="s2">&quot;document_chunks&quot;</span><span class="p">,</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">start_position</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="n">end_position</span><span class="o">=</span><span class="mi">200</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="p">)</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1"># Find parents for only the first 50 items</span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="n">parents</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_parent</span><span class="p">(</span>
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="s2">&quot;embeddings&quot;</span><span class="p">,</span>
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    <span class="n">start_position</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>    <span class="n">end_position</span><span class="o">=</span><span class="mi">50</span>
+</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="p">)</span>
+</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a>
+</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="c1"># Find which processes modified positions 500-1000</span>
+</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="n">processes</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_process</span><span class="p">(</span>
+</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a>    <span class="s2">&quot;training_data&quot;</span><span class="p">,</span>
+</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a>    <span class="n">start_position</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>    <span class="n">end_position</span><span class="o">=</span><span class="mi">1000</span>
+</span><span id="__span-9-20"><a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="p">)</span>
+</span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a>
+</span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="c1"># Find children derived from positions 0-100</span>
+</span><span id="__span-9-23"><a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a><span class="n">children</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_child</span><span class="p">(</span>
+</span><span id="__span-9-24"><a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a>    <span class="s2">&quot;source_documents&quot;</span><span class="p">,</span>
+</span><span id="__span-9-25"><a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a>    <span class="n">start_position</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+</span><span id="__span-9-26"><a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a>    <span class="n">end_position</span><span class="o">=</span><span class="mi">100</span>
+</span><span id="__span-9-27"><a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="p">)</span>
 </span></code></pre></div>
 
 

@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -713,6 +713,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#step-11-list-all-item-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 11: List All Item Names
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -895,6 +906,17 @@
     <span class="md-ellipsis">
       
         Step 10: Process Queries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-11-list-all-item-names" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 11: List All Item Names
       
     </span>
   </a>
@@ -1147,11 +1169,27 @@
 <p>Every item in TableVault is attributed to the process that created it. Process queries let you audit the full output of a given pipeline run, or find which process was responsible for a particular item. This is useful when you have multiple pipelines writing to the same vault.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="c1"># Find which process created these items</span>
 </span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="n">creation_process</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_creation_process</span><span class="p">(</span><span class="s2">&quot;research_papers&quot;</span><span class="p">)</span>
-</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created by process: </span><span class="si">{</span><span class="n">creation_process</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="c1"># Returns: [{&quot;process_id&quot;: &quot;process_list/document_pipeline&quot;, &quot;index&quot;: 0}]</span>
+</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created by process: </span><span class="si">{</span><span class="n">creation_process</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># Find all items created in this process</span>
 </span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="n">process_items</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_process_item</span><span class="p">(</span><span class="s2">&quot;document_pipeline&quot;</span><span class="p">)</span>
-</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Items in process: </span><span class="si">{</span><span class="n">process_items</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="c1"># Returns: [{&quot;name&quot;: &quot;research_papers&quot;, &quot;start_position&quot;: 0, &quot;end_position&quot;: 4}, ...]</span>
+</span><span id="__span-20-4"><a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Items in process: </span><span class="si">{</span><span class="n">process_items</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<h2 id="step-11-list-all-item-names">Step 11: List All Item Names</h2>
+<p>Use <code>query_item_names</code> to enumerate every item list of a given type. This is useful for discovering what's in the vault before querying.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># List all document lists in the vault</span>
+</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="n">doc_lists</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_names</span><span class="p">(</span><span class="s2">&quot;document_list&quot;</span><span class="p">)</span>
+</span><span id="__span-21-3"><a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Document lists: </span><span class="si">{</span><span class="n">doc_lists</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-21-4"><a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a>
+</span><span id="__span-21-5"><a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="c1"># List all embedding lists</span>
+</span><span id="__span-21-6"><a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="n">emb_lists</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_names</span><span class="p">(</span><span class="s2">&quot;embedding_list&quot;</span><span class="p">)</span>
+</span><span id="__span-21-7"><a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Embedding lists: </span><span class="si">{</span><span class="n">emb_lists</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-21-8"><a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a>
+</span><span id="__span-21-9"><a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a><span class="c1"># List all record lists</span>
+</span><span id="__span-21-10"><a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a><span class="n">rec_lists</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_names</span><span class="p">(</span><span class="s2">&quot;record_list&quot;</span><span class="p">)</span>
+</span><span id="__span-21-11"><a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Record lists: </span><span class="si">{</span><span class="n">rec_lists</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 
 

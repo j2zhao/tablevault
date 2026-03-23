@@ -19,7 +19,7 @@
       
       
       <link rel="icon" href="../../assets/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -369,6 +369,67 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#creating-descriptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating Descriptions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retrieving-descriptions-for-an-item" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrieving Descriptions for an Item
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#searching-descriptions-across-all-item-lists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching Descriptions Across All Item Lists
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Searching Descriptions Across All Item Lists">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#token-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token Search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding-similarity-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embedding Similarity Search
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ai-generated-descriptions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -659,6 +720,67 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#creating-descriptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Creating Descriptions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retrieving-descriptions-for-an-item" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Retrieving Descriptions for an Item
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#searching-descriptions-across-all-item-lists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Searching Descriptions Across All Item Lists
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Searching Descriptions Across All Item Lists">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#token-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Token Search
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#embedding-similarity-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embedding Similarity Search
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ai-generated-descriptions" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -691,14 +813,49 @@
 
 <h1 id="descriptions">Descriptions</h1>
 <p>Each item list can store multiple descriptions with semantic metadata. Each description must include both text and an embedding vector. The embedding dimension must match the value configured when the TableVault repository was created.</p>
+<h2 id="creating-descriptions">Creating Descriptions</h2>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;Full novel of Frankenstein by Mary Shelley in paragraphs&quot;</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">embedding</span> <span class="o">=</span> <span class="n">MODEL</span><span class="p">(</span><span class="n">description</span><span class="p">)</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">vault</span><span class="o">.</span><span class="n">create_description</span><span class="p">(</span><span class="s2">&quot;frankenstein_novel&quot;</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span> <span class="n">embedding</span><span class="p">)</span>
 </span></code></pre></div>
+<p>A single item list can hold multiple descriptions, each identified by a unique <code>description_name</code> label (defaults to <code>"BASE"</code>):</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">vault</span><span class="o">.</span><span class="n">create_description</span><span class="p">(</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="s2">&quot;frankenstein_novel&quot;</span><span class="p">,</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Frankenstein paragraphs for semantic search&quot;</span><span class="p">,</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">embedding</span><span class="o">=</span><span class="n">MODEL</span><span class="p">(</span><span class="s2">&quot;Frankenstein paragraphs for semantic search&quot;</span><span class="p">),</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">description_name</span><span class="o">=</span><span class="s2">&quot;SEMANTIC&quot;</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">)</span>
+</span></code></pre></div>
 <p>When querying item types, you can filter by token search over description text or vector similarity over description embeddings.</p>
+<h2 id="retrieving-descriptions-for-an-item">Retrieving Descriptions for an Item</h2>
+<p>Get all descriptions attached to a specific item list with <code>query_item_description</code>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">descriptions</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_item_description</span><span class="p">(</span><span class="s2">&quot;frankenstein_novel&quot;</span><span class="p">)</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># Returns: [[&quot;BASE&quot;, &quot;Full novel of Frankenstein...&quot;], [&quot;SEMANTIC&quot;, &quot;Frankenstein paragraphs...&quot;]]</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># Each element is [description_name, description_text]</span>
+</span></code></pre></div>
+<h2 id="searching-descriptions-across-all-item-lists">Searching Descriptions Across All Item Lists</h2>
+<p>TableVault can also search descriptions globally across all item lists and types, without targeting a specific list.</p>
+<h3 id="token-search">Token Search</h3>
+<p>Find item lists whose descriptions contain all specified tokens:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">results</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_description</span><span class="p">(</span><span class="s2">&quot;machine learning research&quot;</span><span class="p">)</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># Returns: [[&quot;BASE&quot;, &quot;Collection of ML research papers&quot;, &quot;research_papers&quot;, &quot;document_list&quot;], ...]</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Each element is [description_name, description_text, list_name, list_type]</span>
+</span></code></pre></div>
+<p>Use the <code>k</code> parameter to control the maximum number of results (default 500), and <code>text_analyzer</code> to select the ArangoSearch tokenizer (default <code>"text_en"</code>).</p>
+<h3 id="embedding-similarity-search">Embedding Similarity Search</h3>
+<p>Find item lists whose descriptions are semantically closest to a query embedding:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">query_embedding</span> <span class="o">=</span> <span class="n">MODEL</span><span class="p">(</span><span class="s2">&quot;neural network papers&quot;</span><span class="p">)</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">results</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_description_embedding</span><span class="p">(</span><span class="n">query_embedding</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Returns top-10 matches sorted by descending cosine similarity</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c1"># Each element is [description_name, description_text, list_name, list_type]</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Use approximate search for faster results on large vaults</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">results</span> <span class="o">=</span> <span class="n">vault</span><span class="o">.</span><span class="n">query_description_embedding</span><span class="p">(</span><span class="n">query_embedding</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">use_approx</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</span></code></pre></div>
 <h2 id="ai-generated-descriptions">AI Generated Descriptions</h2>
-<p>Automatic description and embedding generation may be added in a future release. If this is useful for your workflow, please free to reach out!</p>
+<p>Automatic description and embedding generation may be added in a future release. If this is useful for your workflow, please feel free to reach out!</p>
 
 
 
