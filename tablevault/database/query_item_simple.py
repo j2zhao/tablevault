@@ -320,7 +320,7 @@ def query_item_output(
 
 
 def query_item_description(db: StandardDatabase, name: str) -> List[str]:
-    [AQL_QUERY_ITEM_DESCRIPTION] = r"""
+    AQL_QUERY_ITEM_DESCRIPTION = r"""
     LET itm = DOCUMENT("items", @name)
     LET startId = CONCAT(itm.collection, "/", @name)
     FOR d IN 1..1 OUTBOUND startId description_edge

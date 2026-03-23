@@ -32,8 +32,6 @@ class ProcessNotebook:
         final_code = info.raw_cell
         if self.is_experiment:
             final_code = extract_star_block(final_code)
-        if self.is_experiment:
-            info.raw_cell
         self.current_index = process_collection.process_add_code_start(
             self.db, self.name, final_code, "", 0
         )
