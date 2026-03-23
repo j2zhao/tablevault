@@ -2915,9 +2915,9 @@
 <p><strong>Returns:</strong> <code>List[str]</code> — sorted list of item names belonging to that collection type</p>
 <hr />
 <h3 id="query_item_type"><code>query_item_type</code></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="n">query_item_type</span><span class="p">(</span><span class="n">item_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="n">query_item_type</span><span class="p">(</span><span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 </span></code></pre></div>
-<p>Get the collection type for each item in a list of item names.</p>
+<p>Get the collection type of an item by name.</p>
 <p><strong>Parameters:</strong></p>
 <table>
 <thead>
@@ -2929,43 +2929,13 @@
 </thead>
 <tbody>
 <tr>
-<td><code>item_list</code></td>
-<td><code>List[str]</code></td>
-<td>List of item names to look up</td>
+<td><code>item_name</code></td>
+<td><code>str</code></td>
+<td>Name of the item to look up</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Returns:</strong> <code>Dict[str, str]</code> — mapping of item name to its collection type string. Items not found in the vault are omitted.</p>
-<table>
-<thead>
-<tr>
-<th>Value</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>"process_list"</code></td>
-<td>Process list</td>
-</tr>
-<tr>
-<td><code>"file_list"</code></td>
-<td>File list</td>
-</tr>
-<tr>
-<td><code>"embedding_list"</code></td>
-<td>Embedding list</td>
-</tr>
-<tr>
-<td><code>"document_list"</code></td>
-<td>Document list</td>
-</tr>
-<tr>
-<td><code>"record_list"</code></td>
-<td>Record list</td>
-</tr>
-</tbody>
-</table>
+<p><strong>Returns:</strong> The collection type string — one of <code>"process_list"</code>, <code>"file_list"</code>, <code>"embedding_list"</code>, <code>"document_list"</code>, or <code>"record_list"</code> — or <code>None</code> if the item does not exist.</p>
 <hr />
 <h3 id="query_item_list"><code>query_item_list</code></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="n">query_item_list</span><span class="p">(</span><span class="n">item_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
