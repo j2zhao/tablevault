@@ -177,6 +177,16 @@ def _query_record_item(
     return list(db.aql.execute(aql, bind_vars=bind_vars))
 
 
+def query_names_by_collection(db: StandardDatabase, collection: str) -> List[str]:
+    aql = r"""
+    FOR i IN items
+      FILTER i.collection == @collection
+      SORT i.name ASC
+      RETURN i.name
+    """
+    return list(db.aql.execute(aql, bind_vars={"collection": collection}))
+
+
 def query_item_list(db: StandardDatabase, name: str) -> Dict[str, Any]:
     items = db.collection("items")
     itm = items.get(name)
@@ -252,7 +262,7 @@ def query_item_input(
     LET startId = CONCAT(itm.collection, "/", @name)
 
     FOR child, parentE IN 1..1 OUTBOUND startId parent_edge
-    FILTER (@start_position == null OR parentE.start_position > @start_position)
+    FILTER (@start_position == null OR parentE.start_position >= @start_position)
         AND (@end_position   == null OR parentE.end_position   < @end_position)
 
     FOR dep, depE IN 1..1 INBOUND child dependency_edge
@@ -260,7 +270,7 @@ def query_item_input(
         parentE.start_position,
         parentE.end_position,
         PARSE_IDENTIFIER(dep._id).collection,
-        dep._id,
+        dep.name,
         depE.start_position,
         depE.end_position
         ]
@@ -284,13 +294,13 @@ def query_item_output(
     LET itm = DOCUMENT("items", @name)
     LET startId = CONCAT(itm.collection, "/", @name)
     FOR dep, depE IN 1..1 OUTBOUND startId dependency_edge
-    FILTER (@start_position == null OR depE.start_position > @start_position)
+    FILTER (@start_position == null OR depE.start_position >= @start_position)
         AND (@end_position   == null OR depE.end_position   < @end_position)
 
     RETURN [
         depE.start_position,
         depE.end_position,
-        PARSE_IDENTIFIER(dep._id).collection,
+        CONCAT(PARSE_IDENTIFIER(dep._id).collection, "_list"),
         dep.name,
         dep.start_position,
         dep.end_position
@@ -310,11 +320,11 @@ def query_item_output(
 
 
 def query_item_description(db: StandardDatabase, name: str) -> List[str]:
-    AQL_QUERY_ITEM_DESCRIPTION = r"""
+    [AQL_QUERY_ITEM_DESCRIPTION] = r"""
     LET itm = DOCUMENT("items", @name)
     LET startId = CONCAT(itm.collection, "/", @name)
     FOR d IN 1..1 OUTBOUND startId description_edge
-    RETURN d.text
+    RETURN [d.name, d.text]
     """
     cursor = db.aql.execute(
         AQL_QUERY_ITEM_DESCRIPTION,

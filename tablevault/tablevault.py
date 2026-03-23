@@ -11,6 +11,7 @@ from tablevault.database import (
     description_collection,
     query_item_simple,
     query_collection_simple,
+    query_description,
     database_restart,
 )
 from tablevault.process.notebook import ProcessNotebook
@@ -466,7 +467,17 @@ class Vault:
             filtered: List of process names to restrict search to.
 
         Returns:
-            List of matching process results.
+            List of 5-element lists, one per matching process run:
+            ``[name, index, start_position, matched_descriptions, matched_processes]``
+
+            - ``name`` (str): Process name.
+            - ``index`` (int): Run index of this process execution.
+            - ``start_position`` (int): Position offset of this run in the process stream.
+            - ``matched_descriptions`` (List[str]): Description names that matched the
+              description filter; empty list when no description filter was applied.
+            - ``matched_processes`` (List[[str, int]]): Parent processes that matched the
+              ``parent_code_text`` filter, each as ``[process_name, process_index]``;
+              empty list when no parent filter was applied.
         """
         return query_collection_simple.query_process(
             self.db,
@@ -498,7 +509,17 @@ class Vault:
             use_approx: Use approximate (faster) similarity search.
 
         Returns:
-            List of matching embedding results.
+            List of 5-element lists, one per matching embedding entry:
+            ``[name, index, start_position, matched_descriptions, matched_processes]``
+
+            - ``name`` (str): Embedding list name.
+            - ``index`` (int): Position index of the entry within its embedding list.
+            - ``start_position`` (int): Numeric start position of the entry.
+            - ``matched_descriptions`` (List[str]): Description names that matched the
+              description filter; empty list when no description filter was applied.
+            - ``matched_processes`` (List[[str, int]]): Processes that matched the
+              ``code_text`` filter, each as ``[process_name, process_index]``;
+              empty list when no code-text filter was applied.
         """
         return query_collection_simple.query_embedding(
             self.db,
@@ -529,7 +550,17 @@ class Vault:
             filtered: List of record names to restrict search to.
 
         Returns:
-            List of matching record results.
+            List of 5-element lists, one per matching record entry:
+            ``[name, index, start_position, matched_descriptions, matched_processes]``
+
+            - ``name`` (str): Record list name.
+            - ``index`` (int): Position index of the entry within its record list.
+            - ``start_position`` (int): Numeric start position of the entry.
+            - ``matched_descriptions`` (List[str]): Description names that matched the
+              description filter; empty list when no description filter was applied.
+            - ``matched_processes`` (List[[str, int]]): Processes that matched the
+              ``code_text`` filter, each as ``[process_name, process_index]``;
+              empty list when no code-text filter was applied.
         """
         return query_collection_simple.query_record(
             self.db,
@@ -559,7 +590,17 @@ class Vault:
             filtered: List of document names to restrict search to.
 
         Returns:
-            List of matching document item results.
+            List of 5-element lists, one per matching document chunk:
+            ``[name, index, start_position, matched_descriptions, matched_processes]``
+
+            - ``name`` (str): Document list name.
+            - ``index`` (int): Position index of the chunk within its document list.
+            - ``start_position`` (int): Character offset where this chunk begins.
+            - ``matched_descriptions`` (List[str]): Description names that matched the
+              description filter; empty list when no description filter was applied.
+            - ``matched_processes`` (List[[str, int]]): Processes that matched the
+              ``code_text`` filter, each as ``[process_name, process_index]``;
+              empty list when no code-text filter was applied.
         """
         return query_collection_simple.query_document(
             self.db,
@@ -587,7 +628,17 @@ class Vault:
             filtered: List of file names to restrict search to.
 
         Returns:
-            List of matching file item results.
+            List of 5-element lists, one per matching file entry:
+            ``[name, index, start_position, matched_descriptions, matched_processes]``
+
+            - ``name`` (str): File list name.
+            - ``index`` (int): Position index of the file entry within its file list.
+            - ``start_position`` (int): Numeric start position of the entry.
+            - ``matched_descriptions`` (List[str]): Description names that matched the
+              description filter; empty list when no description filter was applied.
+            - ``matched_processes`` (List[[str, int]]): Processes that matched the
+              ``code_text`` filter, each as ``[process_name, process_index]``;
+              empty list when no code-text filter was applied.
         """
         return query_collection_simple.query_file(
             self.db,
@@ -608,7 +659,18 @@ class Vault:
             end_position: End of position range (if index not specified).
 
         Returns:
-            The item content at the specified index or position range.
+            When ``index`` is given, a single item whose type depends on the list type:
+
+            - **process_list**: ``dict`` with keys ``text`` (str), ``status`` (str),
+              ``error`` (str), ``start_position`` (int), ``index`` (int).
+            - **file_list**: ``str`` — the file location/path.
+            - **embedding_list**: ``List[float]`` — the embedding vector.
+            - **document_list**: ``str`` — the text chunk.
+            - **record_list**: ``Dict[str, Any]`` — the record data keyed by column name.
+
+            When ``index`` is ``None``, a ``List`` of the above types for all entries
+            whose position range overlaps ``[start_position, end_position)``, sorted by
+            ``start_position``.
         """
         self._ensure_item_exists(item_name, operation="query_item_content")
         if index is not None:
@@ -619,6 +681,19 @@ class Vault:
             self.db, item_name, start_position, end_position
         )
 
+    def query_item_names(self, item_type: str) -> List[str]:
+        """
+        Get all item names of a given collection type.
+
+        Args:
+            item_type: Collection type to filter by (e.g. "process_list", "file_list",
+                "embedding_list", "document_list", "record_list").
+
+        Returns:
+            Sorted list of item names belonging to that collection type.
+        """
+        return query_item_simple.query_names_by_collection(self.db, item_type)
+
     def query_item_list(self, item_name: str) -> Dict[str, Any]:
         """
         Get metadata for an item list.
@@ -627,7 +702,17 @@ class Vault:
             item_name: Name of the item list.
 
         Returns:
-            Dictionary with list metadata (n_items, length, etc.).
+            Dict with the list's metadata document. Common fields:
+
+            - ``n_items`` (int): Number of entries currently in the list.
+            - ``length`` (int): Total length/size of the list (number of file/record/embedding
+              entries, or total character count for document lists).
+            - ``deleted`` (int): Deletion marker (``-1`` means not deleted).
+
+            Additional fields by list type:
+
+            - **embedding_list**: ``n_dim`` (int) — dimensionality of stored embeddings.
+            - **record_list**: ``column_names`` (List[str]) — ordered column names.
         """
         self._ensure_item_exists(item_name, operation="query_item_list")
         return query_item_simple.query_item_list(self.db, item_name)
@@ -642,7 +727,16 @@ class Vault:
             end_position: Filter by end position.
 
         Returns:
-            List of item list information.
+            List of 6-element lists, one per dependency edge in the filtered range:
+            ``[parent_start, parent_end, dep_collection, dep_name, dep_start, dep_end]``
+
+            - ``parent_start`` (int): Start position of the parent entry that has this dependency.
+            - ``parent_end`` (int): End position of the parent entry.
+            - ``dep_collection`` (str): Collection type of the input dependency
+              (e.g. ``"file_list"``, ``"document_list"``).
+            - ``dep_name`` (str): Name of the input dependency item list.
+            - ``dep_start`` (int): Start position within the dependency list.
+            - ``dep_end`` (int): End position within the dependency list.
         """
         self._ensure_item_exists(item_name, operation="query_item_parent")
         return query_item_simple.query_item_input(
@@ -659,7 +753,16 @@ class Vault:
             end_position: Filter by end position.
 
         Returns:
-            List of child item information.
+            List of 6-element lists, one per outgoing dependency edge in the filtered range:
+            ``[dep_start, dep_end, child_collection, child_name, child_start, child_end]``
+
+            - ``dep_start`` (int): Start position of the dependency edge on this item.
+            - ``dep_end`` (int): End position of the dependency edge on this item.
+            - ``child_collection`` (str): Collection type of the dependent (child) item list
+              (e.g. ``"embedding_list"``, ``"record_list"``).
+            - ``child_name`` (str): Name of the child item list.
+            - ``child_start`` (int): Start position of the child entry.
+            - ``child_end`` (int): End position of the child entry.
         """
         self._ensure_item_exists(item_name, operation="query_item_child")
         return query_item_simple.query_item_output(
@@ -674,7 +777,11 @@ class Vault:
             item_name: Name of the item list.
 
         Returns:
-            List of description texts.
+            List of 2-element lists, one per description attached to this item:
+            ``[description_name, description_text]``
+
+            - ``description_name`` (str): Label for the description (e.g. ``"BASE"``).
+            - ``description_text`` (str): The full text of the description.
         """
         self._ensure_item_exists(item_name, operation="query_item_description")
         return query_item_simple.query_item_description(self.db, item_name)
@@ -687,7 +794,12 @@ class Vault:
             item_name: Name of the item list.
 
         Returns:
-            List of process information with process_id and index.
+            List of dicts, one per process that created this item list:
+            ``{"process_id": str, "index": int}``
+
+            - ``process_id`` (str): ArangoDB document ID of the creating process
+              (e.g. ``"process_list/my_process"``).
+            - ``index`` (int): Run index at which the item was created.
         """
         self._ensure_item_exists(item_name, operation="query_item_creation_process")
         return query_item_simple.query_item_creation_process(self.db, item_name)
@@ -702,11 +814,64 @@ class Vault:
             end_position: Filter by end position.
 
         Returns:
-            List of process info dicts with process name and index.
+            List of dicts, one per process that wrote entries in the filtered range:
+            ``{"process_id": str, "index": int}``
+
+            - ``process_id`` (str): ArangoDB document ID of the process
+              (e.g. ``"process_list/my_process"``).
+            - ``index`` (int): Run index at which the entries were written.
         """
         self._ensure_item_exists(item_name, operation="query_item_process")
         return query_item_simple.query_item_process(
             self.db, item_name, start_position, end_position
+        )
+
+    def query_description(
+        self,
+        description_text: str,
+        k: int = 500,
+        text_analyzer: str = "text_en",
+    ) -> List[Any]:
+        """
+        Search descriptions by token match across all data types.
+
+        Args:
+            description_text: Text to search in descriptions (all tokens must match).
+            k: Maximum number of results to return.
+            text_analyzer: ArangoSearch analyzer to use for tokenization.
+
+        Returns:
+            List of [description_name, description_text, list_name, list_type] for each match.
+        """
+        return query_description.query_description_token(
+            self.db,
+            description_text=description_text,
+            k=k,
+            text_analyzer=text_analyzer,
+        )
+
+    def query_description_embedding(
+        self,
+        embedding: List[float],
+        k: int = 500,
+        use_approx: bool = False,
+    ) -> List[Any]:
+        """
+        Search descriptions by embedding similarity across all data types.
+
+        Args:
+            embedding: Query embedding vector.
+            k: Maximum number of results to return.
+            use_approx: Use approximate (faster) nearest-neighbor search when available.
+
+        Returns:
+            List of [description_name, description_text, list_name, list_type] for each match.
+        """
+        return query_description.query_description_embedding(
+            self.db,
+            embedding=embedding,
+            k=k,
+            use_approx=use_approx,
         )
 
     def query_process_item(self, process_name: str) -> List[Dict[str, Any]]:
@@ -717,7 +882,14 @@ class Vault:
             process_name: Name of the process list.
 
         Returns:
-            List of item dictionaries with name and position range.
+            List of dicts, one per item list touched by this process:
+            ``{"name": str, "start_position": int | None, "end_position": int | None}``
+
+            - ``name`` (str): Name of the item list.
+            - ``start_position`` (int | None): Earliest start position written by this
+              process across all its entries; ``None`` if not recorded.
+            - ``end_position`` (int | None): Latest end position written by this process
+              across all its entries; ``None`` if not recorded.
         """
         self._ensure_process_exists(process_name, operation="query_process_item")
         return query_item_simple.query_process_item(self.db, process_name)

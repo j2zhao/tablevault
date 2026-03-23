@@ -290,11 +290,31 @@ Every item in TableVault is attributed to the process that created it. Process q
 ```python
 # Find which process created these items
 creation_process = vault.query_item_creation_process("research_papers")
+# Returns: [{"process_id": "process_list/document_pipeline", "index": 0}]
 print(f"Created by process: {creation_process}")
 ```
 
 ```python
 # Find all items created in this process
 process_items = vault.query_process_item("document_pipeline")
+# Returns: [{"name": "research_papers", "start_position": 0, "end_position": 4}, ...]
 print(f"Items in process: {process_items}")
+```
+
+## Step 11: List All Item Names
+
+Use `query_item_names` to enumerate every item list of a given type. This is useful for discovering what's in the vault before querying.
+
+```python
+# List all document lists in the vault
+doc_lists = vault.query_item_names("document_list")
+print(f"Document lists: {doc_lists}")
+
+# List all embedding lists
+emb_lists = vault.query_item_names("embedding_list")
+print(f"Embedding lists: {emb_lists}")
+
+# List all record lists
+rec_lists = vault.query_item_names("record_list")
+print(f"Record lists: {rec_lists}")
 ```

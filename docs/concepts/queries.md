@@ -38,7 +38,8 @@ Get the process that originally created an item list:
 ```python
 # Find which process created this item
 creation_info = vault.query_item_creation_process("experiment_results")
-# Returns: [{"process_id": "training_run_01", "index": 3}]
+# Returns: [{"process_id": "process_list/training_run_01", "index": 3}]
+# process_id is an ArangoDB document ID in the form "process_list/<name>"
 ```
 
 ### Finding All Modifying Processes
@@ -65,7 +66,7 @@ Get all items that a process created or modified:
 ```python
 # Get all items touched by a process
 items = vault.query_process_item("data_pipeline_process")
-# Returns: [{"name": "raw_data", "start": 0, "end": 1000}, ...]
+# Returns: [{"name": "raw_data", "start_position": 0, "end_position": 1000}, ...]
 ```
 
 ## Data Lineage Tracking
@@ -115,9 +116,36 @@ You can also retrieve descriptions associated with an item list:
 ```python
 # Get all descriptions for an item
 descriptions = vault.query_item_description("trained_models")
-# Returns: ["Random forest classifier for sentiment analysis", ...]
+# Returns: [["BASE", "Random forest classifier for sentiment analysis"], ...]
+# Each element is [description_name, description_text]
 ```
 
+
+## Listing All Item Names
+
+Use `query_item_names` to get a sorted list of all item names belonging to a given collection type:
+
+```python
+# Get all document list names
+doc_lists = vault.query_item_names("document_list")
+# Returns: ["frankenstein_novel", "research_notes", ...]
+
+# Get all embedding list names
+emb_lists = vault.query_item_names("embedding_list")
+
+# Get all record list names
+rec_lists = vault.query_item_names("record_list")
+
+# Get all file list names
+file_lists = vault.query_item_names("file_list")
+
+# Get all process list names
+proc_lists = vault.query_item_names("process_list")
+```
+
+Valid values for `item_type`: `"process_list"`, `"file_list"`, `"embedding_list"`, `"document_list"`, `"record_list"`.
+
+---
 
 ## Range-Based Filtering
 

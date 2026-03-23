@@ -109,7 +109,7 @@ def query_process(
         FOR sl IN 1..1 INBOUND procDoc parent_edge
           FOR d IN 1..1 OUTBOUND sl description_edge
             FILTER d._id IN descCandidateIds
-            RETURN DISTINCT d._key
+            RETURN DISTINCT d.name
       ) : []
       FILTER (!useDesc) OR (LENGTH(matchedDescriptions) > 0)
 
@@ -121,7 +121,7 @@ def query_process(
       ) : []
       FILTER (!useParent) OR (LENGTH(matchedProcesses) > 0)
 
-      RETURN [[procDoc.name, procDoc.index], matchedDescriptions, matchedProcesses]
+      RETURN [procDoc.name, procDoc.index, procDoc.start_position, matchedDescriptions, matchedProcesses]
     """
 
     bind_vars: Dict[str, Any] = {
@@ -251,7 +251,7 @@ def query_embedding(
         FOR sl IN 1..1 INBOUND embDoc parent_edge
           FOR d IN 1..1 OUTBOUND sl description_edge
             FILTER d._id IN descCandidateIds
-            RETURN DISTINCT d._key
+            RETURN DISTINCT d.name
       ) : []
       FILTER (!useDesc) OR (LENGTH(matchedDescriptions) > 0)
 
@@ -263,7 +263,7 @@ def query_embedding(
       ) : []
       FILTER (!useText) OR (LENGTH(matchedProcesses) > 0)
 
-      RETURN [embDoc.name, embDoc.index, matchedDescriptions, matchedProcesses]
+      RETURN [embDoc.name, embDoc.index, embDoc.start_position, matchedDescriptions, matchedProcesses]
     """
 
     embedding_field = None
@@ -419,7 +419,7 @@ def query_record(
         FOR sl IN 1..1 INBOUND recDoc parent_edge
           FOR d IN 1..1 OUTBOUND sl description_edge
             FILTER d._id IN descCandidateIds
-            RETURN DISTINCT d._key
+            RETURN DISTINCT d.name
       ) : []
       FILTER (!useDesc) OR (LENGTH(matchedDescriptions) > 0)
 
@@ -431,7 +431,7 @@ def query_record(
       ) : []
       FILTER (!useText) OR (LENGTH(matchedProcesses) > 0)
 
-      RETURN [recDoc.name, recDoc.index, matchedDescriptions, matchedProcesses]
+      RETURN [recDoc.name, recDoc.index, recDoc.start_position, matchedDescriptions, matchedProcesses]
     """
 
     bind_vars: Dict[str, Any] = {
@@ -566,7 +566,7 @@ def query_document(
         FOR sl IN 1..1 INBOUND txtDoc parent_edge
           FOR x IN 1..1 OUTBOUND sl description_edge
             FILTER x._id IN descCandidateIds
-            RETURN DISTINCT x._key
+            RETURN DISTINCT x.name
       ) : []
       FILTER (!useDesc) OR (LENGTH(matchedDescriptions) > 0)
 
@@ -578,7 +578,7 @@ def query_document(
       ) : []
       FILTER (!useText) OR (LENGTH(matchedProcesses) > 0)
 
-      RETURN [txtDoc.name, txtDoc.index, matchedDescriptions, matchedProcesses]
+      RETURN [txtDoc.name, txtDoc.index, txtDoc.start_position, matchedDescriptions, matchedProcesses]
     """
 
     bind_vars: Dict[str, Any] = {
@@ -696,7 +696,7 @@ def query_file(
         FOR sl IN 1..1 INBOUND fileDoc parent_edge
           FOR d IN 1..1 OUTBOUND sl description_edge
             FILTER d._id IN descCandidateIds
-            RETURN DISTINCT d._key
+            RETURN DISTINCT d.name
       ) : []
       FILTER (!useDesc) OR (LENGTH(matchedDescriptions) > 0)
 
@@ -708,7 +708,7 @@ def query_file(
       ) : []
       FILTER (!useText) OR (LENGTH(matchedProcesses) > 0)
 
-      RETURN [fileDoc.name, fileDoc.index, matchedDescriptions, matchedProcesses]
+      RETURN [fileDoc.name, fileDoc.index, fileDoc.start_position, matchedDescriptions, matchedProcesses]
     """
 
     bind_vars: Dict[str, Any] = {

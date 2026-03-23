@@ -427,7 +427,15 @@ Query process items. Can optionally filter by descriptions and parent process.
 | `description_text` | `Optional[str]` | Text to search in descriptions |
 | `filtered` | `Optional[List[str]]` | List of process names to restrict search to |
 
-**Returns:** List of matching process results
+**Returns:** `List[List]` — one 5-element list per matching process run:
+
+| Index | Type | Description |
+|-------|------|-------------|
+| `[0]` | `str` | Process name |
+| `[1]` | `int` | Run index of this process execution |
+| `[2]` | `int` | Start position offset of this run in the process stream |
+| `[3]` | `List[str]` | Matched description names; empty when no description filter applied |
+| `[4]` | `List[[str, int]]` | Matched parent processes as `[process_name, process_index]`; empty when no `parent_code_text` filter applied |
 
 ---
 
@@ -457,7 +465,15 @@ Query embedding items. Can optionally filter by descriptions and parent process.
 | `filtered` | `Optional[List[str]]` | List of embedding names to restrict search to |
 | `use_approx` | `bool` | Use approximate (faster) similarity search |
 
-**Returns:** List of matching embedding results
+**Returns:** `List[List]` — one 5-element list per matching embedding entry:
+
+| Index | Type | Description |
+|-------|------|-------------|
+| `[0]` | `str` | Embedding list name |
+| `[1]` | `int` | Position index of the entry within its embedding list |
+| `[2]` | `int` | Numeric start position of the entry |
+| `[3]` | `List[str]` | Matched description names; empty when no description filter applied |
+| `[4]` | `List[[str, int]]` | Matched processes as `[process_name, process_index]`; empty when no `code_text` filter applied |
 
 ---
 
@@ -485,7 +501,15 @@ Query record items. Can optionally filter by descriptions and parent process.
 | `code_text` | `Optional[str]` | Text to search in process code |
 | `filtered` | `Optional[List[str]]` | List of record names to restrict search to |
 
-**Returns:** List of matching record results
+**Returns:** `List[List]` — one 5-element list per matching record entry:
+
+| Index | Type | Description |
+|-------|------|-------------|
+| `[0]` | `str` | Record list name |
+| `[1]` | `int` | Position index of the entry within its record list |
+| `[2]` | `int` | Numeric start position of the entry |
+| `[3]` | `List[str]` | Matched description names; empty when no description filter applied |
+| `[4]` | `List[[str, int]]` | Matched processes as `[process_name, process_index]`; empty when no `code_text` filter applied |
 
 ---
 
@@ -513,7 +537,15 @@ Query document items. Can optionally filter by descriptions and parent process.
 | `code_text` | `Optional[str]` | Text to search in process code |
 | `filtered` | `Optional[List[str]]` | List of document names to restrict search to |
 
-**Returns:** List of matching document item results
+**Returns:** `List[List]` — one 5-element list per matching document chunk:
+
+| Index | Type | Description |
+|-------|------|-------------|
+| `[0]` | `str` | Document list name |
+| `[1]` | `int` | Position index of the chunk within its document list |
+| `[2]` | `int` | Character offset where this chunk begins |
+| `[3]` | `List[str]` | Matched description names; empty when no description filter applied |
+| `[4]` | `List[[str, int]]` | Matched processes as `[process_name, process_index]`; empty when no `code_text` filter applied |
 
 ---
 
@@ -539,7 +571,15 @@ Query file items. Can optionally filter by descriptions and parent process.
 | `code_text` | `Optional[str]` | Text to search in process code |
 | `filtered` | `Optional[List[str]]` | List of file names to restrict search to |
 
-**Returns:** List of matching file item results
+**Returns:** `List[List]` — one 5-element list per matching file entry:
+
+| Index | Type | Description |
+|-------|------|-------------|
+| `[0]` | `str` | File list name |
+| `[1]` | `int` | Position index of the file entry within its file list |
+| `[2]` | `int` | Numeric start position of the entry |
+| `[3]` | `List[str]` | Matched description names; empty when no description filter applied |
+| `[4]` | `List[[str, int]]` | Matched processes as `[process_name, process_index]`; empty when no `code_text` filter applied |
 
 ---
 
@@ -569,7 +609,35 @@ Query the content of an item list by index chunk or position range.
 | `start_position` | `Optional[int]` | Start of position range (if index not specified) |
 | `end_position` | `Optional[int]` | End of position range (if index not specified) |
 
-**Returns:** The item content at the specified index or position range
+**Returns:** When `index` is given, a single item whose type depends on the list type:
+
+| List type | Return type | Value |
+|-----------|-------------|-------|
+| `process_list` | `dict` | `{"text": str, "status": str, "error": str, "start_position": int, "index": int}` |
+| `file_list` | `str` | File location/path |
+| `embedding_list` | `List[float]` | Embedding vector |
+| `document_list` | `str` | Text chunk |
+| `record_list` | `Dict[str, Any]` | Record data keyed by column name |
+
+When `index` is `None`, a `List` of the above types for all entries whose position range overlaps `[start_position, end_position)`, sorted by `start_position`.
+
+---
+
+### `query_item_names`
+
+```python
+query_item_names(item_type: str) -> List[str]
+```
+
+Get all item names of a given collection type.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `item_type` | `str` | Collection type to filter by: `"process_list"`, `"file_list"`, `"embedding_list"`, `"document_list"`, or `"record_list"` |
+
+**Returns:** `List[str]` — sorted list of item names belonging to that collection type
 
 ---
 
@@ -587,7 +655,20 @@ Get metadata for an item list.
 |------|------|-------------|
 | `item_name` | `str` | Name of the item list |
 
-**Returns:** Dictionary with list metadata (n_items, length, etc.)
+**Returns:** `Dict[str, Any]` — the list's metadata document. Common fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `n_items` | `int` | Number of entries currently in the list |
+| `length` | `int` | Total length/size (entry count for file/record/embedding lists; total character count for document lists) |
+| `deleted` | `int` | Deletion marker (`-1` = not deleted) |
+
+Additional fields by list type:
+
+| List type | Extra field | Type | Description |
+|-----------|-------------|------|-------------|
+| `embedding_list` | `n_dim` | `int` | Dimensionality of stored embeddings |
+| `record_list` | `column_names` | `List[str]` | Ordered column names |
 
 ---
 
@@ -611,7 +692,16 @@ Query input dependencies of an item list. Allows optional position filtering.
 | `start_position` | `Optional[int]` | Filter by start position |
 | `end_position` | `Optional[int]` | Filter by end position |
 
-**Returns:** List of item list information
+**Returns:** `List[List]` — one 6-element list per dependency edge in the filtered range:
+
+| Index | Type | Description |
+|-------|------|-------------|
+| `[0]` | `int` | Start position of the parent entry that has this dependency |
+| `[1]` | `int` | End position of the parent entry |
+| `[2]` | `str` | Collection type of the input dependency (e.g. `"file_list"`, `"document_list"`) |
+| `[3]` | `str` | Name of the input dependency item list |
+| `[4]` | `int` | Start position within the dependency list |
+| `[5]` | `int` | End position within the dependency list |
 
 ---
 
@@ -635,7 +725,16 @@ Query items that depend on an item list. Allows optional position filtering.
 | `start_position` | `Optional[int]` | Filter by start position |
 | `end_position` | `Optional[int]` | Filter by end position |
 
-**Returns:** List of child item information
+**Returns:** `List[List]` — one 6-element list per outgoing dependency edge in the filtered range:
+
+| Index | Type | Description |
+|-------|------|-------------|
+| `[0]` | `int` | Start position of the dependency edge on this item |
+| `[1]` | `int` | End position of the dependency edge on this item |
+| `[2]` | `str` | Collection type of the dependent (child) item list (e.g. `"embedding_list"`, `"record_list"`) |
+| `[3]` | `str` | Name of the child item list |
+| `[4]` | `int` | Start position of the child entry |
+| `[5]` | `int` | End position of the child entry |
 
 ---
 
@@ -653,7 +752,12 @@ Get descriptions associated with an item list.
 |------|------|-------------|
 | `item_name` | `str` | Name of the item list |
 
-**Returns:** List of description texts
+**Returns:** `List[List]` — one 2-element list per description attached to this item:
+
+| Index | Type | Description |
+|-------|------|-------------|
+| `[0]` | `str` | Description label (e.g. `"BASE"`) |
+| `[1]` | `str` | Full text of the description |
 
 ---
 
@@ -671,7 +775,12 @@ Get the process that created an item list.
 |------|------|-------------|
 | `item_name` | `str` | Name of the item list |
 
-**Returns:** List of process information with process_id and index
+**Returns:** `List[Dict[str, Any]]` — one dict per creating process:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `process_id` | `str` | ArangoDB document ID of the creating process (e.g. `"process_list/my_process"`) |
+| `index` | `int` | Run index at which the item was created |
 
 ---
 
@@ -695,7 +804,12 @@ Get processes that modified an item list. Can filter by position range within th
 | `start_position` | `Optional[int]` | Filter by start position |
 | `end_position` | `Optional[int]` | Filter by end position |
 
-**Returns:** List of process info dicts with process name and index
+**Returns:** `List[Dict[str, Any]]` — one dict per process that wrote entries in the filtered range:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `process_id` | `str` | ArangoDB document ID of the process (e.g. `"process_list/my_process"`) |
+| `index` | `int` | Run index at which the entries were written |
 
 ---
 
@@ -713,4 +827,76 @@ Get all items created or modified by a given process name.
 |------|------|-------------|
 | `process_name` | `str` | Name of the process list |
 
-**Returns:** List of item dictionaries with name and position range
+**Returns:** `List[Dict[str, Any]]` — one dict per item list touched by this process:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `name` | `str` | Name of the item list |
+| `start_position` | `int \| None` | Earliest start position written by this process; `None` if not recorded |
+| `end_position` | `int \| None` | Latest end position written by this process; `None` if not recorded |
+
+---
+
+## Description Queries
+
+Functions for searching across descriptions attached to any item list type.
+
+### `query_description`
+
+```python
+query_description(
+    description_text: str,
+    k: int = 500,
+    text_analyzer: str = "text_en"
+) -> List[Any]
+```
+
+Search descriptions by token match across all data types. All tokens in `description_text` must match.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `description_text` | `str` | Text to search in descriptions (all tokens must match) |
+| `k` | `int` | Maximum number of results to return |
+| `text_analyzer` | `str` | ArangoSearch analyzer to use for tokenization |
+
+**Returns:** `List[List]` — one 4-element list per matching description:
+
+| Index | Type | Description |
+|-------|------|-------------|
+| `[0]` | `str` | Description label (e.g. `"BASE"`) |
+| `[1]` | `str` | Full text of the description |
+| `[2]` | `str` | Name of the item list this description belongs to |
+| `[3]` | `str` | Collection type of the item list (e.g. `"file_list"`, `"embedding_list"`) |
+
+---
+
+### `query_description_embedding`
+
+```python
+query_description_embedding(
+    embedding: List[float],
+    k: int = 500,
+    use_approx: bool = False
+) -> List[Any]
+```
+
+Search descriptions by embedding similarity across all data types.
+
+**Parameters:**
+
+| Name | Type | Description |
+|------|------|-------------|
+| `embedding` | `List[float]` | Query embedding vector |
+| `k` | `int` | Maximum number of results to return |
+| `use_approx` | `bool` | Use approximate (faster) nearest-neighbor search when available |
+
+**Returns:** `List[List]` — one 4-element list per matching description, sorted by descending cosine similarity:
+
+| Index | Type | Description |
+|-------|------|-------------|
+| `[0]` | `str` | Description label (e.g. `"BASE"`) |
+| `[1]` | `str` | Full text of the description |
+| `[2]` | `str` | Name of the item list this description belongs to |
+| `[3]` | `str` | Collection type of the item list (e.g. `"file_list"`, `"embedding_list"`) |

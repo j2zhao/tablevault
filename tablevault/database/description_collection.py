@@ -35,7 +35,7 @@ def add_description_inner(
     guard_rev = utils.add_item_name(db, key_, "description", timestamp)
     doc = {
         "_key": key_,
-        "name": key_,
+        "name": name,
         "item_name": item_name,
         "process_name": process_name,
         "process_index": process_index,
