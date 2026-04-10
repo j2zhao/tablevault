@@ -71,7 +71,26 @@ items = vault.query_process_item("data_pipeline_process")
 
 ## Data Lineage Tracking
 
-When you specify `input_items` during append operations, these dependencies are also stored and can be queried later.
+When you specify `input_items` during append operations, these dependencies are stored as edges and can be queried later.
+
+### The `input_items` Field
+
+`input_items` is an optional argument accepted by all `append_*` functions. It maps the name of a dependency item list to a two-integer list `[start_position, end_position]` indicating which range of that item the new entry was derived from. Ranges follow the same **inclusive start, exclusive end** convention as all other position ranges.
+
+```python
+# This appended embedding was derived from positions 0–10 (exclusive) of "raw_documents"
+# and positions 5–15 (exclusive) of "chunked_text"
+vault.append_embedding(
+    "document_embeddings",
+    embedding_vector,
+    input_items={
+        "raw_documents": [0, 10],
+        "chunked_text":  [5, 15],
+    }
+)
+```
+
+These edges are stored in the `dependency_edge` collection and are returned by `query_item_parent` and `query_item_child`.
 
 ### Querying Dependencies
 
@@ -149,7 +168,7 @@ Valid values for `item_type`: `"process_list"`, `"file_list"`, `"embedding_list"
 
 ## Range-Based Filtering
 
-Many query functions support `start_position` and `end_position` parameters to filter results to specific ranges within a list. This is useful when:
+Many query functions support `start_position` and `end_position` parameters to filter results to specific ranges within a list. Ranges are **inclusive on the start** and **exclusive on the end** — i.e., `[start_position, end_position)`. This is useful when:
 
 - Different processes appended different portions of data
 - You want to trace lineage for only part of an item

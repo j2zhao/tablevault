@@ -19,10 +19,11 @@ vault.append_file("trained_models", "models/classifier_v1.pkl")
 vault.append_file("trained_models", "models/classifier_v2.pkl")
 
 # Append with input dependencies (links to other items)
+# input_items range is [start_position, end_position): inclusive start, exclusive end
 vault.append_file(
     "trained_models",
     "models/ensemble.pkl",
-    input_items={"training_data": [0, 100]}  # depends on positions 0-100 of training_data
+    input_items={"training_data": [0, 100]}  # depends on positions 0–100 (exclusive) of training_data
 )
 ```
 
@@ -63,7 +64,7 @@ vault.append_embedding("document_embeddings", embedding_vector)
 vault.append_embedding(
     "document_embeddings",
     another_embedding,
-    input_items={"research_notes": [0, 1]},  # embedding derived from document at position 0-1
+    input_items={"research_notes": [0, 1]},  # embedding derived from position 0 (end=1, exclusive) of research_notes
     build_idx=True  # rebuild vector index for similarity search
 )
 ```

@@ -251,7 +251,6 @@ def create_record_list(
         "record_list",
     )
 
-
 @function_safeguard
 def append_item(
     db: StandardDatabase,
